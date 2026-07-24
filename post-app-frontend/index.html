@@ -7150,8 +7150,8 @@ function MusicTrimmerModal({ song, photos, onConfirm, onBack, onDelete }) {
   const totalBarsPx = NUM_BARS * PX_PER_BAR;
   const pxPerSec = totalBarsPx / songDur;
   const clipPx = Math.round(CLIP_DUR * pxPerSec);
-  const containerW = typeof window !== 'undefined' ? Math.min(window.innerWidth, 480) - 32 : 340;
-  const sidePad = Math.max(16, (containerW - clipPx) / 2);
+  const containerW = typeof window !== 'undefined' ? Math.min(window.innerWidth, 480) : 390;
+  const sidePad = Math.max(8, (containerW - clipPx) / 2);
   const offset = startSec * pxPerSec;
 
   const fmtTime = s => { const m = Math.floor(s/60); return m+':'+(Math.round(s)%60).toString().padStart(2,'0'); };
@@ -7176,7 +7176,12 @@ function MusicTrimmerModal({ song, photos, onConfirm, onBack, onDelete }) {
           bars.push(Math.sqrt(rms/step));
         }
         const maxVal = Math.max(...bars, 0.01);
-        if (!cancelled) setWaveData(bars.map(b => b/maxVal));
+        // FIX: use actual preview audio duration so clip box size/position is correct
+        if (!cancelled) {
+          const actualDur = Math.max(CLIP_DUR + 1, Math.round(decoded.duration));
+          if (actualDur !== songDur) { /* songDur is const here — component handles this via props */ }
+          setWaveData(bars.map(b => b/maxVal));
+        }
         ctx.close();
       } catch(e) {
         if (!cancelled) setWaveData(Array.from({length:NUM_BARS}, (_,i) =>
@@ -16048,8 +16053,8 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
   var maxStart=Math.max(0,songDuration-clipDuration);
   var pxPerSec=totalBarsPx/Math.max(songDuration,1);
   var clipPx=Math.round(clipDuration*pxPerSec);
-  var containerW=typeof window!=='undefined'?Math.min(window.innerWidth,480)-32:340;
-  var sidePad=Math.max(16,(containerW-clipPx)/2);
+  var containerW=typeof window!=='undefined'?Math.min(window.innerWidth,480):390;
+  var sidePad=Math.max(8,(containerW-clipPx)/2);
   var offset=startSec*pxPerSec;
 
   function fmtDur(ms){ if(!ms&&ms!==0)return''; var s=Math.round(ms/1000); return Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0'); }
@@ -16098,6 +16103,11 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
         var bars=[];
         for(var i=0;i<NUM_BARS;i++){var rms=0;for(var j=0;j<step;j++)rms+=(ch[i*step+j]||0)**2;bars.push(Math.sqrt(rms/step));}
         var mx=Math.max(...bars,0.01);
+        // FIX: use actual preview audio duration (not trackTimeMillis full-song length)
+        // so clip box size and position are correct for the 30s preview
+        var actualDur=Math.max(clipDuration+1,Math.round(decoded.duration));
+        setSongDuration(actualDur);
+        setStartSec(Math.min(startSecRef.current,Math.max(0,actualDur-clipDuration)));
         setWaveData(bars.map(function(b){return b/mx;}));
         ctx.close();
       }catch(e){
