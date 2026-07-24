@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: post-app-frontend
+    runtime: static
+    buildCommand: echo ok
+    staticPublishPath: .
+    autoDeploy: yes
+    pullRequestPreviewsEnabled: false
+    headers:
+      - path: /sw.js
+        name: Cache-Control
+        value: no-cache
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
