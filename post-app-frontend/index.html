@@ -7176,12 +7176,7 @@ function MusicTrimmerModal({ song, photos, onConfirm, onBack, onDelete }) {
           bars.push(Math.sqrt(rms/step));
         }
         const maxVal = Math.max(...bars, 0.01);
-        // FIX: use actual preview audio duration so clip box size/position is correct
-        if (!cancelled) {
-          const actualDur = Math.max(CLIP_DUR + 1, Math.round(decoded.duration));
-          if (actualDur !== songDur) { /* songDur is const here — component handles this via props */ }
-          setWaveData(bars.map(b => b/maxVal));
-        }
+        if (!cancelled) setWaveData(bars.map(b => b/maxVal));
         ctx.close();
       } catch(e) {
         if (!cancelled) setWaveData(Array.from({length:NUM_BARS}, (_,i) =>
@@ -16103,8 +16098,6 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
         var bars=[];
         for(var i=0;i<NUM_BARS;i++){var rms=0;for(var j=0;j<step;j++)rms+=(ch[i*step+j]||0)**2;bars.push(Math.sqrt(rms/step));}
         var mx=Math.max(...bars,0.01);
-        // FIX: use actual preview audio duration (not trackTimeMillis full-song length)
-        // so clip box size and position are correct for the 30s preview
         var actualDur=Math.max(clipDuration+1,Math.round(decoded.duration));
         setSongDuration(actualDur);
         setStartSec(Math.min(startSecRef.current,Math.max(0,actualDur-clipDuration)));
