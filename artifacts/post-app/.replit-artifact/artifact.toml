@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "POST App"
+description = "A social media app with posts, friends, messages, notifications, and user profiles. Full-stack app with FastAPI backend and React frontend."
+version = "1.0.0"
+id = "artifacts/post-app"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20890
+
+[services.development]
+run = "pnpm --filter @workspace/post-app run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/post-app", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/post-app/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20890"
+BASE_PATH = "/"

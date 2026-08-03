@@ -1,45 +1,50 @@
-# [Project name]
+# POST App — BluOm7
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Social media app with posts, friends, messages, and notifications.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `pnpm --filter @workspace/post-app run dev` — frontend preview (port auto-assigned)
+- `pnpm --filter @workspace/api-server run dev` — Node.js API server (port 8080)
+
+## GitHub Repos (direct access)
+
+| Folder | GitHub Repo | Purpose |
+|--------|-------------|---------|
+| `frontend-source/` | `bluOm7/post-app-frontend` | Main HTML+React frontend |
+| `python-backend/` | `bluOm7/post-app-backend` | FastAPI Python backend |
+
+### Change workflow
+1. Edit file in `frontend-source/` or `python-backend/`
+2. For frontend: also copy `index.html` → `artifacts/post-app/index.html` for live preview
+3. Commit + push from that folder to GitHub → Render auto-deploys
+
+### Git commands (run inside the folder)
+```bash
+# Pull latest
+cd frontend-source && git pull origin main
+cd python-backend  && git pull origin main
+
+# Commit + push after changes
+git add -A && git commit -m "fix: description" && git push origin main
+```
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- **Frontend**: React 18 (UMD CDN), plain HTML/CSS/JS — `frontend-source/index.html`
+- **Backend**: Python FastAPI + MongoDB (Motor) + Cloudinary — `python-backend/server.py`
+- **Auth**: JWT (PyJWT) + bcrypt
+- **Email**: Resend
+- **Hosting**: Render (both frontend + backend)
+- **Live backend URL**: `https://post-app-backend-n47s.onrender.com/api`
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
-
-## Architecture decisions
-
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
-
-## Product
-
-_Describe the high-level user-facing capabilities of this app once they exist._
+- `frontend-source/index.html` — entire frontend (22K lines, React UMD)
+- `frontend-source/sw.js` — service worker for push notifications
+- `python-backend/server.py` — entire backend (~4K lines, FastAPI)
+- `artifacts/post-app/index.html` — copy of frontend used for Replit preview
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
-
-## Gotchas
-
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Make changes as instructed, then commit and push to GitHub.
