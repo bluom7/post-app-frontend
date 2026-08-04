@@ -14510,6 +14510,18 @@ function QuickMenuDropdown({
       flexShrink: 0
     }
   }, svg);
+  const settingsHeader = (title, forceHandle) => /*#__PURE__*/React.createElement("div", {
+    style: { display: "flex", alignItems: "center", gap: 12, padding: "0 4px 16px", borderBottom: "1px solid var(--border)", marginBottom: 10 }
+  },
+    /*#__PURE__*/React.createElement("button", {
+      onClick: goBack, "aria-label": "Back from Settings",
+      style: { background: "none", border: 0, cursor: "pointer", display: "flex", alignItems: "center", padding: 4, color: "var(--text)" }
+    }, settingsIcon("M15 18 9 12l6-6", "var(--text)")),
+    /*#__PURE__*/React.createElement("div", { style: { lineHeight: 1.2 } },
+      /*#__PURE__*/React.createElement("div", { style: { fontSize: 22, fontWeight: 900 } }, title),
+      (forceHandle || settingsCategory === "account") && /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, color: "var(--muted)", marginTop: 2 } }, "@" + (user.handle || user.username || "").replace(/^@/, ""))
+    )
+  );
   if (subScreen === 'helpcenter') return React.createElement(HelpCenterScreen, {onBack: function(){ setSubScreen(null); }});
   if (subScreen === 'account-info') {
     const _qmdHandle = (user.handle || user.username || "").replace(/^@/, "");
@@ -16037,18 +16049,6 @@ function AccountRecoveryScreen({
     !settingsSearchQuery ||
     item.title.toLowerCase().includes(settingsSearchQuery) ||
     item.description.toLowerCase().includes(settingsSearchQuery)
-  );
-  const settingsHeader = (title, forceHandle) => /*#__PURE__*/React.createElement("div", {
-    style: { display: "flex", alignItems: "center", gap: 12, padding: "0 4px 16px", borderBottom: "1px solid var(--border)", marginBottom: 10 }
-  },
-    /*#__PURE__*/React.createElement("button", {
-      onClick: goBack, "aria-label": "Back from Settings",
-      style: { background: "none", border: 0, cursor: "pointer", display: "flex", alignItems: "center", padding: 4, color: "var(--text)" }
-    }, settingsIcon("M15 18 9 12l6-6", "var(--text)")),
-    /*#__PURE__*/React.createElement("div", { style: { lineHeight: 1.2 } },
-      /*#__PURE__*/React.createElement("div", { style: { fontSize: 22, fontWeight: 900 } }, title),
-      (forceHandle || settingsCategory === "account") && /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, color: "var(--muted)", marginTop: 2 } }, "@" + (user.handle || user.username || "").replace(/^@/, ""))
-    )
   );
   if (!settingsCategory) {
     return /*#__PURE__*/React.createElement("div", {
