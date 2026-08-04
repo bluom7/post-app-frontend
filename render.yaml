@@ -2,8 +2,9 @@ services:
   - type: web
     name: post-app-frontend
     runtime: static
+    rootDir: frontend-source
     buildCommand: echo ok
-    staticPublishPath: frontend-source
+    staticPublishPath: .
     autoDeploy: yes
     pullRequestPreviewsEnabled: false
     headers:
