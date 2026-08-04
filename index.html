@@ -15756,6 +15756,11 @@ function AccountRecoveryScreen({
     const [blockedUsers, setBlockedUsers] = useState([]);
     const [blockedLoading, setBlockedLoading] = useState(false);
     const [unblockingId, setUnblockingId] = useState(null);
+  const [secTwoFaOn, setSecTwoFaOn] = useState(user.two_fa_enabled || false);
+  const [secLoginAlertsOn, setSecLoginAlertsOn] = useState(user.login_alerts_enabled !== false);
+  const [secSessions, setSecSessions] = useState([]);
+  const [secSessionsLoading, setSecSessionsLoading] = useState(false);
+  const [secDownloadLoading, setSecDownloadLoading] = useState(false);
 
   // Unified Phone & Email
   const [showContactSection, setShowContactSection] = useState(false);
@@ -15881,6 +15886,57 @@ function AccountRecoveryScreen({
     } catch (e) {
       showToast(e.message, COLORS.red);
     }
+  };
+  const loadSecSessions = async () => {
+    setSecSessionsLoading(true);
+    try {
+      const d = await api("/security/sessions", "GET", null, token);
+      setSecSessions(Array.isArray(d.sessions) ? d.sessions : []);
+    } catch(e) { showToast(e.message, COLORS.red); }
+    setSecSessionsLoading(false);
+  };
+  const revokeSession = async (sid) => {
+    try {
+      await api("/security/sessions/" + sid, "DELETE", null, token);
+      setSecSessions(prev => prev.filter(s => s.id !== sid));
+      showToast("Session revoked ✓", COLORS.green);
+    } catch(e) { showToast(e.message, COLORS.red); }
+  };
+  const revokeAllSessions = async () => {
+    if (!window.confirm("Log out from all other devices?")) return;
+    try {
+      await api("/security/sessions/all", "DELETE", null, token);
+      setSecSessions([]);
+      showToast("Logged out from all devices ✓", COLORS.green);
+    } catch(e) { showToast(e.message, COLORS.red); }
+  };
+  const toggleTwoFa = async (on) => {
+    const prev = secTwoFaOn; setSecTwoFaOn(on);
+    try {
+      await api("/profile", "PATCH", { two_fa_enabled: on }, token);
+      showToast(on ? "2FA enabled ✓" : "2FA disabled", COLORS.green);
+    } catch(e) { setSecTwoFaOn(prev); showToast(e.message, COLORS.red); }
+  };
+  const toggleLoginAlerts = async (on) => {
+    const prev = secLoginAlertsOn; setSecLoginAlertsOn(on);
+    try {
+      await api("/profile", "PATCH", { login_alerts_enabled: on }, token);
+      showToast(on ? "Login alerts enabled ✓" : "Login alerts disabled", COLORS.green);
+    } catch(e) { setSecLoginAlertsOn(prev); showToast(e.message, COLORS.red); }
+  };
+  const requestDataDownload = async () => {
+    if (secDownloadLoading) return;
+    setSecDownloadLoading(true);
+    try {
+      const d = await api("/security/download-data", "GET", null, token);
+      const blob = new Blob([JSON.stringify(d, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "post-app-data.json"; a.click();
+      URL.revokeObjectURL(url);
+      showToast("Data downloaded ✓", COLORS.green);
+    } catch(e) { showToast(e.message, COLORS.red); }
+    setSecDownloadLoading(false);
   };
    const updateSettingsProfile = async fields => {
      try {
@@ -16095,6 +16151,40 @@ function AccountRecoveryScreen({
   if (subScreen === 'contact') return /*#__PURE__*/React.createElement("div",{style:subPageStyle},subHeader(contactMode==="email"?"Change Email":"Change Mobile Number"),/*#__PURE__*/React.createElement("div",{style:{background:"var(--card-bg)",borderRadius:16,border:"1px solid var(--border)",padding:"16px"}},contactDemoOtp&&/*#__PURE__*/React.createElement("div",{style:{fontSize:12,background:"#fffde7",color:"#f57f17",padding:"8px 12px",borderRadius:10,marginBottom:10}},"Demo OTP: ",/*#__PURE__*/React.createElement("b",null,contactDemoOtp)),contactStep==="input"?/*#__PURE__*/React.createElement(React.Fragment,null,/*#__PURE__*/React.createElement("p",{style:{fontSize:13,color:"var(--muted)",marginBottom:12,lineHeight:1.6}},contactMode==="email"?"Enter your new email address.":"Enter your new mobile number."),/*#__PURE__*/React.createElement("input",{type:contactMode==="email"?"email":"tel",value:contactValue,onChange:e=>setContactValue(e.target.value),placeholder:contactMode==="email"?"Email address":"Mobile number",style:{...inputStyle,marginBottom:10,width:"100%",boxSizing:"border-box"}}),/*#__PURE__*/React.createElement("button",{onClick:sendContactOtp,disabled:contactLoading,style:{...btnStyle,width:"100%",background:COLORS.blue,color:"#fff",opacity:contactLoading?0.7:1}},contactLoading?"Sending...":"Send OTP"),/*#__PURE__*/React.createElement("p",{onClick:()=>{setContactMode(contactMode==="email"?"phone":"email");setContactValue("");},style:{textAlign:"center",marginTop:14,fontSize:13,color:COLORS.blue,cursor:"pointer"}},contactMode==="email"?"Use mobile number instead":"Use email instead")):/*#__PURE__*/React.createElement(React.Fragment,null,/*#__PURE__*/React.createElement("p",{style:{color:"var(--muted)",fontSize:13,marginBottom:10}},"OTP sent to ",/*#__PURE__*/React.createElement("b",null,contactValue)),/*#__PURE__*/React.createElement("input",{type:"tel",value:contactOtp,onChange:e=>setContactOtp(e.target.value),placeholder:"Enter OTP",maxLength:6,style:{...inputStyle,letterSpacing:6,textAlign:"center",fontSize:20,fontWeight:700,marginBottom:10,width:"100%",boxSizing:"border-box"}}),/*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:8}},/*#__PURE__*/React.createElement("button",{onClick:verifyContactOtp,disabled:contactLoading,style:{...btnStyle,flex:2,background:COLORS.green,color:"#fff",opacity:contactLoading?0.7:1}},contactLoading?"Verifying...":"Verify ✓"),/*#__PURE__*/React.createElement("button",{onClick:()=>{setContactStep("input");setContactOtp("");setContactDemoOtp(null);},style:{...btnStyle,flex:1,background:"var(--input-bg)",color:"var(--muted)",border:"1px solid var(--border)"}},"Back")))));
     if (subScreen === 'blocked-users') return /*#__PURE__*/React.createElement("div",{style:subPageStyle},subHeader("Blocked Users"),blockedLoading?/*#__PURE__*/React.createElement("div",{style:{textAlign:"center",padding:40,color:"var(--muted)"}},"Loading..."):blockedUsers.length===0?/*#__PURE__*/React.createElement("div",{style:{textAlign:"center",padding:60}},/*#__PURE__*/React.createElement("div",{style:{fontSize:40,marginBottom:12}},"\uD83D\uDEAB"),/*#__PURE__*/React.createElement("div",{style:{fontSize:15,color:"var(--muted)",fontWeight:600}},"No blocked users"),/*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:"var(--muted)",marginTop:4}},"Users you block will appear here")):/*#__PURE__*/React.createElement("div",{style:{background:"var(--card-bg)",borderRadius:16,border:"1px solid var(--border)",padding:"0 16px"}},blockedUsers.map((bu,idx)=>/*#__PURE__*/React.createElement("div",{key:bu.id,style:{display:"flex",alignItems:"center",gap:12,padding:"14px 0",borderBottom:idx<blockedUsers.length-1?"1px solid var(--border)":"none"}},bu.avatar_photo?/*#__PURE__*/React.createElement("img",{src:bu.avatar_photo,style:{width:46,height:46,borderRadius:14,objectFit:"cover",flexShrink:0}}):/*#__PURE__*/React.createElement("div",{style:{width:46,height:46,borderRadius:14,background:bu.avatar_bg||"#FFD600",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:18,fontWeight:900,color:"#fff"}},((bu.avatar_letter||bu.name||"?")[0]).toUpperCase()),/*#__PURE__*/React.createElement("div",{style:{flex:1,minWidth:0}},/*#__PURE__*/React.createElement("div",{style:{fontWeight:700,fontSize:15,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},bu.name||bu.username),/*#__PURE__*/React.createElement("div",{style:{fontSize:12,color:"var(--muted)",marginTop:2}},"@"+(bu.handle||bu.username||"").replace(/^@/,""))),/*#__PURE__*/React.createElement("button",{onClick:()=>unblockUser(bu.id),disabled:unblockingId===bu.id,style:{background:"none",border:"1.5px solid var(--border)",borderRadius:10,padding:"7px 14px",fontSize:13,fontWeight:700,color:"var(--text)",cursor:"pointer",flexShrink:0,opacity:unblockingId===bu.id?0.5:1,transition:"all 0.15s"}},unblockingId===bu.id?"...":"Unblock")))));
 
+  if (subScreen === 'security-sessions') return React.createElement("div", {style: subPageStyle},
+    subHeader("Where you're logged in"),
+    secSessionsLoading ? React.createElement("div", {style:{textAlign:"center",padding:40,color:"var(--muted)"}}, "Loading sessions...") :
+    React.createElement(React.Fragment, null,
+      React.createElement("div", {style:{background:"var(--card-bg)",borderRadius:16,border:"1px solid var(--border)",padding:"0 16px",marginBottom:12}},
+        secSessions.length === 0
+          ? React.createElement("div", {style:{padding:"24px 0",textAlign:"center",color:"var(--muted)",fontSize:15}}, "No active sessions found")
+          : secSessions.map((s,i) => React.createElement("div", {key: s.id, style:{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:i<secSessions.length-1?"1px solid var(--border)":"none"}},
+              settingsIcon(s.is_mobile ? "M10 2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6" : "M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm-8 11H8m4 0v-4m0 4h4", "var(--text)"),
+              React.createElement("div", {style:{flex:1}},
+                React.createElement("div", {style:{fontSize:15,fontWeight:700,color:"var(--text)"}}, s.device_name || "Unknown device"),
+                React.createElement("div", {style:{fontSize:12,color:"var(--muted)",marginTop:2}}, s.location || "Unknown location"),
+                React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginTop:1}}, s.is_current ? "🟢 Current session" : ("Last active: " + (s.last_active ? new Date(s.last_active).toLocaleDateString() : "Unknown")))
+              ),
+              !s.is_current && React.createElement("button", {
+                onClick: () => revokeSession(s.id),
+                style:{background:"none",border:"1.5px solid "+COLORS.red,borderRadius:10,padding:"6px 12px",fontSize:12,fontWeight:700,color:COLORS.red,cursor:"pointer",flexShrink:0}
+              }, "Log out")
+            ))
+      ),
+      secSessions.filter(s => !s.is_current).length > 0 && React.createElement("button", {
+        onClick: revokeAllSessions,
+        style:{width:"100%",padding:"14px 0",background:"none",border:"1.5px solid "+COLORS.red,borderRadius:14,fontSize:15,fontWeight:700,color:COLORS.red,cursor:"pointer",marginTop:8}
+      }, "Log out from all other devices")
+    )
+  );
+  if (subScreen === 'security-apps') return React.createElement("div", {style: subPageStyle},
+    subHeader("Apps and sessions"),
+    React.createElement("div", {style:{background:"var(--card-bg)",borderRadius:16,border:"1px solid var(--border)",padding:"20px 16px",textAlign:"center"}},
+      settingsIcon("M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.2-1.2", "var(--muted)"),
+      React.createElement("div", {style:{fontSize:15,fontWeight:600,color:"var(--muted)",marginTop:12}}, "No third-party apps connected"),
+      React.createElement("div", {style:{fontSize:13,color:"var(--muted)",marginTop:4}}, "Apps you authorize will appear here")
+    )
+  );
   const settingsCategories = [
     { key: "account", title: "Your account", description: "See information about your account, update your email or phone, or deactivate your account.", icon: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8" },
     { key: "security", title: "Security and account access", description: "Manage your account's security and keep track of your account access.", icon: "M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3ZM12 8v4M10 10h4" },
@@ -16158,18 +16248,18 @@ function AccountRecoveryScreen({
   }
   if (selectedSettingsCategory) {
     let categoryContent;
+    const _flatItem = (label, sub, iconPath, onClick, danger) => React.createElement("button", {
+      onClick,
+      style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 0", background: "none", border: 0, color: danger ? COLORS.red : "var(--text)", cursor: "pointer", textAlign: "left" }
+    },
+      settingsIcon(iconPath, danger ? COLORS.red : "var(--text)"),
+      React.createElement("div", { style: { flex: 1 } },
+        React.createElement("div", { style: { fontSize: 16, fontWeight: 700 } }, label),
+        React.createElement("div", { style: { fontSize: 13, color: "var(--muted)", marginTop: 3 } }, sub)
+      ),
+      settingsIcon("M9 18l6-6-6-6", danger ? COLORS.red : "var(--muted)")
+    );
     if (settingsCategory === "account") {
-      const _flatItem = (label, sub, iconPath, onClick, danger) => React.createElement("button", {
-        onClick,
-        style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 0", background: "none", border: 0, color: danger ? COLORS.red : "var(--text)", cursor: "pointer", textAlign: "left" }
-      },
-        settingsIcon(iconPath, danger ? COLORS.red : "var(--text)"),
-        React.createElement("div", { style: { flex: 1 } },
-          React.createElement("div", { style: { fontSize: 16, fontWeight: 700 } }, label),
-          React.createElement("div", { style: { fontSize: 13, color: "var(--muted)", marginTop: 3 } }, sub)
-        ),
-        settingsIcon("M9 18l6-6-6-6", danger ? COLORS.red : "var(--muted)")
-      );
       const _acctCat = settingsCategories.find(c => c.key === "account");
       categoryContent = React.createElement(React.Fragment, null,
         React.createElement("p", { style: { fontSize: 14, color: "var(--muted)", marginBottom: 20, lineHeight: 1.6 } }, _acctCat ? _acctCat.description : ""),
@@ -16192,9 +16282,30 @@ function AccountRecoveryScreen({
         }, "Logout")
       );
     } else if (settingsCategory === "security") {
+      const _secToggleRow = (iconPath, label, sub, on, onChange, hasBorderTop) => React.createElement("div", {
+        style: { display: "flex", alignItems: "center", gap: 16, padding: "16px 0", borderTop: hasBorderTop ? "1px solid var(--border)" : "none" }
+      },
+        settingsIcon(iconPath, "var(--text)"),
+        React.createElement("div", { style: { flex: 1 } },
+          React.createElement("div", { style: { fontSize: 16, fontWeight: 700 } }, label),
+          React.createElement("div", { style: { fontSize: 13, color: "var(--muted)", marginTop: 3 } }, sub)
+        ),
+        React.createElement(Toggle, { on, onChange })
+      );
       categoryContent = React.createElement(React.Fragment, null,
-        _flatItem("Change Password", "Update your account password", "M3 11h18v10H3V11Zm3 0V7a6 6 0 0 1 12 0v4", () => { setSubScreen("password"); setCurPass(""); setNewPass(""); setConfirmPass(""); }),
-        _flatItem("Account Recovery", "Reset password via email or phone", "M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10h16V10a2 2 0 0 0-2-2Z", () => onGoRecovery && onGoRecovery())
+        settingsCard(React.createElement(React.Fragment, null,
+          _flatItem("Change password", "Update your password anytime to keep your account secure", "M3 11h18v10H3V11Zm3 0V7a6 6 0 0 1 12 0v4", () => { setSubScreen("password"); setCurPass(""); setNewPass(""); setConfirmPass(""); }),
+          _secToggleRow("M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3ZM12 8v4M12 14h.01", "Two-factor authentication", "Extra layer of security using SMS or an authenticator app", secTwoFaOn, toggleTwoFa, true)
+        )),
+        settingsCard(React.createElement(React.Fragment, null,
+          _flatItem("Where you're logged in", "See your active sessions and log out from devices you don't recognize", "M10 2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6M14 2h6v6M11 13l9-9", () => { setSubScreen("security-sessions"); loadSecSessions(); }),
+          _secToggleRow("M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0", "Login alerts", "Get notified when someone logs in from a new device", secLoginAlertsOn, toggleLoginAlerts, true)
+        )),
+        settingsCard(React.createElement(React.Fragment, null,
+          _flatItem("Apps and sessions", "Manage third-party apps connected to your account", "M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.2-1.2", () => setSubScreen("security-apps")),
+          _flatItem("Account recovery", "Set a backup email or phone number to recover your account", "M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10h16V10a2 2 0 0 0-2-2Z", () => onGoRecovery && onGoRecovery()),
+          _flatItem("Download your data", "Get a copy of what you’ve shared on POST", "M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1M16 12l-4 4-4-4M12 16V4", () => requestDataDownload())
+        ))
       );
     } else if (settingsCategory === "privacy") {
       categoryContent = settingsOption("Blocked Users", "Manage users you've blocked", "M12 2a10 10 0 0 0 0 20 10 10 0 0 0 0-20ZM4.9 4.9l14.2 14.2", () => { setSubScreen("blocked-users"); loadBlockedUsers(); });
