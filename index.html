@@ -15973,6 +15973,11 @@ function AccountRecoveryScreen({
    };
   const subPageStyle = {position:"fixed",inset:0,zIndex:200,background:"var(--bg)",overflowY:"auto",padding:"20px 16px 40px",boxSizing:"border-box"};
   const subHeader = (title) => /*#__PURE__*/React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:28}},/*#__PURE__*/React.createElement("button",{onClick:goBack,style:{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center"}},/*#__PURE__*/React.createElement("svg",{width:"22",height:"22",viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2.2",strokeLinecap:"round"},/*#__PURE__*/React.createElement("polyline",{points:"15 18 9 12 15 6"}))),/*#__PURE__*/React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"var(--text)"}},title));
+  const settingsIcon = (path, color) => /*#__PURE__*/React.createElement("svg", {
+    width: 24, height: 24, viewBox: "0 0 24 24", fill: "none",
+    stroke: color || "var(--muted)", strokeWidth: 1.8,
+    strokeLinecap: "round", strokeLinejoin: "round", style: { flexShrink: 0 }
+  }, React.createElement("path", { d: path }));
   const settingsHeader = (title, forceHandle) => /*#__PURE__*/React.createElement("div", {
     style: { display: "flex", alignItems: "center", gap: 12, padding: "0 4px 16px", borderBottom: "1px solid var(--border)", marginBottom: 10 }
   },
@@ -16032,11 +16037,6 @@ function AccountRecoveryScreen({
     { key: "display", title: "Accessibility, display and languages", description: "Manage how Post content is displayed to you.", icon: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM8 12h8M12 8v8" },
     { key: "resources", title: "Additional resources", description: "Check out helpful places to learn more about Post and get support.", icon: "M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.2-1.2" }
   ];
-  const settingsIcon = (path, color) => /*#__PURE__*/React.createElement("svg", {
-    width: 24, height: 24, viewBox: "0 0 24 24", fill: "none",
-    stroke: color || "var(--muted)", strokeWidth: 1.8,
-    strokeLinecap: "round", strokeLinejoin: "round", style: { flexShrink: 0 }
-  }, React.createElement("path", { d: path }));
   const settingsCard = children => /*#__PURE__*/React.createElement("div", {
     style: { background: "var(--card-bg)", borderRadius: 16, border: "1px solid var(--border)", padding: "0 16px", marginBottom: 12 }
   }, children);
