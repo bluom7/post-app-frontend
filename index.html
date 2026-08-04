@@ -15973,6 +15973,18 @@ function AccountRecoveryScreen({
    };
   const subPageStyle = {position:"fixed",inset:0,zIndex:200,background:"var(--bg)",overflowY:"auto",padding:"20px 16px 40px",boxSizing:"border-box"};
   const subHeader = (title) => /*#__PURE__*/React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:28}},/*#__PURE__*/React.createElement("button",{onClick:goBack,style:{background:"none",border:"none",cursor:"pointer",display:"flex",alignItems:"center"}},/*#__PURE__*/React.createElement("svg",{width:"22",height:"22",viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2.2",strokeLinecap:"round"},/*#__PURE__*/React.createElement("polyline",{points:"15 18 9 12 15 6"}))),/*#__PURE__*/React.createElement("div",{style:{fontSize:18,fontWeight:900,color:"var(--text)"}},title));
+  const settingsHeader = (title, forceHandle) => /*#__PURE__*/React.createElement("div", {
+    style: { display: "flex", alignItems: "center", gap: 12, padding: "0 4px 16px", borderBottom: "1px solid var(--border)", marginBottom: 10 }
+  },
+    /*#__PURE__*/React.createElement("button", {
+      onClick: goBack, "aria-label": "Back from Settings",
+      style: { background: "none", border: 0, cursor: "pointer", display: "flex", alignItems: "center", padding: 4, color: "var(--text)" }
+    }, settingsIcon("M15 18 9 12l6-6", "var(--text)")),
+    /*#__PURE__*/React.createElement("div", { style: { lineHeight: 1.2 } },
+      /*#__PURE__*/React.createElement("div", { style: { fontSize: 22, fontWeight: 900 } }, title),
+      (forceHandle || settingsCategory === "account") && /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, color: "var(--muted)", marginTop: 2 } }, "@" + (user.handle || user.username || "").replace(/^@/, ""))
+    )
+  );
   if (subScreen === 'helpcenter') return React.createElement(HelpCenterScreen, {onBack: function(){ setSubScreen(null); }});
   if (subScreen === 'account-info') {
     const _userHandle = (user.handle || user.username || "").replace(/^@/, "");
@@ -16037,18 +16049,6 @@ function AccountRecoveryScreen({
     !settingsSearchQuery ||
     item.title.toLowerCase().includes(settingsSearchQuery) ||
     item.description.toLowerCase().includes(settingsSearchQuery)
-  );
-  const settingsHeader = (title, forceHandle) => /*#__PURE__*/React.createElement("div", {
-    style: { display: "flex", alignItems: "center", gap: 12, padding: "0 4px 16px", borderBottom: "1px solid var(--border)", marginBottom: 10 }
-  },
-    /*#__PURE__*/React.createElement("button", {
-      onClick: goBack, "aria-label": "Back from Settings",
-      style: { background: "none", border: 0, cursor: "pointer", display: "flex", alignItems: "center", padding: 4, color: "var(--text)" }
-    }, settingsIcon("M15 18 9 12l6-6", "var(--text)")),
-    /*#__PURE__*/React.createElement("div", { style: { lineHeight: 1.2 } },
-      /*#__PURE__*/React.createElement("div", { style: { fontSize: 22, fontWeight: 900 } }, title),
-      (forceHandle || settingsCategory === "account") && /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, color: "var(--muted)", marginTop: 2 } }, "@" + (user.handle || user.username || "").replace(/^@/, ""))
-    )
   );
   if (!settingsCategory) {
     return /*#__PURE__*/React.createElement("div", {
