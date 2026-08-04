@@ -16150,8 +16150,8 @@ function AccountRecoveryScreen({
       );
     } else if (settingsCategory === "security") {
       categoryContent = React.createElement(React.Fragment, null,
-        settingsOption("Change Password", "Update your account password", "M3 11h18v10H3V11Zm3 0V7a6 6 0 0 1 12 0v4", () => { setSubScreen("password"); setCurPass(""); setNewPass(""); setConfirmPass(""); }),
-        settingsOption("Account Recovery", "Reset password via email or phone", "M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10h16V10a2 2 0 0 0-2-2Z", () => onGoRecovery && onGoRecovery())
+        _flatItem("Change Password", "Update your account password", "M3 11h18v10H3V11Zm3 0V7a6 6 0 0 1 12 0v4", () => { setSubScreen("password"); setCurPass(""); setNewPass(""); setConfirmPass(""); }),
+        _flatItem("Account Recovery", "Reset password via email or phone", "M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10h16V10a2 2 0 0 0-2-2Z", () => onGoRecovery && onGoRecovery())
       );
     } else if (settingsCategory === "privacy") {
       categoryContent = settingsOption("Blocked Users", "Manage users you've blocked", "M12 2a10 10 0 0 0 0 20 10 10 0 0 0 0-20ZM4.9 4.9l14.2 14.2", () => { setSubScreen("blocked-users"); loadBlockedUsers(); });
@@ -16217,136 +16217,38 @@ function AccountRecoveryScreen({
       color: "var(--text)"
     }
   }, "Your account"), /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, color: "var(--muted)", marginTop: 2 } }, "@" + (user.handle || user.username || "").replace(/^@/, "")))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "var(--card-bg)",
-      borderRadius: 16,
-      border: "1px solid var(--border)",
-      padding: "0 16px",
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement(MenuItem, {
-    icon: /*#__PURE__*/React.createElement("svg", {
-      width: "20",
-      height: "20",
-      viewBox: "0 0 24 24",
-      fill: "none",
-      stroke: "var(--text)",
-      strokeWidth: "2",
-      strokeLinecap: "round",
-      strokeLinejoin: "round"
-    }, /*#__PURE__*/React.createElement("rect", {
-      x: "3",
-      y: "11",
-      width: "18",
-      height: "11",
-      rx: "2",
-      ry: "2"
-    }), /*#__PURE__*/React.createElement("path", {
-      d: "M7 11V7a5 5 0 0 1 10 0v4"
-    })),
-    label: "Change Password",
-    sub: "Update your account password",
-    onClick: () => { setSubScreen('password'); setCurPass(""); setNewPass(""); setConfirmPass(""); }
-  })), /*#__PURE__*/React.createElement("div", {style:{background:"var(--card-bg)",borderRadius:16,border:"1px solid var(--border)",padding:"0 16px",marginBottom:12}}, /*#__PURE__*/React.createElement(MenuItem, {icon:/*#__PURE__*/React.createElement("svg",{width:"20",height:"20",viewBox:"0 0 24 24",fill:"var(--text)",stroke:"none"},/*#__PURE__*/React.createElement("path",{d:"M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"})),label:"Account Recovery",sub:"Reset password via email or phone",onClick:() => onGoRecovery && onGoRecovery()})), /*#__PURE__*/React.createElement("div", {style:{background:"var(--card-bg)",borderRadius:16,border:"1px solid var(--border)",padding:"0 16px",marginBottom:12}}, /*#__PURE__*/React.createElement(MenuItem, {icon:/*#__PURE__*/React.createElement("svg",{width:"20",height:"20",viewBox:"0 0 24 24",fill:"var(--text)",stroke:"none"},/*#__PURE__*/React.createElement("path",{d:"M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"})),label:"Change Email",sub:user.email||"Add your email",onClick:()=>{ setContactMode("email"); setSubScreen('contact'); setContactStep("input"); setContactValue(""); setContactOtp(""); setContactDemoOtp(null); }}), /*#__PURE__*/React.createElement(MenuItem, {
-    icon: /*#__PURE__*/React.createElement("svg", {
-      width: "20",
-      height: "20",
-      viewBox: "0 0 24 24",
-      fill: "var(--text)",
-      stroke: "none"
-    }, /*#__PURE__*/React.createElement("path", {
-      d: "M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02z"
-    })),
-    label: "Change Mobile Number",
-    sub: user.phone ? user.phone : "Add your mobile number",
-    onClick: () => { setContactMode("phone"); setSubScreen('contact'); setContactStep("input"); setContactValue(""); setContactOtp(""); setContactDemoOtp(null); },
-    noChevron: false
-  })), /*#__PURE__*/React.createElement("div",{style:{background:"var(--card-bg)",borderRadius:16,border:"1px solid var(--border)",padding:"0 16px",marginBottom:12}},/*#__PURE__*/React.createElement(MenuItem,{icon:/*#__PURE__*/React.createElement("svg",{width:"20",height:"20",viewBox:"0 0 24 24",fill:"var(--text)",stroke:"none"},/*#__PURE__*/React.createElement("path",{d:"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9A7.902 7.902 0 014 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1A7.902 7.902 0 0120 12c0 4.42-3.58 8-8 8z"})),label:"Blocked Users",sub:"Manage users you've blocked",onClick:()=>{setSubScreen('blocked-users');loadBlockedUsers();}})), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: "var(--card-bg)",
-      borderRadius: 16,
-      border: "1px solid var(--border)",
-      padding: "0 16px",
-      marginBottom: 16
-    }
-  }, deletionStatus?.pending_delete ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "16px 0"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: COLORS.red,
-      fontWeight: 700,
-      marginBottom: 12
-    }
-  }, "⚠️ Account scheduled for deletion. Restore before ", deletionStatus.restore_deadline ? new Date(deletionStatus.restore_deadline).toLocaleDateString() : "deadline", "."), /*#__PURE__*/React.createElement("button", {
-    onClick: restoreAccount,
-    style: {
-      ...btnStyle,
-      background: COLORS.green,
-      color: "#fff"
-    }
-  }, "Restore My Account")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(MenuItem, {
-    icon: /*#__PURE__*/React.createElement("svg", {
-      width: "20",
-      height: "20",
-      viewBox: "0 0 24 24",
-      fill: "none",
-      stroke: "var(--text)",
-      strokeWidth: 2.3,
-      strokeLinecap: "round",
-      strokeLinejoin: "round"
-    }, /*#__PURE__*/React.createElement("line", { x1: 9, y1: 4, x2: 15, y2: 4 }),
-       /*#__PURE__*/React.createElement("line", { x1: 5, y1: 7, x2: 19, y2: 7 }),
-       /*#__PURE__*/React.createElement("path", { d: "M7 7v11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7" })),
-    label: "Delete Account",
-    sub: "30-day grace period, then permanent",
-    onClick: () => setShowDelete(s => !s),
-    danger: true
-  }), showDelete && /*#__PURE__*/React.createElement("div", {
-    style: {
-      paddingBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      color: "var(--muted)",
-      marginBottom: 12,
-      lineHeight: 1.6
-    }
-  }, "Your account will be hidden immediately and permanently deleted after ", /*#__PURE__*/React.createElement("b", null, "30 days"), " unless you restore it."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: requestDelete,
-    style: {
-      ...btnStyle,
-      flex: 2,
-      background: COLORS.red,
-      color: "#fff"
-    }
-  }, "Yes, Delete"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setShowDelete(false),
-    style: {
-      ...btnStyle,
-      flex: 1,
-      background: "var(--input-bg)",
-      color: "var(--muted)",
-      border: "1px solid var(--border)"
-    }
-  }, "Cancel"))))), /*#__PURE__*/React.createElement("button", {
-    onClick: onLoggedOut,
-    style: {
-      ...btnStyle,
-      background: "none",
-      border: "1.5px solid var(--border)",
-      color: COLORS.red,
-      marginTop: 8
-    }
-  }, "Logout"));
+  /*#__PURE__*/React.createElement("div", { style: { maxWidth: 600, margin: "0 auto" } },
+    _flatItem("Account information", "See your account info like username, phone and email", "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8", () => setSubScreen("account-info")),
+    _flatItem("Change Email", user.email || "Add your email", "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", () => { setContactMode("email"); setSubScreen('contact'); setContactStep("input"); setContactValue(""); setContactOtp(""); setContactDemoOtp(null); }),
+    _flatItem("Change Mobile Number", user.phone || "Add your mobile number", "M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.4c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6l-2.2 2.2Z", () => { setContactMode("phone"); setSubScreen('contact'); setContactStep("input"); setContactValue(""); setContactOtp(""); setContactDemoOtp(null); }),
+    _flatItem("Change Password", "Update your account password", "M3 11h18v10H3V11Zm3 0V7a6 6 0 0 1 12 0v4", () => { setSubScreen('password'); setCurPass(""); setNewPass(""); setConfirmPass(""); }),
+    _flatItem("Account Recovery", "Reset password via email or phone", "M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10h16V10a2 2 0 0 0-2-2Z", () => onGoRecovery && onGoRecovery()),
+    _flatItem("Blocked Users", "Manage users you've blocked", "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-7.1 7.1 14.2 14.2", () => { setSubScreen('blocked-users'); loadBlockedUsers(); }),
+    deletionStatus && deletionStatus.pending_delete
+      ? /*#__PURE__*/React.createElement("div", { style: { padding: "14px 0", borderBottom: "1px solid var(--border)" } },
+          /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, color: COLORS.red, fontWeight: 700, marginBottom: 10 } }, "⚠️ Account scheduled for deletion. Restore before ", deletionStatus.restore_deadline ? new Date(deletionStatus.restore_deadline).toLocaleDateString() : "deadline", "."),
+          /*#__PURE__*/React.createElement("button", { onClick: restoreAccount, style: { ...btnStyle, background: COLORS.green, color: "#fff" } }, "Restore My Account")
+        )
+      : /*#__PURE__*/React.createElement(React.Fragment, null,
+          _flatItem("Delete Account", "30-day grace period, then permanent", "M9 4h6M5 7h14M8 7v11a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2V7", () => setShowDelete(s => !s), true),
+          showDelete && /*#__PURE__*/React.createElement("div", { style: { padding: "0 0 14px", borderBottom: "1px solid var(--border)" } },
+            /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, color: "var(--muted)", marginBottom: 12, lineHeight: 1.6 } }, "Your account will be hidden immediately and permanently deleted after ", /*#__PURE__*/React.createElement("b", null, "30 days"), " unless you restore it."),
+            /*#__PURE__*/React.createElement("div", { style: { display: "flex", gap: 8 } },
+              /*#__PURE__*/React.createElement("button", { onClick: requestDelete, style: { ...btnStyle, flex: 2, background: COLORS.red, color: "#fff" } }, "Yes, Delete"),
+              /*#__PURE__*/React.createElement("button", { onClick: () => setShowDelete(false), style: { ...btnStyle, flex: 1, background: "var(--input-bg)", color: "var(--muted)", border: "1px solid var(--border)" } }, "Cancel")
+            )
+          )
+        ),
+    /*#__PURE__*/React.createElement("button", {
+      onClick: onLoggedOut,
+      style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 0", background: "none", border: 0, cursor: "pointer", textAlign: "left" }
+    },
+      settingsIcon("M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9", COLORS.red),
+      /*#__PURE__*/React.createElement("div", { style: { flex: 1 } },
+        /*#__PURE__*/React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: COLORS.red } }, "Log out")
+      )
+    )
+  ));
 }
 function ShareButton({
   label,
