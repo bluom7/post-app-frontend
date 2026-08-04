@@ -14515,7 +14515,7 @@ function QuickMenuDropdown({
     const _qmdHandle = (user.handle || user.username || "").replace(/^@/, "");
     const _qIcon = (path, clr) => React.createElement("svg", { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: clr || "var(--muted)", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", style: { flexShrink: 0 } }, React.createElement("path", { d: path }));
     const _qRow = (icon, label, value) => React.createElement("div", {
-      style: { display: "flex", alignItems: "flex-start", gap: 16, padding: "15px 0", borderBottom: "1px solid var(--border)" }
+      style: { display: "flex", alignItems: "flex-start", gap: 16, padding: "15px 0" }
     },
       _qIcon(icon),
       React.createElement("div", { style: { flex: 1 } },
@@ -15994,7 +15994,7 @@ function AccountRecoveryScreen({
   if (subScreen === 'account-info') {
     const _userHandle = (user.handle || user.username || "").replace(/^@/, "");
     const _aiRow = (icon, label, value) => /*#__PURE__*/React.createElement("div", {
-      style: { display: "flex", alignItems: "flex-start", gap: 16, padding: "15px 0", borderBottom: "1px solid var(--border)" }
+      style: { display: "flex", alignItems: "flex-start", gap: 16, padding: "15px 0" }
     },
       settingsIcon(icon, "var(--muted)"),
       /*#__PURE__*/React.createElement("div", { style: { flex: 1 } },
