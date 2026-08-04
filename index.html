@@ -14541,12 +14541,10 @@ function QuickMenuDropdown({
     },
       qmdBackHeader,
       React.createElement("div", { style: { maxWidth: 600, margin: "0 auto" } },
-        _qRow("M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8", "Name", user.name || "—"),
-        _qRow("M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z", "Username", "@" + _qmdHandle),
+        _qRow("M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-3.4 7", "Username", "@" + _qmdHandle),
         _qRow("M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02z", "Phone", user.phone || "Add"),
         _qRow("M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", "Email", user.email || "—"),
         _qRow("M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 0v9h9", "Country", user.country || "—"),
-        _qRow("M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", "Bio", user.bio || "—"),
         _qRow("M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z", "Date of birth", user.dob ? new Date(user.dob + (user.dob.includes("T") ? "" : "T00:00:00")).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—")
       )
     );
@@ -16005,12 +16003,10 @@ function AccountRecoveryScreen({
     return /*#__PURE__*/React.createElement("div", { style: { minHeight: "100vh", background: "var(--bg)", color: "var(--text)", padding: "20px 16px 44px", boxSizing: "border-box" } },
       settingsHeader("Account information", true),
       /*#__PURE__*/React.createElement("div", { style: { maxWidth: 600, margin: "0 auto" } },
-        _aiRow("M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8", "Name", user.name || "—"),
-        _aiRow("M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z", "Username", "@" + _userHandle),
+        _aiRow("M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-3.4 7", "Username", "@" + _userHandle),
         _aiRow("M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02z", "Phone", user.phone || "Add"),
         _aiRow("M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", "Email", user.email || "—"),
         _aiRow("M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 0v9h9", "Country", user.country || "—"),
-        _aiRow("M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", "Bio", user.bio || "—"),
         _aiRow("M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z", "Date of birth", user.dob ? new Date(user.dob + (user.dob.includes("T") ? "" : "T00:00:00")).toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" }) : "—"),
         /*#__PURE__*/React.createElement("button", {
           onClick: onLoggedOut,
@@ -16018,8 +16014,7 @@ function AccountRecoveryScreen({
         },
           settingsIcon("M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9", COLORS.red),
           /*#__PURE__*/React.createElement("div", { style: { flex: 1 } },
-            /*#__PURE__*/React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: COLORS.red } }, "Log out"),
-            /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, color: "var(--muted)", marginTop: 2 } }, "@" + _userHandle)
+            /*#__PURE__*/React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: COLORS.red } }, "Log out")
           )
         )
       )
