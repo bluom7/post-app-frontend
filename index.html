@@ -14638,7 +14638,7 @@ function QuickMenuDropdown({
      if (settingsCategory === "account") {
        const _flatItem = (label, sub, iconPath, onClick, danger) => React.createElement("button", {
          onClick,
-         style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 0", background: "none", border: 0, borderBottom: "1px solid var(--border)", color: danger ? COLORS.red : "var(--text)", cursor: "pointer", textAlign: "left" }
+         style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 0", background: "none", border: 0, color: danger ? COLORS.red : "var(--text)", cursor: "pointer", textAlign: "left" }
        },
          settingsIcon(iconPath, danger ? COLORS.red : "var(--text)"),
          React.createElement("div", { style: { flex: 1 } },
@@ -14653,14 +14653,14 @@ function QuickMenuDropdown({
          _flatItem("Change Email", user.email || "Add your email", "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", () => { setContactMode("email"); setSubScreen("contact"); setContactStep("input"); setContactValue(""); setContactOtp(""); setContactDemoOtp(null); }),
          _flatItem("Change Mobile Number", user.phone || "Add your mobile number", "M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.4c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1l-2.2 2.2Z", () => { setContactMode("phone"); setSubScreen("contact"); setContactStep("input"); setContactValue(""); setContactOtp(""); setContactDemoOtp(null); }),
          deletionStatus?.pending_delete ?
-           React.createElement("div", { style: { padding: "16px 0", borderBottom: "1px solid var(--border)" } },
+           React.createElement("div", { style: { padding: "16px 0" } },
              React.createElement("div", { style: { fontSize: 13, color: COLORS.red, fontWeight: 700, marginBottom: 12 } }, "Account scheduled for deletion. Restore before ", deletionStatus.restore_deadline ? new Date(deletionStatus.restore_deadline).toLocaleDateString() : "deadline", "."),
              React.createElement("button", { onClick: restoreAccount, style: { ...btnStyle, background: COLORS.green, color: "#fff" } }, "Restore My Account")
            ) :
            React.createElement(React.Fragment, null,
              React.createElement("button", {
                onClick: () => setShowDelete(s => !s),
-               style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 0", background: "none", border: 0, borderBottom: "1px solid var(--border)", color: COLORS.red, cursor: "pointer", textAlign: "left" }
+               style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 0", background: "none", border: 0, color: COLORS.red, cursor: "pointer", textAlign: "left" }
              },
                settingsIcon("M9 4h6M5 7h14M7 7v11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7", COLORS.red),
                React.createElement("div", { style: { flex: 1 } },
@@ -16090,7 +16090,7 @@ function AccountRecoveryScreen({
     if (settingsCategory === "account") {
       const _flatItem = (label, sub, iconPath, onClick, danger) => React.createElement("button", {
         onClick,
-        style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 0", background: "none", border: 0, borderBottom: "1px solid var(--border)", color: danger ? COLORS.red : "var(--text)", cursor: "pointer", textAlign: "left" }
+        style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 0", background: "none", border: 0, color: danger ? COLORS.red : "var(--text)", cursor: "pointer", textAlign: "left" }
       },
         settingsIcon(iconPath, danger ? COLORS.red : "var(--text)"),
         React.createElement("div", { style: { flex: 1 } },
@@ -16106,7 +16106,7 @@ function AccountRecoveryScreen({
         _flatItem("Change Email", user.email || "Add your email", "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", () => { setContactMode("email"); setSubScreen("contact"); setContactStep("input"); setContactValue(""); setContactOtp(""); setContactDemoOtp(null); }),
         _flatItem("Change Mobile Number", user.phone || "Add your mobile number", "M6.6 10.8a15.5 15.5 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.4c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6l-2.2 2.2Z", () => { setContactMode("phone"); setSubScreen("contact"); setContactStep("input"); setContactValue(""); setContactOtp(""); setContactDemoOtp(null); }),
         deletionStatus?.pending_delete ?
-          React.createElement("div", { style: { padding: "16px 0", borderBottom: "1px solid var(--border)" } },
+          React.createElement("div", { style: { padding: "16px 0" } },
             React.createElement("div", { style: { fontSize: 13, color: COLORS.red, fontWeight: 700, marginBottom: 12 } },
               "Account scheduled for deletion. Restore before ",
               deletionStatus.restore_deadline ? new Date(deletionStatus.restore_deadline).toLocaleDateString() : "deadline",
@@ -16117,7 +16117,7 @@ function AccountRecoveryScreen({
           React.createElement(React.Fragment, null,
             React.createElement("button", {
               onClick: () => setShowDelete(s => !s),
-              style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 0", background: "none", border: 0, borderBottom: "1px solid var(--border)", color: COLORS.red, cursor: "pointer", textAlign: "left" }
+              style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 0", background: "none", border: 0, color: COLORS.red, cursor: "pointer", textAlign: "left" }
             },
               settingsIcon("M9 4h6M5 7h14M7 7v11a2 2 0 0 0 2 2H15a2 2 0 0 0 2-2V7", COLORS.red),
               React.createElement("div", { style: { flex: 1 } },
