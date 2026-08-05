@@ -16205,39 +16205,87 @@ function AccountRecoveryScreen({
     )
   );
 
-  if (subScreen === 'privacy-visibility') return React.createElement("div", {style: subPageStyle},
-    subHeader("Post visibility"),
-    React.createElement("div", {style:{padding:"8px 0"}},
-      React.createElement("div", {style:{fontSize:14,color:"var(--muted)",padding:"0 4px 16px"}}, "Choose who can see your posts and stories"),
-      ["everyone","followers","custom"].map(opt => React.createElement("button", {
-        key:opt, onClick: async () => { setPrivPostVisibility(opt); try { await updateSettingsProfile({post_visibility:opt}); showToast("Saved ✓", COLORS.green); } catch(e){ showToast(e.message,COLORS.red); } },
-        style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"14px 4px",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)"}
-      },
-        React.createElement("div",{style:{width:22,height:22,borderRadius:11,border:`2.5px solid ${privPostVisibility===opt?"var(--primary)":"var(--border)"}`,background:privPostVisibility===opt?"var(--primary)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}, privPostVisibility===opt&&React.createElement("div",{style:{width:8,height:8,borderRadius:4,background:"#fff"}})),
-        React.createElement("div",{style:{flex:1}},
-          React.createElement("span",{style:{display:"block",fontSize:16,fontWeight:700}}, opt==="everyone"?"Everyone":opt==="followers"?"Followers only":"Custom"),
-          React.createElement("span",{style:{display:"block",fontSize:13,color:"var(--muted)",marginTop:2}}, opt==="everyone"?"Anyone on Post can see your posts":opt==="followers"?"Only your approved followers":"Select specific people who can see your posts")
-        )
-      ))
-    )
-  );
+  if (subScreen === 'privacy-visibility') {
+    const [_tmpVis, _setTmpVis] = React.useState(privPostVisibility);
+    const visOpts = [
+      { key:"everyone", label:"Everyone", sub:"Anyone on Post can see your posts", icon:"M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM2 12h20M12 2c-2.5 3.8-4 7.8-4 10s1.5 6.2 4 10M12 2c2.5 3.8 4 7.8 4 10s-1.5 6.2-4 10" },
+      { key:"followers", label:"Followers only", sub:"Only your approved followers can see your posts", icon:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" },
+      { key:"custom", label:"Custom", sub:"Select specific people who can see your posts", icon:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8l2 2 4-4" }
+    ];
+    return React.createElement("div", {style:{...subPageStyle, display:"flex", flexDirection:"column"}},
+      subHeader("Post visibility"),
+      React.createElement("div", {style:{padding:"8px 0", flex:1}},
+        React.createElement("div", {style:{fontSize:14,color:"var(--muted)",padding:"0 4px 16px",lineHeight:1.5}}, "Choose who can see your posts and stories"),
+        visOpts.map(({key:opt, label, sub, icon}) => React.createElement("button", {
+          key:opt,
+          onClick: () => _setTmpVis(opt),
+          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:_tmpVis===opt?"var(--input-bg, rgba(0,0,0,0.04))":"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",borderRadius:8,marginBottom:2,transition:"background 0.15s"}
+        },
+          React.createElement("div",{style:{width:40,height:40,borderRadius:20,background:"var(--input-bg, rgba(0,0,0,0.06))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
+            React.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"var(--text)",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:icon}))
+          ),
+          React.createElement("div",{style:{flex:1}},
+            React.createElement("span",{style:{display:"block",fontSize:16,fontWeight:700}}, label),
+            React.createElement("span",{style:{display:"block",fontSize:13,color:"var(--muted)",marginTop:2,lineHeight:1.4}}, sub)
+          ),
+          React.createElement("div",{style:{width:24,height:24,borderRadius:12,border:`2.5px solid ${_tmpVis===opt?"#1877F2":"var(--border)"}`,background:_tmpVis===opt?"#1877F2":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s"}},
+            _tmpVis===opt&&React.createElement("div",{style:{width:9,height:9,borderRadius:5,background:"#fff"}})
+          )
+        ))
+      ),
+      React.createElement("div",{style:{padding:"12px 0 8px"}},
+        React.createElement("button",{
+          onClick: async () => {
+            setPrivPostVisibility(_tmpVis);
+            try { await updateSettingsProfile({post_visibility:_tmpVis}); showToast("Saved ✓", COLORS.green); } catch(e){ showToast(e.message,COLORS.red); }
+            setSubScreen("privacy");
+          },
+          style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:"pointer",background:"#1877F2",color:"#fff",letterSpacing:0.2}
+        }, "Done")
+      )
+    );
+  }
 
-  if (subScreen === 'privacy-comments') return React.createElement("div", {style: subPageStyle},
-    subHeader("Comment controls"),
-    React.createElement("div", {style:{padding:"8px 0"}},
-      React.createElement("div", {style:{fontSize:14,color:"var(--muted)",padding:"0 4px 16px"}}, "Choose who can comment on your posts"),
-      ["everyone","followers","none"].map(opt => React.createElement("button", {
-        key:opt, onClick: async () => { setPrivCommentControl(opt); try { await updateSettingsProfile({comment_control:opt}); showToast("Saved ✓", COLORS.green); } catch(e){ showToast(e.message,COLORS.red); } },
-        style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"14px 4px",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)"}
-      },
-        React.createElement("div",{style:{width:22,height:22,borderRadius:11,border:`2.5px solid ${privCommentControl===opt?"var(--primary)":"var(--border)"}`,background:privCommentControl===opt?"var(--primary)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}, privCommentControl===opt&&React.createElement("div",{style:{width:8,height:8,borderRadius:4,background:"#fff"}})),
-        React.createElement("div",{style:{flex:1}},
-          React.createElement("span",{style:{display:"block",fontSize:16,fontWeight:700}}, opt==="everyone"?"Everyone":opt==="followers"?"Followers only":"No one"),
-          React.createElement("span",{style:{display:"block",fontSize:13,color:"var(--muted)",marginTop:2}}, opt==="everyone"?"Anyone can comment on your posts":opt==="followers"?"Only followers can comment":"Disable all comments on your posts")
-        )
-      ))
-    )
-  );
+  if (subScreen === 'privacy-comments') {
+    const [_tmpCmt, _setTmpCmt] = React.useState(privCommentControl);
+    const cmtOpts = [
+      { key:"everyone", label:"Everyone", sub:"Anyone can comment on your posts", icon:"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" },
+      { key:"followers", label:"Followers only", sub:"Only your followers can comment", icon:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" },
+      { key:"none", label:"No one", sub:"Disable all comments on your posts", icon:"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM5 5l14 14" }
+    ];
+    return React.createElement("div", {style:{...subPageStyle, display:"flex", flexDirection:"column"}},
+      subHeader("Comment controls"),
+      React.createElement("div", {style:{padding:"8px 0", flex:1}},
+        React.createElement("div", {style:{fontSize:14,color:"var(--muted)",padding:"0 4px 16px",lineHeight:1.5}}, "Choose who can comment on your posts"),
+        cmtOpts.map(({key:opt, label, sub, icon}) => React.createElement("button", {
+          key:opt,
+          onClick: () => _setTmpCmt(opt),
+          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:_tmpCmt===opt?"var(--input-bg, rgba(0,0,0,0.04))":"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",borderRadius:8,marginBottom:2,transition:"background 0.15s"}
+        },
+          React.createElement("div",{style:{width:40,height:40,borderRadius:20,background:"var(--input-bg, rgba(0,0,0,0.06))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
+            React.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"var(--text)",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:icon}))
+          ),
+          React.createElement("div",{style:{flex:1}},
+            React.createElement("span",{style:{display:"block",fontSize:16,fontWeight:700}}, label),
+            React.createElement("span",{style:{display:"block",fontSize:13,color:"var(--muted)",marginTop:2,lineHeight:1.4}}, sub)
+          ),
+          React.createElement("div",{style:{width:24,height:24,borderRadius:12,border:`2.5px solid ${_tmpCmt===opt?"#1877F2":"var(--border)"}`,background:_tmpCmt===opt?"#1877F2":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s"}},
+            _tmpCmt===opt&&React.createElement("div",{style:{width:9,height:9,borderRadius:5,background:"#fff"}})
+          )
+        ))
+      ),
+      React.createElement("div",{style:{padding:"12px 0 8px"}},
+        React.createElement("button",{
+          onClick: async () => {
+            setPrivCommentControl(_tmpCmt);
+            try { await updateSettingsProfile({comment_control:_tmpCmt}); showToast("Saved ✓", COLORS.green); } catch(e){ showToast(e.message,COLORS.red); }
+            setSubScreen("privacy");
+          },
+          style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:"pointer",background:"#1877F2",color:"#fff",letterSpacing:0.2}
+        }, "Done")
+      )
+    );
+  }
 
   if (subScreen === 'privacy-data') return React.createElement("div", {style: subPageStyle},
     subHeader("Data and activity"),
