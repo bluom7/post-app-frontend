@@ -14719,7 +14719,7 @@ function QuickMenuDropdown({
          settingsOption("Account Recovery", "Reset password via email or phone", "M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10h16V10a2 2 0 0 0-2-2Z", () => onGoRecovery && onGoRecovery())
        );
      } else if (settingsCategory === "privacy") {
-       const privFlatItem = (title, desc, iconPath, onClick, rightEl) => React.createElement(onClick ? "button" : "div", { onClick: onClick||undefined, style: { width:"100%", display:"flex", alignItems:"center", gap:18, padding:"0 4px 28px", marginBottom:2, border:0, background:"transparent", color:"var(--text)", textAlign:"left", cursor:onClick?"pointer":"default" } }, settingsRowIcon(iconPath), React.createElement("span", {style:{flex:1}}, React.createElement("span",{style:{display:"block",fontSize:18,fontWeight:800,lineHeight:1.25}},title), React.createElement("span",{style:{display:"block",fontSize:15,lineHeight:1.35,color:"var(--muted)",marginTop:3}},desc)), rightEl||null);
+       const privFlatItem = (title, desc, iconPath, onClick, rightEl) => React.createElement(onClick ? "button" : "div", { onClick: onClick||undefined, style: { width:"100%", display:"flex", alignItems:"center", gap:18, padding:"0 4px 28px", marginBottom:2, border:0, outline:"none", boxShadow:"none", WebkitTapHighlightColor:"transparent", background:"transparent", color:"var(--text)", textAlign:"left", cursor:onClick?"pointer":"default" } }, settingsRowIcon(iconPath), React.createElement("span", {style:{flex:1}}, React.createElement("span",{style:{display:"block",fontSize:18,fontWeight:800,lineHeight:1.25}},title), React.createElement("span",{style:{display:"block",fontSize:15,lineHeight:1.35,color:"var(--muted)",marginTop:3}},desc)), rightEl||null);
        detailContent = React.createElement(React.Fragment, null,
          privFlatItem("Account privacy", privIsPrivate ? "Private — only approved followers see your posts" : "Public — anyone can see your posts", "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10ZM9 12l2 2 4-4", null, React.createElement(Toggle, { on: privIsPrivate, onChange: async v => { setPrivIsPrivate(v); try { await patchProfile({ is_private: v }); showToast(v ? "Account set to private ✓" : "Account set to public ✓", COLORS.green); } catch(e) { setPrivIsPrivate(!v); showToast(e.message, COLORS.red); } } })),
          privFlatItem("Blocked accounts", "Manage users you've blocked", "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM4.9 4.9l14.2 14.2", () => { setSubScreen("blocked-users"); loadBlockedUsers(); }),
@@ -16117,6 +16117,7 @@ function AccountRecoveryScreen({
   
    const goBack = () => {
      if (subScreen) {
+       if (document.activeElement && typeof document.activeElement.blur === "function") document.activeElement.blur();
        setSubScreen(null);
      } else if (settingsCategory) {
        setSettingsCategory(null);
@@ -16416,7 +16417,7 @@ function AccountRecoveryScreen({
       React.createElement("div", {style:{padding:"8px 0"}},
         React.createElement("button", {
           onClick: () => { setReportSubmitted(false); setReportType(''); setReportText(''); setReportUsername(''); setReportStep('reasons'); setSubScreen("report-content"); },
-          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",marginBottom:4}
+          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,outline:"none",boxShadow:"none",WebkitTapHighlightColor:"transparent",background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",marginBottom:4}
         },
           settingsIcon("M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01","var(--text)"),
           React.createElement("span",{style:{flex:1}},
@@ -16427,7 +16428,7 @@ function AccountRecoveryScreen({
         ),
         React.createElement("button", {
           onClick: () => { window.location.href = "mailto:postbluom@gmail.com?subject=Safety+Report"; },
-          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",marginBottom:4}
+          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,outline:"none",boxShadow:"none",WebkitTapHighlightColor:"transparent",background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",marginBottom:4}
         },
           settingsIcon("M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10ZM9 12l2 2 4-4","var(--text)"),
           React.createElement("span",{style:{flex:1}},
@@ -16724,7 +16725,7 @@ function AccountRecoveryScreen({
         _flatItem("Download your data", "Get a copy of what you've shared on POST", "M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1M16 12l-4 4-4-4M12 16V4", () => requestDataDownload())
       );
     } else if (settingsCategory === "privacy") {
-      const privFlatItem2 = (title, desc, iconPath, onClick, rightEl) => React.createElement(onClick ? "button" : "div", { onClick: onClick||undefined, style: { width:"100%", display:"flex", alignItems:"center", gap:18, padding:"0 4px 28px", marginBottom:2, border:0, background:"transparent", color:"var(--text)", textAlign:"left", cursor:onClick?"pointer":"default" } }, settingsIcon(iconPath, "var(--text)"), React.createElement("span", {style:{flex:1}}, React.createElement("span",{style:{display:"block",fontSize:18,fontWeight:800,lineHeight:1.25}},title), React.createElement("span",{style:{display:"block",fontSize:15,lineHeight:1.35,color:"var(--muted)",marginTop:3}},desc)), rightEl||null);
+      const privFlatItem2 = (title, desc, iconPath, onClick, rightEl) => React.createElement(onClick ? "button" : "div", { onClick: onClick||undefined, style: { width:"100%", display:"flex", alignItems:"center", gap:18, padding:"0 4px 28px", marginBottom:2, border:0, outline:"none", boxShadow:"none", WebkitTapHighlightColor:"transparent", background:"transparent", color:"var(--text)", textAlign:"left", cursor:onClick?"pointer":"default" } }, settingsIcon(iconPath, "var(--text)"), React.createElement("span", {style:{flex:1}}, React.createElement("span",{style:{display:"block",fontSize:18,fontWeight:800,lineHeight:1.25}},title), React.createElement("span",{style:{display:"block",fontSize:15,lineHeight:1.35,color:"var(--muted)",marginTop:3}},desc)), rightEl||null);
       categoryContent = React.createElement(React.Fragment, null,
         privFlatItem2("Account privacy", privIsPrivate ? "Private — only approved followers see your posts" : "Public — anyone can see your posts", "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10ZM9 12l2 2 4-4", null, React.createElement(Toggle, { on: privIsPrivate, onChange: async v => { setPrivIsPrivate(v); try { await updateSettingsProfile({ is_private: v }); showToast(v ? "Account set to private ✓" : "Account set to public ✓", COLORS.green); } catch(e) { setPrivIsPrivate(!v); showToast(e.message, COLORS.red); } } })),
         privFlatItem2("Blocked accounts", "Manage users you've blocked", "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM4.9 4.9l14.2 14.2", () => { setSubScreen("blocked-users"); loadBlockedUsers(); }),
