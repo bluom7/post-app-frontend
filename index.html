@@ -15789,6 +15789,13 @@ function AccountRecoveryScreen({
   const [contactLoading, setContactLoading] = useState(false);
   const [contactDemoOtp, setContactDemoOtp] = useState(null);
   const [contactMode, setContactMode] = useState("email"); // "email" | "phone"
+  const [reportType, setReportType] = React.useState('');
+  const [reportText, setReportText] = React.useState('');
+  const [reportUsername, setReportUsername] = React.useState('');
+  const [reportSubmitting, setReportSubmitting] = React.useState(false);
+  const [reportSubmitted, setReportSubmitted] = React.useState(false);
+  const [myReports, setMyReports] = React.useState([]);
+  const [myReportsLoading, setMyReportsLoading] = React.useState(false);
   useEffect(() => {
     api("/account/deletion-status", "GET", null, token).then(setDeletionStatus).catch(() => {});
   }, []);
@@ -16290,60 +16297,93 @@ function AccountRecoveryScreen({
     )
   );
 
-  if (subScreen === 'privacy-report') return React.createElement("div", {style: subPageStyle},
-    subHeader("Report and safety"),
-    React.createElement("div", {style:{padding:"8px 0"}},
-      React.createElement("button", {
-        onClick: () => setSubScreen("report-content"),
-        style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",marginBottom:4}
-      },
-        settingsIcon("M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01","var(--text)"),
-        React.createElement("span",{style:{flex:1}},
-          React.createElement("span",{style:{display:"block",fontSize:16,fontWeight:700}}, "Submit a report"),
-          React.createElement("span",{style:{display:"block",fontSize:13,color:"var(--muted)",marginTop:2}}, "Report a user or content that violates our policies")
+  if (subScreen === 'privacy-report') {
+    if (myReports.length === 0 && !myReportsLoading) {
+      api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false));
+      setMyReportsLoading(true);
+    }
+    const rptStatusColor = s => s==="resolved"?COLORS.green:s==="rejected"?"#e53935":"var(--muted)";
+    const rptStatusLabel = s => s==="pending"?"Under review":s==="resolved"?"Resolved":s==="rejected"?"Rejected":"Under review";
+    const refreshMyReports = () => {
+      setMyReportsLoading(true);
+      api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false));
+    };
+    return React.createElement("div", {style: subPageStyle},
+      subHeader("Report and safety"),
+      React.createElement("div", {style:{padding:"8px 0"}},
+        React.createElement("button", {
+          onClick: () => { setReportSubmitted(false); setReportType(''); setReportText(''); setReportUsername(''); setSubScreen("report-content"); },
+          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",marginBottom:4}
+        },
+          settingsIcon("M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01","var(--text)"),
+          React.createElement("span",{style:{flex:1}},
+            React.createElement("span",{style:{display:"block",fontSize:16,fontWeight:700}}, "Submit a report"),
+            React.createElement("span",{style:{display:"block",fontSize:13,color:"var(--muted)",marginTop:2}}, "Report a user or content that violates our policies")
+          ),
+          settingsIcon("M9 18l6-6-6-6","var(--muted)")
         ),
-        settingsIcon("M9 18l6-6-6-6","var(--muted)")
-      ),
-      React.createElement("button", {
-        onClick: () => window.open("mailto:postbluom@gmail.com?subject=Safety+Report","_blank"),
-        style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",marginBottom:4}
-      },
-        settingsIcon("M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10ZM9 12l2 2 4-4","var(--text)"),
-        React.createElement("span",{style:{flex:1}},
-          React.createElement("span",{style:{display:"block",fontSize:16,fontWeight:700}}, "Safety Center"),
-          React.createElement("span",{style:{display:"block",fontSize:13,color:"var(--muted)",marginTop:2}}, "Contact our team for urgent safety concerns")
+        React.createElement("button", {
+          onClick: () => window.open("mailto:postbluom@gmail.com?subject=Safety+Report","_blank"),
+          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",marginBottom:4}
+        },
+          settingsIcon("M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10ZM9 12l2 2 4-4","var(--text)"),
+          React.createElement("span",{style:{flex:1}},
+            React.createElement("span",{style:{display:"block",fontSize:16,fontWeight:700}}, "Safety Center"),
+            React.createElement("span",{style:{display:"block",fontSize:13,color:"var(--muted)",marginTop:2}}, "Contact our team for urgent safety concerns")
+          ),
+          settingsIcon("M9 18l6-6-6-6","var(--muted)")
         ),
-        settingsIcon("M9 18l6-6-6-6","var(--muted)")
-      ),
-      React.createElement("div",{style:{padding:"16px 4px",fontSize:13,color:"var(--muted)",lineHeight:1.5}}, "Our team reviews all reports within 24 hours. For urgent safety concerns, email postbluom@gmail.com")
-    )
-  );
+        React.createElement("div",{style:{padding:"16px 4px",fontSize:13,color:"var(--muted)",lineHeight:1.5}}, "Our team reviews all reports within 24 hours. For urgent safety concerns, email postbluom@gmail.com"),
+        React.createElement("div",{style:{marginTop:8,paddingTop:8,borderTop:"1px solid var(--border)"}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 4px 8px"}},
+            React.createElement("div",{style:{fontSize:15,fontWeight:800,color:"var(--text)"}}, "My Reports"),
+            React.createElement("button",{onClick:refreshMyReports,style:{background:"none",border:"none",fontSize:12,fontWeight:700,color:"var(--primary,#FFD600)",cursor:"pointer",padding:"4px 8px"}}, myReportsLoading?"...":"Refresh")
+          ),
+          myReportsLoading
+            ? React.createElement("div",{style:{textAlign:"center",padding:"24px 0",color:"var(--muted)",fontSize:14}}, "Loading...")
+            : myReports.length === 0
+              ? React.createElement("div",{style:{textAlign:"center",padding:"24px 16px",color:"var(--muted)"}},
+                  React.createElement("div",{style:{fontSize:15,fontWeight:600,marginBottom:4}}, "No reports yet"),
+                  React.createElement("div",{style:{fontSize:13}}, "Reports you submit will appear here")
+                )
+              : myReports.map((r,i) => React.createElement("div",{key:r.id||i,style:{padding:"14px 4px",borderBottom:i<myReports.length-1?"1px solid var(--border)":"none"}},
+                  React.createElement("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:4}},
+                    React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",flex:1,marginRight:8}},
+                      r.type || (r.report_kind==="general"?"General Report":"Content Report")
+                    ),
+                    React.createElement("div",{style:{fontSize:11,fontWeight:700,color:rptStatusColor(r.status),background:"var(--card-bg)",padding:"3px 8px",borderRadius:20,border:"1px solid "+(r.status==="resolved"?COLORS.green:r.status==="rejected"?"#e53935":"var(--border)"),whiteSpace:"nowrap",flexShrink:0}},
+                      rptStatusLabel(r.status)
+                    )
+                  ),
+                  r.description && React.createElement("div",{style:{fontSize:13,color:"var(--muted)",lineHeight:1.4,marginBottom:4}}, r.description.length>120?r.description.substring(0,120)+"...":r.description),
+                  (r.target_username||r.target_user_id) && React.createElement("div",{style:{fontSize:12,color:"var(--muted)",marginBottom:2}}, "Reported: @"+(r.target_username||r.target_user_id)),
+                  React.createElement("div",{style:{fontSize:11,color:"var(--muted)",marginTop:2}}, r.created_at?new Date(r.created_at).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):"")
+                ))
+        )
+      )
+    );
+  }
 
 
   if (subScreen === 'report-content') {
-    const [reportType, setReportType] = React.useState('');
-    const [reportText, setReportText] = React.useState('');
-    const [reportUsername, setReportUsername] = React.useState('');
-    const [submitting, setSubmitting] = React.useState(false);
-    const [submitted, setSubmitted] = React.useState(false);
-    const submitReport = async () => {
+    const doSubmitReport = async () => {
       if (!reportType) { showToast("Please select a reason", COLORS.red); return; }
       if (!reportText.trim()) { showToast("Please describe the issue", COLORS.red); return; }
-      setSubmitting(true);
+      setReportSubmitting(true);
       try {
         await api("/report/general", "POST", { type: reportType, description: reportText, username: reportUsername }, token);
-        setSubmitted(true);
+        setReportSubmitted(true);
+        setReportType(''); setReportText(''); setReportUsername('');
         showToast("Report submitted ✓", COLORS.green);
-      } catch(e) { showToast(e.message || "Report sent", COLORS.green); setSubmitted(true); }
-      setSubmitting(false);
+      } catch(e) { showToast(e.message || "Report sent", COLORS.green); setReportSubmitted(true); }
+      setReportSubmitting(false);
     };
-    if (submitted) return React.createElement("div", {style: subPageStyle},
+    if (reportSubmitted) return React.createElement("div", {style: subPageStyle},
       subHeader("Report submitted"),
       React.createElement("div", {style:{textAlign:"center",padding:"40px 16px"}},
-        React.createElement("div", {style:{fontSize:48,marginBottom:16}}, "✅"),
         React.createElement("div", {style:{fontSize:18,fontWeight:800,color:"var(--text)",marginBottom:8}}, "Thank you for your report"),
         React.createElement("div", {style:{fontSize:14,color:"var(--muted)",lineHeight:1.6,marginBottom:24}}, "Our team will review your report within 24 hours. We take all reports seriously and will take appropriate action."),
-        React.createElement("button", {onClick:()=>{setSubScreen("privacy-report");setSubmitted(false);}, style:{...{width:"100%",padding:"13px",borderRadius:12,border:"none",fontWeight:800,fontSize:15,cursor:"pointer"},background:"var(--input-bg)",color:"var(--text)"}}, "Back to Safety")
+        React.createElement("button", {onClick:()=>{setSubScreen("privacy-report");setReportSubmitted(false);}, style:{width:"100%",padding:"13px",borderRadius:12,border:"none",fontWeight:800,fontSize:15,cursor:"pointer",background:"var(--input-bg)",color:"var(--text)"}}, "Back to Safety")
       )
     );
     return React.createElement("div", {style: subPageStyle},
@@ -16356,7 +16396,7 @@ function AccountRecoveryScreen({
           onClick: () => setReportType(reason),
           style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"14px 4px",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)"}
         },
-          React.createElement("div",{style:{width:22,height:22,borderRadius:11,border:`2.5px solid ${reportType===reason?"var(--primary, #FFD600)":"var(--border)"}`,background:reportType===reason?"var(--primary, #FFD600)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}, reportType===reason&&React.createElement("div",{style:{width:8,height:8,borderRadius:4,background:"#fff"}})),
+          React.createElement("div",{style:{width:22,height:22,borderRadius:11,border:"2.5px solid "+(reportType===reason?"var(--primary, #FFD600)":"var(--border)"),background:reportType===reason?"var(--primary, #FFD600)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}, reportType===reason&&React.createElement("div",{style:{width:8,height:8,borderRadius:4,background:"#fff"}})),
           React.createElement("span",{style:{fontSize:15,fontWeight:600}}, reason)
         )),
         React.createElement("div", {style:{marginTop:20,padding:"0 4px"}},
@@ -16374,16 +16414,15 @@ function AccountRecoveryScreen({
             style:{width:"100%",padding:"12px 14px",borderRadius:12,border:"1.5px solid var(--border)",fontSize:15,outline:"none",background:"var(--input-bg)",color:"var(--text)",boxSizing:"border-box",resize:"none",fontFamily:"inherit",marginBottom:16}
           }),
           React.createElement("button", {
-            onClick: submitReport,
-            disabled: submitting,
-            style:{width:"100%",padding:"13px",borderRadius:12,border:"none",fontWeight:800,fontSize:15,cursor:submitting?"not-allowed":"pointer",background:"var(--primary, #FFD600)",color:"#111",opacity:submitting?0.7:1}
-          }, submitting ? "Submitting..." : "Submit report")
+            onClick: doSubmitReport,
+            disabled: reportSubmitting || !reportType || !reportText.trim(),
+            style:{width:"100%",padding:"13px",borderRadius:12,border:"none",fontWeight:800,fontSize:15,cursor:(reportSubmitting||!reportType||!reportText.trim())?"not-allowed":"pointer",background:(reportType&&reportText.trim())?"var(--primary, #FFD600)":"var(--border)",color:(reportType&&reportText.trim())?"#111":"var(--muted)",opacity:reportSubmitting?0.7:1}
+          }, reportSubmitting ? "Submitting..." : "Submit report")
         )
       )
     );
   }
-
-  if (subScreen === 'security-sessions') return React.createElement("div", {style: subPageStyle},
+    if (subScreen === 'security-sessions') return React.createElement("div", {style: subPageStyle},
     subHeader("Where you're logged in"),
     secSessionsLoading ? React.createElement("div", {style:{textAlign:"center",padding:40,color:"var(--muted)"}}, "Loading sessions...") :
     React.createElement(React.Fragment, null,
