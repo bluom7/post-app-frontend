@@ -15776,6 +15776,9 @@ function AccountRecoveryScreen({
   const [privCommentControl, setPrivCommentControl] = useState(user.comment_control || "everyone");
   const [privTmpVis, setPrivTmpVis] = useState(user.post_visibility || "everyone");
   const [privTmpCmt, setPrivTmpCmt] = useState(user.comment_control || "everyone");
+   const [privSaving, setPrivSaving] = useState(false);
+   const [privSaved, setPrivSaved] = useState(false);
+   const [privSaveError, setPrivSaveError] = useState("");
   const [privSensitiveFilter, setPrivSensitiveFilter] = useState(user.sensitive_content_filter || false);
   const [privActivityLog, setPrivActivityLog] = useState(null);
   const [privActivityLoading, setPrivActivityLoading] = useState(false);
@@ -15974,10 +15977,36 @@ function AccountRecoveryScreen({
      try {
        const updated = await api("/profile", "PATCH", fields, token);
        if (updated) setUser(updated);
+        return updated;
      } catch (e) {
        showToast(e.message, COLORS.red);
+        return null;
      }
    };
+    const savePrivacySetting = async fields => {
+      if (privSaving) return false;
+      setPrivSaving(true);
+      setPrivSaved(false);
+      setPrivSaveError("");
+      try {
+        const updated = await api("/profile", "PATCH", fields, token);
+        if (updated) setUser(updated);
+        setPrivSaved(true);
+        showToast("Saved ✓", COLORS.green);
+        return true;
+      } catch (e) {
+        const message = e && e.message ? e.message : "Could not save this setting";
+        setPrivSaveError(message);
+        showToast(message, COLORS.red);
+        return false;
+      } finally {
+        setPrivSaving(false);
+      }
+    };
+    const resetPrivacyFeedback = () => {
+      setPrivSaved(false);
+      setPrivSaveError("");
+    };
    const toggleSettingsTheme = isDark => {
      const theme = isDark ? "dark" : "light";
      setSettingsTheme(theme);
@@ -16204,23 +16233,22 @@ function AccountRecoveryScreen({
       subHeader("Who can message / follow you"),
       React.createElement("div",{style:{padding:"8px 0",flex:1}},
         React.createElement("div",{style:{fontSize:15,fontWeight:800,color:"var(--text)",marginBottom:4,padding:"8px 4px 12px"}}, "Who can send you messages"),
-        msgOpts.map(({key:opt,label,sub,icon}) => optBtn(opt,label,sub,icon,privTmpMsg===opt,setPrivTmpMsg)),
+        msgOpts.map(({key:opt,label,sub,icon}) => optBtn(opt,label,sub,icon,privTmpMsg===opt,opt => { setPrivTmpMsg(opt); resetPrivacyFeedback(); })),
         React.createElement("div",{style:{fontSize:15,fontWeight:800,color:"var(--text)",padding:"24px 4px 12px"}}, "Who can follow you"),
-        followOpts.map(({key:opt,label,sub,icon}) => optBtn(opt,label,sub,icon,privTmpFollow===opt,setPrivTmpFollow))
+        followOpts.map(({key:opt,label,sub,icon}) => optBtn(opt,label,sub,icon,privTmpFollow===opt,opt => { setPrivTmpFollow(opt); resetPrivacyFeedback(); }))
       ),
       React.createElement("div",{style:{padding:"12px 0 8px"}},
+        privSaved && React.createElement("div",{role:"status",style:{fontSize:13,fontWeight:700,color:COLORS.green,textAlign:"center",padding:"0 0 10px"}},"Saved ✓ — you can change it again anytime"),
+        privSaveError && React.createElement("div",{role:"alert",style:{fontSize:13,fontWeight:700,color:COLORS.red,textAlign:"center",padding:"0 0 10px"}},"Couldn't save. Please try again."),
         React.createElement("button",{
           onClick: async () => {
             setPrivWhoCanMessage(privTmpMsg);
             setPrivWhoCanFollow(privTmpFollow);
-            try {
-              await updateSettingsProfile({who_can_message:privTmpMsg, who_can_follow:privTmpFollow});
-              showToast("Saved ✓", COLORS.green);
-            } catch(e){ showToast(e.message, COLORS.red); }
-            setSubScreen("privacy");
+            await savePrivacySetting({who_can_message:privTmpMsg, who_can_follow:privTmpFollow});
           },
-          style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:"pointer",background:"#1877F2",color:"#fff",letterSpacing:0.2}
-        }, "Done")
+          disabled:privSaving,
+          style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:privSaving?"wait":"pointer",background:"#1877F2",color:"#fff",letterSpacing:0.2,opacity:privSaving?0.7:1}
+        }, privSaving ? "Saving..." : privSaved ? "Saved ✓" : "Done")
       )
     );
   }
@@ -16237,7 +16265,7 @@ function AccountRecoveryScreen({
         React.createElement("div", {style:{fontSize:14,color:"var(--muted)",padding:"0 4px 16px",lineHeight:1.5}}, "Choose who can see your posts and stories"),
         visOpts.map(({key:opt, label, sub, icon}) => React.createElement("button", {
           key:opt,
-          onClick: () => setPrivTmpVis(opt),
+           onClick: () => { setPrivTmpVis(opt); resetPrivacyFeedback(); },
           style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:privTmpVis===opt?"var(--input-bg, rgba(0,0,0,0.04))":"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",borderRadius:8,marginBottom:2,transition:"background 0.15s"}
         },
           React.createElement("div",{style:{width:40,height:40,borderRadius:20,background:"var(--input-bg, rgba(0,0,0,0.06))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
@@ -16253,14 +16281,16 @@ function AccountRecoveryScreen({
         ))
       ),
       React.createElement("div",{style:{padding:"12px 0 8px"}},
+        privSaved && React.createElement("div",{role:"status",style:{fontSize:13,fontWeight:700,color:COLORS.green,textAlign:"center",padding:"0 0 10px"}},"Saved ✓ — you can change it again anytime"),
+        privSaveError && React.createElement("div",{role:"alert",style:{fontSize:13,fontWeight:700,color:COLORS.red,textAlign:"center",padding:"0 0 10px"}},"Couldn't save. Please try again."),
         React.createElement("button",{
           onClick: async () => {
             setPrivPostVisibility(privTmpVis);
-            try { await updateSettingsProfile({post_visibility:privTmpVis}); showToast("Saved ✓", COLORS.green); } catch(e){ showToast(e.message,COLORS.red); }
-            setSubScreen("privacy");
+            await savePrivacySetting({post_visibility:privTmpVis});
           },
-          style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:"pointer",background:"#1877F2",color:"#fff",letterSpacing:0.2}
-        }, "Done")
+          disabled:privSaving,
+          style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:privSaving?"wait":"pointer",background:"#1877F2",color:"#fff",letterSpacing:0.2,opacity:privSaving?0.7:1}
+        }, privSaving ? "Saving..." : privSaved ? "Saved ✓" : "Done")
       )
     );
   }
@@ -16277,7 +16307,7 @@ function AccountRecoveryScreen({
         React.createElement("div", {style:{fontSize:14,color:"var(--muted)",padding:"0 4px 16px",lineHeight:1.5}}, "Choose who can comment on your posts"),
         cmtOpts.map(({key:opt, label, sub, icon}) => React.createElement("button", {
           key:opt,
-          onClick: () => setPrivTmpCmt(opt),
+           onClick: () => { setPrivTmpCmt(opt); resetPrivacyFeedback(); },
           style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:privTmpCmt===opt?"var(--input-bg, rgba(0,0,0,0.04))":"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",borderRadius:8,marginBottom:2,transition:"background 0.15s"}
         },
           React.createElement("div",{style:{width:40,height:40,borderRadius:20,background:"var(--input-bg, rgba(0,0,0,0.06))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
@@ -16293,14 +16323,16 @@ function AccountRecoveryScreen({
         ))
       ),
       React.createElement("div",{style:{padding:"12px 0 8px"}},
+        privSaved && React.createElement("div",{role:"status",style:{fontSize:13,fontWeight:700,color:COLORS.green,textAlign:"center",padding:"0 0 10px"}},"Saved ✓ — you can change it again anytime"),
+        privSaveError && React.createElement("div",{role:"alert",style:{fontSize:13,fontWeight:700,color:COLORS.red,textAlign:"center",padding:"0 0 10px"}},"Couldn't save. Please try again."),
         React.createElement("button",{
           onClick: async () => {
             setPrivCommentControl(privTmpCmt);
-            try { await updateSettingsProfile({comment_control:privTmpCmt}); showToast("Saved ✓", COLORS.green); } catch(e){ showToast(e.message,COLORS.red); }
-            setSubScreen("privacy");
+            await savePrivacySetting({comment_control:privTmpCmt});
           },
-          style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:"pointer",background:"#1877F2",color:"#fff",letterSpacing:0.2}
-        }, "Done")
+          disabled:privSaving,
+          style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:privSaving?"wait":"pointer",background:"#1877F2",color:"#fff",letterSpacing:0.2,opacity:privSaving?0.7:1}
+        }, privSaving ? "Saving..." : privSaved ? "Saved ✓" : "Done")
       )
     );
   }
