@@ -14654,7 +14654,7 @@ function QuickMenuDropdown({
          visibleSettingsCategories.length ? visibleSettingsCategories.map(category =>
            React.createElement("button", {
              key: category.key, onClick: () => { setSettingsCategory(category.key); setSettingsSearch(""); },
-             style: { width: "100%", display: "flex", alignItems: "flex-start", gap: 18, padding: "0 4px 28px", marginBottom: 2, border: 0, background: "transparent", color: "var(--text)", textAlign: "left", cursor: "pointer" }
+             style: { width: "100%", display: "flex", alignItems: "center", gap: 18, padding: "0 4px 28px", marginBottom: 2, border: 0, background: "transparent", color: "var(--text)", textAlign: "left", cursor: "pointer" }
            },
              settingsRowIcon(category.icon),
              React.createElement("span", { style: { flex: 1 } },
@@ -16234,7 +16234,7 @@ function AccountRecoveryScreen({
         visibleSettingsCategories.length ? visibleSettingsCategories.map(category =>
           /*#__PURE__*/React.createElement("button", {
             key: category.key, onClick: () => { setSettingsCategory(category.key); setSettingsSearch(""); },
-            style: { width: "100%", display: "flex", alignItems: "flex-start", gap: 18, padding: "0 4px 28px", marginBottom: 2, border: 0, background: "transparent", color: "var(--text)", textAlign: "left", cursor: "pointer" }
+            style: { width: "100%", display: "flex", alignItems: "center", gap: 18, padding: "0 4px 28px", marginBottom: 2, border: 0, background: "transparent", color: "var(--text)", textAlign: "left", cursor: "pointer" }
           },
             /*#__PURE__*/React.createElement("div", { style: { width: 42, display: "flex", justifyContent: "center", flexShrink: 0 } }, settingsIcon(category.icon)),
             /*#__PURE__*/React.createElement("span", { style: { flex: 1 } },
