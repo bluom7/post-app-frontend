@@ -14723,7 +14723,7 @@ function QuickMenuDropdown({
          privFlatItem("Comment controls", "Choose who can comment on your posts", "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", () => setSubScreen("privacy-comments")),
          privFlatItem("Sensitive content", "Filter graphic or sensitive media", "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 8v4M12 16h.01", null, React.createElement(Toggle, { on: privSensitiveFilter, onChange: async v => { setPrivSensitiveFilter(v); try { await patchProfile({ sensitive_content_filter: v }); showToast(v ? "Sensitive filter on ✓" : "Sensitive filter off ✓", COLORS.green); } catch(e) { setPrivSensitiveFilter(!v); showToast(e.message, COLORS.red); } } })),
          privFlatItem("Data and activity", "Download your data or view activity log", "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3", () => setSubScreen("privacy-data")),
-         privFlatItem("Report and safety", "Submit a report or visit the Safety Center", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01", () => setSubScreen("privacy-report"))
+         privFlatItem("Report and safety", "Submit a report or visit the Safety Center", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01", () => { setMyReports([]); setMyReportsLoading(true); api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false)); setSubScreen("privacy-report"); })
        );
      } else if (settingsCategory === "notifications") {
        detailContent = settingsDetailCard(React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, padding: "16px 0" } },
@@ -16298,10 +16298,6 @@ function AccountRecoveryScreen({
   );
 
   if (subScreen === 'privacy-report') {
-    if (myReports.length === 0 && !myReportsLoading) {
-      api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false));
-      setMyReportsLoading(true);
-    }
     const rptStatusColor = s => s==="resolved"?COLORS.green:s==="rejected"?"#e53935":"var(--muted)";
     const rptStatusLabel = s => s==="pending"?"Under review":s==="resolved"?"Resolved":s==="rejected"?"Rejected":"Under review";
     const refreshMyReports = () => {
@@ -16582,7 +16578,7 @@ function AccountRecoveryScreen({
         privFlatItem2("Comment controls", "Choose who can comment on your posts", "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", () => setSubScreen("privacy-comments")),
         privFlatItem2("Sensitive content", "Filter graphic or sensitive media", "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 8v4M12 16h.01", null, React.createElement(Toggle, { on: privSensitiveFilter, onChange: async v => { setPrivSensitiveFilter(v); try { await updateSettingsProfile({ sensitive_content_filter: v }); showToast(v ? "Sensitive filter on ✓" : "Sensitive filter off ✓", COLORS.green); } catch(e) { setPrivSensitiveFilter(!v); showToast(e.message, COLORS.red); } } })),
         privFlatItem2("Data and activity", "Download your data or view activity log", "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3", () => setSubScreen("privacy-data")),
-        privFlatItem2("Report and safety", "Submit a report or visit the Safety Center", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01", () => setSubScreen("privacy-report"))
+        privFlatItem2("Report and safety", "Submit a report or visit the Safety Center", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01", () => { setMyReports([]); setMyReportsLoading(true); api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false)); setSubScreen("privacy-report"); })
       );
     } else if (settingsCategory === "notifications") {
       categoryContent = settingsCard(React.createElement(SettingRow, {
