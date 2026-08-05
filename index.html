@@ -16747,7 +16747,7 @@ function AccountRecoveryScreen({
       );
     } else if (settingsCategory === "notifications") {
       const notifFlatRow = (title, desc, iconPath, on, onChange) => React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px", borderBottom: "1px solid var(--border)" } },
-        settingsRowIcon(iconPath),
+        settingsIcon(iconPath, "var(--text)"),
         React.createElement("span", { style: { flex: 1 } },
           React.createElement("span", { style: { display: "block", fontSize: 18, fontWeight: 800, lineHeight: 1.25 } }, title),
           React.createElement("span", { style: { display: "block", fontSize: 15, lineHeight: 1.35, color: "var(--muted)", marginTop: 3 } }, desc)
