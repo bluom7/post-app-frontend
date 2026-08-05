@@ -3039,6 +3039,7 @@ function PostApp() {
   }, []);
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState("home");
+  const [settingsInitialCategory, setSettingsInitialCategory] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showVerifModal, setShowVerifModal] = useState(false);
   const [isDarkState, setIsDarkState] = useState(document.documentElement.getAttribute("data-theme")==="dark");
@@ -3557,6 +3558,7 @@ function PostApp() {
     showToast: showToast,
     onSettings: () => {
       setShowQuickMenu(false);
+      setSettingsInitialCategory(null);
       setTab("settings");
     },
     onClose: () => setShowQuickMenu(false)
@@ -3702,10 +3704,12 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
     showToast: showToast,
     onBack: () => setTab("home"),
     onLoggedOut: handleLogout,
+    initialCategory: settingsInitialCategory,
+    onInitialCategoryConsumed: () => setSettingsInitialCategory(null),
     onGoRecovery: () => setTab("account-recovery")
   }), tab === "account-recovery" && /*#__PURE__*/React.createElement(AccountRecoveryScreen, {
     showToast: showToast,
-    onBack: () => setTab("settings")
+    onBack: () => { setSettingsInitialCategory("security"); setTab("settings"); }
   }), tab === "notifications" && /*#__PURE__*/React.createElement(NotificationsScreen, {
     token: token,
     user: user,
@@ -15144,7 +15148,7 @@ function AccountRecoveryScreen({
     style: { fontSize: 22, fontWeight: 900, color: "var(--text)" }
   }, "Account Recovery")),
   /*#__PURE__*/React.createElement("div", {
-    style: { background: "var(--card-bg)", borderRadius: 16, border: "1px solid var(--border)", padding: "20px 16px" }
+    style: { padding: "20px 0" }
   },
     step === "init" && /*#__PURE__*/React.createElement(React.Fragment, null,
       /*#__PURE__*/React.createElement("p", {
@@ -15742,13 +15746,21 @@ function AccountRecoveryScreen({
   showToast,
   onBack,
   onLoggedOut,
+  initialCategory,
+  onInitialCategoryConsumed,
   onGoRecovery
 }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
    const [subScreen, setSubScreen] = useState(null);
-   const [settingsCategory, setSettingsCategory] = useState(null);
+   const [settingsCategory, setSettingsCategory] = useState(initialCategory || null);
    const [settingsSearch, setSettingsSearch] = useState("");
+   useEffect(() => {
+     if (initialCategory) {
+       setSettingsCategory(initialCategory);
+       if (onInitialCategoryConsumed) onInitialCategoryConsumed();
+     }
+   }, [initialCategory]);
    const [settingsTheme, setSettingsTheme] = useState(user.theme || "light");
    const [settingsLanguage, setSettingsLanguage] = useState(user.language || "en");
    const [settingsNotifOn, setSettingsNotifOn] = useState(Object.values(user.notifications_prefs || {
