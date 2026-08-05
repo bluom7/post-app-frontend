@@ -45,6 +45,7 @@ input, textarea, button { font-family: inherit; }
 ::-webkit-media-controls-overlay-cast-button { display: none !important; }
 ::-webkit-media-controls-cast-button { display: none !important; }
 video::-webkit-media-controls { display: none !important; }
+@keyframes _rpt_spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -16494,7 +16495,14 @@ function AccountRecoveryScreen({
           onClick: doSubmitReport,
           disabled: reportSubmitting || !reportText.trim(),
           style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:(reportSubmitting||!reportText.trim())?"not-allowed":"pointer",background:reportText.trim()?"#1877F2":"var(--border)",color:reportText.trim()?"#fff":"var(--muted)",transition:"background 0.15s",opacity:reportSubmitting?0.7:1}
-        }, reportSubmitting ? "Submitting..." : "Submit report")
+        },
+          reportSubmitting
+            ? React.createElement("span",{style:{display:"flex",alignItems:"center",justifyContent:"center",gap:8}},
+                React.createElement("span",{style:{width:18,height:18,borderRadius:"50%",border:"2.5px solid rgba(255,255,255,0.35)",borderTopColor:"#fff",display:"inline-block",animation:"_rpt_spin 0.75s linear infinite",flexShrink:0}}),
+                "Submitting..."
+              )
+            : "Submit report"
+        )
       )
     );
 
