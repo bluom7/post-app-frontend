@@ -14731,14 +14731,20 @@ function QuickMenuDropdown({
          privFlatItem("Report and safety", "Submit a report or visit the Safety Center", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01", () => { setMyReports([]); setMyReportsLoading(true); api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false)); setSubScreen("privacy-report"); })
        );
      } else if (settingsCategory === "notifications") {
-       detailContent = settingsDetailCard(React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, padding: "16px 0" } },
-         settingsIcon("M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0", "var(--text)"),
+       const notifFlatItem = (title, desc, iconPath, on, onChange) => React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px", borderBottom: "1px solid var(--border)" } },
+         settingsIcon(iconPath, "var(--text)"),
          React.createElement("div", { style: { flex: 1 } },
-           React.createElement("div", { style: { fontSize: 16, fontWeight: 700, color: "var(--text)" } }, "Notifications"),
-           React.createElement("div", { style: { fontSize: 13, color: "var(--muted)", marginTop: 2 } }, "Likes, comments, connections, and messages")
+           React.createElement("div", { style: { fontSize: 16, fontWeight: 700, color: "var(--text)", lineHeight: 1.25 } }, title),
+           React.createElement("div", { style: { fontSize: 13, color: "var(--muted)", marginTop: 3, lineHeight: 1.4 } }, desc)
          ),
-         React.createElement(Toggle, { on: settingsNotifOn, onChange: toggleSettingsNotifications })
-       ));
+         React.createElement(Toggle, { on, onChange })
+       );
+       detailContent = React.createElement(React.Fragment, null,
+         notifFlatItem("Likes", "Get notified when someone likes your post or reel", "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z", notifLikes, toggleNotifLikes),
+         notifFlatItem("Comments", "Get notified when someone comments on your post", "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", notifComments, toggleNotifComments),
+         notifFlatItem("Follow requests", "Get notified when someone sends you a follow or connection request", "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M19 8v6M22 11h-6", notifFriendRequests, toggleNotifFriendRequests),
+         notifFlatItem("Messages", "Get notified when you receive a new direct message", "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", notifMessages, toggleNotifMessages)
+       );
      } else if (settingsCategory === "display") {
        detailContent = settingsDetailCard(React.createElement(React.Fragment, null,
          React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "16px 0", borderBottom: "1px solid var(--border)" } },
@@ -15763,12 +15769,11 @@ function AccountRecoveryScreen({
    }, [initialCategory]);
    const [settingsTheme, setSettingsTheme] = useState(user.theme || "light");
    const [settingsLanguage, setSettingsLanguage] = useState(user.language || "en");
-   const [settingsNotifOn, setSettingsNotifOn] = useState(Object.values(user.notifications_prefs || {
-     likes: false,
-     comments: false,
-     friend_requests: false,
-     messages: false
-   }).every(Boolean));
+   const _np = user.notifications_prefs || { likes: false, comments: false, friend_requests: false, messages: false };
+   const [notifLikes, setNotifLikes] = useState(!!_np.likes);
+   const [notifComments, setNotifComments] = useState(!!_np.comments);
+   const [notifFriendRequests, setNotifFriendRequests] = useState(!!_np.friend_requests);
+   const [notifMessages, setNotifMessages] = useState(!!_np.messages);
   const [showContact, setShowContact] = useState(false);
   const [showChangePhone, setShowChangePhone] = useState(false);
   const [curPass, setCurPass] = useState("");
@@ -16032,16 +16037,20 @@ function AccountRecoveryScreen({
      updateSettingsProfile({ language });
      showToast("Language updated ✓", COLORS.green);
    };
-   const toggleSettingsNotifications = enabled => {
-     setSettingsNotifOn(enabled);
-     api("/settings/notifications", "PATCH", {
-       likes: enabled,
-       comments: enabled,
-       friend_requests: enabled,
-       messages: enabled
-     }, token).catch(e => showToast(e.message, COLORS.red));
-     showToast(enabled ? "Notifications on" : "Notifications off", COLORS.green);
+   const toggleNotif = (key, setter) => async enabled => {
+     setter(enabled);
+     try {
+       await api("/settings/notifications", "PATCH", { [key]: enabled }, token);
+       showToast(enabled ? "On ✓" : "Off ✓", COLORS.green);
+     } catch(e) {
+       setter(!enabled);
+       showToast(e.message, COLORS.red);
+     }
    };
+   const toggleNotifLikes = toggleNotif("likes", setNotifLikes);
+   const toggleNotifComments = toggleNotif("comments", setNotifComments);
+   const toggleNotifFriendRequests = toggleNotif("friend_requests", setNotifFriendRequests);
+   const toggleNotifMessages = toggleNotif("messages", setNotifMessages);
   const inputStyle = {
     width: "100%",
     padding: "12px 14px",
@@ -16737,10 +16746,20 @@ function AccountRecoveryScreen({
         privFlatItem2("Report and safety", "Submit a report or visit the Safety Center", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01", () => { setMyReports([]); setMyReportsLoading(true); api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false)); setSubScreen("privacy-report"); })
       );
     } else if (settingsCategory === "notifications") {
-      categoryContent = settingsCard(React.createElement(SettingRow, {
-        label: "Notifications", sub: "Likes, comments, connection requests and messages",
-        right: React.createElement(Toggle, { on: settingsNotifOn, onChange: toggleSettingsNotifications })
-      }));
+      const notifFlatRow = (title, desc, iconPath, on, onChange) => React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px", borderBottom: "1px solid var(--border)" } },
+        settingsRowIcon(iconPath),
+        React.createElement("span", { style: { flex: 1 } },
+          React.createElement("span", { style: { display: "block", fontSize: 18, fontWeight: 800, lineHeight: 1.25 } }, title),
+          React.createElement("span", { style: { display: "block", fontSize: 15, lineHeight: 1.35, color: "var(--muted)", marginTop: 3 } }, desc)
+        ),
+        React.createElement(Toggle, { on, onChange })
+      );
+      categoryContent = React.createElement(React.Fragment, null,
+        notifFlatRow("Likes", "Get notified when someone likes your post or reel", "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z", notifLikes, toggleNotifLikes),
+        notifFlatRow("Comments", "Get notified when someone comments on your post", "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", notifComments, toggleNotifComments),
+        notifFlatRow("Follow requests", "Get notified when someone sends a follow or connection request", "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M19 8v6M22 11h-6", notifFriendRequests, toggleNotifFriendRequests),
+        notifFlatRow("Messages", "Get notified when you receive a new direct message", "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", notifMessages, toggleNotifMessages)
+      );
     } else if (settingsCategory === "display") {
       categoryContent = settingsCard(React.createElement(React.Fragment, null,
         React.createElement(SettingRow, { label: "Language", sub: "Choose the language used in Post", right: React.createElement("select", { value: settingsLanguage, onChange: e => changeSettingsLanguage(e.target.value), style: { maxWidth: 132, padding: "8px 10px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--input-bg)", color: "var(--text)", fontSize: 13 } }, LANGUAGES.map(([code, name]) => React.createElement("option", { key: code, value: code }, name))) }),
