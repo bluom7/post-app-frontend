@@ -16319,7 +16319,7 @@ function AccountRecoveryScreen({
           settingsIcon("M9 18l6-6-6-6","var(--muted)")
         ),
         React.createElement("button", {
-          onClick: () => window.open("mailto:postbluom@gmail.com?subject=Safety+Report","_blank"),
+          onClick: () => { window.location.href = "mailto:postbluom@gmail.com?subject=Safety+Report"; },
           style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",marginBottom:4}
         },
           settingsIcon("M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10ZM9 12l2 2 4-4","var(--text)"),
