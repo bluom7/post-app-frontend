@@ -15798,6 +15798,7 @@ function AccountRecoveryScreen({
   const [reportUsername, setReportUsername] = React.useState('');
   const [reportSubmitting, setReportSubmitting] = React.useState(false);
   const [reportSubmitted, setReportSubmitted] = React.useState(false);
+  const [reportStep, setReportStep] = React.useState('reasons');
   const [myReports, setMyReports] = React.useState([]);
   const [myReportsLoading, setMyReportsLoading] = React.useState(false);
   useEffect(() => {
@@ -16372,7 +16373,7 @@ function AccountRecoveryScreen({
       subHeader("Report and safety"),
       React.createElement("div", {style:{padding:"8px 0"}},
         React.createElement("button", {
-          onClick: () => { setReportSubmitted(false); setReportType(''); setReportText(''); setReportUsername(''); setSubScreen("report-content"); },
+          onClick: () => { setReportSubmitted(false); setReportType(''); setReportText(''); setReportUsername(''); setReportStep('reasons'); setSubScreen("report-content"); },
           style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",marginBottom:4}
         },
           settingsIcon("M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01","var(--text)"),
@@ -16427,58 +16428,80 @@ function AccountRecoveryScreen({
 
   if (subScreen === 'report-content') {
     const doSubmitReport = async () => {
-      if (!reportType) { showToast("Please select a reason", COLORS.red); return; }
-      if (!reportText.trim()) { showToast("Please describe the issue", COLORS.red); return; }
       setReportSubmitting(true);
       try {
-        await api("/report/general", "POST", { type: reportType, description: reportText, username: reportUsername }, token);
+        await api("/report/general", "POST", { type: reportType, description: reportType, username: reportUsername }, token);
         setReportSubmitted(true);
-        setReportType(''); setReportText(''); setReportUsername('');
+        setReportType(''); setReportUsername(''); setReportStep('reasons');
         showToast("Report submitted ✓", COLORS.green);
       } catch(e) { showToast(e.message || "Report sent", COLORS.green); setReportSubmitted(true); }
       setReportSubmitting(false);
     };
-    if (reportSubmitted) return React.createElement("div", {style: subPageStyle},
-      subHeader("Report submitted"),
-      React.createElement("div", {style:{textAlign:"center",padding:"40px 16px"}},
-        React.createElement("div", {style:{fontSize:18,fontWeight:800,color:"var(--text)",marginBottom:8}}, "Thank you for your report"),
-        React.createElement("div", {style:{fontSize:14,color:"var(--muted)",lineHeight:1.6,marginBottom:24}}, "Our team will review your report within 24 hours. We take all reports seriously and will take appropriate action."),
-        React.createElement("button", {onClick:()=>{setSubScreen("privacy-report");setReportSubmitted(false);}, style:{width:"100%",padding:"13px",borderRadius:12,border:"none",fontWeight:800,fontSize:15,cursor:"pointer",background:"var(--input-bg)",color:"var(--text)"}}, "Back to Safety")
+
+    if (reportSubmitted) return React.createElement("div", {style:{...subPageStyle,display:"flex",flexDirection:"column"}},
+      subHeader("Report an issue"),
+      React.createElement("div", {style:{flex:1,padding:"8px 0 24px"}},
+        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:1,marginBottom:16,paddingTop:8}}, "Submitted"),
+        React.createElement("div",{style:{fontSize:22,fontWeight:900,color:"var(--text)",lineHeight:1.3,marginBottom:20}}, "Thanks for helping make Post App better for everyone"),
+        React.createElement("div",{style:{fontSize:14,color:"var(--muted)",lineHeight:1.6,marginBottom:28}}, "We know it wasn't easy, so we appreciate you taking the time to report this."),
+        React.createElement("div",{style:{marginBottom:20}},
+          React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"var(--text)",marginBottom:8}}, "What's happening now"),
+          React.createElement("div",{style:{fontSize:14,color:"var(--muted)",lineHeight:1.6}}, "Once you submit, we'll send your report to the Post App team and hide this post from your timeline in the meantime.")
+        ),
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"var(--text)",marginBottom:8}}, "What's next"),
+          React.createElement("div",{style:{fontSize:14,color:"var(--muted)",lineHeight:1.6}}, "It'll take a few days for our team to review your report. We'll notify you if we found a rule violation and let you know the actions we're taking as a result.")
+        )
+      ),
+      React.createElement("div",{style:{padding:"12px 0 8px"}},
+        React.createElement("button",{onClick:()=>{setSubScreen("privacy-report");setReportSubmitted(false);},style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:"pointer",background:"#1877F2",color:"#fff"}},"Done")
       )
     );
-    return React.createElement("div", {style: subPageStyle},
-      subHeader("Submit a report"),
-      React.createElement("div", {style:{padding:"8px 0"}},
-        React.createElement("div", {style:{fontSize:14,color:"var(--muted)",padding:"0 4px 16px",lineHeight:1.5}}, "Help us understand the problem. Reports are anonymous."),
-        React.createElement("div", {style:{fontSize:13,fontWeight:700,color:"var(--muted)",marginBottom:10,textTransform:"uppercase",letterSpacing:1,padding:"0 4px"}}, "Reason"),
-        ["Spam or fake account","Harassment or bullying","Hate speech","Nudity or sexual content","Violence or dangerous content","Misinformation","Other"].map(reason => React.createElement("button", {
+
+    if (reportStep === 'confirm') return React.createElement("div", {style:{...subPageStyle,display:"flex",flexDirection:"column"}},
+      subHeader("Report an issue"),
+      React.createElement("div", {style:{flex:1,padding:"8px 0 24px"}},
+        React.createElement("div",{style:{fontSize:12,fontWeight:700,color:"var(--muted)",textTransform:"uppercase",letterSpacing:1,marginBottom:16,paddingTop:8}}, "Submitted"),
+        React.createElement("div",{style:{fontSize:22,fontWeight:900,color:"var(--text)",lineHeight:1.3,marginBottom:20}}, "Thanks for helping make Post App better for everyone"),
+        React.createElement("div",{style:{fontSize:14,color:"var(--muted)",lineHeight:1.6,marginBottom:28}}, "We know it wasn't easy, so we appreciate you taking the time to report this."),
+        React.createElement("div",{style:{marginBottom:20}},
+          React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"var(--text)",marginBottom:8}}, "What's happening now"),
+          React.createElement("div",{style:{fontSize:14,color:"var(--muted)",lineHeight:1.6}}, "Once you submit, we'll send your report to the Post App team and hide this post from your timeline in the meantime.")
+        ),
+        React.createElement("div",null,
+          React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"var(--text)",marginBottom:8}}, "What's next"),
+          React.createElement("div",{style:{fontSize:14,color:"var(--muted)",lineHeight:1.6}}, "It'll take a few days for our team to review your report. We'll notify you if we found a rule violation and let you know the actions we're taking as a result.")
+        )
+      ),
+      React.createElement("div",{style:{padding:"12px 0 8px"}},
+        React.createElement("button",{
+          onClick: doSubmitReport,
+          disabled: reportSubmitting,
+          style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:reportSubmitting?"not-allowed":"pointer",background:"#1877F2",color:"#fff",opacity:reportSubmitting?0.7:1}
+        }, reportSubmitting ? "Submitting..." : "Submit")
+      )
+    );
+
+    return React.createElement("div", {style:{...subPageStyle,display:"flex",flexDirection:"column"}},
+      subHeader("Report an issue"),
+      React.createElement("div", {style:{flex:1,padding:"4px 0 16px"}},
+        React.createElement("div",{style:{fontSize:18,fontWeight:800,color:"var(--text)",padding:"12px 0 20px",lineHeight:1.3}}, "What are you reporting?"),
+        REPORT_REASONS.map((reason, i) => React.createElement("button", {
           key: reason,
           onClick: () => setReportType(reason),
-          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"14px 4px",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)"}
+          style:{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",padding:"16px 0",border:0,background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom: i < REPORT_REASONS.length-1 ? "1px solid var(--border)" : "none"}
         },
-          React.createElement("div",{style:{width:22,height:22,borderRadius:11,border:"2.5px solid "+(reportType===reason?"var(--primary, #FFD600)":"var(--border)"),background:reportType===reason?"var(--primary, #FFD600)":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}, reportType===reason&&React.createElement("div",{style:{width:8,height:8,borderRadius:4,background:"#fff"}})),
-          React.createElement("span",{style:{fontSize:15,fontWeight:600}}, reason)
-        )),
-        React.createElement("div", {style:{marginTop:20,padding:"0 4px"}},
-          React.createElement("div", {style:{fontSize:13,fontWeight:700,color:"var(--muted)",marginBottom:8,textTransform:"uppercase",letterSpacing:1}}, "Username (optional)"),
-          React.createElement("input", {
-            value: reportUsername, onChange: e => setReportUsername(e.target.value),
-            placeholder: "@username",
-            style:{width:"100%",padding:"12px 14px",borderRadius:12,border:"1.5px solid var(--border)",fontSize:15,outline:"none",background:"var(--input-bg)",color:"var(--text)",boxSizing:"border-box",marginBottom:16}
-          }),
-          React.createElement("div", {style:{fontSize:13,fontWeight:700,color:"var(--muted)",marginBottom:8,textTransform:"uppercase",letterSpacing:1}}, "Description"),
-          React.createElement("textarea", {
-            value: reportText, onChange: e => setReportText(e.target.value),
-            placeholder: "Describe the issue in detail...",
-            rows: 4,
-            style:{width:"100%",padding:"12px 14px",borderRadius:12,border:"1.5px solid var(--border)",fontSize:15,outline:"none",background:"var(--input-bg)",color:"var(--text)",boxSizing:"border-box",resize:"none",fontFamily:"inherit",marginBottom:16}
-          }),
-          React.createElement("button", {
-            onClick: doSubmitReport,
-            disabled: reportSubmitting || !reportType || !reportText.trim(),
-            style:{width:"100%",padding:"13px",borderRadius:12,border:"none",fontWeight:800,fontSize:15,cursor:(reportSubmitting||!reportType||!reportText.trim())?"not-allowed":"pointer",background:(reportType&&reportText.trim())?"var(--primary, #FFD600)":"var(--border)",color:(reportType&&reportText.trim())?"#111":"var(--muted)",opacity:reportSubmitting?0.7:1}
-          }, reportSubmitting ? "Submitting..." : "Submit report")
-        )
+          React.createElement("span",{style:{fontSize:15,fontWeight:500,flex:1,paddingRight:16}}, reason),
+          React.createElement("div",{style:{width:24,height:24,borderRadius:12,border:`2.5px solid ${reportType===reason?"#1877F2":"var(--border)"}`,background:reportType===reason?"#1877F2":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s"}},
+            reportType===reason && React.createElement("div",{style:{width:9,height:9,borderRadius:5,background:"#fff"}})
+          )
+        ))
+      ),
+      React.createElement("div",{style:{padding:"12px 0 8px"}},
+        React.createElement("button",{
+          onClick: () => { if(!reportType){ showToast("Please select a reason", COLORS.red); return; } setReportStep('confirm'); },
+          style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:"pointer",background: reportType ? "#1877F2" : "var(--border)",color: reportType ? "#fff" : "var(--muted)",transition:"background 0.15s"}
+        }, "Next")
       )
     );
   }
