@@ -16238,7 +16238,7 @@ function AccountRecoveryScreen({
         followOpts.map(({key:opt,label,sub,icon}) => optBtn(opt,label,sub,icon,privTmpFollow===opt,opt => { setPrivTmpFollow(opt); resetPrivacyFeedback(); }))
       ),
       React.createElement("div",{style:{padding:"12px 0 8px"}},
-        privSaved && React.createElement("div",{role:"status",style:{fontSize:13,fontWeight:700,color:COLORS.green,textAlign:"center",padding:"0 0 10px"}},"Saved ✓ — you can change it again anytime"),
+        privSaved && React.createElement("div",{role:"status",style:{fontSize:13,fontWeight:700,color:COLORS.green,textAlign:"center",padding:"0 0 10px"}},"Saved ✓"),
         privSaveError && React.createElement("div",{role:"alert",style:{fontSize:13,fontWeight:700,color:COLORS.red,textAlign:"center",padding:"0 0 10px"}},"Couldn't save. Please try again."),
         React.createElement("button",{
           onClick: async () => {
@@ -16281,7 +16281,7 @@ function AccountRecoveryScreen({
         ))
       ),
       React.createElement("div",{style:{padding:"12px 0 8px"}},
-        privSaved && React.createElement("div",{role:"status",style:{fontSize:13,fontWeight:700,color:COLORS.green,textAlign:"center",padding:"0 0 10px"}},"Saved ✓ — you can change it again anytime"),
+        privSaved && React.createElement("div",{role:"status",style:{fontSize:13,fontWeight:700,color:COLORS.green,textAlign:"center",padding:"0 0 10px"}},"Saved ✓"),
         privSaveError && React.createElement("div",{role:"alert",style:{fontSize:13,fontWeight:700,color:COLORS.red,textAlign:"center",padding:"0 0 10px"}},"Couldn't save. Please try again."),
         React.createElement("button",{
           onClick: async () => {
@@ -16323,7 +16323,7 @@ function AccountRecoveryScreen({
         ))
       ),
       React.createElement("div",{style:{padding:"12px 0 8px"}},
-        privSaved && React.createElement("div",{role:"status",style:{fontSize:13,fontWeight:700,color:COLORS.green,textAlign:"center",padding:"0 0 10px"}},"Saved ✓ — you can change it again anytime"),
+        privSaved && React.createElement("div",{role:"status",style:{fontSize:13,fontWeight:700,color:COLORS.green,textAlign:"center",padding:"0 0 10px"}},"Saved ✓"),
         privSaveError && React.createElement("div",{role:"alert",style:{fontSize:13,fontWeight:700,color:COLORS.red,textAlign:"center",padding:"0 0 10px"}},"Couldn't save. Please try again."),
         React.createElement("button",{
           onClick: async () => {
