@@ -14743,7 +14743,9 @@ function QuickMenuDropdown({
          notifFlatItem("Likes", "Get notified when someone likes your post or reel", "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z", notifLikes, toggleNotifLikes),
          notifFlatItem("Comments", "Get notified when someone comments on your post", "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", notifComments, toggleNotifComments),
          notifFlatItem("Follow requests", "Get notified when someone sends you a follow or connection request", "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M19 8v6M22 11h-6", notifFriendRequests, toggleNotifFriendRequests),
-         notifFlatItem("Messages", "Get notified when you receive a new direct message", "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", notifMessages, toggleNotifMessages)
+         notifFlatItem("Messages", "Get notified when you receive a new direct message", "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", notifMessages, toggleNotifMessages),
+         notifFlatItem("Mentions", "Get notified when someone @mentions you in a post or comment", "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM9 10h.01M12 10h.01M15 10h.01", notifMentions, toggleNotifMentions),
+         notifFlatItem("Tags", "Get notified when someone tags you in a post", "M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82ZM7 7h.01", notifTags, toggleNotifTags)
        );
      } else if (settingsCategory === "display") {
        detailContent = settingsDetailCard(React.createElement(React.Fragment, null,
@@ -15769,11 +15771,13 @@ function AccountRecoveryScreen({
    }, [initialCategory]);
    const [settingsTheme, setSettingsTheme] = useState(user.theme || "light");
    const [settingsLanguage, setSettingsLanguage] = useState(user.language || "en");
-   const _np = user.notifications_prefs || { likes: false, comments: false, friend_requests: false, messages: false };
+   const _np = user.notifications_prefs || { likes: false, comments: false, friend_requests: false, messages: false, mentions: false, tags: false };
    const [notifLikes, setNotifLikes] = useState(!!_np.likes);
    const [notifComments, setNotifComments] = useState(!!_np.comments);
    const [notifFriendRequests, setNotifFriendRequests] = useState(!!_np.friend_requests);
    const [notifMessages, setNotifMessages] = useState(!!_np.messages);
+   const [notifMentions, setNotifMentions] = useState(!!_np.mentions);
+   const [notifTags, setNotifTags] = useState(!!_np.tags);
   const [showContact, setShowContact] = useState(false);
   const [showChangePhone, setShowChangePhone] = useState(false);
   const [curPass, setCurPass] = useState("");
@@ -16051,6 +16055,8 @@ function AccountRecoveryScreen({
    const toggleNotifComments = toggleNotif("comments", setNotifComments);
    const toggleNotifFriendRequests = toggleNotif("friend_requests", setNotifFriendRequests);
    const toggleNotifMessages = toggleNotif("messages", setNotifMessages);
+   const toggleNotifMentions = toggleNotif("mentions", setNotifMentions);
+   const toggleNotifTags = toggleNotif("tags", setNotifTags);
   const inputStyle = {
     width: "100%",
     padding: "12px 14px",
@@ -16758,7 +16764,9 @@ function AccountRecoveryScreen({
         notifFlatRow("Likes", "Get notified when someone likes your post or reel", "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z", notifLikes, toggleNotifLikes),
         notifFlatRow("Comments", "Get notified when someone comments on your post", "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", notifComments, toggleNotifComments),
         notifFlatRow("Follow requests", "Get notified when someone sends a follow or connection request", "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M19 8v6M22 11h-6", notifFriendRequests, toggleNotifFriendRequests),
-        notifFlatRow("Messages", "Get notified when you receive a new direct message", "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", notifMessages, toggleNotifMessages)
+        notifFlatRow("Messages", "Get notified when you receive a new direct message", "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", notifMessages, toggleNotifMessages),
+        notifFlatRow("Mentions", "Get notified when someone @mentions you in a post or comment", "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2zM9 10h.01M12 10h.01M15 10h.01", notifMentions, toggleNotifMentions),
+        notifFlatRow("Tags", "Get notified when someone tags you in a post", "M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82ZM7 7h.01", notifTags, toggleNotifTags)
       );
     } else if (settingsCategory === "display") {
       categoryContent = settingsCard(React.createElement(React.Fragment, null,
