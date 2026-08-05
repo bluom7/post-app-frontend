@@ -14719,8 +14719,8 @@ function QuickMenuDropdown({
          privFlatItem("Account privacy", privIsPrivate ? "Private — only approved followers see your posts" : "Public — anyone can see your posts", "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10ZM9 12l2 2 4-4", null, React.createElement(Toggle, { on: privIsPrivate, onChange: async v => { setPrivIsPrivate(v); try { await patchProfile({ is_private: v }); showToast(v ? "Account set to private ✓" : "Account set to public ✓", COLORS.green); } catch(e) { setPrivIsPrivate(!v); showToast(e.message, COLORS.red); } } })),
          privFlatItem("Blocked accounts", "Manage users you've blocked", "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM4.9 4.9l14.2 14.2", () => { setSubScreen("blocked-users"); loadBlockedUsers(); }),
          privFlatItem("Who can message / follow you", "Control DMs and follow requests", "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8", () => setSubScreen("privacy-messaging")),
-         privFlatItem("Post visibility", "Choose who can see your posts", "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6", () => setSubScreen("privacy-visibility")),
-         privFlatItem("Comment controls", "Choose who can comment on your posts", "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", () => setSubScreen("privacy-comments")),
+         privFlatItem("Post visibility", "Choose who can see your posts", "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6", () => { setPrivTmpVis(privPostVisibility); setSubScreen("privacy-visibility"); }),
+         privFlatItem("Comment controls", "Choose who can comment on your posts", "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", () => { setPrivTmpCmt(privCommentControl); setSubScreen("privacy-comments"); }),
          privFlatItem("Sensitive content", "Filter graphic or sensitive media", "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 8v4M12 16h.01", null, React.createElement(Toggle, { on: privSensitiveFilter, onChange: async v => { setPrivSensitiveFilter(v); try { await patchProfile({ sensitive_content_filter: v }); showToast(v ? "Sensitive filter on ✓" : "Sensitive filter off ✓", COLORS.green); } catch(e) { setPrivSensitiveFilter(!v); showToast(e.message, COLORS.red); } } })),
          privFlatItem("Data and activity", "Download your data or view activity log", "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3", () => setSubScreen("privacy-data")),
          privFlatItem("Report and safety", "Submit a report or visit the Safety Center", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01", () => { setMyReports([]); setMyReportsLoading(true); api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false)); setSubScreen("privacy-report"); })
@@ -15771,6 +15771,8 @@ function AccountRecoveryScreen({
   const [privWhoCanFollow, setPrivWhoCanFollow] = useState(user.who_can_follow || "everyone");
   const [privPostVisibility, setPrivPostVisibility] = useState(user.post_visibility || "everyone");
   const [privCommentControl, setPrivCommentControl] = useState(user.comment_control || "everyone");
+  const [privTmpVis, setPrivTmpVis] = useState(user.post_visibility || "everyone");
+  const [privTmpCmt, setPrivTmpCmt] = useState(user.comment_control || "everyone");
   const [privSensitiveFilter, setPrivSensitiveFilter] = useState(user.sensitive_content_filter || false);
   const [privActivityLog, setPrivActivityLog] = useState(null);
   const [privActivityLoading, setPrivActivityLoading] = useState(false);
@@ -16206,7 +16208,6 @@ function AccountRecoveryScreen({
   );
 
   if (subScreen === 'privacy-visibility') {
-    const [_tmpVis, _setTmpVis] = React.useState(privPostVisibility);
     const visOpts = [
       { key:"everyone", label:"Everyone", sub:"Anyone on Post can see your posts", icon:"M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM2 12h20M12 2c-2.5 3.8-4 7.8-4 10s1.5 6.2 4 10M12 2c2.5 3.8 4 7.8 4 10s-1.5 6.2-4 10" },
       { key:"followers", label:"Followers only", sub:"Only your approved followers can see your posts", icon:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" },
@@ -16218,8 +16219,8 @@ function AccountRecoveryScreen({
         React.createElement("div", {style:{fontSize:14,color:"var(--muted)",padding:"0 4px 16px",lineHeight:1.5}}, "Choose who can see your posts and stories"),
         visOpts.map(({key:opt, label, sub, icon}) => React.createElement("button", {
           key:opt,
-          onClick: () => _setTmpVis(opt),
-          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:_tmpVis===opt?"var(--input-bg, rgba(0,0,0,0.04))":"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",borderRadius:8,marginBottom:2,transition:"background 0.15s"}
+          onClick: () => setPrivTmpVis(opt),
+          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:privTmpVis===opt?"var(--input-bg, rgba(0,0,0,0.04))":"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",borderRadius:8,marginBottom:2,transition:"background 0.15s"}
         },
           React.createElement("div",{style:{width:40,height:40,borderRadius:20,background:"var(--input-bg, rgba(0,0,0,0.06))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
             React.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"var(--text)",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:icon}))
@@ -16228,16 +16229,16 @@ function AccountRecoveryScreen({
             React.createElement("span",{style:{display:"block",fontSize:16,fontWeight:700}}, label),
             React.createElement("span",{style:{display:"block",fontSize:13,color:"var(--muted)",marginTop:2,lineHeight:1.4}}, sub)
           ),
-          React.createElement("div",{style:{width:24,height:24,borderRadius:12,border:`2.5px solid ${_tmpVis===opt?"#1877F2":"var(--border)"}`,background:_tmpVis===opt?"#1877F2":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s"}},
-            _tmpVis===opt&&React.createElement("div",{style:{width:9,height:9,borderRadius:5,background:"#fff"}})
+          React.createElement("div",{style:{width:24,height:24,borderRadius:12,border:`2.5px solid ${privTmpVis===opt?"#1877F2":"var(--border)"}`,background:privTmpVis===opt?"#1877F2":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s"}},
+            privTmpVis===opt&&React.createElement("div",{style:{width:9,height:9,borderRadius:5,background:"#fff"}})
           )
         ))
       ),
       React.createElement("div",{style:{padding:"12px 0 8px"}},
         React.createElement("button",{
           onClick: async () => {
-            setPrivPostVisibility(_tmpVis);
-            try { await updateSettingsProfile({post_visibility:_tmpVis}); showToast("Saved ✓", COLORS.green); } catch(e){ showToast(e.message,COLORS.red); }
+            setPrivPostVisibility(privTmpVis);
+            try { await updateSettingsProfile({post_visibility:privTmpVis}); showToast("Saved ✓", COLORS.green); } catch(e){ showToast(e.message,COLORS.red); }
             setSubScreen("privacy");
           },
           style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:"pointer",background:"#1877F2",color:"#fff",letterSpacing:0.2}
@@ -16247,7 +16248,6 @@ function AccountRecoveryScreen({
   }
 
   if (subScreen === 'privacy-comments') {
-    const [_tmpCmt, _setTmpCmt] = React.useState(privCommentControl);
     const cmtOpts = [
       { key:"everyone", label:"Everyone", sub:"Anyone can comment on your posts", icon:"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" },
       { key:"followers", label:"Followers only", sub:"Only your followers can comment", icon:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" },
@@ -16259,8 +16259,8 @@ function AccountRecoveryScreen({
         React.createElement("div", {style:{fontSize:14,color:"var(--muted)",padding:"0 4px 16px",lineHeight:1.5}}, "Choose who can comment on your posts"),
         cmtOpts.map(({key:opt, label, sub, icon}) => React.createElement("button", {
           key:opt,
-          onClick: () => _setTmpCmt(opt),
-          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:_tmpCmt===opt?"var(--input-bg, rgba(0,0,0,0.04))":"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",borderRadius:8,marginBottom:2,transition:"background 0.15s"}
+          onClick: () => setPrivTmpCmt(opt),
+          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,background:privTmpCmt===opt?"var(--input-bg, rgba(0,0,0,0.04))":"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",borderRadius:8,marginBottom:2,transition:"background 0.15s"}
         },
           React.createElement("div",{style:{width:40,height:40,borderRadius:20,background:"var(--input-bg, rgba(0,0,0,0.06))",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
             React.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"var(--text)",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:icon}))
@@ -16269,16 +16269,16 @@ function AccountRecoveryScreen({
             React.createElement("span",{style:{display:"block",fontSize:16,fontWeight:700}}, label),
             React.createElement("span",{style:{display:"block",fontSize:13,color:"var(--muted)",marginTop:2,lineHeight:1.4}}, sub)
           ),
-          React.createElement("div",{style:{width:24,height:24,borderRadius:12,border:`2.5px solid ${_tmpCmt===opt?"#1877F2":"var(--border)"}`,background:_tmpCmt===opt?"#1877F2":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s"}},
-            _tmpCmt===opt&&React.createElement("div",{style:{width:9,height:9,borderRadius:5,background:"#fff"}})
+          React.createElement("div",{style:{width:24,height:24,borderRadius:12,border:`2.5px solid ${privTmpCmt===opt?"#1877F2":"var(--border)"}`,background:privTmpCmt===opt?"#1877F2":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s"}},
+            privTmpCmt===opt&&React.createElement("div",{style:{width:9,height:9,borderRadius:5,background:"#fff"}})
           )
         ))
       ),
       React.createElement("div",{style:{padding:"12px 0 8px"}},
         React.createElement("button",{
           onClick: async () => {
-            setPrivCommentControl(_tmpCmt);
-            try { await updateSettingsProfile({comment_control:_tmpCmt}); showToast("Saved ✓", COLORS.green); } catch(e){ showToast(e.message,COLORS.red); }
+            setPrivCommentControl(privTmpCmt);
+            try { await updateSettingsProfile({comment_control:privTmpCmt}); showToast("Saved ✓", COLORS.green); } catch(e){ showToast(e.message,COLORS.red); }
             setSubScreen("privacy");
           },
           style:{width:"100%",padding:"15px",borderRadius:14,border:"none",fontWeight:800,fontSize:16,cursor:"pointer",background:"#1877F2",color:"#fff",letterSpacing:0.2}
@@ -16622,8 +16622,8 @@ function AccountRecoveryScreen({
         privFlatItem2("Account privacy", privIsPrivate ? "Private — only approved followers see your posts" : "Public — anyone can see your posts", "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10ZM9 12l2 2 4-4", null, React.createElement(Toggle, { on: privIsPrivate, onChange: async v => { setPrivIsPrivate(v); try { await updateSettingsProfile({ is_private: v }); showToast(v ? "Account set to private ✓" : "Account set to public ✓", COLORS.green); } catch(e) { setPrivIsPrivate(!v); showToast(e.message, COLORS.red); } } })),
         privFlatItem2("Blocked accounts", "Manage users you've blocked", "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM4.9 4.9l14.2 14.2", () => { setSubScreen("blocked-users"); loadBlockedUsers(); }),
         privFlatItem2("Who can message / follow you", "Control DMs and follow requests", "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 8a4 4 0 1 0 0-8 4 4 0 0 0 0 8", () => setSubScreen("privacy-messaging")),
-        privFlatItem2("Post visibility", "Choose who can see your posts", "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6", () => setSubScreen("privacy-visibility")),
-        privFlatItem2("Comment controls", "Choose who can comment on your posts", "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", () => setSubScreen("privacy-comments")),
+        privFlatItem2("Post visibility", "Choose who can see your posts", "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6", () => { setPrivTmpVis(privPostVisibility); setSubScreen("privacy-visibility"); }),
+        privFlatItem2("Comment controls", "Choose who can comment on your posts", "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z", () => { setPrivTmpCmt(privCommentControl); setSubScreen("privacy-comments"); }),
         privFlatItem2("Sensitive content", "Filter graphic or sensitive media", "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 8v4M12 16h.01", null, React.createElement(Toggle, { on: privSensitiveFilter, onChange: async v => { setPrivSensitiveFilter(v); try { await updateSettingsProfile({ sensitive_content_filter: v }); showToast(v ? "Sensitive filter on ✓" : "Sensitive filter off ✓", COLORS.green); } catch(e) { setPrivSensitiveFilter(!v); showToast(e.message, COLORS.red); } } })),
         privFlatItem2("Data and activity", "Download your data or view activity log", "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3", () => setSubScreen("privacy-data")),
         privFlatItem2("Report and safety", "Submit a report or visit the Safety Center", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01", () => { setMyReports([]); setMyReportsLoading(true); api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false)); setSubScreen("privacy-report"); })
