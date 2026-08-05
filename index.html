@@ -14755,7 +14755,14 @@ function QuickMenuDropdown({
        );
        detailContent = React.createElement(React.Fragment, null,
          dispFlatItem("Language", "Choose the language used in Post", "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4ZM15 5l3 3", React.createElement("select", { value: settingsLanguage, onChange: e => changeSettingsLanguage(e.target.value), style: { maxWidth: 132, padding: "8px 10px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--input-bg)", color: "var(--text)", fontSize: 13 } }, LANGUAGES.map(([code, name]) => React.createElement("option", { key: code, value: code }, name)))),
-         dispFlatItem("Dark mode", "Choose a lighter or darker appearance", "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z", React.createElement(Toggle, { on: settingsTheme === "dark", onChange: toggleSettingsTheme }))
+         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px" } },
+           settingsIcon("M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z", "var(--text)"),
+           React.createElement("div", { style: { flex: 1 } },
+             React.createElement("div", { style: { fontSize: 18, fontWeight: 800, lineHeight: 1.25, color: "var(--text)" } }, "Dark mode"),
+             React.createElement("div", { style: { fontSize: 15, color: "var(--muted)", marginTop: 3, lineHeight: 1.4 } }, "Choose a lighter or darker appearance")
+           ),
+           React.createElement(Toggle, { on: settingsTheme === "dark", onChange: toggleSettingsTheme })
+         )
        );
      } else {
        detailContent = React.createElement(React.Fragment, null,
@@ -16770,7 +16777,14 @@ function AccountRecoveryScreen({
       );
       categoryContent = React.createElement(React.Fragment, null,
         dispFlatRow("Language", "Choose the language used in Post", "M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4ZM15 5l3 3", React.createElement("select", { value: settingsLanguage, onChange: e => changeSettingsLanguage(e.target.value), style: { maxWidth: 132, padding: "8px 10px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--input-bg)", color: "var(--text)", fontSize: 13 } }, LANGUAGES.map(([code, name]) => React.createElement("option", { key: code, value: code }, name)))),
-        dispFlatRow("Dark mode", "Choose a lighter or darker appearance", "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z", React.createElement(Toggle, { on: settingsTheme === "dark", onChange: toggleSettingsTheme }))
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px" } },
+          settingsIcon("M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z", "var(--text)"),
+          React.createElement("span", { style: { flex: 1 } },
+            React.createElement("span", { style: { display: "block", fontSize: 18, fontWeight: 800, lineHeight: 1.25 } }, "Dark mode"),
+            React.createElement("span", { style: { display: "block", fontSize: 15, lineHeight: 1.35, color: "var(--muted)", marginTop: 3 } }, "Choose a lighter or darker appearance")
+          ),
+          React.createElement(Toggle, { on: settingsTheme === "dark", onChange: toggleSettingsTheme })
+        )
       );
     } else {
       categoryContent = React.createElement(React.Fragment, null,
