@@ -3955,7 +3955,8 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
         .finally(() => setNotifPostLoading(false));
     }
   }), tab === "helpcenter" && /*#__PURE__*/React.createElement(HelpCenterScreen, {
-    onBack: () => setTab("home")
+    onBack: () => setTab("home"),
+    onSignIn: () => setScreen("login")
   }), tab === "invite" && /*#__PURE__*/React.createElement(InviteFriendsScreen, {
     user: user,
     showToast: showToast,
@@ -14753,7 +14754,7 @@ function QuickMenuDropdown({
       flexShrink: 0
     }
   }, svg);
-  if (subScreen === 'helpcenter') return React.createElement(HelpCenterScreen, {onBack: function(){ setSubScreen(null); }});
+  if (subScreen === 'helpcenter') return React.createElement(HelpCenterScreen, {onBack: function(){ setSubScreen(null); }, onSignIn: onLoggedOut});
   if (subScreen === 'deactivate-account') {
     const _daHandle = (user.handle || user.username || "").replace(/^@/, "");
     const _daLetter = (user.avatar_letter || user.name || _daHandle || "?")[0].toUpperCase();
@@ -15751,6 +15752,7 @@ function AccountRecoveryScreen({
  function HelpCenterScreen(props) {
    var e = React.createElement;
    var onBack = props.onBack;
+   var onSignIn = props.onSignIn;
    var searchState = React.useState("");
    var search = searchState[0], setSearch = searchState[1];
    var expandedState = React.useState({});
@@ -15927,7 +15929,7 @@ function AccountRecoveryScreen({
             style:{ marginTop:28, marginRight:12, padding:"13px 24px", border:"2px solid #E7EDF0", borderRadius:28, background:"#fff", color:"#202124", fontSize:16, cursor:"pointer", fontFamily:"inherit" }
           }, "Contact Us"),
           e("button", {
-            onClick:function(){ setMenuOpen(false); onBack(); },
+            onClick:function(){ setMenuOpen(false); if(onSignIn){ onSignIn(); } else { onBack(); } },
             style:{ display:"block", marginTop:12, padding:"13px 24px", border:"2px solid #E7EDF0", borderRadius:28, background:"#fff", color:"#202124", fontSize:16, cursor:"pointer", fontFamily:"inherit" }
           }, "Sign in")
         )
