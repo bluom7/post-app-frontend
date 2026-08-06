@@ -15772,6 +15772,7 @@ function AccountRecoveryScreen({
 
    var categories = [
      { color:"#20B981", icon:"M12 3 3 8l9 5 9-5-9-5ZM3 12l9 5 9-5M3 16l9 5 9-5", title:"Getting Started", articles:[
+        ["Welcome to POST 🎉","Jaano POST community ke baare mein — yeh zaroor padhein!",["Pehla post karo","Profile set karo","POST explore karo","Doston ko invite karo"],"welcome"],
         ["Create your Post account","Set up your profile and choose a handle.",["Signup form does not open","Email or phone OTP is not arriving","Username is already taken","Account creation fails"]],
         ["Your first week on Post","A quick tour of posts, replies, and follows.",["I cannot find the home feed","Posts or replies are not loading","Following a person does not work","The first-week guide is incorrect"]],
         ["How the home feed works","Learn how Post organizes your home timeline.",["Posts are missing from my feed","Feed shows unwanted content","Feed is not refreshing","Feed order looks incorrect"]],
@@ -15879,7 +15880,7 @@ function AccountRecoveryScreen({
       }, 40);
     }
    function openArticle(category, article) {
-      setSelectedArticle({ category:category, title:article[0], summary:article[1], issues:article[2] || ["Other"] });
+      setSelectedArticle({ category:category, title:article[0], summary:article[1], issues:article[2] || ["Other"], special:article[3]||null });
       setReportType((article[2] && article[2][0]) || "Other");
      window.scrollTo(0, 0);
    }
@@ -15935,6 +15936,59 @@ function AccountRecoveryScreen({
         )
       );
     }
+
+   if (selectedArticle && selectedArticle.special === "welcome") {
+     var _shareWelcome = function(){
+       var txt = "\uD83C\uDF89 Welcome to POST!\n\nHi \uD83D\uDC4B,\n\nThank you for joining the POST community. We\u2019re excited to have you with us!\n\nYour support helps us build a better social platform where people can share ideas, connect with others, and express themselves freely.\n\n\u2728 Start by:\n\u2022 Creating your first post\n\u2022 Following people you like\n\u2022 Completing your profile\n\u2022 Inviting your friends to join POST\n\nIf you ever need help or have suggestions, we\u2019re always here for you.\n\nThank you for choosing POST. \uD83D\uDC99\n\n\u2014 Team POST";
+       if(navigator.share){ navigator.share({title:"Welcome to POST!",text:txt}).catch(function(){}); }
+       else if(navigator.clipboard){ navigator.clipboard.writeText(txt).then(function(){ alert("Message copied! Ab paste karke share karo \uD83D\uDE0A"); }); }
+       else { alert("Share: " + txt.slice(0,80) + "..."); }
+     };
+     return e("div",{style:{minHeight:"100vh",background:"var(--bg)",color:"var(--text)",overflowY:"auto"}},
+       e("div",{style:{position:"sticky",top:0,zIndex:4,background:"var(--nav-bg)",borderBottom:"1px solid var(--border)",padding:"13px 16px",display:"flex",alignItems:"center",gap:10}},
+         e("button",{onClick:function(){setSelectedArticle(null);},"aria-label":"Back",style:{background:"none",border:"none",cursor:"pointer",padding:4,color:"var(--text)",display:"flex",alignItems:"center"}},icon("M15 18 9 12l6-6","currentColor",24)),
+         e("div",{style:{flex:1}},e("div",{style:{fontSize:18,fontWeight:900,letterSpacing:-.3}},"Help Center"),e("div",{style:{fontSize:10,color:"var(--muted)",marginTop:1}},"POST \u00B7 BluOm Group Pvt. Limited")),
+         e("button",{onClick:_shareWelcome,"aria-label":"Share this message",title:"Share",style:{background:"none",border:"none",cursor:"pointer",padding:6,color:"var(--text)",display:"flex",alignItems:"center",gap:5}},
+           icon("M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13","currentColor",22),
+           e("span",{style:{fontSize:13,fontWeight:700}},"Share")
+         )
+       ),
+       e("div",{style:{maxWidth:600,margin:"0 auto",padding:"28px 18px 60px"}},
+         e("div",{style:{background:"linear-gradient(135deg,#1877F2 0%,#0C9486 100%)",borderRadius:20,padding:"32px 24px 28px",color:"#fff",marginBottom:24,boxShadow:"0 8px 32px rgba(24,119,242,.25)"}},
+           e("div",{style:{fontSize:36,marginBottom:8}},"\uD83C\uDF89"),
+           e("h1",{style:{fontSize:28,fontWeight:900,margin:"0 0 4px",letterSpacing:-.5}},"Welcome to POST!"),
+           e("div",{style:{fontSize:14,opacity:.85,marginTop:6}},"From Team POST \u2022 BluOm Group Pvt. Limited")
+         ),
+         e("div",{style:{background:"var(--card-bg)",borderRadius:16,padding:"24px 20px",boxShadow:"0 2px 12px rgba(0,0,0,.06)",lineHeight:1.8,fontSize:15,color:"var(--text)"}},
+           e("p",{style:{margin:"0 0 16px",fontSize:17}},e("strong",null,"Hi \uD83D\uDC4B,") ),
+           e("p",{style:{margin:"0 0 16px"}},"Thank you for joining the POST community. We\u2019re excited to have you with us!"),
+           e("p",{style:{margin:"0 0 20px"}},"Your support helps us build a better social platform where people can share ideas, connect with others, and express themselves freely."),
+           e("div",{style:{background:"var(--bg)",borderRadius:12,padding:"16px 18px",marginBottom:20}},
+             e("div",{style:{fontSize:14,fontWeight:800,letterSpacing:.5,color:"#1877F2",marginBottom:12}},"\u2728 START BY"),
+             [
+               ["📝","Apna pehla post karo"],
+               ["👥","Logon ko follow karo joh aapko pasand hain"],
+               ["✏️","Apna profile complete karo"],
+               ["🎉","Doston ko POST join karne ke liye invite karo"]
+             ].map(function(item,i){
+               return e("div",{key:i,style:{display:"flex",alignItems:"center",gap:12,padding:"9px 0",borderBottom:i<3?"1px solid var(--border)":"none"}},
+                 e("span",{style:{fontSize:20,minWidth:28,textAlign:"center"}},item[0]),
+                 e("span",{style:{fontSize:14,fontWeight:500}},item[1])
+               );
+             })
+           ),
+           e("p",{style:{margin:"0 0 16px"}},"If you ever need help or have suggestions, we\u2019re always here for you."),
+           e("p",{style:{margin:"0 0 0",fontWeight:700,fontSize:16}},"Thank you for choosing POST. \uD83D\uDC99"),
+           e("p",{style:{margin:"12px 0 0",color:"var(--muted)",fontSize:14}},"\u2014 Team POST")
+         ),
+         e("button",{onClick:_shareWelcome,style:{marginTop:22,width:"100%",padding:"15px",border:0,borderRadius:14,background:"#1877F2",color:"#fff",fontSize:16,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10}},
+           icon("M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13","#fff",20),
+           "Yeh message share karo"
+         ),
+         e("button",{onClick:function(){setSelectedArticle(null);},style:{marginTop:12,width:"100%",padding:"13px",border:"1px solid var(--border)",borderRadius:14,background:"transparent",color:"var(--text)",fontSize:15,fontWeight:700,cursor:"pointer"}},"Help Center par wapas jao")
+       )
+     );
+   }
 
    if (selectedArticle) {
      return e("div", { style:{ minHeight:"100vh", background:"var(--bg)", color:"var(--text)", overflowY:"auto" } },
