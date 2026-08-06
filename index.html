@@ -15864,6 +15864,20 @@ function AccountRecoveryScreen({
      });
    }
     function openMenuSection(section) {
+      if (section.title === "Using Post") {
+        var welcomeArticle = categories[0].articles[0];
+        setMenuOpen(false);
+        setSelectedArticle({
+          category:"Using Post",
+          title:welcomeArticle[0],
+          summary:welcomeArticle[1],
+          issues:welcomeArticle[2],
+          special:"welcome"
+        });
+        setReportType((welcomeArticle[2] && welcomeArticle[2][0]) || "Other");
+        window.scrollTo(0, 0);
+        return;
+      }
       var indexes = {};
       categories.forEach(function(category, index) {
         if (section.categories.indexOf(category.title) !== -1) indexes[index] = true;
@@ -15946,7 +15960,7 @@ function AccountRecoveryScreen({
      };
      return e("div",{style:{minHeight:"100vh",background:"var(--bg)",color:"var(--text)",overflowY:"auto"}},
        e("div",{style:{position:"sticky",top:0,zIndex:4,background:"var(--nav-bg)",borderBottom:"1px solid var(--border)",padding:"13px 16px",display:"flex",alignItems:"center",gap:10}},
-         e("button",{onClick:function(){setSelectedArticle(null);},"aria-label":"Back",style:{background:"none",border:"none",cursor:"pointer",padding:4,color:"var(--text)",display:"flex",alignItems:"center"}},icon("M15 18 9 12l6-6","currentColor",24)),
+          e("button",{onClick:function(){setSelectedArticle(null);setMenuOpen(true);},"aria-label":"Back to Help Center menu",style:{background:"none",border:"none",cursor:"pointer",padding:4,color:"var(--text)",display:"flex",alignItems:"center"}},icon("M15 18 9 12l6-6","currentColor",24)),
          e("div",{style:{flex:1}},e("div",{style:{fontSize:18,fontWeight:900,letterSpacing:-.3}},"Help Center"),e("div",{style:{fontSize:10,color:"var(--muted)",marginTop:1}},"POST \u00B7 BluOm Group Pvt. Limited")),
          e("button",{onClick:_shareWelcome,"aria-label":"Share this message",title:"Share",style:{background:"none",border:"none",cursor:"pointer",padding:6,color:"var(--text)",display:"flex",alignItems:"center",gap:5}},
            icon("M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13","currentColor",22),
@@ -15985,7 +15999,7 @@ function AccountRecoveryScreen({
            icon("M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13","#fff",20),
            "Yeh message share karo"
          ),
-         e("button",{onClick:function(){setSelectedArticle(null);},style:{marginTop:12,width:"100%",padding:"13px",border:"1px solid var(--border)",borderRadius:14,background:"transparent",color:"var(--text)",fontSize:15,fontWeight:700,cursor:"pointer"}},"Help Center par wapas jao")
+          e("button",{onClick:function(){setSelectedArticle(null);setMenuOpen(true);},style:{marginTop:12,width:"100%",padding:"13px",border:"1px solid var(--border)",borderRadius:14,background:"transparent",color:"var(--text)",fontSize:15,fontWeight:700,cursor:"pointer"}},"Help Center par wapas jao")
        )
      );
    }
