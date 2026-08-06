@@ -14965,7 +14965,7 @@ function QuickMenuDropdown({
          privFlatItem("Report and safety", "Submit a report or visit the Safety Center", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01", () => { setMyReports([]); setMyReportsLoading(true); api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false)); setSubScreen("privacy-report"); })
        );
      } else if (settingsCategory === "notifications") {
-       const notifFlatItem = (title, desc, iconPath, on, onChange) => React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px", borderBottom: "1px solid var(--border)" } },
+       const notifFlatItem = (title, desc, iconPath, on, onChange) => React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px" } },
          settingsIcon(iconPath, "var(--text)"),
          React.createElement("div", { style: { flex: 1 } },
            React.createElement("div", { style: { fontSize: 16, fontWeight: 700, color: "var(--text)", lineHeight: 1.25 } }, title),
@@ -17281,7 +17281,7 @@ function AccountRecoveryScreen({
         privFlatItem2("Report and safety", "Submit a report or visit the Safety Center", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01", () => { setMyReports([]); setMyReportsLoading(true); api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false)); setSubScreen("privacy-report"); })
       );
     } else if (settingsCategory === "notifications") {
-      const notifFlatRow = (title, desc, iconPath, on, onChange) => React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px", borderBottom: "1px solid var(--border)" } },
+      const notifFlatRow = (title, desc, iconPath, on, onChange) => React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px" } },
         settingsIcon(iconPath, "var(--text)"),
         React.createElement("span", { style: { flex: 1 } },
           React.createElement("span", { style: { display: "block", fontSize: 18, fontWeight: 800, lineHeight: 1.25 } }, title),
