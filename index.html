@@ -3052,13 +3052,14 @@ function AccountSwitcherSheet({open, onClose, user, onCreateAccount, onAddAccoun
   );
 }
 
-function DrawerPanel({open, onClose, user, onNavigate, isDark, onToggleDark, onOpenFollowList, onOpenAccountSwitcher}) {
+function DrawerPanel({open, onClose, user, onNavigate, isDark, onToggleDark, onOpenFollowList, onOpenAccountSwitcher, skipAnimation}) {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
     if (open) { setTimeout(() => setMounted(true), 10); }
     else { setMounted(false); }
   }, [open]);
-  if (!open && !mounted) return null;
+  if (!open && !mounted && !skipAnimation) return null;
+  if (!open && skipAnimation) return null;
 
   const name = (user && user.name) || "User";
   const handle = (user && (user.handle || user.username)) ? "@" + (user.handle || user.username).replace(/^@/,"") : "";
@@ -3069,7 +3070,7 @@ function DrawerPanel({open, onClose, user, onNavigate, isDark, onToggleDark, onO
   const menuItem = (icon, label, onClick, badge, primary) =>
     React.createElement("button", {
       key: label,
-      onClick: () => { onClose(); setTimeout(() => onClick(), 180); },
+      onClick: () => { onClick(); onClose(); },
       style: {
         display:"flex", alignItems:"center", gap:18, width:"100%",
         background:"none", border:"none", cursor:"pointer",
@@ -3123,8 +3124,8 @@ function DrawerPanel({open, onClose, user, onNavigate, isDark, onToggleDark, onO
       style:{
         position:"relative", width:"82%", maxWidth:320, height:"100%",
         background:"var(--bg)", overflowY:"auto",
-        transform: mounted ? "translateX(0)" : "translateX(100%)",
-        transition:"transform 0.25s cubic-bezier(0.4,0,0.2,1)",
+        transform: (mounted && !skipAnimation) || (mounted && !open) ? "translateX(0)" : "translateX(100%)",
+        transition: skipAnimation ? "none" : "transform 0.25s cubic-bezier(0.4,0,0.2,1)",
         display:"flex", flexDirection:"column",
         marginLeft:"auto"
       }
@@ -3981,6 +3982,7 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
     }
   }), /*#__PURE__*/React.createElement(DrawerPanel, {
     open: drawerOpen,
+    skipAnimation: isSubPage,
     onClose: () => setDrawerOpen(false),
     user: user,
     isDark: isDarkState,
