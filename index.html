@@ -15761,6 +15761,8 @@ function AccountRecoveryScreen({
    var selectedArticle = selectedState[0], setSelectedArticle = selectedState[1];
    var menuState = React.useState(false);
    var menuOpen = menuState[0], setMenuOpen = menuState[1];
+    var menuSectionState = React.useState(null);
+    var menuSection = menuSectionState[0], setMenuSection = menuSectionState[1];
    var showAllState = React.useState(null);
    var showAll = showAllState[0], setShowAll = showAllState[1];
    var reportState = React.useState(false);
@@ -15772,7 +15774,6 @@ function AccountRecoveryScreen({
 
    var categories = [
      { color:"#20B981", icon:"M12 3 3 8l9 5 9-5-9-5ZM3 12l9 5 9-5M3 16l9 5 9-5", title:"Getting Started", articles:[
-        ["Welcome to POST 🎉","Jaano POST community ke baare mein — yeh zaroor padhein!",["Pehla post karo","Profile set karo","POST explore karo","Doston ko invite karo"],"welcome"],
         ["Create your Post account","Set up your profile and choose a handle.",["Signup form does not open","Email or phone OTP is not arriving","Username is already taken","Account creation fails"]],
         ["Your first week on Post","A quick tour of posts, replies, and follows.",["I cannot find the home feed","Posts or replies are not loading","Following a person does not work","The first-week guide is incorrect"]],
         ["How the home feed works","Learn how Post organizes your home timeline.",["Posts are missing from my feed","Feed shows unwanted content","Feed is not refreshing","Feed order looks incorrect"]],
@@ -15872,12 +15873,8 @@ function AccountRecoveryScreen({
       setShowAll(null);
       setSearch("");
       setMenuOpen(false);
+       setMenuSection(section);
       setSelectedArticle(null);
-      window.setTimeout(function() {
-        var firstIndex = Object.keys(indexes)[0];
-        var target = document.getElementById("post-help-category-" + firstIndex);
-        if (target && target.scrollIntoView) target.scrollIntoView({ behavior:"smooth", block:"start" });
-      }, 40);
     }
    function openArticle(category, article) {
       setSelectedArticle({ category:category, title:article[0], summary:article[1], issues:article[2] || ["Other"], special:article[3]||null });
@@ -15937,7 +15934,53 @@ function AccountRecoveryScreen({
       );
     }
 
-   if (selectedArticle && selectedArticle.special === "welcome") {
+    if (menuSection) {
+      var sectionCategories = categories.filter(function(category) {
+        return menuSection.categories.indexOf(category.title) !== -1;
+      });
+      return e("div", { style:{ minHeight:"100vh", background:"#F3F7FA", color:"#111", overflowY:"auto" } },
+        e("header", { style:{ position:"sticky", top:0, zIndex:10, background:"#fff", borderBottom:"1px solid #E5E7EB", display:"flex", alignItems:"center", gap:12, padding:"14px 18px" } },
+          e("button", {
+            onClick:function(){ setMenuSection(null); setMenuOpen(true); },
+            "aria-label":"Back to Help Center menu",
+            style:{ width:34, height:34, display:"flex", alignItems:"center", justifyContent:"center", border:0, borderRadius:17, background:"transparent", cursor:"pointer", padding:0, color:"#111" }
+          }, icon("M15 18 9 12l6-6", "#111", 24)),
+          e("div", { style:{ fontSize:20, fontWeight:900, flex:1, letterSpacing:-.5 } }, menuSection.title)
+        ),
+        e("main", { style:{ maxWidth:820, margin:"0 auto", padding:"30px 16px 60px" } },
+          e("div", { style:{ fontSize:12, letterSpacing:1.8, fontWeight:900, color:"#74808A", margin:"0 0 7px 2px" } }, "HELP CENTER"),
+          e("h1", { style:{ fontSize:29, margin:"0 0 22px", letterSpacing:-.6 } }, menuSection.title),
+          sectionCategories.map(function(category) {
+            var categoryIndex = categories.indexOf(category);
+            var isOpen = !!expanded[categoryIndex];
+            var shown = showAll === categoryIndex ? category.articles : category.articles.slice(0, 3);
+            return e("section", { id:"post-help-category-"+categoryIndex, key:category.title, style:{ background:"#fff", border:"1px solid #D9E0E5", borderRadius:15, overflow:"hidden", marginBottom:12, boxShadow:"0 1px 1px rgba(10,30,50,.03)" } },
+              e("button", { onClick:function(){ toggleCategory(categoryIndex); }, "aria-expanded":isOpen, style:{ width:"100%", display:"flex", alignItems:"center", gap:12, padding:"16px", border:0, background:"#fff", cursor:"pointer", textAlign:"left", color:"#111" } },
+                e("span", { style:{ width:42, height:42, borderRadius:12, background:category.color+"20", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 } }, icon(category.icon, category.color, 21)),
+                e("span", { style:{ flex:1, fontWeight:850, fontSize:15 } }, category.title),
+                icon(isOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6", "#687078", 18)
+              ),
+              isOpen ? e("div", { style:{ borderTop:"1px solid #E3E7EA" } },
+                shown.map(function(article, articleIndex) {
+                  return e("button", { key:article[0], onClick:function(){ openArticle(category.title, article); }, style:{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"15px 16px", border:0, borderBottom:articleIndex < shown.length - 1 ? "1px solid #E6EAED" : "none", background:"#fff", cursor:"pointer", textAlign:"left" } },
+                    e("span", { style:{ flex:1 } },
+                      e("span", { style:{ display:"block", fontSize:16, lineHeight:1.35, color:"#087EBB", fontWeight:500 } }, article[0]),
+                      e("span", { style:{ display:"block", fontSize:12, color:"#75818A", marginTop:4, lineHeight:1.35 } }, article[1])
+                    ),
+                    icon("M9 18l6-6-6-6", "#8A949B", 17)
+                  );
+                }),
+                e("div", { style:{ padding:"12px 16px 16px" } },
+                  e("button", { onClick:function(ev){ ev.stopPropagation(); setShowAll(showAll === categoryIndex ? null : categoryIndex); }, style:{ border:"1px solid #111", background:"#fff", borderRadius:22, padding:"10px 16px", fontWeight:800, cursor:"pointer", fontSize:13, color:"#111" } }, showAll === categoryIndex ? "Show fewer articles" : "See all " + category.articles.length + " articles")
+                )
+              ) : null
+            );
+          })
+        )
+      );
+    }
+
+    if (selectedArticle && selectedArticle.special === "welcome") {
      var _shareWelcome = function(){
        var txt = "\uD83C\uDF89 Welcome to POST!\n\nHi \uD83D\uDC4B,\n\nThank you for joining the POST community. We\u2019re excited to have you with us!\n\nYour support helps us build a better social platform where people can share ideas, connect with others, and express themselves freely.\n\n\u2728 Start by:\n\u2022 Creating your first post\n\u2022 Following people you like\n\u2022 Completing your profile\n\u2022 Inviting your friends to join POST\n\nIf you ever need help or have suggestions, we\u2019re always here for you.\n\nThank you for choosing POST. \uD83D\uDC99\n\n\u2014 Team POST";
        if(navigator.share){ navigator.share({title:"Welcome to POST!",text:txt}).catch(function(){}); }
