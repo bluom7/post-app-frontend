@@ -15779,6 +15779,12 @@ function AccountRecoveryScreen({
    var safetyExpanded = safetyExpandedState[0], setSafetyExpanded = safetyExpandedState[1];
    var safetyArticleState = React.useState(null);
    var safetyArticle = safetyArticleState[0], setSafetyArticle = safetyArticleState[1];
+    var rulesOpenState = React.useState(false);
+    var rulesOpen = rulesOpenState[0], setRulesOpen = rulesOpenState[1];
+    var rulesExpandedState = React.useState({});
+    var rulesExpanded = rulesExpandedState[0], setRulesExpanded = rulesExpandedState[1];
+    var rulesArticleState = React.useState(null);
+    var rulesArticle = rulesArticleState[0], setRulesArticle = rulesArticleState[1];
 
    var categories = [
      { color:"#20B981", icon:"M12 3 3 8l9 5 9-5-9-5ZM3 12l9 5 9-5M3 16l9 5 9-5", title:"Getting Started", articles:[
@@ -15900,6 +15906,14 @@ function AccountRecoveryScreen({
         setSafetyOpen(true);
         setSafetyArticle(null);
         setSafetyExpanded({});
+        setMenuOpen(false);
+        window.scrollTo(0, 0);
+        return;
+      }
+      if (section.title === "Rules and policies") {
+        setRulesOpen(true);
+        setRulesArticle(null);
+        setRulesExpanded({});
         setMenuOpen(false);
         window.scrollTo(0, 0);
         return;
@@ -16369,6 +16383,389 @@ function AccountRecoveryScreen({
       }
     ];
 
+    var rulesSections = [
+      {
+        key:"general",
+        title:"General",
+        intro:"Read the rules that help keep conversation on POST open, useful, and safe.",
+        articles:[
+          {
+            title:"The POST Rules",
+            summary:"POST is a place for public conversation where people can share ideas and connect freely.",
+            blocks:[
+              {heading:"Our purpose", paragraphs:[
+                "POST exists to serve public conversation. People should be able to express themselves, discover different points of view, and participate without being threatened or targeted.",
+                "These rules explain the behavior and content that is not allowed on POST. They apply to posts, replies, profiles, messages, communities, and other features."
+              ]},
+              {heading:"How we enforce the rules", paragraphs:[
+                "We may limit the reach of content, remove content, restrict features, suspend an account, or permanently remove an account when we find a serious or repeated violation.",
+                "We consider the context, severity, and history of an incident. If you believe an action was made in error, use the appeal option shown in the app or contact POST Support."
+              ]}
+            ]
+          },
+          {
+            title:"Information for Parents and Minor Users",
+            summary:"Safety guidance for younger people and the adults who support them on POST.",
+            blocks:[
+              {heading:"Stay in control", bullets:[
+                "Use a strong password and never share it, even with someone claiming to be POST Support.",
+                "Keep personal details such as your address, school, phone number, and live location private.",
+                "Block and report anyone who makes you uncomfortable, threatens you, or asks for private images.",
+                "Tell a trusted adult if you see threatening, exploitative, or dangerous content."
+              ]},
+              {heading:"When something feels urgent", paragraphs:[
+                "If someone is in immediate danger, contact local emergency services or a trusted adult first. POST reports help us review content, but they do not replace emergency help."
+              ]}
+            ]
+          },
+          {
+            title:"Username squatting policy",
+            summary:"Usernames should represent people, organizations, or communities honestly and not be held only to prevent others from using them.",
+            blocks:[
+              {heading:"What is not allowed", bullets:[
+                "Registering a username only to sell, transfer, or demand payment for it.",
+                "Using a username to impersonate a person, brand, or organization.",
+                "Creating multiple accounts to reserve many names without a genuine use.",
+                "Using names or marks in a way that is likely to confuse people."
+              ]},
+              {heading:"Report a username", paragraphs:[
+                "If a username is impersonating you or your organization, report the account from its profile and include the relevant details. We may request information that helps confirm the identity or rights involved."
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key:"platform-integrity-authenticity",
+        title:"Platform integrity and authenticity",
+        intro:"Policies that protect the health of public conversation by addressing spam, manipulation, and deceptive behavior.",
+        articles:[
+          {
+            title:"Platform manipulation and spam",
+            summary:"Do not use POST to artificially amplify, suppress, or disrupt information or people’s experience.",
+            blocks:[
+              {heading:"Examples of prohibited behavior", bullets:[
+                "Coordinating fake engagement, including likes, follows, replies, or reposts.",
+                "Using automation to create accounts, publish repeated content, or manipulate trends.",
+                "Posting the same or substantially similar material across many accounts.",
+                "Using misleading links, fake rewards, or mass unsolicited messages to drive activity."
+              ]},
+              {heading:"What happens next", paragraphs:[
+                "We may remove spam, limit distribution, restrict features, or suspend accounts that manipulate the platform. Do not reply to suspicious messages; report and block them instead."
+              ]}
+            ]
+          },
+          {
+            title:"Civic integrity",
+            summary:"POST must not be used to manipulate or interfere with elections or other civic processes.",
+            blocks:[
+              {heading:"Civic information", paragraphs:[
+                "Do not post or share content that intentionally misleads people about when, where, or how to participate in a civic process, including voting, registration, or public services.",
+                "Do not coordinate campaigns designed to suppress participation, intimidate voters, or impersonate election officials."
+              ]},
+              {heading:"Report a concern", paragraphs:[
+                "Report misleading civic content from the post options menu. Include the specific claim and the information that makes it misleading so the team can review it accurately."
+              ]}
+            ]
+          },
+          {
+            title:"Misleading and deceptive identities",
+            summary:"Do not impersonate individuals, groups, or organizations in a way that deceives or confuses others.",
+            blocks:[
+              {heading:"Identity rules", bullets:[
+                "Do not copy another person’s name, profile photo, or biography to mislead people.",
+                "Do not claim to represent an organization without authorization.",
+                "Parody and commentary should be clearly described so people are not confused about who is speaking.",
+                "Do not use a fake identity to evade enforcement or harm another person."
+              ]},
+              {heading:"If someone is impersonating you", paragraphs:[
+                "Open the profile, select Report, choose impersonation, and provide the real account or organization details when requested."
+              ]}
+            ]
+          },
+          {
+            title:"Synthetic and manipulated media",
+            summary:"Do not deceptively share synthetic or edited media that is likely to cause harm.",
+            blocks:[
+              {heading:"What is not allowed", paragraphs:[
+                "Do not use edited audio, images, or video to falsely depict a real person saying or doing something when the result could cause serious harm, confusion, or harassment.",
+                "Context matters. Clearly labeled parody, commentary, and creative work may be allowed when it is not presented as authentic and is not used to deceive or harm people."
+              ]},
+              {heading:"How to report it", paragraphs:[
+                "Report the post and explain what has been changed, who appears in the media, and why the presentation is misleading. Avoid reposting harmful material while reporting it."
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key:"safety-cybercrime",
+        title:"Safety and cybercrime",
+        intro:"Policies against abuse, harassment, violence, and criminal activity on POST.",
+        articles:[
+          {
+            title:"Violent content",
+            summary:"Graphic media may be restricted, and threats, incitement, glorification, or expressions of desire for violence are not allowed.",
+            blocks:[
+              {heading:"Violence", paragraphs:[
+                "You may not threaten, encourage, glorify, or celebrate violence against a person or group. Content that expresses a desire for real-world violence may be removed.",
+                "Graphic media may only be shared where it is properly labeled, not prominently displayed, and not excessively graphic. We may remove media that depicts extreme cruelty or exploitation."
+              ]},
+              {heading:"Report an urgent threat", paragraphs:[
+                "If a post describes a credible and immediate threat, report it from the post options and contact local emergency services when someone may be in immediate danger."
+              ]}
+            ]
+          },
+          {
+            title:"Violent and hateful entities",
+            summary:"You cannot affiliate with or promote the activities of violent or hateful entities.",
+            blocks:[
+              {heading:"Prohibited support", bullets:[
+                "Do not praise or promote violent extremist or terrorist organizations.",
+                "Do not recruit for, fund, or provide operational support to violent groups.",
+                "Do not share propaganda or instructions intended to help a violent organization.",
+                "Do not target people with content that encourages violence because of who they are."
+              ]}
+            ]
+          },
+          {
+            title:"Child safety",
+            summary:"POST has zero tolerance for child sexual exploitation and content that normalizes abuse of children.",
+            blocks:[
+              {heading:"Protecting children", paragraphs:[
+                "We remove content that depicts, promotes, requests, or facilitates child sexual exploitation. Attempts to groom, sexualize, or contact children for exploitation are also prohibited.",
+                "Do not download, save, or share suspected abusive material. Report it directly through POST and provide the account or post link."
+              ]},
+              {heading:"Immediate danger", paragraphs:[
+                "If a child may be in immediate danger, contact local emergency services or the relevant child protection authority. Do not confront a suspected offender yourself."
+              ]}
+            ]
+          },
+          {
+            title:"Abuse and harassment",
+            summary:"Do not share abusive content, engage in targeted harassment, or incite other people to harass someone.",
+            blocks:[
+              {heading:"Not allowed", bullets:[
+                "Repeated unwanted contact, threats, or targeted insults.",
+                "Encouraging others to dogpile, threaten, or expose someone.",
+                "Doxxing or sharing private information without permission.",
+                "Harassment directed at a person because of a protected characteristic."
+              ]},
+              {heading:"Report and protect yourself", paragraphs:[
+                "Block the account, save the post link if it is safe to do so, and submit a report with clear details. Do not share your password or one-time codes with anyone offering help."
+              ]}
+            ]
+          },
+          {
+            title:"Hateful conduct",
+            summary:"You may not attack people on the basis of race, ethnicity, national origin, caste, sexual orientation, gender, religion, age, disability, or serious disease.",
+            blocks:[
+              {heading:"Hateful conduct", paragraphs:[
+                "POST does not allow slurs, dehumanizing comparisons, threats, or calls for exclusion or violence against people because of a protected characteristic.",
+                "Discussion of difficult topics, news reporting, and criticism may be allowed when it does not target people with hateful abuse or encourage harm."
+              ]}
+            ]
+          },
+          {
+            title:"Suicide and self-harm",
+            summary:"Do not promote or encourage suicide or self-harm.",
+            blocks:[
+              {heading:"Supportive conversation", paragraphs:[
+                "Do not provide instructions, celebrate attempts, encourage self-harm, or share graphic material that could trigger someone. Posts that seek help should receive supportive, non-judgmental responses.",
+                "If you believe someone is in immediate danger, contact local emergency services or a trusted person who can reach them."
+              ]}
+            ]
+          },
+          {
+            title:"Illegal or regulated goods and services",
+            summary:"Do not use POST to sell, buy, or facilitate transactions involving illegal or regulated goods or services.",
+            blocks:[
+              {heading:"Examples", bullets:[
+                "Illegal drugs, weapons, stolen goods, or instructions for making them.",
+                "Fraud, identity theft, hacking services, or access to compromised accounts.",
+                "Offers that require payment for guaranteed followers, verification, or account recovery.",
+                "Transactions that violate applicable local laws or safety requirements."
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key:"intellectual-property",
+        title:"Intellectual property",
+        intro:"Respect the intellectual property rights of people and organizations when sharing on POST.",
+        articles:[
+          {
+            title:"Copyright and trademark",
+            summary:"Do not use someone else’s copyrighted work or trademark in a way that violates their rights or confuses people.",
+            blocks:[
+              {heading:"Copyright", paragraphs:[
+                "Only post content you created, content you have permission to use, or content covered by an applicable legal exception. Repeated copyright infringement may lead to account restrictions.",
+                "Rights holders can report allegedly infringing content with enough information for POST to identify the material and the rights involved."
+              ]},
+              {heading:"Trademarks", paragraphs:[
+                "Do not use a trademark to impersonate a business or make people believe you are officially connected to it. Commentary, reviews, and fan activity should be clear and not misleading."
+              ]}
+            ]
+          },
+          {
+            title:"Third-party advertising in video content",
+            summary:"Do not display third-party advertising in video content through POST without prior consent.",
+            blocks:[
+              {heading:"Video advertising", paragraphs:[
+                "You may not submit, post, or display video content on or through POST that includes third-party advertising, such as pre-roll video ads or sponsorship graphics, without our prior consent.",
+                "If you are working with a brand or sponsor, contact POST Support before publishing the campaign so the required review can be completed."
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key:"platform-use-guidelines",
+        title:"Platform Use Guidelines",
+        intro:"Information about using POST features responsibly and keeping the platform reliable for everyone.",
+        articles:[
+          {
+            title:"Using POST features",
+            summary:"Use posts, replies, messages, communities, and other features for their intended purpose.",
+            blocks:[
+              {heading:"Good platform use", bullets:[
+                "Keep posts and replies relevant to the conversation.",
+                "Respect people’s boundaries and do not send repeated unwanted messages.",
+                "Use reporting and blocking tools instead of retaliating against another account.",
+                "Keep your account details accurate enough for support and recovery."
+              ]}
+            ]
+          },
+          {
+            title:"Automation and third-party access",
+            summary:"Only use tools and integrations that are authorized and do not put accounts or the platform at risk.",
+            blocks:[
+              {heading:"Account access", paragraphs:[
+                "Never share your password, one-time code, session token, or private account data with an untrusted service. Review connected access and revoke anything you do not recognize.",
+                "Unauthorized scraping, automated account creation, and tools that manipulate engagement may be restricted or removed."
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key:"account-settings",
+        title:"Account Settings",
+        intro:"Articles and policies that assist users in setting up their POST account and settings.",
+        articles:[
+          {
+            title:"Keep your account information accurate",
+            summary:"Your email, phone number, username, and profile details help you use and recover your account.",
+            blocks:[
+              {heading:"Review your settings", steps:[
+                "Open Settings and Privacy from your POST profile.",
+                "Review your email address and phone number.",
+                "Check your username, profile name, and profile photo.",
+                "Save changes only from the official POST app or website."
+              ]},
+              {heading:"Protect your details", paragraphs:[
+                "POST Support will not ask for your password or one-time code. If someone asks for these details, report the account and change your password."
+              ]}
+            ]
+          },
+          {
+            title:"Account actions and appeals",
+            summary:"Understand what to do when content is removed or your account is restricted.",
+            blocks:[
+              {heading:"If your account is restricted", paragraphs:[
+                "Read the notice shown in POST and follow the appeal instructions if you believe the action is incorrect. Include the username, affected content, and a short explanation.",
+                "Do not create replacement accounts to evade a restriction. That can make the enforcement action more serious."
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key:"law-enforcement",
+        title:"Law Enforcement Guidelines",
+        intro:"Information for law enforcement requests relating to POST accounts and content.",
+        articles:[
+          {
+            title:"Requests for account information",
+            summary:"Law enforcement requests should come through the appropriate legal process and official channels.",
+            blocks:[
+              {heading:"How requests are reviewed", paragraphs:[
+                "POST reviews valid requests for account information under applicable law. Requests should identify the relevant account, the information sought, the legal authority, and the requested time period.",
+                "We may notify users about requests when legally permitted, except where notice is prohibited or an emergency makes notice inappropriate."
+              ]}
+            ]
+          },
+          {
+            title:"Emergency requests",
+            summary:"Emergency disclosures may be considered when there is a genuine risk of death or serious physical harm.",
+            blocks:[
+              {heading:"Emergency information", paragraphs:[
+                "Emergency requests should explain the danger, identify the person at risk, identify the account or content, and explain why the information is needed immediately.",
+                "A request does not guarantee disclosure. POST evaluates each request and may preserve information when a valid preservation request is received."
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key:"research-experiments",
+        title:"Research and Experiments",
+        intro:"Learn how POST conducts research and experiments on the platform.",
+        articles:[
+          {
+            title:"How POST improves the experience",
+            summary:"POST may evaluate features and product changes to understand what helps people connect and participate.",
+            blocks:[
+              {heading:"Responsible testing", paragraphs:[
+                "Experiments are designed to improve reliability, safety, accessibility, and the usefulness of the service. We use safeguards intended to limit unnecessary impact on people.",
+                "Some tests may change how content or features appear for a limited period. We review results before making a wider product change."
+              ]}
+            ]
+          },
+          {
+            title:"Research data and privacy",
+            summary:"Research should use appropriate safeguards for account and activity information.",
+            blocks:[
+              {heading:"Data protection", paragraphs:[
+                "Access to research data is limited to authorized work and should follow applicable privacy and security requirements. Personal information should not be used for unrelated purposes.",
+                "If you have a question about a product experiment, contact POST Support with the screen or feature you saw."
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key:"country-specific-resources",
+        title:"Country-specific resources",
+        intro:"Articles that describe how POST supports applicable local laws and users in different regions.",
+        articles:[
+          {
+            title:"Local law and POST",
+            summary:"POST works to provide a service that respects applicable laws while supporting public conversation.",
+            blocks:[
+              {heading:"Regional requirements", paragraphs:[
+                "Some features, notices, or content restrictions may differ depending on local law and the country where a user is located.",
+                "If local law requires a restriction, POST may limit access in that region. We aim to communicate meaningful restrictions and provide an appeal path where available."
+              ]}
+            ]
+          },
+          {
+            title:"Request help in your country",
+            summary:"Use POST Support to ask about a local notice, report, or account issue.",
+            blocks:[
+              {heading:"What to include", bullets:[
+                "Your POST username and country or region.",
+                "The feature, post, or notice you are asking about.",
+                "The date and time you saw the issue.",
+                "A screenshot or link when it is safe and appropriate to share."
+              ]}
+            ]
+          }
+        ]
+      }
+    ];
+
     function SafetyArticle(_props) {
       var sec = _props.sec;
       var article = _props.article;
@@ -16406,6 +16803,48 @@ function AccountRecoveryScreen({
           e("div", { style:{ borderTop:"1px solid #D7DDE1", marginTop:30, paddingTop:22 } },
             e("div", { style:{ fontSize:13, color:"#687078", marginBottom:10 } }, "Need more help?"),
             e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Help%3A%20" + encodeURIComponent(article.title), style:{ display:"inline-block", border:"1px solid #111", borderRadius:24, padding:"11px 20px", background:"#fff", color:"#111", fontSize:14, fontWeight:800, cursor:"pointer", textDecoration:"none" } }, "Contact Post Support")
+          )
+        )
+      );
+    }
+
+    function RulesArticle(_props) {
+      var sec = _props.sec;
+      var article = _props.article;
+      return e("div", { style:{ minHeight:"100vh", background:"#fff", color:"#111", overflowY:"auto" } },
+        e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"#fff", borderBottom:"1px solid #E5E7EB", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
+          e("button", { onClick:function(){ setRulesArticle(null); }, "aria-label":"Back to Rules and policies", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"#111", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","#111",24)),
+          e("div", { style:{ flex:1 } },
+            e("div", { style:{ fontSize:18, fontWeight:900, letterSpacing:-.3 } }, "Help Center"),
+            e("div", { style:{ fontSize:11, color:"#687078", marginTop:2 } }, "POST · BluOm Group Pvt. Limited")
+          ),
+          e("button", { onClick:function(){ setRulesArticle(null); }, "aria-label":"Open rules topics", style:{ background:"none", border:0, cursor:"pointer", padding:6, color:"#111", display:"flex", alignItems:"center" } }, icon("M4 6h16M4 12h16M4 18h16","#111",23))
+        ),
+        e("main", { style:{ maxWidth:760, margin:"0 auto", padding:"30px 20px 64px" } },
+          e("div", { style:{ fontSize:12, fontWeight:900, letterSpacing:1.5, textTransform:"uppercase", color:"#087EBB", marginBottom:12 } }, sec.title),
+          e("h1", { style:{ fontSize:"clamp(30px,8vw,46px)", lineHeight:1.08, letterSpacing:-1, margin:"0 0 16px", fontWeight:900 } }, article.title),
+          e("p", { style:{ fontSize:17, lineHeight:1.65, color:"#4C5660", margin:"0 0 28px" } }, article.summary),
+          article.blocks.map(function(block, blockIndex) {
+            return e("section", { key:blockIndex, style:{ borderTop:"1px solid #AEB7BE", paddingTop:20, marginTop:blockIndex ? 26 : 0 } },
+              e("h2", { style:{ fontSize:24, lineHeight:1.2, margin:"0 0 16px", letterSpacing:-.4, fontWeight:900 } }, block.heading),
+              block.paragraphs ? block.paragraphs.map(function(text, index) {
+                return e("p", { key:index, style:{ fontSize:17, lineHeight:1.65, margin:"0 0 16px" } }, text);
+              }) : null,
+              block.bullets ? e("ul", { style:{ margin:0, padding:"0 0 0 22px" } },
+                block.bullets.map(function(text, index) {
+                  return e("li", { key:index, style:{ fontSize:17, lineHeight:1.6, marginBottom:12, paddingLeft:3 } }, text);
+                })
+              ) : null,
+              block.steps ? e("ol", { style:{ margin:0, padding:"0 0 0 24px" } },
+                block.steps.map(function(text, index) {
+                  return e("li", { key:index, style:{ fontSize:17, lineHeight:1.6, marginBottom:12, paddingLeft:3 } }, text);
+                })
+              ) : null
+            );
+          }),
+          e("div", { style:{ borderTop:"1px solid #D7DDE1", marginTop:30, paddingTop:22 } },
+            e("div", { style:{ fontSize:13, color:"#687078", marginBottom:10 } }, "Need more help?"),
+            e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Rules%20Help%3A%20" + encodeURIComponent(article.title), style:{ display:"inline-block", border:"1px solid #111", borderRadius:24, padding:"11px 20px", background:"#fff", color:"#111", fontSize:14, fontWeight:800, cursor:"pointer", textDecoration:"none" } }, "Contact Post Support")
           )
         )
       );
@@ -16452,6 +16891,59 @@ function AccountRecoveryScreen({
     if (safetyOpen && safetyArticle) {
       return e(SafetyArticle, { sec: safetySections.filter(function(sec){ return sec.key === safetyArticle.sectionKey; })[0] || safetySections[0], article:safetyArticle.article });
     }
+
+     if (rulesOpen && rulesArticle) {
+       return e(RulesArticle, { sec: rulesSections.filter(function(sec){ return sec.key === rulesArticle.sectionKey; })[0] || rulesSections[0], article:rulesArticle.article });
+     }
+
+     if (rulesOpen) {
+       return e("div", { style:{ minHeight:"100vh", background:"#fff", color:"#111", overflowY:"auto" } },
+         e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"#fff", borderBottom:"1px solid #E5E7EB", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
+           e("button", { onClick:function(){ setRulesOpen(false); setMenuOpen(true); }, "aria-label":"Back to Help Center", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"#111", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","#111",24)),
+           e("div", { style:{ flex:1 } },
+             e("div", { style:{ fontSize:18, fontWeight:900, letterSpacing:-.3 } }, "Help Center"),
+             e("div", { style:{ fontSize:11, color:"#687078", marginTop:2 } }, "POST · BluOm Group Pvt. Limited")
+           ),
+           e("button", { onClick:function(){ setRulesOpen(false); setMenuOpen(true); }, "aria-label":"Open Help Center menu", style:{ background:"none", border:0, cursor:"pointer", padding:6, color:"#111", display:"flex", alignItems:"center" } }, icon("M4 6h16M4 12h16M4 18h16","#111",23))
+         ),
+         e("main", { style:{ padding:"34px 28px 60px", maxWidth:600, margin:"0 auto" } },
+           e("div", { style:{ display:"flex", alignItems:"center", gap:12, marginBottom:18 } },
+             e("span", { style:{ fontSize:30 } }, "▤"),
+             e("h1", { style:{ fontSize:"clamp(30px,8vw,44px)", lineHeight:1.1, margin:0, letterSpacing:-1, fontWeight:900 } }, "Rules and policies")
+           ),
+           e("p", { style:{ fontSize:17, lineHeight:1.55, margin:"0 0 30px", maxWidth:500 } }, "Understand the rules that keep POST welcoming, authentic, and safe."),
+           rulesSections.map(function(sec) {
+             var isOpen = !!rulesExpanded[sec.key];
+             return e("section", { key:sec.key, style:{ marginBottom:9 } },
+               e("button", {
+                 onClick:function(){
+                   var next = Object.assign({}, rulesExpanded);
+                   next[sec.key] = !next[sec.key];
+                   setRulesExpanded(next);
+                 },
+                 "aria-expanded":isOpen,
+                 style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"16px 18px", border:"1px solid " + (isOpen ? "#E0A900" : "#E4EAEE"), borderRadius:isOpen ? "5px 5px 0 0" : 0, background:"#EAF2F6", color:"#111", cursor:"pointer", textAlign:"left", fontSize:17, fontWeight:800 }
+               },
+                 e("span", null, sec.title),
+                 icon(isOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6", "#111", 19)
+               ),
+               isOpen ? e("div", { style:{ border:"1px solid #E4EAEE", borderTop:0, background:"#F1F7FA" } },
+                 sec.articles.map(function(article, articleIndex) {
+                   return e("button", {
+                     key:article.title,
+                     onClick:function(){ setRulesArticle({ sectionKey:sec.key, article:article }); window.scrollTo(0,0); },
+                     style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"15px 18px", border:0, borderBottom:articleIndex < sec.articles.length - 1 ? "1px solid #E5E7EB" : 0, background:"transparent", color:"#087EBB", cursor:"pointer", textAlign:"left", fontSize:15, lineHeight:1.4, fontWeight:600 }
+                   },
+                     e("span", null, article.title),
+                     icon("M9 18l6-6-6-6", "#687078", 18)
+                   );
+                 })
+               ) : null
+             );
+           })
+         )
+       );
+     }
 
     if (safetyOpen) {
       return e("div", { style:{ minHeight:"100vh", background:"#fff", color:"#111", overflowY:"auto" } },
