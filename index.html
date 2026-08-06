@@ -16109,7 +16109,7 @@ function AccountRecoveryScreen({
          }),
          e("div", { style:{ marginTop:24, borderTop:"1px solid var(--border,#eee)", paddingTop:18 } },
            e("div", { style:{ fontSize:13, color:"var(--muted,#888)", marginBottom:10 } }, "Need more help?"),
-           e("button", { onClick:function(){ window.open("mailto:postbluom@gmail.com?subject=POST%20Help%3A%20" + encodeURIComponent(sec.title)); }, style:{ border:"1px solid var(--border,#ddd)", borderRadius:22, padding:"10px 20px", background:"var(--bg,#fff)", color:"var(--text,#111)", fontSize:13, fontWeight:700, cursor:"pointer" } }, "Contact Support")
+           e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Help%3A%20" + encodeURIComponent(sec.title), style:{ display:"inline-block", border:"1px solid var(--border,#ddd)", borderRadius:22, padding:"10px 20px", background:"var(--bg,#fff)", color:"var(--text,#111)", fontSize:13, fontWeight:700, cursor:"pointer", textDecoration:"none" } }, "Contact Support")
          )
        )
      );
