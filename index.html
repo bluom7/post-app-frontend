@@ -14907,8 +14907,22 @@ function QuickMenuDropdown({
        );
      } else {
        detailContent = React.createElement(React.Fragment, null,
-         settingsOption("Help Center", "Find answers and contact Post Support", "M12 18h.01M9.1 9a3 3 0 1 1 5.8 1c0 2-3 3-3 3M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20", () => setSubScreen("helpcenter")),
-         settingsOption("Contact Post Support", "postbluom@gmail.com", "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", () => { window.location.href = "mailto:postbluom@gmail.com?subject=POST%20App%20Support"; })
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px", cursor: "pointer" }, onClick: () => setSubScreen("helpcenter") },
+          settingsIcon("M12 18h.01M9.1 9a3 3 0 1 1 5.8 1c0 2-3 3-3 3M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20", "var(--text)"),
+          React.createElement("div", { style: { flex: 1 } },
+            React.createElement("div", { style: { fontSize: 18, fontWeight: 800, lineHeight: 1.25, color: "var(--text)" } }, "Help Center"),
+            React.createElement("div", { style: { fontSize: 15, color: "var(--muted)", marginTop: 3, lineHeight: 1.4 } }, "Find answers and contact Post Support")
+          ),
+          settingsIcon("M9 18l6-6-6-6", "var(--muted)")
+        ),
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px", cursor: "pointer" }, onClick: () => { window.location.href = "mailto:postbluom@gmail.com?subject=POST%20App%20Support"; } },
+          settingsIcon("M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", "var(--text)"),
+          React.createElement("div", { style: { flex: 1 } },
+            React.createElement("div", { style: { fontSize: 18, fontWeight: 800, lineHeight: 1.25, color: "var(--text)" } }, "Contact Post Support"),
+            React.createElement("div", { style: { fontSize: 15, color: "var(--muted)", marginTop: 3, lineHeight: 1.4 } }, "postbluom@gmail.com")
+          ),
+          settingsIcon("M9 18l6-6-6-6", "var(--muted)")
+        )
        );
      }
      return React.createElement("div", { style: { minHeight: "100vh", background: "var(--bg)", color: "var(--text)", padding: "20px 16px 44px", boxSizing: "border-box" } },
@@ -16929,8 +16943,22 @@ function AccountRecoveryScreen({
       );
     } else {
       categoryContent = React.createElement(React.Fragment, null,
-        settingsOption("Help Center", "Find answers and contact Post Support", "M12 18h.01M9.1 9a3 3 0 1 1 5.8 1c0 2-3 3-3 3M12 2a10 10 0 1 0 0-20", () => setSubScreen("helpcenter")),
-        settingsOption("Contact Post Support", "postbluom@gmail.com", "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", () => { window.location.href = "mailto:postbluom@gmail.com?subject=POST%20App%20Support"; })
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px", cursor: "pointer" }, onClick: () => setSubScreen("helpcenter") },
+          settingsIcon("M12 18h.01M9.1 9a3 3 0 1 1 5.8 1c0 2-3 3-3 3M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20", "var(--text)"),
+          React.createElement("div", { style: { flex: 1 } },
+            React.createElement("div", { style: { fontSize: 18, fontWeight: 800, lineHeight: 1.25, color: "var(--text)" } }, "Help Center"),
+            React.createElement("div", { style: { fontSize: 15, color: "var(--muted)", marginTop: 3, lineHeight: 1.4 } }, "Find answers and contact Post Support")
+          ),
+          settingsIcon("M9 18l6-6-6-6", "var(--muted)")
+        ),
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px", cursor: "pointer" }, onClick: () => { window.location.href = "mailto:postbluom@gmail.com?subject=POST%20App%20Support"; } },
+          settingsIcon("M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2Zm0 2 8 5 8-5", "var(--text)"),
+          React.createElement("div", { style: { flex: 1 } },
+            React.createElement("div", { style: { fontSize: 18, fontWeight: 800, lineHeight: 1.25, color: "var(--text)" } }, "Contact Post Support"),
+            React.createElement("div", { style: { fontSize: 15, color: "var(--muted)", marginTop: 3, lineHeight: 1.4 } }, "postbluom@gmail.com")
+          ),
+          settingsIcon("M9 18l6-6-6-6", "var(--muted)")
+        )
       );
     }
     return /*#__PURE__*/React.createElement("div", { style: { minHeight: "100vh", background: "var(--bg)", color: "var(--text)", padding: "20px 16px 44px", boxSizing: "border-box" } },
