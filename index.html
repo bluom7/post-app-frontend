@@ -15761,8 +15761,6 @@ function AccountRecoveryScreen({
    var selectedArticle = selectedState[0], setSelectedArticle = selectedState[1];
    var menuState = React.useState(false);
    var menuOpen = menuState[0], setMenuOpen = menuState[1];
-    var menuSectionState = React.useState(null);
-    var menuSection = menuSectionState[0], setMenuSection = menuSectionState[1];
    var showAllState = React.useState(null);
    var showAll = showAllState[0], setShowAll = showAllState[1];
    var reportState = React.useState(false);
@@ -15874,8 +15872,12 @@ function AccountRecoveryScreen({
       setShowAll(null);
       setSearch("");
       setMenuOpen(false);
-       setMenuSection(section);
       setSelectedArticle(null);
+      window.setTimeout(function() {
+        var firstIndex = Object.keys(indexes)[0];
+        var target = document.getElementById("post-help-category-" + firstIndex);
+        if (target && target.scrollIntoView) target.scrollIntoView({ behavior:"smooth", block:"start" });
+      }, 40);
     }
    function openArticle(category, article) {
       setSelectedArticle({ category:category, title:article[0], summary:article[1], issues:article[2] || ["Other"], special:article[3]||null });
@@ -15931,52 +15933,6 @@ function AccountRecoveryScreen({
             onClick:function(){ setMenuOpen(false); if(onSignIn){ onSignIn(); } else { onBack(); } },
             style:{ display:"block", marginTop:12, padding:"13px 24px", border:"2px solid #E7EDF0", borderRadius:28, background:"#fff", color:"#202124", fontSize:16, cursor:"pointer", fontFamily:"inherit" }
           }, "Sign in")
-        )
-      );
-    }
-
-    if (menuSection) {
-      var sectionCategories = categories.filter(function(category) {
-        return menuSection.categories.indexOf(category.title) !== -1;
-      });
-      return e("div", { style:{ minHeight:"100vh", background:"#F3F7FA", color:"#111", overflowY:"auto" } },
-        e("header", { style:{ position:"sticky", top:0, zIndex:10, background:"#fff", borderBottom:"1px solid #E5E7EB", display:"flex", alignItems:"center", gap:12, padding:"14px 18px" } },
-          e("button", {
-            onClick:function(){ setMenuSection(null); setMenuOpen(true); },
-            "aria-label":"Back to Help Center menu",
-            style:{ width:34, height:34, display:"flex", alignItems:"center", justifyContent:"center", border:0, borderRadius:17, background:"transparent", cursor:"pointer", padding:0, color:"#111" }
-          }, icon("M15 18 9 12l6-6", "#111", 24)),
-          e("div", { style:{ fontSize:20, fontWeight:900, flex:1, letterSpacing:-.5 } }, menuSection.title)
-        ),
-        e("main", { style:{ maxWidth:820, margin:"0 auto", padding:"30px 16px 60px" } },
-          e("div", { style:{ fontSize:12, letterSpacing:1.8, fontWeight:900, color:"#74808A", margin:"0 0 7px 2px" } }, "HELP CENTER"),
-          e("h1", { style:{ fontSize:29, margin:"0 0 22px", letterSpacing:-.6 } }, menuSection.title),
-          sectionCategories.map(function(category) {
-            var categoryIndex = categories.indexOf(category);
-            var isOpen = !!expanded[categoryIndex];
-            var shown = showAll === categoryIndex ? category.articles : category.articles.slice(0, 3);
-            return e("section", { id:"post-help-category-"+categoryIndex, key:category.title, style:{ background:"#fff", border:"1px solid #D9E0E5", borderRadius:15, overflow:"hidden", marginBottom:12, boxShadow:"0 1px 1px rgba(10,30,50,.03)" } },
-              e("button", { onClick:function(){ toggleCategory(categoryIndex); }, "aria-expanded":isOpen, style:{ width:"100%", display:"flex", alignItems:"center", gap:12, padding:"16px", border:0, background:"#fff", cursor:"pointer", textAlign:"left", color:"#111" } },
-                e("span", { style:{ width:42, height:42, borderRadius:12, background:category.color+"20", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 } }, icon(category.icon, category.color, 21)),
-                e("span", { style:{ flex:1, fontWeight:850, fontSize:15 } }, category.title),
-                icon(isOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6", "#687078", 18)
-              ),
-              isOpen ? e("div", { style:{ borderTop:"1px solid #E3E7EA" } },
-                shown.map(function(article, articleIndex) {
-                  return e("button", { key:article[0], onClick:function(){ openArticle(category.title, article); }, style:{ display:"flex", alignItems:"center", gap:12, width:"100%", padding:"15px 16px", border:0, borderBottom:articleIndex < shown.length - 1 ? "1px solid #E6EAED" : "none", background:"#fff", cursor:"pointer", textAlign:"left" } },
-                    e("span", { style:{ flex:1 } },
-                      e("span", { style:{ display:"block", fontSize:16, lineHeight:1.35, color:"#087EBB", fontWeight:500 } }, article[0]),
-                      e("span", { style:{ display:"block", fontSize:12, color:"#75818A", marginTop:4, lineHeight:1.35 } }, article[1])
-                    ),
-                    icon("M9 18l6-6-6-6", "#8A949B", 17)
-                  );
-                }),
-                e("div", { style:{ padding:"12px 16px 16px" } },
-                  e("button", { onClick:function(ev){ ev.stopPropagation(); setShowAll(showAll === categoryIndex ? null : categoryIndex); }, style:{ border:"1px solid #111", background:"#fff", borderRadius:22, padding:"10px 16px", fontWeight:800, cursor:"pointer", fontSize:13, color:"#111" } }, showAll === categoryIndex ? "Show fewer articles" : "See all " + category.articles.length + " articles")
-                )
-              ) : null
-            );
-          })
         )
       );
     }
