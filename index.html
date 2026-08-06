@@ -14946,10 +14946,6 @@ function QuickMenuDropdown({
              React.createElement("button", { onClick: restoreAccount, style: { ...btnStyle, background: COLORS.green, color: "#fff" } }, "Restore My Account")
            ) :
             _flatItem("Deactivate your account", "Find out how you can deactivate your account", "M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10", () => setSubScreen("deactivate-account"), true),
-         React.createElement("button", {
-           onClick: onLoggedOut,
-           style: { ...btnStyle, background: "none", border: 0, color: COLORS.red, marginTop: 20, width: "100%", fontWeight: 700, fontSize: 16, padding: "14px 0" }
-         }, "Logout")
        );
      } else if (settingsCategory === "security") {
        detailContent = React.createElement(React.Fragment, null,
@@ -17251,10 +17247,6 @@ function AccountRecoveryScreen({
             React.createElement("button", { onClick: restoreAccount, style: { ...btnStyle, background: COLORS.green, color: "#fff" } }, "Restore My Account")
           ) :
           _flatItem("Deactivate your account", "Find out how you can deactivate your account", "M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10", () => setSubScreen("deactivate-account"), true),
-        React.createElement("button", {
-          onClick: onLoggedOut,
-          style: { ...btnStyle, background: "none", border: 0, color: COLORS.red, marginTop: 20, width: "100%", fontWeight: 700, fontSize: 16, padding: "14px 0" }
-        }, "Logout")
       );
     } else if (settingsCategory === "security") {
       const _secToggleRow = (iconPath, label, sub, on, onChange) => React.createElement("div", {
