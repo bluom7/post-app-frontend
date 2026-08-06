@@ -3039,17 +3039,12 @@ function AccountSwitcherSheet({open, onClose, user, onCreateAccount, onAddAccoun
             : avatarLetter
         ),
         React.createElement("div", {style:{minWidth:0,flex:1}},
-          React.createElement("div", {style:{fontSize:18,fontWeight:800,color:"var(--text)"}}, name),
+          React.createElement("div", {style:{display:"flex",alignItems:"center",gap:5,fontSize:18,fontWeight:800,color:"var(--text)"}},
+            name,
+            user && user.is_badge_verified && React.createElement(VerifiedBadge, {size:18})
+          ),
           React.createElement("div", {style:{fontSize:16,color:"var(--muted)",marginTop:2}}, handle)
-        ),
-        React.createElement("div", {
-          style:{
-            width:24,height:24,borderRadius:"50%",background:"#08B968",
-            color:"#fff",display:"flex",alignItems:"center",
-            justifyContent:"center",fontSize:16,fontWeight:900
-          },
-          "aria-label":"Current account"
-        }, "✓")
+        )
       ),
       React.createElement("div", {style:{display:"flex",flexDirection:"column",gap:12}},
         actionButton("Create a new account", onCreateAccount),
@@ -3151,7 +3146,7 @@ function DrawerPanel({open, onClose, user, onNavigate, isDark, onToggleDark, onO
             ),
           ),
           React.createElement("button", {
-            onClick: () => { onClose(); setTimeout(() => onOpenAccountSwitcher && onOpenAccountSwitcher(), 180); },
+            onClick: () => { if (onOpenAccountSwitcher) onOpenAccountSwitcher(); },
             style:{background:"none",border:"1.5px solid var(--border)",borderRadius:"50%",
               width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",
               cursor:"pointer",color:"var(--text)"}
