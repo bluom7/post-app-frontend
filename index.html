@@ -3062,8 +3062,8 @@ function DrawerPanel({open, onClose, user, onNavigate, isDark, onToggleDark, onO
     },
       // Header: avatar + name + handle + stats + gear
       React.createElement("div", {style:{padding:"20px 24px 16px",borderBottom:"1px solid var(--border)"}},
-        React.createElement("div", {style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:10}},
-          React.createElement("div", {style:{position:"relative",flexShrink:0}},
+        React.createElement("div", {style:{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",marginBottom:10}},
+          React.createElement("div", {style:{flexShrink:0}},
             React.createElement("div", {
               style:{width:60,height:60,borderRadius:16,overflow:"hidden",background:avatarBg,
                 display:"flex",alignItems:"center",justifyContent:"center",
@@ -3073,13 +3073,10 @@ function DrawerPanel({open, onClose, user, onNavigate, isDark, onToggleDark, onO
                 ? React.createElement("img",{src:user.avatar_photo,style:{width:"100%",height:"100%",objectFit:"cover"},alt:""})
                 : React.createElement("span",null, (user && user.avatar_letter) || (name||"?")[0].toUpperCase())
             ),
-            user && user.is_badge_verified && React.createElement("div", {
-              style:{position:"absolute",bottom:-5,right:-5,background:"var(--bg)",borderRadius:"50%",padding:1,lineHeight:0}
-            }, React.createElement(VerifiedBadge, {size:22}))
           ),
           React.createElement("button", {
             onClick: () => { onClose(); setTimeout(() => onNavigate("settings"), 180); },
-            style:{background:"none",border:"1.5px solid var(--border)",borderRadius:"50%",
+            style:{position:"absolute",right:0,top:0,background:"none",border:"1.5px solid var(--border)",borderRadius:"50%",
               width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",
               cursor:"pointer",color:"var(--text)"}
           },
@@ -3089,12 +3086,12 @@ function DrawerPanel({open, onClose, user, onNavigate, isDark, onToggleDark, onO
             )
           )
         ),
-        React.createElement("div", {style:{display:"flex",alignItems:"center",gap:5,marginTop:2}},
+        React.createElement("div", {style:{display:"flex",alignItems:"center",justifyContent:"center",gap:5,marginTop:2,textAlign:"center"}},
           React.createElement("div", {style:{fontWeight:900,fontSize:18,color:"var(--text)",lineHeight:1.2}}, name),
           user && user.is_badge_verified && React.createElement(VerifiedBadge, {size:16})
         ),
-        handle && React.createElement("div", {style:{fontSize:14,color:"var(--muted)",marginTop:4,lineHeight:1.3}}, handle),
-        React.createElement("div", {style:{display:"flex",gap:20,marginTop:12,fontSize:14,color:"var(--muted)"}},
+        handle && React.createElement("div", {style:{fontSize:14,color:"var(--muted)",marginTop:4,lineHeight:1.3,textAlign:"center"}}, handle),
+        React.createElement("div", {style:{display:"flex",justifyContent:"center",gap:20,marginTop:12,fontSize:14,color:"var(--muted)"}},
           React.createElement("span", {
             onClick: () => { if(onOpenFollowList){ onClose(); setTimeout(()=>onOpenFollowList("followers"),180); } },
             style:{cursor:"pointer"}
