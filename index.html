@@ -15951,21 +15951,12 @@ function AccountRecoveryScreen({
       );
     }
 
-   if (selectedArticle && selectedArticle.special === "welcome") {
-     var _shareWelcome = function(){
-       var txt = "\uD83C\uDF89 Welcome to POST!\n\nHi \uD83D\uDC4B,\n\nThank you for joining the POST community. We\u2019re excited to have you with us!\n\nYour support helps us build a better social platform where people can share ideas, connect with others, and express themselves freely.\n\n\u2728 Start by:\n\u2022 Creating your first post\n\u2022 Following people you like\n\u2022 Completing your profile\n\u2022 Inviting your friends to join POST\n\nIf you ever need help or have suggestions, we\u2019re always here for you.\n\nThank you for choosing POST. \uD83D\uDC99\n\n\u2014 Team POST";
-       if(navigator.share){ navigator.share({title:"Welcome to POST!",text:txt}).catch(function(){}); }
-       else if(navigator.clipboard){ navigator.clipboard.writeText(txt).then(function(){ alert("Message copied! Ab paste karke share karo \uD83D\uDE0A"); }); }
-       else { alert("Share: " + txt.slice(0,80) + "..."); }
-     };
+    if (selectedArticle && selectedArticle.special === "welcome") {
      return e("div",{style:{minHeight:"100vh",background:"var(--bg)",color:"var(--text)",overflowY:"auto"}},
        e("div",{style:{position:"sticky",top:0,zIndex:4,background:"var(--nav-bg)",borderBottom:"1px solid var(--border)",padding:"13px 16px",display:"flex",alignItems:"center",gap:10}},
           e("button",{onClick:function(){setSelectedArticle(null);setMenuOpen(true);},"aria-label":"Back to Help Center menu",style:{background:"none",border:"none",cursor:"pointer",padding:4,color:"var(--text)",display:"flex",alignItems:"center"}},icon("M15 18 9 12l6-6","currentColor",24)),
          e("div",{style:{flex:1}},e("div",{style:{fontSize:18,fontWeight:900,letterSpacing:-.3}},"Help Center"),e("div",{style:{fontSize:10,color:"var(--muted)",marginTop:1}},"POST \u00B7 BluOm Group Pvt. Limited")),
-         e("button",{onClick:_shareWelcome,"aria-label":"Share this message",title:"Share",style:{background:"none",border:"none",cursor:"pointer",padding:6,color:"var(--text)",display:"flex",alignItems:"center",gap:5}},
-           icon("M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13","currentColor",22),
-           e("span",{style:{fontSize:13,fontWeight:700}},"Share")
-         )
+          e("button",{onClick:function(){setSelectedArticle(null);setMenuOpen(true);},"aria-label":"Open Help Center menu",title:"Menu",style:{background:"none",border:"none",cursor:"pointer",padding:6,color:"var(--text)",display:"flex",alignItems:"center"}},icon("M4 6h16M4 12h16M4 18h16","currentColor",24))
        ),
        e("div",{style:{maxWidth:600,margin:"0 auto",padding:"28px 18px 60px"}},
          e("div",{style:{background:"linear-gradient(135deg,#1877F2 0%,#0C9486 100%)",borderRadius:20,padding:"32px 24px 28px",color:"#fff",marginBottom:24,boxShadow:"0 8px 32px rgba(24,119,242,.25)"}},
@@ -15995,11 +15986,6 @@ function AccountRecoveryScreen({
            e("p",{style:{margin:"0 0 0",fontWeight:700,fontSize:16}},"Thank you for choosing POST. \uD83D\uDC99"),
            e("p",{style:{margin:"12px 0 0",color:"var(--muted)",fontSize:14}},"\u2014 Team POST")
          ),
-         e("button",{onClick:_shareWelcome,style:{marginTop:22,width:"100%",padding:"15px",border:0,borderRadius:14,background:"#1877F2",color:"#fff",fontSize:16,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10}},
-           icon("M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13","#fff",20),
-           "Yeh message share karo"
-         ),
-          e("button",{onClick:function(){setSelectedArticle(null);setMenuOpen(true);},style:{marginTop:12,width:"100%",padding:"13px",border:"1px solid var(--border)",borderRadius:14,background:"transparent",color:"var(--text)",fontSize:15,fontWeight:700,cursor:"pointer"}},"Help Center par wapas jao")
        )
      );
    }
