@@ -14886,7 +14886,7 @@ function QuickMenuDropdown({
          notifFlatItem("Tags", "Get notified when someone tags you in a post", "M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82ZM7 7h.01", notifTags, toggleNotifTags)
        );
      } else if (settingsCategory === "display") {
-       const dispFlatItem = (title, desc, iconPath, rightEl) => React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px", borderBottom: "1px solid var(--border)" } },
+       const dispFlatItem = (title, desc, iconPath, rightEl) => React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px" } },
          settingsIcon(iconPath, "var(--text)"),
          React.createElement("div", { style: { flex: 1 } },
            React.createElement("div", { style: { fontSize: 18, fontWeight: 800, lineHeight: 1.25, color: "var(--text)" } }, title),
@@ -16908,7 +16908,7 @@ function AccountRecoveryScreen({
         notifFlatRow("Tags", "Get notified when someone tags you in a post", "M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82ZM7 7h.01", notifTags, toggleNotifTags)
       );
     } else if (settingsCategory === "display") {
-      const dispFlatRow = (title, desc, iconPath, rightEl) => React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px", borderBottom: "1px solid var(--border)" } },
+      const dispFlatRow = (title, desc, iconPath, rightEl) => React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, padding: "16px 4px" } },
         settingsIcon(iconPath, "var(--text)"),
         React.createElement("span", { style: { flex: 1 } },
           React.createElement("span", { style: { display: "block", fontSize: 18, fontWeight: 800, lineHeight: 1.25 } }, title),
