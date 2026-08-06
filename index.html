@@ -15773,6 +15773,12 @@ function AccountRecoveryScreen({
    var managingAccArticle = managingAccArticleState[0], setManagingAccArticle = managingAccArticleState[1];
    var managingAccExpandedState = React.useState({});
    var managingAccExpanded = managingAccExpandedState[0], setManagingAccExpanded = managingAccExpandedState[1];
+   var safetyOpenState = React.useState(false);
+   var safetyOpen = safetyOpenState[0], setSafetyOpen = safetyOpenState[1];
+   var safetyExpandedState = React.useState({});
+   var safetyExpanded = safetyExpandedState[0], setSafetyExpanded = safetyExpandedState[1];
+   var safetyArticleState = React.useState(null);
+   var safetyArticle = safetyArticleState[0], setSafetyArticle = safetyArticleState[1];
 
    var categories = [
      { color:"#20B981", icon:"M12 3 3 8l9 5 9-5-9-5ZM3 12l9 5 9-5M3 16l9 5 9-5", title:"Getting Started", articles:[
@@ -15886,6 +15892,14 @@ function AccountRecoveryScreen({
         setManagingAccOpen(true);
         setManagingAccArticle(null);
         setManagingAccExpanded({});
+        setMenuOpen(false);
+        window.scrollTo(0, 0);
+        return;
+      }
+      if (section.title === "Safety and security") {
+        setSafetyOpen(true);
+        setSafetyArticle(null);
+        setSafetyExpanded({});
         setMenuOpen(false);
         window.scrollTo(0, 0);
         return;
@@ -16079,6 +16093,324 @@ function AccountRecoveryScreen({
      }
    ];
 
+    var safetySections = [
+      {
+        key:"security-hacked-accounts",
+        title:"Security and hacked accounts",
+        color:"#C99700",
+        iconPath:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6-8 10-8-10",
+        intro:"Learn how to protect your POST account and what to do if someone else may have accessed it.",
+        articles:[
+          {
+            title:"About account security",
+            summary:"Use strong sign-in details and the security controls in POST to keep your account protected.",
+            blocks:[
+              {heading:"Keep your account secure", paragraphs:[
+                "Use a strong, unique password for your POST account. Do not reuse that password on other websites.",
+                "Turn on two-factor authentication when it is available in your POST security settings. Login alerts can also help you notice a sign-in you do not recognize.",
+                "Only sign in through the official POST app or your trusted POST website. Never enter your password into a link sent by an unknown person."
+              ]},
+              {heading:"If you think your account was hacked", paragraphs:[
+                "Change your POST password immediately from Settings and Privacy. If you can still sign in, review your active sessions and revoke any device you do not recognize.",
+                "Check your email address, phone number, profile details, and recent posts for changes you did not make. Contact POST Support if you cannot restore the account yourself."
+              ]}
+            ]
+          },
+          {
+            title:"Password strength",
+            summary:"Create a password that is difficult to guess and different from the passwords you use elsewhere.",
+            blocks:[
+              {heading:"Do", bullets:[
+                "Create a password at least 10 characters long. Longer is better.",
+                "Use a mix of uppercase and lowercase letters, numbers, and symbols.",
+                "Use a different password for every website you visit.",
+                "Keep your password in a safe place. A reputable password manager can help."
+              ]},
+              {heading:"Do not", bullets:[
+                "Use personal information such as your phone number, birthday, or name.",
+                "Use common dictionary words such as “password” or “iloveyou”.",
+                "Use sequences such as “abcd1234” or keyboard patterns such as “qwerty”.",
+                "Share your password or reuse your POST password on another service."
+              ]}
+            ]
+          },
+          {
+            title:"Protect your account from phishing",
+            summary:"Scammers may use fake login pages, messages, or offers to steal your account details.",
+            blocks:[
+              {heading:"Before you sign in", paragraphs:[
+                "Check that you are using the official POST app or website. Be cautious of urgent messages asking you to verify your account, claim followers, receive money, or avoid suspension.",
+                "POST Support will not need your password. Never send your password, one-time code, or recovery code to another person."
+              ]},
+              {heading:"If you entered your details on a suspicious page", paragraphs:[
+                "Change your POST password immediately, then review sessions and revoke access from devices you do not recognize.",
+                "If the suspicious message or account is still visible, report it from POST and block the sender."
+              ]}
+            ]
+          },
+          {
+            title:"Review sessions and login alerts",
+            summary:"See where your POST account is signed in and remove access from an unfamiliar device.",
+            blocks:[
+              {heading:"Review your account activity", steps:[
+                "Open Settings and Privacy in POST.",
+                "Open Security and look at your active sessions.",
+                "Compare the listed devices with the devices you use.",
+                "Revoke any session you do not recognize. You can also sign out of other devices if necessary.",
+                "Keep login alerts enabled so POST can notify you about new sign-ins."
+              ]},
+              {heading:"Remember", paragraphs:[
+                "A session you do not recognize can mean that someone has your password, that you used a shared device, or that the device information changed. Change your password if anything looks suspicious."
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key:"privacy",
+        title:"Privacy",
+        color:"#1683D8",
+        iconPath:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6-8 10-8-10",
+        intro:"Choose who can see your content and who can interact with you on POST.",
+        articles:[
+          {
+            title:"Control who can see your posts",
+            summary:"Your privacy settings let you decide how widely your POST profile and posts can be seen.",
+            blocks:[
+              {heading:"Private account", paragraphs:[
+                "When your account is private, only people you approve can follow you and see the posts that are limited to followers.",
+                "Open Settings and Privacy, then Privacy to review the Private Account setting. Check the setting again after changing it to make sure it was saved."
+              ]},
+              {heading:"Post visibility", paragraphs:[
+                "Before publishing, check the visibility selected for the post. If a post is visible to the wrong audience, open the post settings and update its visibility or remove the post."
+              ]}
+            ]
+          },
+          {
+            title:"Control messages and follow requests",
+            summary:"POST lets you choose who can send messages and who can follow or connect with you.",
+            blocks:[
+              {heading:"Change your privacy controls", steps:[
+                "Open Settings and Privacy.",
+                "Open Privacy.",
+                "Review Who can message me and Who can follow me.",
+                "Choose the audience that matches your preference and save the change.",
+                "Use Block or Mute for a specific account that is bothering you."
+              ]},
+              {heading:"If an account can still interact", paragraphs:[
+                "Refresh POST and check that the setting was saved. For a specific account, block it directly from the account profile. Contact POST Support if the account can still interact after being blocked."
+              ]}
+            ]
+          },
+          {
+            title:"Download your POST data",
+            summary:"You can request a copy of the account and content data available in POST.",
+            blocks:[
+              {heading:"Request a copy", steps:[
+                "Open Settings and Privacy.",
+                "Open Security.",
+                "Choose Download your data.",
+                "Save the JSON file when the download begins and keep it in a secure place."
+              ]},
+              {heading:"Protect your downloaded file", paragraphs:[
+                "The downloaded file may contain account and content information. Do not upload it to a public website or share it with someone you do not trust."
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key:"spam-fake-accounts",
+        title:"Spam and fake accounts",
+        color:"#8B5CF6",
+        iconPath:"M4 4h16v16H4zM8 8h8M8 12h5M8 16h8",
+        intro:"Learn how to recognize misleading activity and keep unwanted accounts away from your POST experience.",
+        articles:[
+          {
+            title:"Recognize spam on POST",
+            summary:"Spam often uses repeated messages, suspicious links, fake rewards, or promises of followers and money.",
+            blocks:[
+              {heading:"Common warning signs", bullets:[
+                "A message asks for your password, one-time code, or payment.",
+                "An account promises followers, verification, money, or a prize in exchange for your login details.",
+                "A post repeats the same link or request across many accounts.",
+                "A profile copies another person’s name, photo, or identity."
+              ]},
+              {heading:"What to do", paragraphs:[
+                "Do not open suspicious links or reply with private information. Report the post or account, then block or mute it so it cannot continue to disturb your feed."
+              ]}
+            ]
+          },
+          {
+            title:"Report spam or a fake account",
+            summary:"Reports help POST review accounts and content that may break the rules.",
+            blocks:[
+              {heading:"Report from POST", steps:[
+                "Open the profile, post, or Reel you want to report.",
+                "Open its options menu and choose Report.",
+                "Select the reason that best describes the problem, such as Spam, Impersonation, or Account safety concern.",
+                "Add clear details when the form asks for them, then submit the report.",
+                "Block or mute the account if you do not want further contact."
+              ]},
+              {heading:"Report accurately", paragraphs:[
+                "Only include information that is relevant to the report. If the account is impersonating you or another person, explain who the real account belongs to and include the profile link when possible."
+              ]}
+            ]
+          },
+          {
+            title:"Block, mute, or restrict an account",
+            summary:"Use account controls to stop unwanted contact without continuing to engage with the account.",
+            blocks:[
+              {heading:"Choose the right control", bullets:[
+                "Block prevents an account from interacting with you and is the strongest option for unwanted contact.",
+                "Mute removes an account’s content from your experience without notifying the account.",
+                "Restrict or privacy controls can reduce interaction when you want more control without a full block."
+              ]},
+              {heading:"If the account returns", paragraphs:[
+                "Report new spam or abuse instead of replying. Keep screenshots or links if the behavior continues and include them when contacting POST Support."
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key:"sensitive-content",
+        title:"Sensitive content",
+        color:"#F59A23",
+        iconPath:"M12 9v4M12 17h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
+        intro:"Understand how POST handles sensitive material and what you can do when content is unsafe or upsetting.",
+        articles:[
+          {
+            title:"Sensitive content controls",
+            summary:"Use POST privacy controls to manage whether sensitive content is shown in your experience.",
+            blocks:[
+              {heading:"Manage the filter", steps:[
+                "Open Settings and Privacy.",
+                "Open Privacy.",
+                "Review the Sensitive content filter.",
+                "Choose the setting that matches what you want to see, then save it.",
+                "If content still appears unexpectedly, refresh POST and check the setting again."
+              ]},
+              {heading:"For young or vulnerable users", paragraphs:[
+                "If content is upsetting, do not continue viewing or sharing it. Use the report option and block the account that posted it."
+              ]}
+            ]
+          },
+          {
+            title:"Report harmful or graphic content",
+            summary:"Report content that violates POST rules, including graphic violence, sexual exploitation, or dangerous material.",
+            blocks:[
+              {heading:"Make a report", steps:[
+                "Open the post or Reel.",
+                "Open the options menu and choose Report.",
+                "Select the closest reason and describe what makes the content harmful.",
+                "Submit the report. Do not repost the material while asking for help."
+              ]},
+              {heading:"Urgent danger", paragraphs:[
+                "If someone is in immediate danger, contact local emergency services first. You can also report the content to POST so it can be reviewed."
+              ]}
+            ]
+          }
+        ]
+      },
+      {
+        key:"abuse",
+        title:"Abuse",
+        color:"#EF4D5A",
+        iconPath:"M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+        intro:"POST does not allow harassment, threats, impersonation, or targeted abuse.",
+        articles:[
+          {
+            title:"Report harassment or abuse",
+            summary:"Report behavior that targets, threatens, or repeatedly harms you or another person.",
+            blocks:[
+              {heading:"What to report", bullets:[
+                "Threats of violence or messages that make you fear for your safety.",
+                "Repeated harassment, hateful abuse, or targeted insults.",
+                "Impersonation, doxxing, or sharing private information without permission.",
+                "Coordinated spam or attempts to manipulate another person’s account."
+              ]},
+              {heading:"Send a useful report", paragraphs:[
+                "Include the profile, post, or message link, what happened, and when it happened. Keep the report factual and do not send passwords or one-time codes."
+              ]}
+            ]
+          },
+          {
+            title:"Block an abusive account",
+            summary:"Blocking stops an account from interacting with you while POST reviews a report.",
+            blocks:[
+              {heading:"Block from the account", steps:[
+                "Open the account’s profile.",
+                "Open the options menu and choose Block.",
+                "Confirm the block.",
+                "Return to the profile options and submit a report if the account broke POST rules."
+              ]},
+              {heading:"Stay safe", paragraphs:[
+                "Do not meet someone who is threatening you and do not share your address, phone number, passwords, or private images. Save evidence only if it is safe to do so."
+              ]}
+            ]
+          },
+          {
+            title:"Appeal a moderation action",
+            summary:"If POST removed your content or limited your account by mistake, contact support with the relevant details.",
+            blocks:[
+              {heading:"What to include", bullets:[
+                "Your POST username and the link to the affected profile or content.",
+                "The action you are appealing and the date you noticed it.",
+                "A short explanation of why you believe the action was incorrect.",
+                "Any context that helps the review team understand the situation."
+              ]},
+              {heading:"Keep your account safe", paragraphs:[
+                "POST Support will not ask for your password. Do not pay anyone who claims they can restore your account or remove a moderation action."
+              ]}
+            ]
+          }
+        ]
+      }
+    ];
+
+    function SafetyArticle(_props) {
+      var sec = _props.sec;
+      var article = _props.article;
+      return e("div", { style:{ minHeight:"100vh", background:"#fff", color:"#111", overflowY:"auto" } },
+        e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"#fff", borderBottom:"1px solid #E5E7EB", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
+          e("button", { onClick:function(){ setSafetyArticle(null); }, "aria-label":"Back to Safety and security", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"#111", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","#111",24)),
+          e("div", { style:{ flex:1 } },
+            e("div", { style:{ fontSize:18, fontWeight:900, letterSpacing:-.3 } }, "Help Center"),
+            e("div", { style:{ fontSize:11, color:"#687078", marginTop:2 } }, "POST · BluOm Group Pvt. Limited")
+          ),
+          e("button", { onClick:function(){ setSafetyArticle(null); }, "aria-label":"Open safety topics", style:{ background:"none", border:0, cursor:"pointer", padding:6, color:"#111", display:"flex", alignItems:"center" } }, icon("M4 6h16M4 12h16M4 18h16","#111",23))
+        ),
+        e("main", { style:{ maxWidth:760, margin:"0 auto", padding:"30px 20px 64px" } },
+          e("div", { style:{ fontSize:12, fontWeight:900, letterSpacing:1.5, textTransform:"uppercase", color:"#C99700", marginBottom:12 } }, sec.title),
+          e("h1", { style:{ fontSize:"clamp(30px,8vw,46px)", lineHeight:1.08, letterSpacing:-1, margin:"0 0 16px", fontWeight:900 } }, article.title),
+          e("p", { style:{ fontSize:17, lineHeight:1.65, color:"#4C5660", margin:"0 0 28px" } }, article.summary),
+          article.blocks.map(function(block, blockIndex) {
+            return e("section", { key:blockIndex, style:{ borderTop:"1px solid #AEB7BE", paddingTop:20, marginTop:blockIndex ? 26 : 0 } },
+              e("h2", { style:{ fontSize:24, lineHeight:1.2, margin:"0 0 16px", letterSpacing:-.4, fontWeight:900 } }, block.heading),
+              block.paragraphs ? block.paragraphs.map(function(text, index) {
+                return e("p", { key:index, style:{ fontSize:17, lineHeight:1.65, margin:"0 0 16px" } }, text);
+              }) : null,
+              block.bullets ? e("ul", { style:{ margin:0, padding:"0 0 0 22px" } },
+                block.bullets.map(function(text, index) {
+                  return e("li", { key:index, style:{ fontSize:17, lineHeight:1.6, marginBottom:12, paddingLeft:3 } }, text);
+                })
+              ) : null,
+              block.steps ? e("ol", { style:{ margin:0, padding:"0 0 0 24px" } },
+                block.steps.map(function(text, index) {
+                  return e("li", { key:index, style:{ fontSize:17, lineHeight:1.6, marginBottom:12, paddingLeft:3 } }, text);
+                })
+              ) : null
+            );
+          }),
+          e("div", { style:{ borderTop:"1px solid #D7DDE1", marginTop:30, paddingTop:22 } },
+            e("div", { style:{ fontSize:13, color:"#687078", marginBottom:10 } }, "Need more help?"),
+            e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Help%3A%20" + encodeURIComponent(article.title), style:{ display:"inline-block", border:"1px solid #111", borderRadius:24, padding:"11px 20px", background:"#fff", color:"#111", fontSize:14, fontWeight:800, cursor:"pointer", textDecoration:"none" } }, "Contact Post Support")
+          )
+        )
+      );
+    }
+
    function ManagingAccountArticle(_props) {
      var sec = _props.sec;
      return e("div", { style:{ minHeight:"100vh", background:"var(--bg,#fff)", color:"var(--text,#111)", overflowY:"auto" } },
@@ -16116,6 +16448,59 @@ function AccountRecoveryScreen({
    if (managingAccOpen && managingAccArticle) {
      return e(ManagingAccountArticle, { sec: managingAccArticle });
    }
+
+    if (safetyOpen && safetyArticle) {
+      return e(SafetyArticle, { sec: safetySections.filter(function(sec){ return sec.key === safetyArticle.sectionKey; })[0] || safetySections[0], article:safetyArticle.article });
+    }
+
+    if (safetyOpen) {
+      return e("div", { style:{ minHeight:"100vh", background:"#fff", color:"#111", overflowY:"auto" } },
+        e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"#fff", borderBottom:"1px solid #E5E7EB", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
+          e("button", { onClick:function(){ setSafetyOpen(false); setMenuOpen(true); }, "aria-label":"Back to Help Center", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"#111", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","#111",24)),
+          e("div", { style:{ flex:1 } },
+            e("div", { style:{ fontSize:18, fontWeight:900, letterSpacing:-.3 } }, "Help Center"),
+            e("div", { style:{ fontSize:11, color:"#687078", marginTop:2 } }, "POST · BluOm Group Pvt. Limited")
+          ),
+          e("button", { onClick:function(){ setSafetyOpen(false); setMenuOpen(true); }, "aria-label":"Open Help Center menu", style:{ background:"none", border:0, cursor:"pointer", padding:6, color:"#111", display:"flex", alignItems:"center" } }, icon("M4 6h16M4 12h16M4 18h16","#111",23))
+        ),
+        e("main", { style:{ padding:"34px 28px 60px", maxWidth:600, margin:"0 auto" } },
+          e("div", { style:{ display:"flex", alignItems:"center", gap:12, marginBottom:18 } },
+            e("span", { style:{ fontSize:30 } }, "🤏"),
+            e("h1", { style:{ fontSize:"clamp(30px,8vw,44px)", lineHeight:1.1, margin:0, letterSpacing:-1, fontWeight:900 } }, "Safety and security")
+          ),
+          e("p", { style:{ fontSize:17, lineHeight:1.55, margin:"0 0 30px", maxWidth:470 } }, "Learn how to stay safe by managing your privacy settings"),
+          safetySections.map(function(sec, index) {
+            var isOpen = !!safetyExpanded[sec.key];
+            return e("section", { key:sec.key, style:{ marginBottom:9 } },
+              e("button", {
+                onClick:function(){
+                  var next = Object.assign({}, safetyExpanded);
+                  next[sec.key] = !next[sec.key];
+                  setSafetyExpanded(next);
+                },
+                "aria-expanded":isOpen,
+                style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"16px 18px", border:"1px solid " + (isOpen ? "#E0A900" : "#E4EAEE"), borderRadius:isOpen ? "5px 5px 0 0" : 0, background:"#EAF2F6", color:"#111", cursor:"pointer", textAlign:"left", fontSize:17, fontWeight:800 }
+              },
+                e("span", null, sec.title),
+                icon(isOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6", "#111", 19)
+              ),
+              isOpen ? e("div", { style:{ border:"1px solid #E4EAEE", borderTop:0, background:"#fff" } },
+                sec.articles.map(function(article, articleIndex) {
+                  return e("button", {
+                    key:article.title,
+                    onClick:function(){ setSafetyArticle({ sectionKey:sec.key, article:article }); window.scrollTo(0,0); },
+                    style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"15px 18px", border:0, borderBottom:articleIndex < sec.articles.length - 1 ? "1px solid #E5E7EB" : 0, background:"#fff", color:"#087EBB", cursor:"pointer", textAlign:"left", fontSize:15, lineHeight:1.4, fontWeight:600 }
+                  },
+                    e("span", null, article.title),
+                    icon("M9 18l6-6-6-6", "#687078", 18)
+                  );
+                })
+              ) : null
+            );
+          })
+        )
+      );
+    }
 
    if (managingAccOpen) {
      return e("div", { style:{ minHeight:"100vh", background:"var(--bg,#fff)", color:"var(--text,#111)", overflowY:"auto" } },
