@@ -1037,15 +1037,12 @@ const TRANSLATIONS = {
   }
 };
 let _currentLang = localStorage.getItem('post_lang') || 'en';
-(function(){const RTL=['ar','ur','he'];if(RTL.includes(_currentLang)){document.documentElement.setAttribute('dir','rtl');document.documentElement.setAttribute('lang',_currentLang);}})();
 function t(key) {
   return (TRANSLATIONS[_currentLang] || TRANSLATIONS['en'])[key] || key;
 }
 function setAppLang(lang) {
   _currentLang = lang;
   localStorage.setItem('post_lang', lang);
-  const RTL_LANGS = ['ar', 'ur', 'he'];
-  document.documentElement.setAttribute('dir', RTL_LANGS.includes(lang) ? 'rtl' : 'ltr');
   document.documentElement.setAttribute('lang', lang);
   window.dispatchEvent(new CustomEvent('langchange'));
 }
