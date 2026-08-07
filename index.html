@@ -32,11 +32,19 @@ button:focus-visible { outline: none !important; box-shadow: none !important; bo
   --bg: #ffffff; --card-bg: #ffffff; --text: #111111; --muted: #666666;
   --border: #e0e0e0; --input-bg: #f5f5f5; --nav-bg: #ffffff;
   --shadow: rgba(0,0,0,0.08);
+  --help-page-bg: #ffffff; --help-surface: #ffffff; --help-soft: #F0F2F5;
+  --help-soft-blue: #F1F7FA; --help-control: #EAF2F6; --help-heading: #111111;
+  --help-body: #1A2330; --help-muted: #687078; --help-line: #E5E7EB;
+  --help-blue: #087EBB; --help-selected: #EEF6FF; --help-hero: #111820;
 }
 [data-theme="dark"] {
   --bg: #0f0f0f; --card-bg: #1a1a1a; --text: #f0f0f0; --muted: #aaaaaa;
   --border: #2e2e2e; --input-bg: #252525; --nav-bg: #141414;
   --shadow: rgba(0,0,0,0.4);
+  --help-page-bg: #0f0f0f; --help-surface: #1a1a1a; --help-soft: #202124;
+  --help-soft-blue: #1c2930; --help-control: #22343c; --help-heading: #f0f0f0;
+  --help-body: #e8e8e8; --help-muted: #a8a8a8; --help-line: #303438;
+  --help-blue: #61c3ff; --help-selected: #183247; --help-hero: #141414;
 }
 body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; transition: background 0.3s, color 0.3s; }
 input, textarea, button { font-family: inherit; }
@@ -16769,21 +16777,21 @@ function AccountRecoveryScreen({
     function SafetyArticle(_props) {
       var sec = _props.sec;
       var article = _props.article;
-      return e("div", { style:{ minHeight:"100vh", background:"#fff", color:"#111", overflowY:"auto" } },
-        e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"#fff", borderBottom:"1px solid #E5E7EB", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
-          e("button", { onClick:function(){ setSafetyArticle(null); }, "aria-label":"Back to Safety and security", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"#111", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","#111",24)),
+      return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)", overflowY:"auto" } },
+        e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--help-line)", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
+          e("button", { onClick:function(){ setSafetyArticle(null); }, "aria-label":"Back to Safety and security", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","var(--help-heading)",24)),
           e("div", { style:{ flex:1 } },
             e("div", { style:{ fontSize:18, fontWeight:900, letterSpacing:-.3 } }, "Help Center"),
-            e("div", { style:{ fontSize:11, color:"#687078", marginTop:2 } }, "POST · BluOm Group Pvt. Limited")
+            e("div", { style:{ fontSize:11, color:"var(--help-muted)", marginTop:2 } }, "POST · BluOm Group Pvt. Limited")
           ),
-          e("button", { onClick:function(){ setSafetyArticle(null); }, "aria-label":"Open safety topics", style:{ background:"none", border:0, cursor:"pointer", padding:6, color:"#111", display:"flex", alignItems:"center" } }, icon("M4 6h16M4 12h16M4 18h16","#111",23))
+          e("button", { onClick:function(){ setSafetyArticle(null); }, "aria-label":"Open safety topics", style:{ background:"none", border:0, cursor:"pointer", padding:6, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M4 6h16M4 12h16M4 18h16","var(--help-heading)",23))
         ),
         e("main", { style:{ maxWidth:760, margin:"0 auto", padding:"30px 20px 64px" } },
           e("div", { style:{ fontSize:12, fontWeight:900, letterSpacing:1.5, textTransform:"uppercase", color:"#C99700", marginBottom:12 } }, sec.title),
           e("h1", { style:{ fontSize:"clamp(30px,8vw,46px)", lineHeight:1.08, letterSpacing:-1, margin:"0 0 16px", fontWeight:900 } }, article.title),
-          e("p", { style:{ fontSize:17, lineHeight:1.65, color:"#4C5660", margin:"0 0 28px" } }, article.summary),
+          e("p", { style:{ fontSize:17, lineHeight:1.65, color:"var(--help-muted)", margin:"0 0 28px" } }, article.summary),
           article.blocks.map(function(block, blockIndex) {
-            return e("section", { key:blockIndex, style:{ borderTop:"1px solid #AEB7BE", paddingTop:20, marginTop:blockIndex ? 26 : 0 } },
+            return e("section", { key:blockIndex, style:{ borderTop:"1px solid var(--help-line)", paddingTop:20, marginTop:blockIndex ? 26 : 0 } },
               e("h2", { style:{ fontSize:24, lineHeight:1.2, margin:"0 0 16px", letterSpacing:-.4, fontWeight:900 } }, block.heading),
               block.paragraphs ? block.paragraphs.map(function(text, index) {
                 return e("p", { key:index, style:{ fontSize:17, lineHeight:1.65, margin:"0 0 16px" } }, text);
@@ -16800,9 +16808,9 @@ function AccountRecoveryScreen({
               ) : null
             );
           }),
-          e("div", { style:{ borderTop:"1px solid #D7DDE1", marginTop:30, paddingTop:22 } },
-            e("div", { style:{ fontSize:13, color:"#687078", marginBottom:10 } }, "Need more help?"),
-            e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Help%3A%20" + encodeURIComponent(article.title), style:{ display:"inline-block", border:"1px solid #111", borderRadius:24, padding:"11px 20px", background:"#fff", color:"#111", fontSize:14, fontWeight:800, cursor:"pointer", textDecoration:"none" } }, "Contact Post Support")
+          e("div", { style:{ borderTop:"1px solid var(--help-line)", marginTop:30, paddingTop:22 } },
+            e("div", { style:{ fontSize:13, color:"var(--help-muted)", marginBottom:10 } }, "Need more help?"),
+            e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Help%3A%20" + encodeURIComponent(article.title), style:{ display:"inline-block", border:"1px solid var(--help-heading)", borderRadius:24, padding:"11px 20px", background:"var(--help-page-bg)", color:"var(--help-heading)", fontSize:14, fontWeight:800, cursor:"pointer", textDecoration:"none" } }, "Contact Post Support")
           )
         )
       );
@@ -16811,21 +16819,21 @@ function AccountRecoveryScreen({
     function RulesArticle(_props) {
       var sec = _props.sec;
       var article = _props.article;
-      return e("div", { style:{ minHeight:"100vh", background:"#fff", color:"#111", overflowY:"auto" } },
-        e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"#fff", borderBottom:"1px solid #E5E7EB", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
-          e("button", { onClick:function(){ setRulesArticle(null); }, "aria-label":"Back to Rules and policies", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"#111", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","#111",24)),
+      return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)", overflowY:"auto" } },
+        e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--help-line)", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
+          e("button", { onClick:function(){ setRulesArticle(null); }, "aria-label":"Back to Rules and policies", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","var(--help-heading)",24)),
           e("div", { style:{ flex:1 } },
             e("div", { style:{ fontSize:18, fontWeight:900, letterSpacing:-.3 } }, "Help Center"),
-            e("div", { style:{ fontSize:11, color:"#687078", marginTop:2 } }, "POST · BluOm Group Pvt. Limited")
+            e("div", { style:{ fontSize:11, color:"var(--help-muted)", marginTop:2 } }, "POST · BluOm Group Pvt. Limited")
           ),
-          e("button", { onClick:function(){ setRulesArticle(null); }, "aria-label":"Open rules topics", style:{ background:"none", border:0, cursor:"pointer", padding:6, color:"#111", display:"flex", alignItems:"center" } }, icon("M4 6h16M4 12h16M4 18h16","#111",23))
+          e("button", { onClick:function(){ setRulesArticle(null); }, "aria-label":"Open rules topics", style:{ background:"none", border:0, cursor:"pointer", padding:6, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M4 6h16M4 12h16M4 18h16","var(--help-heading)",23))
         ),
         e("main", { style:{ maxWidth:760, margin:"0 auto", padding:"30px 20px 64px" } },
           e("div", { style:{ fontSize:12, fontWeight:900, letterSpacing:1.5, textTransform:"uppercase", color:"#087EBB", marginBottom:12 } }, sec.title),
           e("h1", { style:{ fontSize:"clamp(30px,8vw,46px)", lineHeight:1.08, letterSpacing:-1, margin:"0 0 16px", fontWeight:900 } }, article.title),
-          e("p", { style:{ fontSize:17, lineHeight:1.65, color:"#4C5660", margin:"0 0 28px" } }, article.summary),
+          e("p", { style:{ fontSize:17, lineHeight:1.65, color:"var(--help-muted)", margin:"0 0 28px" } }, article.summary),
           article.blocks.map(function(block, blockIndex) {
-            return e("section", { key:blockIndex, style:{ borderTop:"1px solid #AEB7BE", paddingTop:20, marginTop:blockIndex ? 26 : 0 } },
+            return e("section", { key:blockIndex, style:{ borderTop:"1px solid var(--help-line)", paddingTop:20, marginTop:blockIndex ? 26 : 0 } },
               e("h2", { style:{ fontSize:24, lineHeight:1.2, margin:"0 0 16px", letterSpacing:-.4, fontWeight:900 } }, block.heading),
               block.paragraphs ? block.paragraphs.map(function(text, index) {
                 return e("p", { key:index, style:{ fontSize:17, lineHeight:1.65, margin:"0 0 16px" } }, text);
@@ -16842,9 +16850,9 @@ function AccountRecoveryScreen({
               ) : null
             );
           }),
-          e("div", { style:{ borderTop:"1px solid #D7DDE1", marginTop:30, paddingTop:22 } },
-            e("div", { style:{ fontSize:13, color:"#687078", marginBottom:10 } }, "Need more help?"),
-            e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Rules%20Help%3A%20" + encodeURIComponent(article.title), style:{ display:"inline-block", border:"1px solid #111", borderRadius:24, padding:"11px 20px", background:"#fff", color:"#111", fontSize:14, fontWeight:800, cursor:"pointer", textDecoration:"none" } }, "Contact Post Support")
+          e("div", { style:{ borderTop:"1px solid var(--help-line)", marginTop:30, paddingTop:22 } },
+            e("div", { style:{ fontSize:13, color:"var(--help-muted)", marginBottom:10 } }, "Need more help?"),
+            e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Rules%20Help%3A%20" + encodeURIComponent(article.title), style:{ display:"inline-block", border:"1px solid var(--help-heading)", borderRadius:24, padding:"11px 20px", background:"var(--help-page-bg)", color:"var(--help-heading)", fontSize:14, fontWeight:800, cursor:"pointer", textDecoration:"none" } }, "Contact Post Support")
           )
         )
       );
@@ -16852,33 +16860,33 @@ function AccountRecoveryScreen({
 
    function ManagingAccountArticle(_props) {
      var sec = _props.sec;
-     return e("div", { style:{ minHeight:"100vh", background:"var(--bg,#fff)", color:"var(--text,#111)", overflowY:"auto" } },
-       e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg,#fff)", borderBottom:"1px solid var(--border,#eee)", padding:"13px 16px", display:"flex", alignItems:"center", gap:10 } },
-         e("button", { onClick:function(){ setManagingAccArticle(null); }, "aria-label":"Back", style:{ background:"none", border:"none", cursor:"pointer", padding:4, color:"var(--text,#111)", display:"flex", alignItems:"center" } },
+      return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)", overflowY:"auto" } },
+        e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--help-line)", padding:"13px 16px", display:"flex", alignItems:"center", gap:10 } },
+          e("button", { onClick:function(){ setManagingAccArticle(null); }, "aria-label":"Back", style:{ background:"none", border:"none", cursor:"pointer", padding:4, color:"var(--help-heading)", display:"flex", alignItems:"center" } },
            icon("M15 18 9 12l6-6","currentColor",24)),
          e("div", { style:{ flex:1 } },
            e("div", { style:{ fontSize:17, fontWeight:900, letterSpacing:-.3 } }, "Help Center"),
            e("div", { style:{ fontSize:10, color:"var(--muted,#888)", marginTop:1 } }, "POST \u00B7 BluOm Group Pvt. Limited")
          ),
-         e("button", { onClick:function(){ setManagingAccArticle(null); setManagingAccOpen(true); }, "aria-label":"Back to Managing account", style:{ background:"none", border:"none", cursor:"pointer", padding:6, color:"var(--text,#111)", display:"flex", alignItems:"center" } },
-           icon("M4 6h16M4 12h16M4 18h16","currentColor",24))
+          e("button", { onClick:function(){ setManagingAccArticle(null); setManagingAccOpen(true); }, "aria-label":"Back to Managing account", style:{ background:"none", border:"none", cursor:"pointer", padding:6, color:"var(--help-heading)", display:"flex", alignItems:"center" } },
+            icon("M4 6h16M4 12h16M4 18h16","var(--help-heading)",24))
        ),
        e("div", { style:{ padding:"24px 18px 60px", maxWidth:540 } },
          e("div", { style:{ fontSize:26, fontWeight:900, marginBottom:20, lineHeight:1.2, display:"flex", alignItems:"center", gap:10 } }, icon(sec.iconPath, sec.iconColor, 28), sec.title),
          sec.guide.map(function(g, gi) {
-           return e("div", { key:gi, style:{ background:"#F4F6F8", borderRadius:14, padding:"18px 16px", marginBottom:16 } },
-             e("div", { style:{ fontSize:16, fontWeight:800, color:"#1A2330", marginBottom:12, lineHeight:1.3 } }, g.heading),
+            return e("div", { key:gi, style:{ background:"var(--help-soft)", borderRadius:14, padding:"18px 16px", marginBottom:16 } },
+              e("div", { style:{ fontSize:16, fontWeight:800, color:"var(--help-heading)", marginBottom:12, lineHeight:1.3 } }, g.heading),
              e("ol", { style:{ margin:0, padding:"0 0 0 20px" } },
                g.steps.map(function(step, si) {
-                 return e("li", { key:si, style:{ fontSize:14, color:"#2C3A48", lineHeight:1.65, marginBottom:6 } }, step);
+                  return e("li", { key:si, style:{ fontSize:14, color:"var(--help-body)", lineHeight:1.65, marginBottom:6 } }, step);
                })
              ),
-             g.note ? e("div", { style:{ marginTop:10, fontSize:12, color:"#6B7B8A", fontStyle:"italic", lineHeight:1.5 } }, "\u26A0\uFE0F Note: " + g.note) : null
+              g.note ? e("div", { style:{ marginTop:10, fontSize:12, color:"var(--help-muted)", fontStyle:"italic", lineHeight:1.5 } }, "\u26A0\uFE0F Note: " + g.note) : null
            );
          }),
-         e("div", { style:{ marginTop:24, borderTop:"1px solid var(--border,#eee)", paddingTop:18 } },
-           e("div", { style:{ fontSize:13, color:"var(--muted,#888)", marginBottom:10 } }, "Need more help?"),
-           e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Help%3A%20" + encodeURIComponent(sec.title), style:{ display:"inline-block", border:"1px solid var(--border,#ddd)", borderRadius:22, padding:"10px 20px", background:"var(--bg,#fff)", color:"var(--text,#111)", fontSize:13, fontWeight:700, cursor:"pointer", textDecoration:"none" } }, "Contact Support")
+          e("div", { style:{ marginTop:24, borderTop:"1px solid var(--help-line)", paddingTop:18 } },
+            e("div", { style:{ fontSize:13, color:"var(--help-muted)", marginBottom:10 } }, "Need more help?"),
+            e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Help%3A%20" + encodeURIComponent(sec.title), style:{ display:"inline-block", border:"1px solid var(--help-heading)", borderRadius:22, padding:"10px 20px", background:"var(--help-page-bg)", color:"var(--help-heading)", fontSize:13, fontWeight:700, cursor:"pointer", textDecoration:"none" } }, "Contact Support")
          )
        )
      );
@@ -16897,14 +16905,14 @@ function AccountRecoveryScreen({
      }
 
      if (rulesOpen) {
-       return e("div", { style:{ minHeight:"100vh", background:"#fff", color:"#111", overflowY:"auto" } },
-         e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"#fff", borderBottom:"1px solid #E5E7EB", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
-           e("button", { onClick:function(){ setRulesOpen(false); setMenuOpen(true); }, "aria-label":"Back to Help Center", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"#111", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","#111",24)),
+       return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)", overflowY:"auto" } },
+         e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--help-line)", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
+           e("button", { onClick:function(){ setRulesOpen(false); setMenuOpen(true); }, "aria-label":"Back to Help Center", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","var(--help-heading)",24)),
            e("div", { style:{ flex:1 } },
              e("div", { style:{ fontSize:18, fontWeight:900, letterSpacing:-.3 } }, "Help Center"),
-             e("div", { style:{ fontSize:11, color:"#687078", marginTop:2 } }, "POST · BluOm Group Pvt. Limited")
+             e("div", { style:{ fontSize:11, color:"var(--help-muted)", marginTop:2 } }, "POST · BluOm Group Pvt. Limited")
            ),
-           e("button", { onClick:function(){ setRulesOpen(false); setMenuOpen(true); }, "aria-label":"Open Help Center menu", style:{ background:"none", border:0, cursor:"pointer", padding:6, color:"#111", display:"flex", alignItems:"center" } }, icon("M4 6h16M4 12h16M4 18h16","#111",23))
+           e("button", { onClick:function(){ setRulesOpen(false); setMenuOpen(true); }, "aria-label":"Open Help Center menu", style:{ background:"none", border:0, cursor:"pointer", padding:6, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M4 6h16M4 12h16M4 18h16","var(--help-heading)",23))
          ),
          e("main", { style:{ padding:"34px 28px 60px", maxWidth:600, margin:"0 auto" } },
            e("div", { style:{ display:"flex", alignItems:"center", gap:12, marginBottom:18 } },
@@ -16922,20 +16930,20 @@ function AccountRecoveryScreen({
                    setRulesExpanded(next);
                  },
                  "aria-expanded":isOpen,
-                 style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"16px 18px", border:"1px solid " + (isOpen ? "#E0A900" : "#E4EAEE"), borderRadius:isOpen ? "5px 5px 0 0" : 0, background:"#EAF2F6", color:"#111", cursor:"pointer", textAlign:"left", fontSize:17, fontWeight:800 }
+                  style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"16px 18px", border:"1px solid " + (isOpen ? "#E0A900" : "var(--help-line)"), borderRadius:isOpen ? "5px 5px 0 0" : 0, background:"var(--help-control)", color:"var(--help-heading)", cursor:"pointer", textAlign:"left", fontSize:17, fontWeight:800 }
                },
                  e("span", null, sec.title),
-                 icon(isOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6", "#111", 19)
+            icon(isOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6", "var(--help-heading)", 19)
                ),
-               isOpen ? e("div", { style:{ border:"1px solid #E4EAEE", borderTop:0, background:"#F1F7FA" } },
+                isOpen ? e("div", { style:{ border:"1px solid var(--help-line)", borderTop:0, background:"var(--help-soft-blue)" } },
                  sec.articles.map(function(article, articleIndex) {
                    return e("button", {
                      key:article.title,
                      onClick:function(){ setRulesArticle({ sectionKey:sec.key, article:article }); window.scrollTo(0,0); },
-                     style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"15px 18px", border:0, borderBottom:articleIndex < sec.articles.length - 1 ? "1px solid #E5E7EB" : 0, background:"transparent", color:"#087EBB", cursor:"pointer", textAlign:"left", fontSize:15, lineHeight:1.4, fontWeight:600 }
+                     style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"15px 18px", border:0, borderBottom:articleIndex < sec.articles.length - 1 ? "1px solid var(--help-line)" : 0, background:"transparent", color:"var(--help-blue)", cursor:"pointer", textAlign:"left", fontSize:15, lineHeight:1.4, fontWeight:600 }
                    },
                      e("span", null, article.title),
-                     icon("M9 18l6-6-6-6", "#687078", 18)
+                      icon("M9 18l6-6-6-6", "var(--help-muted)", 18)
                    );
                  })
                ) : null
@@ -16945,15 +16953,15 @@ function AccountRecoveryScreen({
        );
      }
 
-    if (safetyOpen) {
-      return e("div", { style:{ minHeight:"100vh", background:"#fff", color:"#111", overflowY:"auto" } },
-        e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"#fff", borderBottom:"1px solid #E5E7EB", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
-          e("button", { onClick:function(){ setSafetyOpen(false); setMenuOpen(true); }, "aria-label":"Back to Help Center", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"#111", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","#111",24)),
+     if (safetyOpen) {
+       return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)", overflowY:"auto" } },
+         e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--help-line)", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
+            e("button", { onClick:function(){ setSafetyOpen(false); setMenuOpen(true); }, "aria-label":"Back to Help Center", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","var(--help-heading)",24)),
           e("div", { style:{ flex:1 } },
             e("div", { style:{ fontSize:18, fontWeight:900, letterSpacing:-.3 } }, "Help Center"),
-            e("div", { style:{ fontSize:11, color:"#687078", marginTop:2 } }, "POST · BluOm Group Pvt. Limited")
+             e("div", { style:{ fontSize:11, color:"var(--help-muted)", marginTop:2 } }, "POST · BluOm Group Pvt. Limited")
           ),
-          e("button", { onClick:function(){ setSafetyOpen(false); setMenuOpen(true); }, "aria-label":"Open Help Center menu", style:{ background:"none", border:0, cursor:"pointer", padding:6, color:"#111", display:"flex", alignItems:"center" } }, icon("M4 6h16M4 12h16M4 18h16","#111",23))
+           e("button", { onClick:function(){ setSafetyOpen(false); setMenuOpen(true); }, "aria-label":"Open Help Center menu", style:{ background:"none", border:0, cursor:"pointer", padding:6, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M4 6h16M4 12h16M4 18h16","var(--help-heading)",23))
         ),
         e("main", { style:{ padding:"34px 28px 60px", maxWidth:600, margin:"0 auto" } },
           e("div", { style:{ display:"flex", alignItems:"center", gap:12, marginBottom:18 } },
@@ -16971,20 +16979,20 @@ function AccountRecoveryScreen({
                   setSafetyExpanded(next);
                 },
                 "aria-expanded":isOpen,
-                style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"16px 18px", border:"1px solid " + (isOpen ? "#E0A900" : "#E4EAEE"), borderRadius:isOpen ? "5px 5px 0 0" : 0, background:"#EAF2F6", color:"#111", cursor:"pointer", textAlign:"left", fontSize:17, fontWeight:800 }
+                 style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"16px 18px", border:"1px solid " + (isOpen ? "#E0A900" : "var(--help-line)"), borderRadius:isOpen ? "5px 5px 0 0" : 0, background:"var(--help-control)", color:"var(--help-heading)", cursor:"pointer", textAlign:"left", fontSize:17, fontWeight:800 }
               },
                 e("span", null, sec.title),
-                icon(isOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6", "#111", 19)
+                icon(isOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6", "var(--help-heading)", 19)
               ),
-              isOpen ? e("div", { style:{ border:"1px solid #E4EAEE", borderTop:0, background:"#fff" } },
+               isOpen ? e("div", { style:{ border:"1px solid var(--help-line)", borderTop:0, background:"var(--help-surface)" } },
                 sec.articles.map(function(article, articleIndex) {
                   return e("button", {
                     key:article.title,
                     onClick:function(){ setSafetyArticle({ sectionKey:sec.key, article:article }); window.scrollTo(0,0); },
-                    style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"15px 18px", border:0, borderBottom:articleIndex < sec.articles.length - 1 ? "1px solid #E5E7EB" : 0, background:"#fff", color:"#087EBB", cursor:"pointer", textAlign:"left", fontSize:15, lineHeight:1.4, fontWeight:600 }
+                     style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"15px 18px", border:0, borderBottom:articleIndex < sec.articles.length - 1 ? "1px solid var(--help-line)" : 0, background:"var(--help-surface)", color:"var(--help-blue)", cursor:"pointer", textAlign:"left", fontSize:15, lineHeight:1.4, fontWeight:600 }
                   },
                     e("span", null, article.title),
-                    icon("M9 18l6-6-6-6", "#687078", 18)
+                    icon("M9 18l6-6-6-6", "var(--help-muted)", 18)
                   );
                 })
               ) : null
@@ -16994,9 +17002,9 @@ function AccountRecoveryScreen({
       );
     }
 
-   if (managingAccOpen) {
-     return e("div", { style:{ minHeight:"100vh", background:"var(--bg,#fff)", color:"var(--text,#111)", overflowY:"auto" } },
-       e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg,#fff)", borderBottom:"1px solid var(--border,#eee)", padding:"13px 16px", display:"flex", alignItems:"center", gap:10 } },
+     if (managingAccOpen) {
+      return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)", overflowY:"auto" } },
+        e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--help-line)", padding:"13px 16px", display:"flex", alignItems:"center", gap:10 } },
          e("button", { onClick:function(){ setManagingAccOpen(false); setMenuOpen(true); }, "aria-label":"Back to Help Center", style:{ background:"none", border:"none", cursor:"pointer", padding:4, color:"var(--text,#111)", display:"flex", alignItems:"center" } },
            icon("M15 18 9 12l6-6","currentColor",24)),
          e("div", { style:{ flex:1 } },
@@ -17006,18 +17014,18 @@ function AccountRecoveryScreen({
          e("button", { onClick:function(){ setManagingAccOpen(false); setMenuOpen(true); }, "aria-label":"Open Help Center menu", style:{ background:"none", border:"none", cursor:"pointer", padding:6, color:"var(--text,#111)", display:"flex", alignItems:"center" } },
            icon("M4 6h16M4 12h16M4 18h16","currentColor",24))
        ),
-       e("div", { style:{ padding:"28px 18px 60px", maxWidth:540 } },
+        e("div", { style:{ padding:"28px 18px 60px", maxWidth:540 } },
          e("div", { style:{ fontSize:28, fontWeight:900, marginBottom:6, lineHeight:1.2 } }, "Managing your account"),
-         e("div", { style:{ fontSize:13, color:"var(--muted,#888)", marginBottom:22 } }, "Complete guide to managing your account"),
+          e("div", { style:{ fontSize:13, color:"var(--help-muted)", marginBottom:22 } }, "Complete guide to managing your account"),
          managingAccSections.map(function(sec) {
            var isOpen = managingAccExpanded[sec.key];
-           return e("div", { key:sec.key, style:{ background:"#F0F2F5", borderRadius:12, marginBottom:10, overflow:"hidden" } },
+            return e("div", { key:sec.key, style:{ background:"var(--help-soft)", borderRadius:12, marginBottom:10, overflow:"hidden" } },
              e("button", {
                onClick:function(){ setManagingAccArticle(sec); },
                style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 18px", border:0, background:"transparent", cursor:"pointer", textAlign:"left", gap:10 }
              },
-               e("span", { style:{ display:"flex", alignItems:"center", gap:10, fontSize:15, fontWeight:700, color:"var(--text,#111)", lineHeight:1.3 } }, icon(sec.iconPath, sec.iconColor, 20), sec.title),
-               icon("M9 18l6-6-6-6","var(--muted,#888)",18)
+                e("span", { style:{ display:"flex", alignItems:"center", gap:10, fontSize:15, fontWeight:700, color:"var(--help-heading)", lineHeight:1.3 } }, icon(sec.iconPath, sec.iconColor, 20), sec.title),
+                icon("M9 18l6-6-6-6","var(--help-muted)",18)
              )
            );
          })
@@ -17025,14 +17033,14 @@ function AccountRecoveryScreen({
      );
    }
 
-    if (menuOpen) {
-      return e("div", { style:{ minHeight:"100vh", background:"#fff", color:"#111", overflowY:"auto" } },
-        e("header", { style:{ display:"flex", alignItems:"center", gap:16, padding:"36px 24px 22px", background:"#fff" } },
+     if (menuOpen) {
+       return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)", overflowY:"auto" } },
+         e("header", { style:{ display:"flex", alignItems:"center", gap:16, padding:"36px 24px 22px", background:"var(--help-page-bg)" } },
           e("button", {
             onClick:function(){ setMenuOpen(false); },
             "aria-label":"Close Help Center",
-            style:{ width:40, height:40, display:"flex", alignItems:"center", justifyContent:"center", border:"2px solid #C99700", borderRadius:4, background:"#fff", color:"#111", cursor:"pointer", padding:0 }
-          }, icon("M6 6l12 12M18 6 6 18", "#111", 25)),
+             style:{ width:40, height:40, display:"flex", alignItems:"center", justifyContent:"center", border:"2px solid #C99700", borderRadius:4, background:"var(--help-page-bg)", color:"var(--help-heading)", cursor:"pointer", padding:0 }
+           }, icon("M6 6l12 12M18 6 6 18", "var(--help-heading)", 25)),
           e("div", { style:{ fontSize:25, fontWeight:900, letterSpacing:-.6 } }, "Help Center")
         ),
         e("main", { style:{ padding:"18px 24px 52px", maxWidth:560 } },
@@ -17040,16 +17048,16 @@ function AccountRecoveryScreen({
             return e("button", {
               key:section.title,
               onClick:function(){ openMenuSection(section); },
-              style:{ display:"block", width:"100%", padding:"17px 0", border:0, background:"transparent", color:"#202124", fontSize:20, lineHeight:1.35, textAlign:"left", cursor:"pointer", fontFamily:"inherit" }
+               style:{ display:"block", width:"100%", padding:"17px 0", border:0, background:"transparent", color:"var(--help-heading)", fontSize:20, lineHeight:1.35, textAlign:"left", cursor:"pointer", fontFamily:"inherit" }
             }, section.title);
           }),
           e("button", {
             onClick:function(){ window.location.href="mailto:postbluom@gmail.com?subject=POST%20App%20Help%20Center"; },
-            style:{ marginTop:28, marginRight:12, padding:"13px 24px", border:"2px solid #E7EDF0", borderRadius:28, background:"#fff", color:"#202124", fontSize:16, cursor:"pointer", fontFamily:"inherit" }
+             style:{ marginTop:28, marginRight:12, padding:"13px 24px", border:"2px solid var(--help-line)", borderRadius:28, background:"var(--help-page-bg)", color:"var(--help-heading)", fontSize:16, cursor:"pointer", fontFamily:"inherit" }
           }, "Contact Us"),
           e("button", {
             onClick:function(){ setMenuOpen(false); if(onSignIn){ onSignIn(); } else { onBack(); } },
-            style:{ display:"block", marginTop:12, padding:"13px 24px", border:"2px solid #E7EDF0", borderRadius:28, background:"#fff", color:"#202124", fontSize:16, cursor:"pointer", fontFamily:"inherit" }
+             style:{ display:"block", marginTop:12, padding:"13px 24px", border:"2px solid var(--help-line)", borderRadius:28, background:"var(--help-page-bg)", color:"var(--help-heading)", fontSize:16, cursor:"pointer", fontFamily:"inherit" }
           }, "Sign in")
         )
       );
@@ -17101,7 +17109,7 @@ function AccountRecoveryScreen({
          e("div", null, e("div",{style:{fontSize:20,fontWeight:900}},"Help Center"), e("div",{style:{fontSize:11,color:"var(--muted)",marginTop:2}},"POST · BluOm Group Pvt. Limited"))
        ),
        e("main", { style:{ maxWidth:760, margin:"0 auto", padding:"26px 20px 60px" } },
-         e("div",{style:{fontSize:12,fontWeight:800,letterSpacing:1.4,textTransform:"uppercase",color:"#1877F2",marginBottom:12}}, selectedArticle.category),
+        e("div",{style:{fontSize:12,fontWeight:800,letterSpacing:1.4,textTransform:"uppercase",color:"var(--help-blue)",marginBottom:12}}, selectedArticle.category),
          e("h1",{style:{fontSize:"clamp(28px,7vw,42px)",lineHeight:1.08,margin:"0 0 16px",fontWeight:900}},selectedArticle.title),
          e("p",{style:{fontSize:16,lineHeight:1.65,color:"var(--muted)",margin:"0 0 26px"}},selectedArticle.summary),
          e("div",{style:{borderTop:"1px solid var(--border)",paddingTop:22,fontSize:15,lineHeight:1.8,color:"var(--text)"}},
@@ -17113,48 +17121,53 @@ function AccountRecoveryScreen({
        reportOpen ? e("div",{style:{position:"fixed",inset:0,zIndex:20,background:"rgba(0,0,0,.55)",display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:function(ev){if(ev.target===ev.currentTarget)setReportOpen(false);}},
          e("div",{style:{width:"100%",maxWidth:520,background:"var(--card-bg)",borderRadius:"22px 22px 0 0",padding:"20px",color:"var(--text)"}},
            e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},e("strong",{style:{fontSize:18}},"Contact Post Support"),e("button",{onClick:function(){setReportOpen(false);},style:{border:"none",background:"none",fontSize:24,cursor:"pointer",color:"var(--muted)"}}, "×")),
+            e("div",{style:{background:"var(--help-soft-blue)",border:"1px solid var(--help-line)",borderRadius:10,padding:"10px 12px",marginBottom:16}},
+              e("div",{style:{fontSize:11,fontWeight:800,letterSpacing:.6,textTransform:"uppercase",color:"var(--help-muted)",marginBottom:3}},"Article"),
+              e("div",{style:{fontSize:14,fontWeight:800,lineHeight:1.35,color:"var(--text)"}},selectedArticle.title),
+              e("div",{style:{fontSize:12,color:"var(--help-blue)",marginTop:3}},selectedArticle.category)
+            ),
             e("div",{style:{fontSize:12,fontWeight:800,letterSpacing:.5,textTransform:"uppercase",color:"var(--muted)",marginBottom:8}},"What went wrong?"),
             e("div",{role:"radiogroup","aria-label":"Issue type",style:{border:"1px solid var(--border)",borderRadius:12,overflow:"hidden",marginBottom:12}},
               (selectedArticle.issues || ["Other"]).map(function(item,index){
                 var chosen = reportType === item;
-                return e("button",{key:item,type:"button",role:"radio","aria-checked":chosen,onClick:function(){setReportType(item);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,padding:"14px 12px",border:0,borderBottom:index < selectedArticle.issues.length - 1 ? "1px solid var(--border)" : "none",background:chosen?"#EEF6FF":"var(--card-bg)",color:"var(--text)",textAlign:"left",cursor:"pointer",fontSize:14}},
+                return e("button",{key:item,type:"button",role:"radio","aria-checked":chosen,onClick:function(){setReportType(item);},style:{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,padding:"14px 12px",border:0,borderBottom:index < selectedArticle.issues.length - 1 ? "1px solid var(--border)" : "none",background:chosen?"var(--help-selected)":"var(--card-bg)",color:"var(--text)",textAlign:"left",cursor:"pointer",fontSize:14}},
                   e("span",null,item),
-                  e("span",{style:{width:20,height:20,borderRadius:"50%",border:"2px solid "+(chosen?"#1877F2":"var(--muted)"),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
-                    chosen && e("span",{style:{width:10,height:10,borderRadius:"50%",background:"#1877F2"}})
+                  e("span",{style:{width:20,height:20,borderRadius:"50%",border:"2px solid "+(chosen?"var(--help-blue)":"var(--muted)"),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
+                    chosen && e("span",{style:{width:10,height:10,borderRadius:"50%",background:"var(--help-blue)"}})
                   )
                 );
               })
             ),
            e("textarea",{value:reportText,onChange:function(ev){setReportText(ev.target.value);},placeholder:"Describe what happened...",rows:5,style:{width:"100%",padding:12,borderRadius:10,border:"1px solid var(--border)",background:"var(--input-bg)",color:"var(--text)",resize:"vertical",fontFamily:"inherit",fontSize:14}}),
-           e("button",{onClick:submitReport,disabled:!reportText.trim(),style:{width:"100%",marginTop:12,padding:13,border:0,borderRadius:12,background:reportText.trim()?"#1877F2":"var(--border)",color:"#fff",fontWeight:800,cursor:reportText.trim()?"pointer":"not-allowed"}},"Open Support Email")
+           e("button",{onClick:submitReport,disabled:!reportText.trim(),style:{width:"100%",marginTop:12,padding:13,border:0,borderRadius:12,background:reportText.trim()?"var(--help-blue)":"var(--border)",color:"#fff",fontWeight:800,cursor:reportText.trim()?"pointer":"not-allowed"}},"Open Support Email")
          )
        ) : null
      );
    }
 
-   return e("div", { style:{ minHeight:"100vh", background:"#F3F7FA", color:"#111", overflowY:"auto" } },
-       e("header", { style:{ position:"sticky",top:0,zIndex:10,background:"#fff",borderBottom:"1px solid #E5E7EB",display:"flex",alignItems:"center",gap:12,padding:"14px 18px" } },
-        e("button",{onClick:function(){onBack();},"aria-label":"Go back from Help Center",style:{width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",border:0,borderRadius:17,background:"transparent",cursor:"pointer",padding:0,color:"#111"}},icon("M15 18 9 12l6-6","#111",24)),
+    return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)", overflowY:"auto" } },
+        e("header", { style:{ position:"sticky",top:0,zIndex:10,background:"var(--nav-bg)",borderBottom:"1px solid var(--help-line)",display:"flex",alignItems:"center",gap:12,padding:"14px 18px" } },
+         e("button",{onClick:function(){onBack();},"aria-label":"Go back from Help Center",style:{width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",border:0,borderRadius:17,background:"transparent",cursor:"pointer",padding:0,color:"var(--help-heading)"}},icon("M15 18 9 12l6-6","var(--help-heading)",24)),
          e("div",{style:{fontSize:20,fontWeight:900,flex:1,letterSpacing:-.5}},"Help Center"),
-       e("button",{onClick:function(){var input=document.getElementById("post-help-search");if(input)input.focus();},"aria-label":"Search help articles",style:{border:0,background:"none",cursor:"pointer",padding:4,color:"#111"}},icon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z","#111",22)),
-       e("button",{onClick:function(){setMenuOpen(!menuOpen);},"aria-label":"Open help menu",style:{border:0,background:"none",cursor:"pointer",padding:4,color:"#111"}},icon("M4 6h16M4 12h16M4 18h16","#111",23))
+        e("button",{onClick:function(){var input=document.getElementById("post-help-search");if(input)input.focus();},"aria-label":"Search help articles",style:{border:0,background:"none",cursor:"pointer",padding:4,color:"var(--help-heading)"}},icon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z","var(--help-heading)",22)),
+        e("button",{onClick:function(){setMenuOpen(!menuOpen);},"aria-label":"Open help menu",style:{border:0,background:"none",cursor:"pointer",padding:4,color:"var(--help-heading)"}},icon("M4 6h16M4 12h16M4 18h16","var(--help-heading)",23))
      ),
-     e("section",{style:{background:"#111820",color:"#fff",padding:"42px 20px 44px",position:"relative",overflow:"hidden"}},
+      e("section",{style:{background:"var(--help-hero)",color:"#fff",padding:"42px 20px 44px",position:"relative",overflow:"hidden"}},
        e("div",{style:{position:"absolute",inset:0,opacity:.23,backgroundImage:"radial-gradient(circle at 20% 30%,#8ea3b4 0 1px,transparent 1.5px),radial-gradient(circle at 80% 60%,#8ea3b4 0 1px,transparent 1.5px)",backgroundSize:"34px 34px,52px 52px"}}),
-           e("div",{style:{position:"relative",maxWidth:760,margin:"0 auto"}},e("div",{style:{fontSize:12,fontWeight:900,letterSpacing:2,color:"#B9E7FF",marginBottom:14}},"WELCOME TO POST HELP CENTER"),e("h1",{style:{fontSize:"clamp(36px,10vw,58px)",lineHeight:1.03,letterSpacing:-1.8,margin:"0 0 26px",fontWeight:900,maxWidth:560}},"What can we help you find?"),
-           e("div",{style:{position:"relative"}},e("span",{style:{position:"absolute",left:16,top:17,pointerEvents:"none"}},icon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z","#68727B",21)),e("input",{id:"post-help-search",value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search articles",style:{width:"100%",height:56,border:0,borderRadius:10,padding:"0 18px 0 48px",fontSize:16,outline:0,color:"#111",background:"#fff"}}))
+            e("div",{style:{position:"relative",maxWidth:760,margin:"0 auto"}},e("div",{style:{fontSize:12,fontWeight:900,letterSpacing:2,color:"#B9E7FF",marginBottom:14}},"WELCOME TO POST HELP CENTER"),e("h1",{style:{fontSize:"clamp(36px,10vw,58px)",lineHeight:1.03,letterSpacing:-1.8,margin:"0 0 26px",fontWeight:900,maxWidth:560}},"What can we help you find?"),
+            e("div",{style:{position:"relative"}},e("span",{style:{position:"absolute",left:16,top:17,pointerEvents:"none"}},icon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z","#68727B",21)),e("input",{id:"post-help-search",value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search articles",style:{width:"100%",height:56,border:0,borderRadius:10,padding:"0 18px 0 48px",fontSize:16,outline:0,color:"#111",background:"#fff"}}))
        )
      ),
      e("main",{style:{maxWidth:820,margin:"0 auto",padding:"30px 16px 60px"}},e("div",{style:{fontSize:12,letterSpacing:1.8,fontWeight:900,color:"#74808A",margin:"0 0 7px 2px"}},"SUPPORT LIBRARY"),e("h2",{style:{fontSize:25,margin:"0 0 22px",letterSpacing:-.5}},"Browse by topic"),
        visible.length ? visible.map(function(item){
           var category=item.category, idx=item.index, isOpen=!!expanded[idx], shown=showAll===idx?item.articles:item.articles.slice(0,3);
-          return e("section",{id:"post-help-category-"+idx,key:category.title,style:{background:"#fff",border:"1px solid #D9E0E5",borderRadius:15,overflow:"hidden",marginBottom:12,boxShadow:"0 1px 1px rgba(10,30,50,.03)"}},
-            e("button",{onClick:function(){toggleCategory(idx);},"aria-expanded":isOpen,style:{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"16px",border:0,background:"#fff",cursor:"pointer",textAlign:"left",color:"#111"}},
+           return e("section",{id:"post-help-category-"+idx,key:category.title,style:{background:"var(--help-surface)",border:"1px solid var(--help-line)",borderRadius:15,overflow:"hidden",marginBottom:12,boxShadow:"0 1px 1px rgba(10,30,50,.03)"}},
+             e("button",{onClick:function(){toggleCategory(idx);},"aria-expanded":isOpen,style:{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"16px",border:0,background:"var(--help-surface)",cursor:"pointer",textAlign:"left",color:"var(--help-heading)"}},
              e("span",{style:{width:42,height:42,borderRadius:12,background:category.color+"20",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},icon(category.icon,category.color,21)),
              e("span",{style:{flex:1,fontWeight:850,fontSize:15}},String(idx+1).padStart(2,"0")+"  "+category.title),
              icon(isOpen?"M6 15l6-6 6 6":"M6 9l6 6 6-6","#687078",18)
            ),
-           isOpen ? e("div",{style:{borderTop:"1px solid #E3E7EA"}},shown.map(function(article,articleIndex){return e("button",{key:article[0],onClick:function(){openArticle(category.title,article);},style:{display:"flex",alignItems:"center",gap:12,width:"100%",padding:"15px 16px",border:0,borderBottom:articleIndex<shown.length-1?"1px solid #E6EAED":"none",background:"#fff",cursor:"pointer",textAlign:"left"}},e("span",{style:{flex:1}},e("span",{style:{display:"block",fontSize:16,lineHeight:1.35,color:"#087EBB",fontWeight:500}},article[0]),e("span",{style:{display:"block",fontSize:12,color:"#75818A",marginTop:4,lineHeight:1.35}},article[1])),icon("M9 18l6-6-6-6","#8A949B",17));}),e("div",{style:{padding:"12px 16px 16px"}},e("button",{onClick:function(ev){ev.stopPropagation();setShowAll(showAll===idx?null:idx);},style:{border:"1px solid #111",background:"#fff",borderRadius:22,padding:"10px 16px",fontWeight:800,cursor:"pointer",fontSize:13,color:"#111"}},showAll===idx?"Show fewer articles":"See all "+category.articles.length+" articles"))) : null
+           isOpen ? e("div",{style:{borderTop:"1px solid var(--help-line)"}},shown.map(function(article,articleIndex){return e("button",{key:article[0],onClick:function(){openArticle(category.title,article);},style:{display:"flex",alignItems:"center",gap:12,width:"100%",padding:"15px 16px",border:0,borderBottom:articleIndex<shown.length-1?"1px solid var(--help-line)":"none",background:"var(--help-surface)",cursor:"pointer",textAlign:"left"}},e("span",{style:{flex:1}},e("span",{style:{display:"block",fontSize:16,lineHeight:1.35,color:"var(--help-blue)",fontWeight:500}},article[0]),e("span",{style:{display:"block",fontSize:12,color:"var(--help-muted)",marginTop:4,lineHeight:1.35}},article[1])),icon("M9 18l6-6-6-6","var(--help-muted)",17));}),e("div",{style:{padding:"12px 16px 16px"}},e("button",{onClick:function(ev){ev.stopPropagation();setShowAll(showAll===idx?null:idx);},style:{border:"1px solid var(--help-heading)",background:"var(--help-surface)",borderRadius:22,padding:"10px 16px",fontWeight:800,cursor:"pointer",fontSize:13,color:"var(--help-heading)"}},showAll===idx?"Show fewer articles":"See all "+category.articles.length+" articles"))) : null
          );
        }) : e("div",{style:{background:"#fff",border:"1px solid #D9E0E5",borderRadius:15,padding:"28px 20px",textAlign:"center",color:"#68747D"}},"No articles found. Try a different search.")
      )
