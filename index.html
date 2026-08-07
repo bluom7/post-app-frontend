@@ -23255,7 +23255,10 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
         React.createElement("div", { onClick: function() { onViewProfile && onViewProfile(reel.user_id); }, style: { width: 36, height: 36, marginTop: 1, borderRadius: "50%", background: reel.avatar_bg || "#FFD600", flexShrink: 0, border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15, color: "#111", overflow: "hidden", cursor: "pointer", boxShadow: "0 1px 5px rgba(0,0,0,0.45)" } },
           reel.avatar_photo ? React.createElement("img", { src: reel.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" } }) : (reel.avatar_letter || "?")),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 3, flex: 1, minWidth: 0 } },
-            React.createElement("span", { onClick: function() { onViewProfile && onViewProfile(reel.user_id); }, style: { color: "#fff", fontWeight: 700, fontSize: 16, lineHeight: "20px", cursor: "pointer", textShadow: "0 1px 4px rgba(0,0,0,0.6)", letterSpacing: "-0.1px" } }, "@" + (reel.user_handle || reel.user_name || "user").replace(/^@/, "")),
+            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, minWidth: 0 } },
+              React.createElement("span", { onClick: function() { onViewProfile && onViewProfile(reel.user_id); }, style: { color: "#fff", fontWeight: 700, fontSize: 16, lineHeight: "20px", cursor: "pointer", textShadow: "0 1px 4px rgba(0,0,0,0.6)", letterSpacing: "-0.1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (reel.user_handle || reel.user_name || "user").replace(/^@/, "")),
+              reel.is_badge_verified && React.createElement(VerifiedBadge, { size: 16, color: "#fff" })
+            ),
           (reel.audio_label || reel.music_title) && React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, overflow: "hidden" } },
             React.createElement("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "#fff", style: { flexShrink: 0 } },
               React.createElement("path", { d: "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" })),
