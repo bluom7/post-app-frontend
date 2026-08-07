@@ -16971,7 +16971,7 @@ function AccountRecoveryScreen({
           e("p", { style:{ fontSize:17, lineHeight:1.55, margin:"0 0 30px", maxWidth:470 } }, "Learn how to stay safe by managing your privacy settings"),
           safetySections.map(function(sec, index) {
             var isOpen = !!safetyExpanded[sec.key];
-            return e("section", { key:sec.key, style:{ marginBottom:9 } },
+            return e("section", { key:sec.key, style:{ width:"100%", display:"block", margin:"0 0 10px", padding:0, overflow:"hidden", boxSizing:"border-box", transform:"none" } },
               e("button", {
                 onClick:function(){
                   var next = Object.assign({}, safetyExpanded);
@@ -16979,12 +16979,12 @@ function AccountRecoveryScreen({
                   setSafetyExpanded(next);
                 },
                 "aria-expanded":isOpen,
-                 style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"16px 18px", border:"1px solid " + (isOpen ? "#E0A900" : "var(--help-line)"), borderRadius:isOpen ? "5px 5px 0 0" : 0, background:"var(--help-control)", color:"var(--help-heading)", cursor:"pointer", textAlign:"left", fontSize:17, fontWeight:800 }
+                 style:{ width:"100%", height:64, minHeight:64, display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, boxSizing:"border-box", margin:0, padding:"16px 22px", border:"1px solid var(--help-line)", borderBottom:isOpen?0:"1px solid var(--help-line)", borderRadius:0, appearance:"none", WebkitAppearance:"none", background:"var(--help-control)", color:"var(--help-heading)", cursor:"pointer", textAlign:"left", fontSize:17, lineHeight:1.35, fontWeight:800, transform:"none" }
               },
                 e("span", null, sec.title),
                 icon(isOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6", "var(--help-heading)", 19)
               ),
-               isOpen ? e("div", { style:{ border:"1px solid var(--help-line)", borderTop:0, background:"var(--help-surface)" } },
+                isOpen ? e("div", { style:{ width:"100%", boxSizing:"border-box", border:"1px solid var(--help-line)", borderTop:0, background:"var(--help-surface)" } },
                 sec.articles.map(function(article, articleIndex) {
                   return e("button", {
                     key:article.title,
