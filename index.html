@@ -15887,6 +15887,17 @@ function AccountRecoveryScreen({
      });
    }
     function openMenuSection(section) {
+      if (section.title === "Using Post") {
+        setSelectedArticle({
+          category: "Using Post",
+          title: "Welcome to POST!",
+          summary: "An official message from Team POST for everyone joining the community.",
+          special: "welcome"
+        });
+        setMenuOpen(false);
+        window.scrollTo(0, 0);
+        return;
+      }
       if (section.title === "Managing your account") {
         setManagingAccOpen(true);
         setManagingAccArticle(null);
@@ -17057,30 +17068,31 @@ function AccountRecoveryScreen({
        ),
        e("div",{style:{maxWidth:600,margin:"0 auto",padding:"28px 18px 60px"}},
          e("div",{style:{background:"linear-gradient(135deg,#1877F2 0%,#0C9486 100%)",borderRadius:20,padding:"32px 24px 28px",color:"#fff",marginBottom:24,boxShadow:"0 8px 32px rgba(24,119,242,.25)"}},
-           e("div",{style:{fontSize:36,marginBottom:8}},"\uD83C\uDF89"),
+           e("div",{style:{fontSize:12,fontWeight:900,letterSpacing:1.6,marginBottom:10,opacity:.88}},"OFFICIAL POST NOTICE"),
            e("h1",{style:{fontSize:28,fontWeight:900,margin:"0 0 4px",letterSpacing:-.5}},"Welcome to POST!"),
            e("div",{style:{fontSize:14,opacity:.85,marginTop:6}},"From Team POST \u2022 BluOm Group Pvt. Limited")
          ),
          e("div",{style:{background:"var(--card-bg)",borderRadius:16,padding:"24px 20px",boxShadow:"0 2px 12px rgba(0,0,0,.06)",lineHeight:1.8,fontSize:15,color:"var(--text)"}},
-           e("p",{style:{margin:"0 0 16px",fontSize:17}},e("strong",null,"Hi \uD83D\uDC4B,") ),
-           e("p",{style:{margin:"0 0 16px"}},"Thank you for joining the POST community. We\u2019re excited to have you with us!"),
-           e("p",{style:{margin:"0 0 20px"}},"Your support helps us build a better social platform where people can share ideas, connect with others, and express themselves freely."),
+           e("p",{style:{margin:"0 0 16px",fontSize:17}},e("strong",null,"Hi there!") ),
+           e("p",{style:{margin:"0 0 16px"}},"Thank you for joining POST. We\u2019re excited to have you as part of our growing community."),
+           e("p",{style:{margin:"0 0 20px"}},"POST is a place where you can share your thoughts, connect with people, discover new ideas, and express yourself freely."),
+           e("p",{style:{margin:"0 0 20px"}},"Your support means a lot to us, and we\u2019re committed to making POST a safe, enjoyable, and meaningful experience for everyone."),
            e("div",{style:{background:"var(--bg)",borderRadius:12,padding:"16px 18px",marginBottom:20}},
-             e("div",{style:{fontSize:14,fontWeight:800,letterSpacing:.5,color:"#1877F2",marginBottom:12}},"\u2728 START BY"),
+             e("div",{style:{fontSize:14,fontWeight:800,letterSpacing:.5,color:"#1877F2",marginBottom:12}},"GET STARTED BY"),
              [
-               ["📝","Create your first post"],
-               ["👥","Follow people you like"],
-               ["✏️","Complete your profile"],
-               ["🎉","Invite your friends to join POST"]
+               ["1","Completing your profile"],
+               ["2","Sharing your first post"],
+               ["3","Following people who inspire you"],
+               ["4","Inviting your friends to join POST"]
              ].map(function(item,i){
                return e("div",{key:i,style:{display:"flex",alignItems:"center",gap:12,padding:"9px 0",borderBottom:i<3?"1px solid var(--border)":"none"}},
-                 e("span",{style:{fontSize:20,minWidth:28,textAlign:"center"}},item[0]),
+                 e("span",{style:{fontSize:14,fontWeight:800,minWidth:28,width:28,height:28,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",background:"#1877F2",color:"#fff"}},item[0]),
                  e("span",{style:{fontSize:14,fontWeight:500}},item[1])
                );
              })
            ),
-           e("p",{style:{margin:"0 0 16px"}},"If you ever need help or have suggestions, we\u2019re always here for you."),
-           e("p",{style:{margin:"0 0 0",fontWeight:700,fontSize:16}},"Thank you for choosing POST. \uD83D\uDC99"),
+           e("p",{style:{margin:"0 0 16px"}},"If you ever have questions, feedback, or suggestions, we\u2019re always here to help."),
+           e("p",{style:{margin:"0 0 0",fontWeight:700,fontSize:16}},"Thank you for choosing POST. Welcome to the community!"),
            e("p",{style:{margin:"12px 0 0",color:"var(--muted)",fontSize:14}},"\u2014 Team POST")
          ),
        )
