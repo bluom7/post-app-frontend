@@ -15769,6 +15769,8 @@ function AccountRecoveryScreen({
    var menuOpen = menuState[0], setMenuOpen = menuState[1];
    var showAllState = React.useState(null);
    var showAll = showAllState[0], setShowAll = showAllState[1];
+   var heartState = React.useState(false);
+   var heartFilled = heartState[0], setHeartFilled = heartState[1];
    var reportState = React.useState(false);
    var reportOpen = reportState[0], setReportOpen = reportState[1];
     var reportTypeState = React.useState("");
@@ -17099,7 +17101,7 @@ function AccountRecoveryScreen({
              })
            ),
            e("p",{style:{margin:"0 0 16px"}},"If you ever have questions, feedback, or suggestions, we\u2019re always here to help."),
-           e("p",{style:{margin:"0 0 0",fontWeight:700,fontSize:16,display:"flex",alignItems:"center",gap:7}},"Thank you for choosing POST.",e("span",{style:{display:"inline-flex",color:"#E53935",verticalAlign:"middle"}},icon("M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z","currentColor",20))),
+           e("p",{style:{margin:"0 0 0",fontWeight:700,fontSize:16,display:"flex",alignItems:"center",gap:7}},"Thank you for choosing POST.",e("button",{type:"button",onClick:function(){setHeartFilled(function(prev){return !prev;});},"aria-label":heartFilled?"Remove heart":"Add heart",style:{display:"inline-flex",alignItems:"center",justifyContent:"center",padding:0,border:"none",background:"transparent",color:"#E53935",cursor:"pointer",lineHeight:1}},e("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},e("path",{d:"M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z",fill:heartFilled?"currentColor":"none"})))),
            e("p",{style:{margin:"12px 0 0",color:"var(--muted)",fontSize:14}},"\u2014 Team POST")
          ),
        )
