@@ -23172,6 +23172,34 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
     return 16;
   }
   var userInfoBottom = getUserInfoBottom();
+  function shareReel() {
+    var shareUrl = window.location.href;
+    var shareData = { title: reel.user_name || reel.user_handle || "Post App reel", text: reel.caption || "", url: shareUrl };
+    if (navigator.share) {
+      navigator.share(shareData).then(function() { showToast && showToast("Shared", "#22C55E"); }).catch(function(err) {
+        if (err && err.name === "AbortError") return;
+        copyReelLink(shareUrl);
+      });
+    } else {
+      copyReelLink(shareUrl);
+    }
+  }
+  function copyReelLink(url) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(url).then(function() { showToast && showToast("Link copied", "#22C55E"); }).catch(function() { fallbackCopyReelLink(url); });
+    } else {
+      fallbackCopyReelLink(url);
+    }
+  }
+  function fallbackCopyReelLink(url) {
+    var input = document.createElement("textarea");
+    input.value = url; input.setAttribute("readonly", "");
+    input.style.position = "fixed"; input.style.opacity = "0";
+    document.body.appendChild(input); input.select();
+    try { document.execCommand("copy"); showToast && showToast("Link copied", "#22C55E"); }
+    catch (_) { showToast && showToast("Copy link unavailable", "#FF3B5C"); }
+    document.body.removeChild(input);
+  }
   function handleVideoTap() {
     var now = Date.now();
     if (lastTapRef.current && (now - lastTapRef.current) < 300) {
@@ -23189,7 +23217,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
       showHeart && React.createElement("div", { style: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none", zIndex: 10, animation: "reelHeartPop 0.9s ease forwards" } },
         React.createElement("svg", { width: 90, height: 90, viewBox: "0 0 24 24", fill: "#FF1744", stroke: "none" },
           React.createElement("path", { d: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" }))),
-      React.createElement("div", { style: { position: "absolute", right: 14, bottom: 120, display: "flex", flexDirection: "column", alignItems: "center", gap: 20, zIndex: 5 } },
+      React.createElement("div", { style: { position: "absolute", right: 14, bottom: 120, display: "flex", flexDirection: "column", alignItems: "center", gap: 20, zIndex: 5, paddingBottom: "env(safe-area-inset-bottom, 0px)" } },
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 } },
           React.createElement("button", { onClick: function() { onLike(reel.id); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4 } },
             React.createElement("svg", { width: 30, height: 30, viewBox: "0 0 24 24", fill: reel.is_liked ? "#FF1744" : "none", stroke: reel.is_liked ? "#FF1744" : "#fff", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" },
@@ -23201,7 +23229,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
               React.createElement("path", { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" }))),
           React.createElement("span", { style: { color: "#fff", fontSize: 12, fontWeight: 600, letterSpacing: 0.1 } }, fmtCount(reel.comment_count))),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 } },
-          React.createElement("button", { onClick: function() { if (navigator.share) { navigator.share({ title: reel.user_name, text: reel.caption || "", url: window.location.href }).catch(function(){}); } else if (navigator.clipboard) { navigator.clipboard.writeText(window.location.href); showToast && showToast("Link copied!", "#22C55E"); } }, style: { background: "none", border: "none", cursor: "pointer", padding: 4 } },
+          React.createElement("button", { onClick: function(e) { e.stopPropagation(); shareReel(); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4 } },
             React.createElement("svg", { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" },
               React.createElement("line", { x1: 22, y1: 2, x2: 11, y2: 13 }),
               React.createElement("polygon", { points: "22 2 15 22 11 13 2 9 22 2" }))),
@@ -23224,10 +23252,10 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
                   React.createElement("path", { d: "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" }))))),
     React.createElement("div", { style: { position: "absolute", left: 0, right: 70, bottom: 16, padding: "0 16px", zIndex: 5 } },
       React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 8 } },
-        React.createElement("div", { onClick: function() { onViewProfile && onViewProfile(reel.user_id); }, style: { width: 44, height: 44, borderRadius: "50%", background: reel.avatar_bg || "#FFD600", flexShrink: 0, border: "2.5px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 18, color: "#111", overflow: "hidden", cursor: "pointer" } },
+        React.createElement("div", { onClick: function() { onViewProfile && onViewProfile(reel.user_id); }, style: { width: 30, height: 30, borderRadius: "50%", background: reel.avatar_bg || "#FFD600", flexShrink: 0, border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13, color: "#111", overflow: "hidden", cursor: "pointer", boxShadow: "0 1px 5px rgba(0,0,0,0.45)" } },
           reel.avatar_photo ? React.createElement("img", { src: reel.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" } }) : (reel.avatar_letter || "?")),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 3, flex: 1, minWidth: 0 } },
-            React.createElement("span", { onClick: function() { onViewProfile && onViewProfile(reel.user_id); }, style: { color: "#fff", fontWeight: 800, fontSize: 17, cursor: "pointer", textShadow: "0 1px 4px rgba(0,0,0,0.6)" } }, "@" + (reel.user_handle || reel.user_name || "user").replace(/^@/, "")),
+            React.createElement("span", { onClick: function() { onViewProfile && onViewProfile(reel.user_id); }, style: { color: "#fff", fontWeight: 700, fontSize: 15, lineHeight: 1.1, cursor: "pointer", textShadow: "0 1px 4px rgba(0,0,0,0.6)", letterSpacing: "-0.1px" } }, "@" + (reel.user_handle || reel.user_name || "user").replace(/^@/, "")),
           (reel.audio_label || reel.music_title) && React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, overflow: "hidden" } },
             React.createElement("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "#fff", style: { flexShrink: 0 } },
               React.createElement("path", { d: "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" })),
@@ -23238,7 +23266,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
             React.createElement("svg", { width: 10, height: 10, viewBox: "0 0 24 24", fill: "#fff", style: { flexShrink: 0 } },
               React.createElement("path", { d: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" })),
             React.createElement("span", { style: { color: "rgba(255,255,255,0.85)", fontSize: 11, fontWeight: 600, textShadow: "0 1px 4px rgba(0,0,0,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, reel.location))),
-        !isOwn && React.createElement("button", { onClick: function() { onFollow(reel.user_id); }, style: { background: reel.is_following ? "rgba(255,255,255,0.20)" : "transparent", border: "2px solid " + (reel.is_following ? "rgba(255,255,255,0.6)" : "#fff"), color: "#fff", borderRadius: 20, padding: "6px 16px", fontSize: 14, fontWeight: 800, cursor: "pointer", opacity: 1, flexShrink: 0 } }, reel.is_following ? "Following" : "Follow")),
+        !isOwn && React.createElement("button", { onClick: function() { onFollow(reel.user_id); }, style: { background: "transparent", border: "1px solid rgba(255,255,255,0.9)", color: "#fff", borderRadius: 7, padding: "4px 11px", fontSize: 13, lineHeight: 1.1, fontWeight: 500, cursor: "pointer", opacity: 1, flexShrink: 0, textShadow: "0 1px 3px rgba(0,0,0,0.45)" } }, reel.is_following ? "Following" : "Follow")),
       reel.caption ? React.createElement("div", { style: { marginBottom: 6 } },
         React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: 1.5, textShadow: "0 1px 6px rgba(0,0,0,0.7)", display: "-webkit-box", WebkitLineClamp: captionExpanded ? "unset" : 2, WebkitBoxOrient: "vertical", overflow: captionExpanded ? "visible" : "hidden" } }, reel.caption),
         !captionExpanded && reel.caption.length > 70 && React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(true); }, style: { color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-block", marginTop: 2 } }, "show more"),
@@ -23531,28 +23559,90 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
     }
   }
 
+  // Mutating reel actions use optimistic UI, but always reconcile with the
+  // server and roll back the visible state when the request fails.
+  var reelActionSeqRef = React.useRef({});
+  function nextReelAction(rid) {
+    var next = (reelActionSeqRef.current[rid] || 0) + 1;
+    reelActionSeqRef.current[rid] = next;
+    return next;
+  }
+  function isLatestReelAction(rid, seq) {
+    return reelActionSeqRef.current[rid] === seq;
+  }
   function likeReel(rid) {
+    var previous = null;
+    var seq = nextReelAction(rid);
     setReels(function(prev) {
-      var updated = prev.map(function(r) {
+      return prev.map(function(r) {
         if (r.id !== rid) return r;
+        previous = { is_liked: !!r.is_liked, like_count: r.like_count || 0 };
         var newLiked = !r.is_liked;
-        var newCount = newLiked ? (r.like_count||0)+1 : Math.max(0,(r.like_count||0)-1);
+        var newCount = newLiked ? previous.like_count + 1 : Math.max(0, previous.like_count - 1);
         var upd = Object.assign({}, r, { is_liked: newLiked, like_count: newCount });
         dispatchReelUpdate(rid, { is_liked: newLiked, like_count: newCount });
         return upd;
       });
-      return updated;
     });
-    api("/reels/" + rid + "/like", "POST", {}, token).catch(function() {});
+    api("/reels/" + rid + "/like", "POST", {}, token)
+      .then(function(result) {
+        if (!isLatestReelAction(rid, seq) || !result) return;
+        setReels(function(prev) { return prev.map(function(r) {
+          return r.id === rid ? Object.assign({}, r, {
+            is_liked: typeof result.liked === "boolean" ? result.liked : r.is_liked,
+            like_count: typeof result.like_count === "number" ? result.like_count : r.like_count
+          }) : r;
+        }); });
+      })
+      .catch(function() {
+        if (!previous || !isLatestReelAction(rid, seq)) return;
+        setReels(function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, previous) : r; }); });
+        dispatchReelUpdate(rid, previous);
+        showToast && showToast("Couldn't update like", "#FF3B5C");
+      });
   }
   function saveReel(rid) {
-    setReels(function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, { is_saved: !r.is_saved }) : r; }); });
-    api("/reels/" + rid + "/save", "POST", {}, token).catch(function() {});
+    var previous = null;
+    var seq = nextReelAction(rid);
+    setReels(function(prev) { return prev.map(function(r) {
+      if (r.id !== rid) return r;
+      previous = { is_saved: !!r.is_saved };
+      return Object.assign({}, r, { is_saved: !r.is_saved });
+    }); });
+    api("/reels/" + rid + "/save", "POST", {}, token)
+      .then(function(result) {
+        if (!isLatestReelAction(rid, seq) || !result) return;
+        setReels(function(prev) { return prev.map(function(r) {
+          return r.id === rid && typeof result.saved === "boolean" ? Object.assign({}, r, { is_saved: result.saved }) : r;
+        }); });
+      })
+      .catch(function() {
+        if (!previous || !isLatestReelAction(rid, seq)) return;
+        setReels(function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, previous) : r; }); });
+        showToast && showToast("Couldn't update saved reels", "#FF3B5C");
+      });
   }
   function followUser(userId) {
-    var currentlyFollowing = false;
-    setReels(function(prev) { var updated = prev.map(function(r) { if (r.user_id === userId) { currentlyFollowing = r.is_following; return Object.assign({}, r, { is_following: !r.is_following }); } return r; }); return updated; });
-    setTimeout(function() { if (currentlyFollowing) { api("/users/" + userId + "/unfollow", "POST", {}, token).catch(function() {}); } else { api("/users/" + userId + "/follow", "POST", {}, token).catch(function() {}); } }, 0);
+    var previousFollowing = null;
+    var seq = nextReelAction("follow:" + userId);
+    setReels(function(prev) { return prev.map(function(r) {
+      if (r.user_id !== userId) return r;
+      if (previousFollowing === null) previousFollowing = !!r.is_following;
+      return Object.assign({}, r, { is_following: !r.is_following });
+    }); });
+    var endpoint = previousFollowing ? "/users/" + userId + "/unfollow" : "/users/" + userId + "/follow";
+    api(endpoint, "POST", {}, token)
+      .then(function(result) {
+        if (!isLatestReelAction("follow:" + userId, seq)) return;
+        var isPending = !!(result && result.pending);
+        var confirmedFollowing = previousFollowing ? false : !isPending;
+        setReels(function(prev) { return prev.map(function(r) { return r.user_id === userId ? Object.assign({}, r, { is_following: confirmedFollowing, is_follow_pending: isPending }) : r; }); });
+      })
+      .catch(function() {
+        if (previousFollowing === null || !isLatestReelAction("follow:" + userId, seq)) return;
+        setReels(function(prev) { return prev.map(function(r) { return r.user_id === userId ? Object.assign({}, r, { is_following: previousFollowing }) : r; }); });
+        showToast && showToast("Couldn't update follow", "#FF3B5C");
+      });
   }
   function openComments(rid) {
     if (commentPollRef.current) { clearInterval(commentPollRef.current); commentPollRef.current = null; }
