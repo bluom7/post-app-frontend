@@ -15751,7 +15751,11 @@ function AccountRecoveryScreen({
           }, "Submit Application")
         )
       )
-    ) function HelpCenterScreen(props) {
+    ) : null
+  );
+}
+
+ function HelpCenterScreen(props) {
    var e = React.createElement;
    var onBack = props.onBack;
    var onSignIn = props.onSignIn;
@@ -18294,9 +18298,6 @@ function AccountRecoveryScreen({
       /*#__PURE__*/React.createElement("div", { style: { flex: 1 } },
         /*#__PURE__*/React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: COLORS.red } }, "Log out")
       )
-    )
-  ));
-} )
     )
   ));
 }
