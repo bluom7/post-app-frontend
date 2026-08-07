@@ -15796,7 +15796,6 @@ function AccountRecoveryScreen({
 
    var categories = [
      { color:"#20B981", icon:"M12 3 3 8l9 5 9-5-9-5ZM3 12l9 5 9-5M3 16l9 5 9-5", title:"Getting Started", articles:[
-        ["Welcome to POST 🎉","Jaano POST community ke baare mein — yeh zaroor padhein!",["Pehla post karo","Profile set karo","POST explore karo","Doston ko invite karo"],"welcome"],
         ["Create your Post account","Set up your profile and choose a handle.",["Signup form does not open","Email or phone OTP is not arriving","Username is already taken","Account creation fails"]],
         ["Your first week on Post","A quick tour of posts, replies, and follows.",["I cannot find the home feed","Posts or replies are not loading","Following a person does not work","The first-week guide is incorrect"]],
         ["How the home feed works","Learn how Post organizes your home timeline.",["Posts are missing from my feed","Feed shows unwanted content","Feed is not refreshing","Feed order looks incorrect"]],
@@ -15888,20 +15887,6 @@ function AccountRecoveryScreen({
      });
    }
     function openMenuSection(section) {
-      if (section.title === "Using Post") {
-        var welcomeArticle = categories[0].articles[0];
-        setMenuOpen(false);
-        setSelectedArticle({
-          category:"Using Post",
-          title:welcomeArticle[0],
-          summary:welcomeArticle[1],
-          issues:welcomeArticle[2],
-          special:"welcome"
-        });
-        setReportType((welcomeArticle[2] && welcomeArticle[2][0]) || "Other");
-        window.scrollTo(0, 0);
-        return;
-      }
       if (section.title === "Managing your account") {
         setManagingAccOpen(true);
         setManagingAccArticle(null);
