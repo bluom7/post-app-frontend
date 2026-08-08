@@ -23230,6 +23230,15 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   var [mentionSubmitting, setMentionSubmitting] = React.useState(false);
   var [mentionCount, setMentionCount] = React.useState(Number(reel.mention_count) || 0);
   var isOwn = reel.is_own || (user && reel.user_id === user.id);
+  var songMarqueeText = (reel.music_title || reel.audio_label || "") + (reel.music_artist ? " · " + reel.music_artist : "");
+  var songMarqueeRef = React.useRef(null);
+  var [songMarqueeDuration, setSongMarqueeDuration] = React.useState(8);
+  React.useEffect(function() {
+    var marquee = songMarqueeRef.current;
+    if (!marquee || !songMarqueeText) return;
+    var travelDistance = Math.max(40, marquee.scrollWidth / 2);
+    setSongMarqueeDuration(Math.max(4, travelDistance / 28));
+  }, [songMarqueeText]);
   var [localFollowing, setLocalFollowing] = React.useState(!!reel.is_following);
   var followOverrideRef = React.useRef(null);
   React.useEffect(function() {
@@ -23434,8 +23443,8 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
             React.createElement("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "#fff", style: { flexShrink: 0 } },
               React.createElement("path", { d: "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" })),
             React.createElement("div", { style: { flex: 1, overflow: "hidden" } },
-              React.createElement("span", { style: { color: "rgba(255,255,255,0.92)", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", display: "inline-block", animation: "songHeaderTicker 5s linear infinite", textShadow: "0 1px 4px rgba(0,0,0,0.6)" } },
-                (function(){ var t = (reel.music_title || reel.audio_label || "") + (reel.music_artist ? " · " + reel.music_artist : ""); return t + "  " + t; })()))),
+              React.createElement("span", { ref: songMarqueeRef, style: { color: "rgba(255,255,255,0.92)", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", display: "inline-block", animation: "songHeaderTicker " + songMarqueeDuration + "s linear infinite", textShadow: "0 1px 4px rgba(0,0,0,0.6)" } },
+                songMarqueeText + "  " + songMarqueeText))),
           reel.location && React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } },
             React.createElement("svg", { width: 10, height: 10, viewBox: "0 0 24 24", fill: "#fff", style: { flexShrink: 0 } },
               React.createElement("path", { d: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" })),
