@@ -23229,7 +23229,13 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   var [reportStep, setReportStep] = React.useState("reasons");
   var [mentionSubmitting, setMentionSubmitting] = React.useState(false);
   var [mentionCount, setMentionCount] = React.useState(Number(reel.mention_count) || 0);
-  var isOwn = reel.is_own || (user && reel.user_id === user.id);
+  // Preserve the follow target across parent refreshes. A follow request can
+  // briefly reconcile the reel object without its user_id; the control must
+  // remain mounted instead of disappearing or shifting the reel layout.
+  var followTargetIdRef = React.useRef(reel && reel.user_id != null ? reel.user_id : null);
+  if (reel && reel.user_id != null) followTargetIdRef.current = reel.user_id;
+  var followTargetId = followTargetIdRef.current;
+  var isOwn = reel.is_own || (user && followTargetId != null && String(followTargetId) === String(user.id));
   var songMarqueeText = (reel.music_title || reel.audio_label || "") + (reel.music_artist ? " · " + reel.music_artist : "");
   var songMarqueeRef = React.useRef(null);
   var [songMarqueeDuration, setSongMarqueeDuration] = React.useState(8);
@@ -23253,11 +23259,11 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   }, [reel.is_following]);
   var handleFollowClick = function(e) {
     e.stopPropagation();
-    if (!reel.user_id) return;
+    if (followTargetId == null || String(followTargetId) === "") return;
     var nextFollowing = !localFollowing;
     followOverrideRef.current = nextFollowing;
     setLocalFollowing(nextFollowing);
-    onFollow && onFollow(reel.user_id);
+    onFollow && onFollow(followTargetId);
   };
 
   // A reel mention from the feed is a one-tap repost to the signed-in user's feed.
@@ -23460,7 +23466,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
             React.createElement("svg", { width: 10, height: 10, viewBox: "0 0 24 24", fill: "#fff", style: { flexShrink: 0 } },
               React.createElement("path", { d: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" })),
             React.createElement("span", { style: { color: "rgba(255,255,255,0.85)", fontSize: 11, fontWeight: 600, marginTop: 3, textShadow: "0 1px 4px rgba(0,0,0,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, reel.location))),
-        reel.user_id && (!user || reel.user_id !== user.id) && React.createElement("button", { onClick: handleFollowClick, "aria-label": localFollowing ? "Following" : "Follow", style: { background: "rgba(0,0,0,0.18)", border: "1.5px solid rgba(255,255,255,0.95)", color: "#fff", borderRadius: 8, width: localFollowing ? 86 : 66, minWidth: localFollowing ? 86 : 66, height: 34, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", fontSize: 15, lineHeight: 1, fontWeight: 700, cursor: "pointer", opacity: 1, flexShrink: 0, visibility: "visible", position: "relative", zIndex: 6, textShadow: "0 1px 3px rgba(0,0,0,0.45)" } }, localFollowing ? "Following" : "Follow")),
+        followTargetId != null && String(followTargetId) !== "" && !isOwn && React.createElement("button", { onClick: handleFollowClick, "aria-label": localFollowing ? "Following" : "Follow", style: { background: "rgba(0,0,0,0.18)", border: "1.5px solid rgba(255,255,255,0.95)", color: "#fff", borderRadius: 8, width: localFollowing ? 86 : 66, minWidth: localFollowing ? 86 : 66, height: 34, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", fontSize: 15, lineHeight: 1, fontWeight: 700, cursor: "pointer", opacity: 1, flexShrink: 0, visibility: "visible", position: "relative", zIndex: 6, textShadow: "0 1px 3px rgba(0,0,0,0.45)" } }, localFollowing ? "Following" : "Follow")),
       reel.caption ? React.createElement("div", { style: { marginBottom: 6 } },
         captionExpanded
           ? React.createElement(React.Fragment, null,
