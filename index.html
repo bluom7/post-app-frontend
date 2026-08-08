@@ -23101,6 +23101,10 @@ function ReelUploadModal({ token, user, showToast, onClose, onUploaded, initialF
 function ReelMentionSheet({ reel, token, user, showToast, onClose, onMentioned }) {
   var [friends, setFriends] = React.useState([]);
   var [results, setResults] = React.useState([]);
+  // A reel mention is a one-to-one action: the selected user receives the
+  // mention and the original reel is shown in that user's feed. Keep a
+  // single selected record so another search result can never be submitted
+  // accidentally alongside it.
   var [selected, setSelected] = React.useState({});
   var [query, setQuery] = React.useState("");
   var [loading, setLoading] = React.useState(true);
@@ -23141,28 +23145,26 @@ function ReelMentionSheet({ reel, token, user, showToast, onClose, onMentioned }
   var toggle = function(item) {
     if (!item || !item.id) return;
     setSelected(function(prev) {
-      var next = Object.assign({}, prev);
-      if (next[item.id]) delete next[item.id]; else next[item.id] = item;
-      return next;
+      return prev[item.id] ? {} : { [item.id]: item };
     });
   };
   var submit = function() {
-    var targets = Object.keys(selected);
+    // Defensive slice: only the one visibly selected user may be mentioned.
+    var targets = Object.keys(selected).slice(0, 1);
     if (!targets.length || submitting) return;
     setSubmitting(true);
-    Promise.all(targets.map(function(targetId) {
-      return api("/reels/" + reel.id + "/mention", "POST", { target_user_id: targetId }, token);
-    })).then(function(responses) {
+    api("/reels/" + reel.id + "/mention", "POST", { target_user_id: targets[0] }, token)
+      .then(function(response) {
       invalidateCache("/posts?feed=true");
-      showToast && showToast("Mentioned " + targets.length + (targets.length === 1 ? " person" : " people"), "#22C55E");
-      var confirmedCount = responses.reduce(function(max, response) {
-        return Math.max(max, Number(response && response.mention_count) || 0);
-      }, 0);
+      showToast && showToast("Mentioned " + (selected[targets[0]].name || selected[targets[0]].handle || "user"), "#22C55E");
+      var confirmedCount = Number(response && response.mention_count) || 0;
       onMentioned && onMentioned(confirmedCount);
       onClose();
-    }).catch(function(error) {
-      showToast && showToast(error.message || "Could not mention user", "#FF3B5C");
-    }).finally(function() { setSubmitting(false); });
+      })
+      .catch(function(error) {
+        showToast && showToast(error.message || "Could not mention user", "#FF3B5C");
+      })
+      .finally(function() { setSubmitting(false); });
   };
   var avatar = function(item) {
     return item.avatar_photo
@@ -23177,7 +23179,7 @@ function ReelMentionSheet({ reel, token, user, showToast, onClose, onMentioned }
       React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 18px 10px", borderBottom: "1px solid #ececec" } },
         React.createElement("div", null,
           React.createElement("div", { style: { fontSize: 18, fontWeight: 800 } }, "Mention people"),
-          React.createElement("div", { style: { fontSize: 12, color: "#777", marginTop: 3 } }, "Choose friends, public figures, or any available user")),
+          React.createElement("div", { style: { fontSize: 12, color: "#777", marginTop: 3 } }, "Choose one user — the original reel will be reposted to their feed")),
         React.createElement("button", { onClick: onClose, disabled: submitting, style: { border: 0, background: "#f1f1f1", borderRadius: 18, width: 32, height: 32, fontSize: 20, cursor: "pointer" } }, "×")),
       React.createElement("div", { style: { padding: "12px 16px 8px" } },
         React.createElement("input", {
@@ -23206,7 +23208,7 @@ function ReelMentionSheet({ reel, token, user, showToast, onClose, onMentioned }
         React.createElement("button", {
           onClick: submit, disabled: !Object.keys(selected).length || submitting,
           style: { width: "100%", border: 0, borderRadius: 24, padding: 13, background: Object.keys(selected).length ? "#1877F2" : "#d8d8d8", color: "#fff", fontSize: 15, fontWeight: 800, cursor: Object.keys(selected).length ? "pointer" : "default" }
-        }, submitting ? "Mentioning…" : ("Mention" + (Object.keys(selected).length ? " (" + Object.keys(selected).length + ")" : ""))))
+        }, submitting ? "Mentioning…" : "Mention"))
     )
   );
 }
@@ -23405,7 +23407,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
         captionExpanded && React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(false); }, style: { color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-block", marginTop: 2 } }, "show less")) : null)),
   showMentionSheet && React.createElement(ReelMentionSheet, {
     reel: reel, token: token, user: user, showToast: showToast,
-    onMentioned: function(count) { setMentionCount(function(prev) { return prev + count; }); },
+    onMentioned: function(count) { setMentionCount(Number(count) || 0); },
     onClose: function() { setShowMentionSheet(false); }
   }),
   showMenu && React.createElement("div", { onClick: function() { setShowMenu(false); }, style: { position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-end" } },
