@@ -1,2 +1,0 @@
-- [GitHub push safety](github-push-safety.md) — rebase concurrent remote work before pushing; never force-push shared branches.
-- [Frontend entrypoint sync](frontend-entrypoint-sync.md) — keep root and nested frontend copies aligned when both contain the deployed app.
