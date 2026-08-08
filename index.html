@@ -9069,7 +9069,12 @@ function ComposeModal({
         user.avatar_photo ? /*#__PURE__*/React.createElement("img", { src: user.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" } }) : user.avatar_letter
       ),
       /*#__PURE__*/React.createElement("div", null,
-        /*#__PURE__*/React.createElement("div", { style: { fontWeight: 800, fontSize: 15, color: "var(--text)" } }, user.name),
+        /*#__PURE__*/React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, fontWeight: 800, fontSize: 15, color: "var(--text)" } },
+          user.name,
+          user.is_badge_verified && /*#__PURE__*/React.createElement("span", { title: "Verified " + (user.verified_category || "account"), style: { display: "inline-flex", alignItems: "center" } },
+            /*#__PURE__*/React.createElement(VerifiedBadge, { size: 16 })
+          )
+        ),
         /*#__PURE__*/React.createElement("div", { style: { color: COLORS.muted, fontSize: 12 } }, "@" + (user.handle || "").replace(/^@/, ""))
       )
     ),
