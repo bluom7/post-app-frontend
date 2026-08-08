@@ -23270,8 +23270,16 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
         // only the exact /posts?feed=true prefix leaves stale results behind.
         invalidateCache("/posts");
         try { localStorage.removeItem("feed_cache_" + user.id); } catch (_) {}
-        setMentionCount(Number(response && response.mention_count) || mentionCount + 1);
-        showToast && showToast("Reel reposted to your feed", "#22C55E");
+        var nextMentionCount = response && typeof response.mention_count === "number"
+          ? response.mention_count
+          : mentionCount;
+        setMentionCount(nextMentionCount);
+        showToast && showToast(
+          response && response.mentioned === false
+            ? "Mention removed from your feed"
+            : "Reel mentioned in your feed",
+          response && response.mentioned === false ? "#999" : "#22C55E"
+        );
       })
       .catch(function(error) {
         showToast && showToast(error.message || "Could not repost reel", "#FF3B5C");
