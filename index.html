@@ -23098,7 +23098,7 @@ function ReelUploadModal({ token, user, showToast, onClose, onUploaded, initialF
 
 
 // ── Reel mention picker — friends first, then searchable public users ─────────
-function ReelMentionSheet({ reel, token, user, showToast, onClose }) {
+function ReelMentionSheet({ reel, token, user, showToast, onClose, onMentioned }) {
   var [friends, setFriends] = React.useState([]);
   var [results, setResults] = React.useState([]);
   var [selected, setSelected] = React.useState({});
@@ -23155,6 +23155,7 @@ function ReelMentionSheet({ reel, token, user, showToast, onClose }) {
     })).then(function() {
       invalidateCache("/posts?feed=true");
       showToast && showToast("Mentioned " + targets.length + (targets.length === 1 ? " person" : " people"), "#22C55E");
+      onMentioned && onMentioned(targets.length);
       onClose();
     }).catch(function(error) {
       showToast && showToast(error.message || "Could not mention user", "#FF3B5C");
@@ -23222,6 +23223,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   var [reportSent, setReportSent] = React.useState(false);
   var [reportStep, setReportStep] = React.useState("reasons");
   var [showMentionSheet, setShowMentionSheet] = React.useState(false);
+  var [mentionCount, setMentionCount] = React.useState(0);
   var isOwn = reel.is_own || (user && reel.user_id === user.id);
 
   // ── Track view when reel becomes active ────────────────────────────────────────
@@ -23339,17 +23341,23 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
             React.createElement("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" },
               React.createElement("path", { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" }))),
           React.createElement("span", { style: { color: "#fff", fontSize: 12, fontWeight: 600, letterSpacing: 0.1 } }, fmtCount(reel.comment_count))),
-        React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 } },
+        React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 3, minWidth: 44 } },
           React.createElement("button", {
             "aria-label": "Mention people",
             onClick: function(e) { e.stopPropagation(); setShowMentionSheet(true); },
-            style: { background: "none", border: "none", cursor: "pointer", padding: 4 }
+            style: { position: "relative", background: "none", border: "none", cursor: "pointer", padding: 3, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }
           },
-            React.createElement("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round" },
-              React.createElement("circle", { cx: "9", cy: "8", r: "3" }),
-              React.createElement("path", { d: "M3.5 19c.7-3 2.5-4.5 5.5-4.5s4.8 1.5 5.5 4.5" }),
-              React.createElement("path", { d: "M18 8v6M15 11h6" }))),
-          React.createElement("span", { style: { color: "#fff", fontSize: 11, fontWeight: 600, letterSpacing: 0.1 } }, "Mention")),
+            React.createElement("svg", { width: 30, height: 30, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round" },
+              React.createElement("circle", { cx: "9", cy: "7.5", r: "3.2" }),
+              React.createElement("path", { d: "M3.5 19c.7-3.1 2.6-4.7 5.5-4.7s4.8 1.6 5.5 4.7" }),
+              mentionCount > 0
+                ? React.createElement(React.Fragment, null,
+                    React.createElement("circle", { cx: "18", cy: "16.5", r: "4.2", fill: "#111", stroke: "#fff", strokeWidth: "1.5" }),
+                    React.createElement("path", { d: "m15.8 16.5 1.5 1.5 3-3.2", strokeWidth: "1.7" }))
+                : React.createElement(React.Fragment, null,
+                    React.createElement("circle", { cx: "18", cy: "8.5", r: "4", fill: "#111", stroke: "#fff", strokeWidth: "1.5" }),
+                    React.createElement("path", { d: "M18 6.5v4M16 8.5h4", strokeWidth: "1.7" })))),
+          React.createElement("span", { style: { color: "#fff", fontSize: 11, fontWeight: 600, letterSpacing: 0.1, lineHeight: 1.1, textShadow: "0 1px 4px rgba(0,0,0,0.55)" } }, mentionCount > 0 ? "Mentioned" : "Mention")),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 } },
           React.createElement("button", { onClick: function(e) { e.stopPropagation(); shareReel(); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4 } },
             React.createElement("svg", { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" },
@@ -23398,6 +23406,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
         captionExpanded && React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(false); }, style: { color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-block", marginTop: 2 } }, "show less")) : null)),
   showMentionSheet && React.createElement(ReelMentionSheet, {
     reel: reel, token: token, user: user, showToast: showToast,
+    onMentioned: function(count) { setMentionCount(function(prev) { return prev + count; }); },
     onClose: function() { setShowMentionSheet(false); }
   }),
   showMenu && React.createElement("div", { onClick: function() { setShowMenu(false); }, style: { position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-end" } },
