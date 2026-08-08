@@ -8365,6 +8365,36 @@ function ComposeModal({
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [pickerDraft, setPickerDraft] = useState([]);
   const [pickerLoading, setPickerLoading] = useState(false);
+    // Compose exit flow: empty compose closes to home; active compose offers three real choices.
+    const hasUnsavedCompose = () => Boolean(
+      text.trim() || photoUrls.length || videoUrl || localVideoPreviewUrl || pendingVideoFile ||
+      gifUrl || stickerOverlays.length || selectedMusic || location || feeling || taggedUsers.length
+    );
+    const clearComposeState = () => {
+      if (postMusicAudioRef.current) {
+        postMusicAudioRef.current.pause();
+        postMusicAudioRef.current = null;
+      }
+      if (localVideoPreviewUrl) {
+        try { URL.revokeObjectURL(localVideoPreviewUrl); } catch (_) {}
+      }
+      setShowDiscardDialog(false);
+      setText(""); setPhotoUrls([]); setPhotoAspect(null);
+      setVideoUrl(null); setVideoDuration(0); setVideoWidth(0); setVideoHeight(0);
+      setLocalVideoPreviewUrl(null); setPendingVideoFile(null); setPendingVideoObjectUrl(null);
+      setPendingVideoDuration(0); setPickerDraft([]); setPickerLoading(false);
+      setGifUrl(null); setStickerOverlays([]); setSelectedMusic(null);
+      setLocation(""); setFeeling(""); setTaggedUsers([]);
+      setAudience({ type: "public", users: [] }); setPhotoAudience("everyone");
+      setCommentsEnabled(true); setAltText("");
+    };
+    const closeComposeToHome = () => { clearComposeState(); onClose(); };
+    const handleComposeClose = () => { if (hasUnsavedCompose()) setShowDiscardDialog(true); else closeComposeToHome(); };
+    const saveComposeDraft = () => {
+      const draft = { version: 1, savedAt: Date.now(), text, photoUrls, location, feeling, taggedUsers, audience, photoAudience, commentsEnabled, altText, gifUrl, stickerOverlays, videoUrl, hasLocalVideo: Boolean(pendingVideoFile || localVideoPreviewUrl) };
+      try { localStorage.setItem("post_compose_draft", JSON.stringify(draft)); showToast("Draft saved", COLORS.green); closeComposeToHome(); }
+      catch (_) { showToast("Draft save failed — media is too large", COLORS.red); }
+    };
   const MAX_POST_VIDEO_SECONDS = 30;
   const MAX_PICK_VIDEO_SECONDS = 60; // you can select up to 1 min, then must trim to 30s before posting
   const MAX_POST_VIDEO_BYTES = 100 * 1024 * 1024; // 100MB raw file — uploaded directly to Cloudinary, no base64/Mongo size limit anymore
@@ -8472,10 +8502,12 @@ function ComposeModal({
         setTrimEnd(Math.min(MAX_POST_VIDEO_SECONDS, dur));
         setLocalVideoPreviewUrl(objectUrl);
       }
+      setShowDiscardDialog(true);
     };
     probe.onerror = () => { URL.revokeObjectURL(objectUrl); showToast('Could not read video. Try another file.', COLORS.red); };
     probe.src = objectUrl;
   };
+  
   const confirmVideoTrim = () => {
     if (trimEnd - trimStart > MAX_POST_VIDEO_SECONDS + 0.5) { showToast('Trim to ' + MAX_POST_VIDEO_SECONDS + ' seconds or less.', COLORS.red); return; }
     if (trimEnd - trimStart < 1) { showToast('Clip is too short.', COLORS.red); return; }
@@ -8521,25 +8553,25 @@ function ComposeModal({
     }
   };
   const handlePickerFiles = e => {
-    const files = Array.from(e.target.files || []);
-    e.target.value = '';
-    if (!files.length) return;
-    const firstFile = files[0];
-    // Video → handle directly (no review grid)
-    if (firstFile.type.startsWith('video/')) {
-      handleVideoFile(firstFile);
-      return;
-    }
-    // Photos → compress then show blue-tick review
-    const toProcess = files.slice(0, 5);
-    setPickerLoading(true);
-    Promise.all(toProcess.map(compressPhoto)).then(results => {
-      const valid = results.filter(Boolean);
-      setPickerDraft(valid.map(r => ({ src: r.src, selected: true, w: r.w, h: r.h })));
-      setPickerLoading(false);
-    });
-  };
-  const handlePost = async () => {
+      const files = Array.from(e.target.files || []);
+      e.target.value = '';
+      if (!files.length) return;
+      const firstFile = files[0];
+      if (firstFile.type.startsWith('video/')) { handleVideoFile(firstFile); return; }
+      const toProcess = files.slice(0, 5);
+      setPickerLoading(true);
+      Promise.all(toProcess.map(compressPhoto)).then(results => {
+        const valid = results.filter(Boolean);
+        if (valid.length) {
+          setVideoUrl(null); setVideoDuration(0);
+          setPhotoUrls(prev => [...prev, ...valid.map(r => r.src)].slice(0, 5));
+          setPhotoAspect(prev => prev || (valid[0].w && valid[0].h ? { w: valid[0].w, h: valid[0].h } : null));
+          setShowDiscardDialog(true);
+        }
+        setPickerLoading(false);
+      });
+    };
+      const handlePost = async () => {
     if (!text.trim() && !photoUrls.length && !videoUrl && !localVideoPreviewUrl) {
       showToast("Write something!", COLORS.red);
       return;
@@ -8866,7 +8898,27 @@ function ComposeModal({
       )
     );
   }
-  if (pickerLoading || pickerDraft.length > 0) {
+  if (showDiscardDialog) {
+      return /*#__PURE__*/React.createElement("div", { onClick: () => setShowDiscardDialog(false), style: { position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.48)", display: "flex", alignItems: "flex-end", justifyContent: "center" } },
+        /*#__PURE__*/React.createElement("div", { onClick: e => e.stopPropagation(), style: { width: "100%", maxWidth: 520, background: "var(--card-bg)", borderRadius: "24px 24px 0 0", padding: "0 0 env(safe-area-inset-bottom, 14px)", color: "var(--text)", boxSizing: "border-box" } },
+          /*#__PURE__*/React.createElement("div", { style: { width: 42, height: 4, borderRadius: 999, background: "var(--muted)", opacity: 0.65, margin: "12px auto 18px" } }),
+          /*#__PURE__*/React.createElement("div", { style: { padding: "0 20px 14px", fontSize: 18, fontWeight: 700 } }, "Want to finish your post later?"),
+          /*#__PURE__*/React.createElement("button", { onClick: saveComposeDraft, style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "15px 20px", background: "none", border: "none", borderTop: "1px solid var(--border)", color: "var(--text)", textAlign: "left", cursor: "pointer", fontSize: 16 } },
+            /*#__PURE__*/React.createElement("span", { style: { width: 40, height: 40, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } }, "▧"),
+            /*#__PURE__*/React.createElement("span", null, "Save as draft")
+          ),
+          /*#__PURE__*/React.createElement("button", { onClick: () => { try { localStorage.removeItem("post_compose_draft"); } catch (_) {} clearComposeState(); onClose(); }, style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "15px 20px", background: "none", border: "none", borderTop: "1px solid var(--border)", color: "var(--text)", textAlign: "left", cursor: "pointer", fontSize: 16 } },
+            /*#__PURE__*/React.createElement("span", { style: { width: 40, height: 40, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } }, "▣"),
+            /*#__PURE__*/React.createElement("span", null, "Discard post")
+          ),
+          /*#__PURE__*/React.createElement("button", { onClick: () => setShowDiscardDialog(false), style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "15px 20px 20px", background: "none", border: "none", borderTop: "1px solid var(--border)", color: "var(--text)", textAlign: "left", cursor: "pointer", fontSize: 16 } },
+            /*#__PURE__*/React.createElement("span", { style: { width: 40, height: 40, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } }, "✓"),
+            /*#__PURE__*/React.createElement("span", null, "Continue editing")
+          )
+        )
+      );
+    }
+      if (pickerLoading || pickerDraft.length > 0) {
     const pickerSel = pickerDraft.filter(d => d.selected).length;
     return /*#__PURE__*/React.createElement("div", {
       style: { position:"fixed", inset:0, zIndex:490, background:"var(--bg)", display:"flex", flexDirection:"column", boxSizing:"border-box" }
@@ -8960,7 +9012,7 @@ function ComposeModal({
   /*#__PURE__*/React.createElement("div", {
     style: { background: "var(--bg)", padding: "12px 16px", boxSizing: "border-box", flexShrink: 0, borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between" }
   },
-    /*#__PURE__*/React.createElement("button", { onClick: () => setShowDiscardDialog(true), style: { background: "none", border: "none", cursor: "pointer", color: "var(--text)", fontSize: 22, fontWeight: 700, padding: "4px 8px", lineHeight: 1 } }, "✕"),
+    /*#__PURE__*/React.createElement("button", { onClick: handleComposeClose, style: { background: "none", border: "none", cursor: "pointer", color: "var(--text)", fontSize: 22, fontWeight: 700, padding: "4px 8px", lineHeight: 1, WebkitTapHighlightColor: "transparent" } }, "✕"),
     /*#__PURE__*/React.createElement("span", { style: { fontWeight: 800, fontSize: 20 } }, React.createElement("span", { style: { color: "#FFD600" } }, "p"), React.createElement("span", { style: { color: "#4CAF50" } }, "o"), React.createElement("span", { style: { color: "#F44336" } }, "s"), React.createElement("span", { style: { color: "#1877F2" } }, "t")),
     /*#__PURE__*/React.createElement("button", {
       onClick: handlePost,
