@@ -23227,9 +23227,27 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   var [reportReason, setReportReason] = React.useState("");
   var [reportSent, setReportSent] = React.useState(false);
   var [reportStep, setReportStep] = React.useState("reasons");
-  var [showMentionSheet, setShowMentionSheet] = React.useState(false);
+  var [mentionSubmitting, setMentionSubmitting] = React.useState(false);
   var [mentionCount, setMentionCount] = React.useState(Number(reel.mention_count) || 0);
   var isOwn = reel.is_own || (user && reel.user_id === user.id);
+
+  // A reel mention from the feed is a one-tap repost to the signed-in user's feed.
+  // Keep this action direct: no user picker or bottom sheet.
+  var mentionReelToFeed = function(e) {
+    if (e) e.stopPropagation();
+    if (mentionSubmitting || !user || !reel || !reel.id) return;
+    setMentionSubmitting(true);
+    api("/reels/" + reel.id + "/mention", "POST", { target_user_id: user.id }, token)
+      .then(function(response) {
+        invalidateCache("/posts?feed=true");
+        setMentionCount(Number(response && response.mention_count) || mentionCount + 1);
+        showToast && showToast("Reel reposted to your feed", "#22C55E");
+      })
+      .catch(function(error) {
+        showToast && showToast(error.message || "Could not repost reel", "#FF3B5C");
+      })
+      .finally(function() { setMentionSubmitting(false); });
+  };
 
   // ── Track view when reel becomes active ────────────────────────────────────────
   var _viewedIdRef = React.useRef(null);
@@ -23349,8 +23367,9 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 3, minWidth: 44 } },
           React.createElement("button", {
             "aria-label": "Mention people",
-            onClick: function(e) { e.stopPropagation(); setShowMentionSheet(true); },
-            style: { position: "relative", background: "none", border: "none", cursor: "pointer", padding: 3, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }
+            onClick: mentionReelToFeed,
+            disabled: mentionSubmitting,
+            style: { position: "relative", background: "none", border: "none", cursor: mentionSubmitting ? "default" : "pointer", opacity: mentionSubmitting ? 0.55 : 1, padding: 3, width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }
           },
             React.createElement("svg", { width: 30, height: 30, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round" },
               React.createElement("polyline", { points: "17 1 21 5 17 9" }),
@@ -23405,11 +23424,6 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
         React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: 1.5, textShadow: "0 1px 6px rgba(0,0,0,0.7)", display: "-webkit-box", WebkitLineClamp: captionExpanded ? "unset" : 2, WebkitBoxOrient: "vertical", overflow: captionExpanded ? "visible" : "hidden" } }, reel.caption),
         !captionExpanded && reel.caption.length > 70 && React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(true); }, style: { color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-block", marginTop: 2 } }, "show more"),
         captionExpanded && React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(false); }, style: { color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-block", marginTop: 2 } }, "show less")) : null)),
-  showMentionSheet && React.createElement(ReelMentionSheet, {
-    reel: reel, token: token, user: user, showToast: showToast,
-    onMentioned: function(count) { setMentionCount(Number(count) || 0); },
-    onClose: function() { setShowMentionSheet(false); }
-  }),
   showMenu && React.createElement("div", { onClick: function() { setShowMenu(false); }, style: { position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-end" } },
       React.createElement("style", null, "@keyframes _bsUp{from{transform:translateY(100%)}to{transform:translateY(0)}}"),
       React.createElement("div", { onClick: function(e) { e.stopPropagation(); }, style: { width: "100%", maxWidth: 540, margin: "0 auto", background: "var(--card-bg)", borderRadius: "22px 22px 0 0", paddingBottom: 32, animation: "_bsUp 0.26s cubic-bezier(0.32,0.72,0,1)", overflowY: "auto", maxHeight: "70vh" } },
