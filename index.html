@@ -23239,7 +23239,11 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
     setMentionSubmitting(true);
     api("/reels/" + reel.id + "/mention", "POST", { target_user_id: user.id }, token)
       .then(function(response) {
-        invalidateCache("/posts?feed=true");
+        // Clear every home-feed variant and the persisted feed snapshot.
+        // The feed request also carries limit/skip query params, so invalidating
+        // only the exact /posts?feed=true prefix leaves stale results behind.
+        invalidateCache("/posts");
+        try { localStorage.removeItem("feed_cache_" + user.id); } catch (_) {}
         setMentionCount(Number(response && response.mention_count) || mentionCount + 1);
         showToast && showToast("Reel reposted to your feed", "#22C55E");
       })
