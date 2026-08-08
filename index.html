@@ -8365,6 +8365,9 @@ function ComposeModal({
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [pickerDraft, setPickerDraft] = useState([]);
   const [pickerLoading, setPickerLoading] = useState(false);
+  // Tracks the native gallery opened from Discard post. A selected file returns
+  // to Compose; cancelling the native picker returns to the Home feed.
+  const replacementGalleryRef = React.useRef(false);
     // Compose exit flow: empty compose closes to home; active compose offers three real choices.
     const hasUnsavedCompose = () => Boolean(
       text.trim() || photoUrls.length || videoUrl || localVideoPreviewUrl || pendingVideoFile ||
@@ -8394,6 +8397,25 @@ function ComposeModal({
       const draft = { version: 1, savedAt: Date.now(), text, photoUrls, location, feeling, taggedUsers, audience, photoAudience, commentsEnabled, altText, gifUrl, stickerOverlays, videoUrl, hasLocalVideo: Boolean(pendingVideoFile || localVideoPreviewUrl) };
       try { localStorage.setItem("post_compose_draft", JSON.stringify(draft)); showToast("Draft saved", COLORS.green); closeComposeToHome(); }
       catch (_) { showToast("Draft save failed — media is too large", COLORS.red); }
+    };
+    const openReplacementGallery = () => {
+      try { localStorage.removeItem("post_compose_draft"); } catch (_) {}
+      clearComposeState();
+      replacementGalleryRef.current = true;
+      const input = pickerInputRef.current;
+      if (!input) { replacementGalleryRef.current = false; onClose(); return; }
+      // Native Android/iOS pickers do not fire change when the user taps X.
+      // The focus return lets us distinguish cancel from a real selection.
+      const handlePickerReturn = () => {
+        window.removeEventListener("focus", handlePickerReturn);
+        setTimeout(() => {
+          if (!replacementGalleryRef.current) return;
+          replacementGalleryRef.current = false;
+          onClose();
+        }, 750);
+      };
+      window.addEventListener("focus", handlePickerReturn);
+      setTimeout(() => input.click(), 50);
     };
   const MAX_POST_VIDEO_SECONDS = 30;
   const MAX_PICK_VIDEO_SECONDS = 60; // you can select up to 1 min, then must trim to 30s before posting
@@ -8554,6 +8576,7 @@ function ComposeModal({
   };
   const handlePickerFiles = e => {
       const files = Array.from(e.target.files || []);
+      if (files.length) replacementGalleryRef.current = false;
       e.target.value = '';
       if (!files.length) return;
       const firstFile = files[0];
@@ -8912,7 +8935,7 @@ function ComposeModal({
             ),
             /*#__PURE__*/React.createElement("span", null, "Save as draft")
           ),
-          /*#__PURE__*/React.createElement("button", { onClick: () => { try { localStorage.removeItem("post_compose_draft"); } catch (_) {} clearComposeState(); onClose(); }, style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "15px 20px", background: "none", border: "none", borderTop: "1px solid var(--border)", color: "var(--text)", textAlign: "left", cursor: "pointer", fontSize: 16 } },
+          /*#__PURE__*/React.createElement("button", { onClick: openReplacementGallery, style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "15px 20px", background: "none", border: "none", borderTop: "1px solid var(--border)", color: "var(--text)", textAlign: "left", cursor: "pointer", fontSize: 16 } },
             /*#__PURE__*/React.createElement("span", { style: { width: 40, height: 40, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
               /*#__PURE__*/React.createElement("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.9, strokeLinecap: "round", strokeLinejoin: "round" },
                 /*#__PURE__*/React.createElement("path", { d: "M5 7h14" }),
