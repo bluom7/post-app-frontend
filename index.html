@@ -23152,10 +23152,13 @@ function ReelMentionSheet({ reel, token, user, showToast, onClose, onMentioned }
     setSubmitting(true);
     Promise.all(targets.map(function(targetId) {
       return api("/reels/" + reel.id + "/mention", "POST", { target_user_id: targetId }, token);
-    })).then(function() {
+    })).then(function(responses) {
       invalidateCache("/posts?feed=true");
       showToast && showToast("Mentioned " + targets.length + (targets.length === 1 ? " person" : " people"), "#22C55E");
-      onMentioned && onMentioned(targets.length);
+      var confirmedCount = responses.reduce(function(max, response) {
+        return Math.max(max, Number(response && response.mention_count) || 0);
+      }, 0);
+      onMentioned && onMentioned(confirmedCount);
       onClose();
     }).catch(function(error) {
       showToast && showToast(error.message || "Could not mention user", "#FF3B5C");
@@ -23223,7 +23226,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   var [reportSent, setReportSent] = React.useState(false);
   var [reportStep, setReportStep] = React.useState("reasons");
   var [showMentionSheet, setShowMentionSheet] = React.useState(false);
-  var [mentionCount, setMentionCount] = React.useState(0);
+  var [mentionCount, setMentionCount] = React.useState(Number(reel.mention_count) || 0);
   var isOwn = reel.is_own || (user && reel.user_id === user.id);
 
   // ── Track view when reel becomes active ────────────────────────────────────────
@@ -23353,7 +23356,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
               React.createElement("polyline", { points: "7 23 3 19 7 15" }),
               React.createElement("path", { d: "M21 13v2a4 4 0 0 1-4 4H3" }),
               mentionCount > 0 && React.createElement("path", { d: "m8.5 12.5 2 2 5-5", stroke: "#fff", strokeWidth: "2.2" }))),
-          React.createElement("span", { style: { color: "#fff", fontSize: 11, fontWeight: 600, letterSpacing: 0.1, lineHeight: 1.1, textShadow: "0 1px 4px rgba(0,0,0,0.55)" } }, mentionCount > 0 ? "Mentioned" : "Mention")),
+          React.createElement("span", { style: { color: "#fff", fontSize: 11, fontWeight: 600, letterSpacing: 0.1, lineHeight: 1.1, textShadow: "0 1px 4px rgba(0,0,0,0.55)" } }, fmtCount(mentionCount))),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 } },
           React.createElement("button", { onClick: function(e) { e.stopPropagation(); shareReel(); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4 } },
             React.createElement("svg", { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" },
