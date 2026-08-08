@@ -1,0 +1,1 @@
+- [GitHub push safety](github-push-safety.md) — rebase concurrent remote work before pushing; never force-push shared branches.
