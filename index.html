@@ -19387,7 +19387,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
   var _fixedH=React.useRef(typeof window!=='undefined'?window.innerHeight:800);
 
   // waveform constants
-  var NUM_BARS=120; var BAR_W=4; var BAR_GAP=2;
+  var NUM_BARS=120; var BAR_W=4; var BAR_GAP=2; var WAVEFORM_HEIGHT=20;
   var totalBarsPx=NUM_BARS*(BAR_W+BAR_GAP);
   var maxStart=Math.max(0,songDuration-clipDuration);
   var pxPerSec=totalBarsPx/Math.max(songDuration,1);
@@ -19607,7 +19607,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
       React.createElement('div',{style:{position:'relative',zIndex:2,paddingBottom:28,flexShrink:0}},
         React.createElement('div',{style:{textAlign:'center',color:'rgba(255,255,255,0.8)',fontSize:12,fontWeight:500,padding:'0 0 10px',letterSpacing:0.1}},
           'Choose the part you want for your reel.'),
-        React.createElement('div',{ref:waveContRef,style:{position:'relative',height:76,overflow:'hidden',cursor:'ew-resize',userSelect:'none',touchAction:'none',WebkitTapHighlightColor:'transparent'}},
+        React.createElement('div',{ref:waveContRef,style:{position:'relative',height:WAVEFORM_HEIGHT,overflow:'hidden',cursor:'ew-resize',userSelect:'none',touchAction:'none',WebkitTapHighlightColor:'transparent'}},
           React.createElement('div',{style:{display:'flex',alignItems:'center',height:'100%',gap:BAR_GAP+'px',
             paddingLeft:sidePad+'px',paddingRight:sidePad+'px',
             transform:'translateX('+(-offset)+'px)',
@@ -19617,12 +19617,12 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
               ?waveData.map(function(h,i){
                   var barTime=(i/NUM_BARS)*songDuration;
                   var inClip=barTime>=startSec&&barTime<startSec+clipDuration;
-                  return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:Math.max(4,Math.round(h*20))+'px',borderRadius:2,background:inClip?'#fff':'rgba(255,255,255,0.3)',flexShrink:0,transformOrigin:'bottom',animation:'waveBar '+(0.5+(i*0.07%0.4)).toFixed(2)+'s ease-in-out '+(i*0.018%0.35).toFixed(3)+'s infinite'}});
+                  return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:Math.max(2,Math.min(WAVEFORM_HEIGHT,Math.round(h*WAVEFORM_HEIGHT)))+'px',borderRadius:2,background:inClip?'#fff':'rgba(255,255,255,0.3)',flexShrink:0,transformOrigin:'center',animation:'none'}});
                 })
-              :Array.from({length:80},function(_,i){return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:(6+Math.round(Math.sin(i*0.5)*7+7))+'px',borderRadius:2,background:'rgba(255,255,255,0.25)',flexShrink:0,transformOrigin:'bottom',animation:'waveBar '+(0.5+(i*0.07%0.4)).toFixed(2)+'s ease-in-out '+(i*0.018%0.35).toFixed(3)+'s infinite'}});})
+              :Array.from({length:80},function(_,i){return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:Math.max(2,Math.min(WAVEFORM_HEIGHT,6+Math.round(Math.sin(i*0.5)*7+7)))+'px',borderRadius:2,background:'rgba(255,255,255,0.25)',flexShrink:0,transformOrigin:'center',animation:'none'}});})
           ),
           // Wide horizontal rectangle clip box (image 2 style) with yellow fill
-          React.createElement('div',{style:{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:clipPx+'px',height:'80%',border:'3.5px solid #FF3B7A',borderRadius:0,pointerEvents:'none',boxSizing:'border-box',overflow:'hidden'}},
+          React.createElement('div',{style:{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:clipPx+'px',height:'100%',border:'2px solid #FF3B7A',borderRadius:0,pointerEvents:'none',boxSizing:'border-box',overflow:'hidden'}},
             React.createElement('div',{style:{position:'absolute',top:0,left:0,height:'100%',width:(playedSec/clipDuration*100)+'%',background:'rgba(255,214,0,0.52)',borderRadius:11,transition:'width 0.08s linear'}})
           )),
         // Yellow second-by-second progress bar
