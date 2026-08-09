@@ -8034,23 +8034,23 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
     };
   }, [pxPerSec, maxStart, song.music_preview_url]);
 
-  return React.createElement('div', { style: { position:'fixed', inset:0, zIndex:3100, background:'var(--bg)', display:'flex', flexDirection:'column' } },
+  return React.createElement('div', { style: { position:'fixed', inset:0, zIndex:3100, background:'#000', display:'flex', flexDirection:'column', overflow:'hidden' } },
     // ── Top bar ──
-    React.createElement('div', { style: { display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 18px 10px', flexShrink:0 } },
+    React.createElement('div', { style: { position:'absolute', top:0, left:0, right:0, zIndex:5, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 18px 10px', pointerEvents:'none', background:'linear-gradient(to bottom, rgba(0,0,0,0.38), transparent)' } },
       // Delete / remove music
-      React.createElement('button', { onClick: () => { stopAudio(); onDelete(); }, style: { background:'rgba(0,0,0,0.07)', border:'none', borderRadius:'50%', width:40, height:40, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } },
-        React.createElement('svg', { width:20, height:20, viewBox:'0 0 24 24', fill:'none', stroke:'#333', strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' },
+      React.createElement('button', { onClick: () => { stopAudio(); onDelete(); }, style: { background:'rgba(0,0,0,0.28)', border:'1px solid rgba(255,255,255,0.25)', borderRadius:'50%', width:40, height:40, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', pointerEvents:'auto' } },
+        React.createElement('svg', { width:20, height:20, viewBox:'0 0 24 24', fill:'none', stroke:'#fff', strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' },
           React.createElement('polyline', { points:'3 6 5 6 21 6' }),
           React.createElement('path', { d:'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2' })
         )
       ),
       // Song artwork circle — with ✕ remove overlay
-      React.createElement('div', { style: { position:'relative', width:44, height:44 } },
+      React.createElement('div', { style: { position:'relative', width:34, height:34, pointerEvents:'auto' } },
         song.music_artwork
-          ? React.createElement('img', { src: song.music_artwork, style: { width:44, height:44, borderRadius:8, objectFit:'cover', border:'2px solid rgba(255,255,255,0.35)', display:'block' } })
-          : React.createElement('div', { style: { width:44, height:44, borderRadius:8, background:'#333' } }),
+          ? React.createElement('img', { src: song.music_artwork, style: { width:34, height:34, borderRadius:6, objectFit:'cover', border:'1.5px solid rgba(255,255,255,0.7)', display:'block' } })
+          : React.createElement('div', { style: { width:34, height:34, borderRadius:6, background:'rgba(0,0,0,0.35)', border:'1.5px solid rgba(255,255,255,0.55)' } }),
         React.createElement('button', { onClick: () => { stopAudio(); onDelete(); }, title:'Remove music',
-          style: { position:'absolute', top:-6, right:-6, width:20, height:20, borderRadius:'50%', background:'#fff', border:'none', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 1px 4px rgba(0,0,0,0.4)' } },
+          style: { position:'absolute', top:-7, right:-7, width:18, height:18, borderRadius:'50%', background:'rgba(255,255,255,0.92)', border:'none', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 1px 4px rgba(0,0,0,0.45)', pointerEvents:'auto' } },
           React.createElement('svg', { width:10, height:10, viewBox:'0 0 24 24', fill:'none', stroke:'#000', strokeWidth:3, strokeLinecap:'round' },
             React.createElement('line', { x1:18, y1:6, x2:6, y2:18 }),
             React.createElement('line', { x1:6, y1:6, x2:18, y2:18 })
@@ -8058,7 +8058,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
         )
       ),
       // Done
-      React.createElement('button', { onClick: () => { stopAudio(); onConfirm(Math.round(startSecRef.current * 1000)); }, style: { background:'#1877F2', border:'none', borderRadius:20, padding:'9px 22px', fontWeight:700, fontSize:15, cursor:'pointer', color:'#fff' } }, 'Done')
+      React.createElement('button', { onClick: () => { stopAudio(); onConfirm(Math.round(startSecRef.current * 1000)); }, style: { background:'transparent', border:'none', borderRadius:0, padding:'9px 0', fontWeight:700, fontSize:17, cursor:'pointer', color:'#fff', textShadow:'0 1px 4px rgba(0,0,0,0.8)', pointerEvents:'auto' } }, 'Done')
     ),
     // ── Photo/video preview ── (tap anywhere to play/pause)
     React.createElement('div', { style: { flex:1, position:'relative', overflow:'hidden', cursor:'pointer', background:'#000', minHeight:0 }, onClick: togglePlay },
