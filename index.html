@@ -8052,11 +8052,11 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
             ? React.createElement('img', { src: song.music_artwork, alt: song.music_title || 'Album artwork', style: { width:38, height:38, borderRadius:7, objectFit:'cover', border:'1.5px solid rgba(255,255,255,0.7)', display:'block' } })
             : React.createElement('div', { style: { width:38, height:38, borderRadius:7, background:'rgba(0,0,0,0.35)', border:'1.5px solid rgba(255,255,255,0.55)' } })
         ),
-        React.createElement('div', { style: { width:'100%', color:'#fff', fontSize:11, lineHeight:'14px', fontWeight:700, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textShadow:'0 1px 4px rgba(0,0,0,0.8)' } }, song.music_title || 'Unknown song'),
-        React.createElement('div', { style: { width:'100%', color:'rgba(255,255,255,0.72)', fontSize:10, lineHeight:'12px', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textShadow:'0 1px 4px rgba(0,0,0,0.8)' } }, song.music_artist || 'Unknown artist')
+        React.createElement('div', { style: { width:'100%', color:'#fff', fontSize:13, lineHeight:'16px', fontWeight:800, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textShadow:'0 1px 4px rgba(0,0,0,0.8)' } }, song.music_title || 'Unknown song'),
+        React.createElement('div', { style: { width:'100%', color:'rgba(255,255,255,0.82)', fontSize:11, lineHeight:'13px', fontWeight:700, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textShadow:'0 1px 4px rgba(0,0,0,0.8)' } }, song.music_artist || 'Unknown artist')
       ),
       // Done
-      React.createElement('button', { onClick: () => { stopAudio(); onConfirm(Math.round(startSecRef.current * 1000)); }, style: { position:'absolute', top:20, right:18, background:'transparent', border:'none', borderRadius:0, padding:'9px 0', fontWeight:700, fontSize:17, cursor:'pointer', color:'#fff', textShadow:'0 1px 4px rgba(0,0,0,0.8)', pointerEvents:'auto', zIndex:3 } }, 'Done'),
+      React.createElement('button', { onClick: () => { stopAudio(); onConfirm(Math.round(startSecRef.current * 1000)); }, style: { position:'absolute', top:14, right:18, background:'transparent', border:'none', borderRadius:0, padding:'9px 0', fontWeight:700, fontSize:17, cursor:'pointer', color:'#fff', textShadow:'0 1px 4px rgba(0,0,0,0.8)', pointerEvents:'auto', zIndex:3 } }, 'Done'),
       // Compact clip-duration control directly beneath Done, like the camera time tool.
       React.createElement('div', { style: { position:'absolute', top:58, right:12, zIndex:6, pointerEvents:'auto' } },
         React.createElement('button', {
