@@ -7907,7 +7907,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
   const BAR_W = 4;
   const BAR_GAP = 3;
   // Facebook-style repeating rhythm: two short, two medium, one tallest.
-  const WAVEFORM_PATTERN = [0.28, 0.28, 0.48, 0.48, 0.72];
+  const WAVEFORM_PATTERN = [0.28, 0.48, 0.72, 0.48, 0.28];
   const PX_PER_BAR = BAR_W + BAR_GAP;
   const totalBarsPx = NUM_BARS * PX_PER_BAR;
   const pxPerSec = totalBarsPx / songDur;
@@ -19390,7 +19390,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
 
   // waveform constants
   var NUM_BARS=120; var BAR_W=4; var BAR_GAP=3; var WAVEFORM_HEIGHT=64;
-  var WAVEFORM_PATTERN=[0.28,0.28,0.48,0.48,0.72];
+  var WAVEFORM_PATTERN=[0.28,0.48,0.72,0.48,0.28];
   var totalBarsPx=NUM_BARS*(BAR_W+BAR_GAP);
   var maxStart=Math.max(0,songDuration-clipDuration);
   var pxPerSec=totalBarsPx/Math.max(songDuration,1);
@@ -24801,6 +24801,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.c
 </script>
 </body>
 </html>
+
 
 
 
