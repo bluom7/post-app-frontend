@@ -8137,16 +8137,17 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
       ),
       // Track
       React.createElement('div', { style: { flex:1, position:'relative', height:3, background:'rgba(255,255,255,0.32)', borderRadius:3 } },
-        // Green played portion
-        React.createElement('div', { style: { position:'absolute', left:(startSec/songDur*100)+'%', width:(playedSec/songDur*100)+'%', height:'100%', background:'#41F29A', borderRadius:3, transition:'width 0.08s linear' } }),
-        // White remaining-clip portion
-        React.createElement('div', { style: { position:'absolute', left:((startSec+playedSec)/songDur*100)+'%', width:((CLIP_DUR-playedSec)/songDur*100)+'%', height:'100%', background:'rgba(255,255,255,0.55)', borderRadius:3 } }),
-        // Clip-start dot
-        React.createElement('div', { style: { position:'absolute', left:(startSec/songDur*100)+'%', top:'50%', transform:'translate(-50%,-50%)', width:10, height:10, borderRadius:'50%', background:'#fff' } }),
-        // Clip-end dot
-        React.createElement('div', { style: { position:'absolute', left:(Math.min((startSec+CLIP_DUR)/songDur,1)*100)+'%', top:'50%', transform:'translate(-50%,-50%)', width:10, height:10, borderRadius:'50%', background:'#fff' } }),
-        // Moving playhead (only when playing)
-        playing && React.createElement('div', { style: { position:'absolute', left:((startSec+playedSec)/songDur*100)+'%', top:'50%', transform:'translate(-50%,-50%)', width:14, height:14, borderRadius:'50%', background:'#41F29A', boxShadow:'0 0 0 2px rgba(255,255,255,0.96), 0 0 12px rgba(65,242,154,0.72)', transition:'left 0.08s linear', zIndex:2 } })
+        // Plain white playback line — no green fill or moving circle
+        playing && React.createElement('div', { style: { position:'absolute', left:(startSec/songDur*100)+'%', width:(playedSec/songDur*100)+'%', height:3, background:'#fff', borderRadius:3, transition:'width 0.08s linear', zIndex:1 } }),
+        // Fixed Facebook-style star markers for the selected clip boundaries
+        React.createElement('div', { 'aria-label':'Clip start', style: { position:'absolute', left:(startSec/songDur*100)+'%', top:'50%', transform:'translate(-50%,-50%)', width:22, height:22, borderRadius:'50%', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, boxShadow:'0 1px 4px rgba(0,0,0,0.22)' } },
+          React.createElement('svg', { width:14, height:14, viewBox:'0 0 24 24', fill:'#1877F2', 'aria-hidden':'true' },
+            React.createElement('path', { d:'M12 2.5l2.75 5.58 6.16.9-4.46 4.35 1.05 6.14L12 16.57l-5.5 2.9 1.05-6.14L3.09 8.98l6.16-.9L12 2.5z' }))
+        ),
+        React.createElement('div', { 'aria-label':'Clip end', style: { position:'absolute', left:(Math.min((startSec+CLIP_DUR)/songDur,1)*100)+'%', top:'50%', transform:'translate(-50%,-50%)', width:22, height:22, borderRadius:'50%', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, boxShadow:'0 1px 4px rgba(0,0,0,0.22)' } },
+          React.createElement('svg', { width:14, height:14, viewBox:'0 0 24 24', fill:'#1877F2', 'aria-hidden':'true' },
+            React.createElement('path', { d:'M12 2.5l2.75 5.58 6.16.9-4.46 4.35 1.05 6.14L12 16.57l-5.5 2.9 1.05-6.14L3.09 8.98l6.16-.9L12 2.5z' }))
+        )
       ),
       // End-time of selected clip
       React.createElement('div', { style: { flexShrink:0, color:'rgba(255,255,255,0.85)', fontSize:12, fontWeight:600, minWidth:32, textAlign:'right' } },
