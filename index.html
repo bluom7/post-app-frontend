@@ -8110,15 +8110,15 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
         )
       )
     ),
-    // ── Transparent bottom controls overlay ──
+    // ── Fully transparent bottom controls (no sheet, blur, gradient, border, or shadow) ──
     React.createElement('div', { style: {
       position:'absolute', left:0, right:0, bottom:0, zIndex:4,
       paddingBottom:'calc(10px + env(safe-area-inset-bottom, 0px))',
-      background:'linear-gradient(180deg, rgba(7,10,16,0.10) 0%, rgba(7,10,16,0.42) 28%, rgba(7,10,16,0.62) 100%)',
-      backdropFilter:'blur(16px) saturate(1.18)',
-      WebkitBackdropFilter:'blur(16px) saturate(1.18)',
-      borderTop:'1px solid rgba(255,255,255,0.14)',
-      boxShadow:'0 -18px 38px rgba(0,0,0,0.24)'
+      background:'transparent',
+      backdropFilter:'none',
+      WebkitBackdropFilter:'none',
+      borderTop:'none',
+      boxShadow:'none'
     } },
     // ── Progress bar row (Instagram-style) ──
     React.createElement('div', { style: { background:'transparent', display:'flex', alignItems:'center', gap:12, padding:'10px 16px 8px', flexShrink:0 } },
