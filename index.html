@@ -8021,7 +8021,9 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
     const opts = { passive: false };
     const onTS = e => {
       dragRef.current = { active: true, startX: e.touches[0].clientX, startSec: startSecRef.current };
-      startAudio(startSecRef.current);
+      // Scrolling the waveform is a reselection gesture: stop the current
+      // preview immediately and restart only after the new position is chosen.
+      stopAudio();
     };
     const onTM = e => {
       e.preventDefault();
@@ -8032,7 +8034,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
     const onTE = () => {
       if (!dragRef.current.active) return;
       dragRef.current.active = false;
-      stopAudio();
+      startAudio(startSecRef.current);
     };
     el.addEventListener('touchstart', onTS, opts);
     el.addEventListener('touchmove', onTM, opts);
@@ -8181,10 +8183,6 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
           React.createElement('div', { style: { position:'absolute', top:0, left:0, bottom:0, width:Math.min(100, Math.max(0, playedSec / CLIP_DUR * 100))+'%', borderRadius:12, background:'linear-gradient(90deg, #FFD600 0%, #20D96B 34%, #FF4D5F 68%, #3B82F6 100%)', opacity:0.82, transition:'width 0.08s linear' } }),
           React.createElement('div', { style: { position:'absolute', inset:0, borderRadius:12, background:'rgba(255,255,255,0.08)', transition:'opacity 0.08s linear' } })
         )
-      ),
-      // Yellow second-by-second fill bar under clip box
-      React.createElement('div', { style: { margin:'8px 16px 2px', height:6, background:'rgba(255,255,255,0.24)', borderRadius:4, overflow:'hidden' } },
-        React.createElement('div', { style: { height:'100%', width:(playedSec/CLIP_DUR*100)+'%', background:'#FFD600', borderRadius:4, transition:'width 0.08s linear', boxShadow: playedSec > 0 ? '0 0 6px rgba(255,214,0,0.7)' : 'none' } })
       ),
       // Time range
       React.createElement('div', { style: { textAlign:'center', marginTop:6 } },
