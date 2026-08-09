@@ -8110,8 +8110,18 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
         )
       )
     ),
+    // ── Transparent bottom controls overlay ──
+    React.createElement('div', { style: {
+      position:'absolute', left:0, right:0, bottom:0, zIndex:4,
+      paddingBottom:'calc(10px + env(safe-area-inset-bottom, 0px))',
+      background:'linear-gradient(180deg, rgba(7,10,16,0.10) 0%, rgba(7,10,16,0.42) 28%, rgba(7,10,16,0.62) 100%)',
+      backdropFilter:'blur(16px) saturate(1.18)',
+      WebkitBackdropFilter:'blur(16px) saturate(1.18)',
+      borderTop:'1px solid rgba(255,255,255,0.14)',
+      boxShadow:'0 -18px 38px rgba(0,0,0,0.24)'
+    } },
     // ── Progress bar row (Instagram-style) ──
-    React.createElement('div', { style: { background:'#111', display:'flex', alignItems:'center', gap:12, padding:'10px 16px', flexShrink:0 } },
+    React.createElement('div', { style: { background:'transparent', display:'flex', alignItems:'center', gap:12, padding:'10px 16px 8px', flexShrink:0 } },
       // Play / Pause button
       React.createElement('button', { onClick: togglePlay,
         style: { flexShrink:0, background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', padding:4 } },
@@ -8122,9 +8132,9 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
               React.createElement('polygon',{points:'5 3 19 12 5 21 5 3'}))
       ),
       // Track
-      React.createElement('div', { style: { flex:1, position:'relative', height:3, background:'rgba(255,255,255,0.18)', borderRadius:3 } },
+      React.createElement('div', { style: { flex:1, position:'relative', height:3, background:'rgba(255,255,255,0.32)', borderRadius:3 } },
         // Green played portion
-        React.createElement('div', { style: { position:'absolute', left:(startSec/songDur*100)+'%', width:(playedSec/songDur*100)+'%', height:'100%', background:'#4ADE80', borderRadius:3, transition:'width 0.08s linear' } }),
+        React.createElement('div', { style: { position:'absolute', left:(startSec/songDur*100)+'%', width:(playedSec/songDur*100)+'%', height:'100%', background:'#41F29A', borderRadius:3, transition:'width 0.08s linear' } }),
         // White remaining-clip portion
         React.createElement('div', { style: { position:'absolute', left:((startSec+playedSec)/songDur*100)+'%', width:((CLIP_DUR-playedSec)/songDur*100)+'%', height:'100%', background:'rgba(255,255,255,0.55)', borderRadius:3 } }),
         // Clip-start dot
@@ -8132,15 +8142,15 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
         // Clip-end dot
         React.createElement('div', { style: { position:'absolute', left:(Math.min((startSec+CLIP_DUR)/songDur,1)*100)+'%', top:'50%', transform:'translate(-50%,-50%)', width:10, height:10, borderRadius:'50%', background:'#fff' } }),
         // Moving playhead (only when playing)
-        playing && React.createElement('div', { style: { position:'absolute', left:((startSec+playedSec)/songDur*100)+'%', top:'50%', transform:'translate(-50%,-50%)', width:14, height:14, borderRadius:'50%', background:'#4ADE80', boxShadow:'0 0 0 2px #fff', transition:'left 0.08s linear', zIndex:2 } })
+        playing && React.createElement('div', { style: { position:'absolute', left:((startSec+playedSec)/songDur*100)+'%', top:'50%', transform:'translate(-50%,-50%)', width:14, height:14, borderRadius:'50%', background:'#41F29A', boxShadow:'0 0 0 2px rgba(255,255,255,0.96), 0 0 12px rgba(65,242,154,0.72)', transition:'left 0.08s linear', zIndex:2 } })
       ),
       // End-time of selected clip
       React.createElement('div', { style: { flexShrink:0, color:'rgba(255,255,255,0.85)', fontSize:12, fontWeight:600, minWidth:32, textAlign:'right' } },
         fmtTime(Math.min(startSec + CLIP_DUR, songDur))
       )
     ),
-    // ── Waveform trimmer (dark, Instagram-style) ──
-    React.createElement('div', { style: { background:'#111', paddingBottom:20, flexShrink:0 } },
+    // ── Waveform trimmer — readable over the media with a translucent glass layer ──
+    React.createElement('div', { style: { background:'transparent', paddingBottom:4, flexShrink:0 } },
       React.createElement('div', { style: { textAlign:'center', color:'rgba(255,255,255,0.85)', fontSize:11, fontWeight:700, padding:'10px 0 6px' } }, CLIP_DUR+'s'),
       // Waveform scroll container — touchAction:none is critical
       React.createElement('div', { ref: waveContRef,
@@ -8156,19 +8166,19 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
             ? waveData.map((h,i) => {
                 const barTime = (i / NUM_BARS) * songDur;
                 const inClip  = barTime >= startSec && barTime < startSec + CLIP_DUR;
-                const bg = inClip ? '#fff' : 'rgba(255,255,255,0.22)';
+                const bg = inClip ? 'rgba(255,255,255,0.98)' : 'rgba(255,255,255,0.32)';
                 const anim = 'waveBar ' + (0.45 + h * 0.35).toFixed(2) + 's ease-in-out ' + (i * 0.013).toFixed(3) + 's infinite';
                 return React.createElement('div', { key:i, style: { width:BAR_W+'px', height:Math.max(4,Math.round(h*52))+'px', borderRadius:2, background:bg, flexShrink:0, transformOrigin:'center', animation:anim } });
               })
-            : Array.from({length:40},(_,i) => React.createElement('div',{key:i,style:{width:BAR_W+'px',height:'20px',borderRadius:2,background:'rgba(255,255,255,0.15)',flexShrink:0}}))
+            : Array.from({length:40},(_,i) => React.createElement('div',{key:i,style:{width:BAR_W+'px',height:'20px',borderRadius:2,background:'rgba(255,255,255,0.22)',flexShrink:0}}))
         ),
         // Wide horizontal rectangle clip box (like image 2) with yellow second-fill
-        React.createElement('div', { style: { position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:clipPx+'px', height:'100%', border:'3px solid rgba(255,255,255,0.92)', borderRadius:8, pointerEvents:'none', boxSizing:'border-box', overflow:'hidden' } },
-          React.createElement('div', { style: { position:'absolute', top:0, left:0, height:'100%', width:(playedSec/CLIP_DUR*100)+'%', background:'rgba(255,214,0,0.52)', borderRadius:13, transition:'width 0.08s linear' } })
+        React.createElement('div', { style: { position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:clipPx+'px', height:'100%', border:'2.5px solid rgba(255,255,255,0.96)', borderRadius:9, boxShadow:'0 0 0 1px rgba(0,0,0,0.16), 0 6px 18px rgba(0,0,0,0.18)', pointerEvents:'none', boxSizing:'border-box', overflow:'hidden' } },
+          React.createElement('div', { style: { position:'absolute', top:0, left:0, height:'100%', width:(playedSec/CLIP_DUR*100)+'%', background:'rgba(255,214,0,0.58)', borderRadius:13, transition:'width 0.08s linear' } })
         )
       ),
       // Yellow second-by-second fill bar under clip box
-      React.createElement('div', { style: { margin:'8px 16px 2px', height:6, background:'rgba(255,255,255,0.13)', borderRadius:4, overflow:'hidden' } },
+      React.createElement('div', { style: { margin:'8px 16px 2px', height:6, background:'rgba(255,255,255,0.24)', borderRadius:4, overflow:'hidden' } },
         React.createElement('div', { style: { height:'100%', width:(playedSec/CLIP_DUR*100)+'%', background:'#FFD600', borderRadius:4, transition:'width 0.08s linear', boxShadow: playedSec > 0 ? '0 0 6px rgba(255,214,0,0.7)' : 'none' } })
       ),
       // Time range
@@ -8178,6 +8188,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
         )
       ),
       // Duration is selected from the compact clock control beneath Done.
+    )
     )
   );
 }
