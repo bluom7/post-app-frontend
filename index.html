@@ -7884,6 +7884,7 @@ function StickerPickerModal({ onSelect, onClose }) {
 
 function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete }) {
   const [CLIP_DUR, setClipDur] = React.useState(15);
+  const [showClipDurationPicker, setShowClipDurationPicker] = React.useState(false);
   const songDur = Math.max(CLIP_DUR + 1, Math.round((song.music_duration_ms || 30000) / 1000));
   const maxStart = Math.max(0, songDur - CLIP_DUR);
 
@@ -7915,6 +7916,12 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
 
   const fmtTime = s => { const m = Math.floor(s/60); return m+':'+(Math.round(s)%60).toString().padStart(2,'0'); };
   const clamp = s => Math.max(0, Math.min(maxStart, s));
+  const selectClipDuration = dur => {
+    setClipDur(dur);
+    setStartSec(Math.max(0, Math.min(startSecRef.current, Math.max(0, songDur - dur))));
+    setShowClipDurationPicker(false);
+    stopAudio();
+  };
 
   // Load real waveform via Web Audio API
   React.useEffect(() => {
@@ -8049,7 +8056,42 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
         React.createElement('div', { style: { width:'100%', color:'rgba(255,255,255,0.72)', fontSize:10, lineHeight:'12px', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textShadow:'0 1px 4px rgba(0,0,0,0.8)' } }, song.music_artist || 'Unknown artist')
       ),
       // Done
-      React.createElement('button', { onClick: () => { stopAudio(); onConfirm(Math.round(startSecRef.current * 1000)); }, style: { position:'absolute', top:20, right:18, background:'transparent', border:'none', borderRadius:0, padding:'9px 0', fontWeight:700, fontSize:17, cursor:'pointer', color:'#fff', textShadow:'0 1px 4px rgba(0,0,0,0.8)', pointerEvents:'auto', zIndex:3 } }, 'Done')
+      React.createElement('button', { onClick: () => { stopAudio(); onConfirm(Math.round(startSecRef.current * 1000)); }, style: { position:'absolute', top:20, right:18, background:'transparent', border:'none', borderRadius:0, padding:'9px 0', fontWeight:700, fontSize:17, cursor:'pointer', color:'#fff', textShadow:'0 1px 4px rgba(0,0,0,0.8)', pointerEvents:'auto', zIndex:3 } }, 'Done'),
+      // Compact clip-duration control directly beneath Done, like the camera time tool.
+      React.createElement('div', { style: { position:'absolute', top:58, right:12, zIndex:6, pointerEvents:'auto' } },
+        React.createElement('button', {
+          type:'button',
+          'aria-label':'Choose song clip duration',
+          'aria-expanded':showClipDurationPicker,
+          onClick:e => { e.stopPropagation(); setShowClipDurationPicker(v => !v); },
+          style: { width:42, height:34, display:'flex', alignItems:'center', justifyContent:'center', gap:3, color:'#fff', background:'rgba(0,0,0,0.5)', border:'1px solid rgba(255,255,255,0.55)', borderRadius:18, cursor:'pointer', padding:0, boxShadow:'0 2px 10px rgba(0,0,0,0.35)' }
+        },
+          React.createElement('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'#fff',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round',ariaHidden:true},
+            React.createElement('circle',{cx:12,cy:12,r:8.5}),
+            React.createElement('path',{d:'M12 7v5l3 2'})
+          ),
+          React.createElement('span',{style:{fontSize:10,fontWeight:800,lineHeight:1}}, CLIP_DUR)
+        ),
+        showClipDurationPicker && React.createElement('div', {
+          role:'menu',
+          'aria-label':'Song clip duration',
+          onClick:e => e.stopPropagation(),
+          style: { position:'absolute', top:40, right:0, width:116, padding:6, background:'rgba(28,28,28,0.96)', border:'1px solid rgba(255,255,255,0.22)', borderRadius:12, boxShadow:'0 8px 24px rgba(0,0,0,0.5)', display:'flex', flexDirection:'column', gap:3 }
+        },
+          React.createElement('div',{style:{color:'rgba(255,255,255,0.58)',fontSize:10,fontWeight:700,padding:'3px 7px 4px',letterSpacing:0.2}}, 'Song clip'),
+          [15,30].map(dur => React.createElement('button', {
+            key:dur,
+            type:'button',
+            role:'menuitemradio',
+            'aria-checked':CLIP_DUR === dur,
+            onClick:() => selectClipDuration(dur),
+            style: { width:'100%', height:34, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 9px', border:'none', borderRadius:8, background:CLIP_DUR === dur ? 'rgba(255,255,255,0.18)' : 'transparent', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:700 }
+          },
+            React.createElement('span',null,dur+' sec'),
+            CLIP_DUR === dur && React.createElement('span',{style:{fontSize:15,lineHeight:1}}, '✓')
+          ))
+        )
+      )
     ),
     // ── Photo/video preview ── (tap anywhere to play/pause)
     React.createElement('div', { style: { flex:1, position:'relative', overflow:'hidden', cursor:'pointer', background:'#000', minHeight:0, WebkitTapHighlightColor:'transparent', WebkitUserSelect:'none', userSelect:'none', touchAction:'manipulation', outline:'none' }, onClick: togglePlay, onPointerDown: e => { e.currentTarget.style.backgroundColor = '#000'; } },
@@ -8144,29 +8186,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
           fmtTime(startSec) + ' – ' + fmtTime(Math.min(startSec + CLIP_DUR, songDur))
         )
       ),
-      // ── Clip duration selector: 15 sec / 30 sec ──
-      React.createElement('div', { style: { display:'flex', justifyContent:'center', gap:14, padding:'14px 16px 4px' } },
-        [15, 30].map(dur =>
-          React.createElement('button', {
-            key: dur,
-            onClick: () => { setClipDur(dur); setStartSec(Math.max(0, Math.min(startSecRef.current, Math.max(0, songDur - dur)))); stopAudio(); },
-            style: {
-              padding: '8px 22px', minWidth: 60, height: 44,
-              border: CLIP_DUR === dur ? '2.5px solid #fff' : '1.5px solid rgba(255,255,255,0.28)',
-              borderRadius: 22,
-              background: CLIP_DUR === dur ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.05)',
-              color: '#fff',
-              cursor: 'pointer',
-              display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
-              transition: 'background 0.15s, border 0.15s',
-              flexShrink: 0
-            }
-          },
-            React.createElement('span', { style: { fontSize: 16, fontWeight: 800, lineHeight: 1 } }, dur),
-            React.createElement('span', { style: { fontSize: 14, color: CLIP_DUR === dur ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.5)', fontWeight: 600, letterSpacing: 0.3 } }, 'sec')
-          )
-        )
-      )
+      // Duration is selected from the compact clock control beneath Done.
     )
   );
 }
