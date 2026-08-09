@@ -19612,19 +19612,22 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
         React.createElement('div',{style:{textAlign:'center',color:'rgba(255,255,255,0.8)',fontSize:12,fontWeight:500,padding:'0 0 10px',letterSpacing:0.1}},
           'Choose the part you want for your reel.'),
         React.createElement('div',{ref:waveContRef,className:'rcMusicTrimmerWaveform',style:{position:'relative',height:WAVEFORM_HEIGHT,overflow:'hidden',cursor:'ew-resize',userSelect:'none',touchAction:'none',WebkitTapHighlightColor:'transparent'}},
-          React.createElement('div',{style:{display:'flex',alignItems:'center',height:'100%',gap:BAR_GAP+'px',
-            paddingLeft:sidePad+'px',paddingRight:sidePad+'px',
-            transform:'translateX('+(-offset)+'px)',
-            transition:dragRef.current&&dragRef.current.active?'none':'transform 0.08s linear',
-            willChange:'transform',flexShrink:0,boxSizing:'border-box'}},
-            waveData.length>0
-              ?waveData.map(function(h,i){
-                  var barTime=(i/NUM_BARS)*songDuration;
-                  var inClip=barTime>=startSec&&barTime<startSec+clipDuration;
-                  var waveHeight=WAVEFORM_PATTERN[i%WAVEFORM_PATTERN.length];
-                  return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:Math.round(waveHeight*(WAVEFORM_HEIGHT-8))+'px',borderRadius:2,background:inClip?'#fff':'rgba(255,255,255,0.3)',flexShrink:0,transformOrigin:'center',animation:'none'}});
-                })
-              :Array.from({length:80},function(_,i){return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:Math.round(WAVEFORM_PATTERN[i%WAVEFORM_PATTERN.length]*(WAVEFORM_HEIGHT-8))+'px',borderRadius:2,background:'rgba(255,255,255,0.25)',flexShrink:0,transformOrigin:'center',animation:'none'}});})
+          // Keep the waveform itself inside the selected clip window. The track still
+          // moves while dragging, but the viewport prevents any bars leaking outside
+          // the 15s/30s selection box.
+          React.createElement('div',{style:{position:'absolute',top:0,left:'50%',width:clipPx+'px',height:'100%',transform:'translateX(-50%)',overflow:'hidden',pointerEvents:'none'}},
+            React.createElement('div',{style:{display:'flex',alignItems:'center',height:'100%',gap:BAR_GAP+'px',
+              paddingLeft:sidePad+'px',paddingRight:sidePad+'px',
+              transform:'translateX('+(-offset)+'px)',
+              transition:dragRef.current&&dragRef.current.active?'none':'transform 0.08s linear',
+              willChange:'transform',flexShrink:0,boxSizing:'border-box'}},
+              waveData.length>0
+                ?waveData.map(function(h,i){
+                    var waveHeight=WAVEFORM_PATTERN[i%WAVEFORM_PATTERN.length];
+                    return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:Math.round(waveHeight*(WAVEFORM_HEIGHT-8))+'px',borderRadius:2,background:'#fff',flexShrink:0,transformOrigin:'center',animation:'none'}});
+                  })
+                :Array.from({length:80},function(_,i){return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:Math.round(WAVEFORM_PATTERN[i%WAVEFORM_PATTERN.length]*(WAVEFORM_HEIGHT-8))+'px',borderRadius:2,background:'rgba(255,255,255,0.25)',flexShrink:0,transformOrigin:'center',animation:'none'}});})
+            )
           ),
           // Wide horizontal rectangle clip box (image 2 style) with yellow fill
           React.createElement('div',{style:{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:clipPx+'px',height:'80%',border:'3.5px solid #FF3B7A',borderRadius:0,pointerEvents:'none',boxSizing:'border-box',overflow:'hidden'}},
