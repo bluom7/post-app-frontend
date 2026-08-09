@@ -8177,7 +8177,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
         // Facebook-style selection capsule: one continuous soft-gray surface
         // across the entire selected clip. Playback paints the elapsed portion
         // with a multi-color progress gradient.
-        React.createElement('div', { style: { position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:clipPx+'px', height:'100%', background:'rgba(190,190,190,0.76)', borderRadius:12, boxShadow:'0 4px 14px rgba(0,0,0,0.18)', pointerEvents:'none', boxSizing:'border-box', overflow:'visible' } },
+        React.createElement('div', { style: { position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:clipPx+'px', height:'44px', background:'rgba(190,190,190,0.76)', borderRadius:12, boxShadow:'0 4px 14px rgba(0,0,0,0.18)', pointerEvents:'none', boxSizing:'border-box', overflow:'visible' } },
           React.createElement('div', { style: { position:'absolute', top:0, left:0, bottom:0, width:Math.min(100, Math.max(0, playedSec / CLIP_DUR * 100))+'%', borderRadius:12, background:'linear-gradient(90deg, #FFD600 0%, #20D96B 34%, #FF4D5F 68%, #3B82F6 100%)', opacity:0.82, transition:'width 0.08s linear' } }),
           React.createElement('div', { style: { position:'absolute', inset:0, borderRadius:12, background:'rgba(255,255,255,0.08)', transition:'opacity 0.08s linear' } })
         )
