@@ -19508,7 +19508,12 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
   React.useEffect(function(){
     var el=waveContRef.current; if(!el)return;
     var opts={passive:false};
-    var onTS=function(e){dragRef.current={active:true,startX:e.touches[0].clientX,startSec:startSecRef.current,moved:false};};
+    var onTS=function(e){
+      // The waveform is a selection-only control. Never start playback while
+      // the user is moving or tapping the full-song timeline.
+      stopTrimAudio();
+      dragRef.current={active:true,startX:e.touches[0].clientX,startSec:startSecRef.current,moved:false};
+    };
     var onTM=function(e){
       e.preventDefault();
       if(!dragRef.current.active)return;
@@ -19518,13 +19523,9 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
     };
     var onTE=function(){
       if(!dragRef.current.active)return;
-      var wasDrag=dragRef.current.moved;
+      // Keep the selected clip at the new position. Playback is intentionally
+      // not triggered here; the user confirms the selection with Done.
       dragRef.current.active=false;
-      if(wasDrag){
-        startTrimAudio(startSecRef.current); // drag ended → play new clip position
-      }else{
-        toggleTrimPlay(); // tap → toggle play/pause
-      }
     };
     el.addEventListener('touchstart',onTS,opts);
     el.addEventListener('touchmove',onTM,opts);
