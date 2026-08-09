@@ -10,12 +10,12 @@ http.createServer((req, res) => {
   fs.readFile(filePath, (err, data) => {
     if (err) {
       fs.readFile(path.join(__dirname, 'index.html'), (e2, d2) => {
-        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store, no-cache, must-revalidate' });
         res.end(d2);
       });
     } else {
       const ext = path.extname(filePath);
-      res.writeHead(200, { 'Content-Type': mime[ext] || 'text/plain' });
+      res.writeHead(200, { 'Content-Type': mime[ext] || 'text/plain', 'Cache-Control': 'no-store, no-cache, must-revalidate' });
       res.end(data);
     }
   });
