@@ -8060,7 +8060,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
       // Done
       React.createElement('button', { onClick: () => { stopAudio(); onConfirm(Math.round(startSecRef.current * 1000)); }, style: { background:'#1877F2', border:'none', borderRadius:20, padding:'9px 22px', fontWeight:700, fontSize:15, cursor:'pointer', color:'#fff' } }, 'Done')
     ),
-    // ── Photo preview + song info ── (tap anywhere to play/pause)
+    // ── Photo/video preview ── (tap anywhere to play/pause)
     React.createElement('div', { style: { flex:1, position:'relative', overflow:'hidden', cursor:'pointer', background:'#000', minHeight:0 }, onClick: togglePlay },
       videoSrc
         ? React.createElement('video', { key: videoSrc, ref: mediaRef, src: videoSrc, playsInline:true, muted:true, loop:true,
@@ -8071,15 +8071,6 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
           : React.createElement('div', { style: { width:'100%', height:'100%', background:'#1a1a1a' } }),
       React.createElement('div', { style: { position:'absolute', inset:0, background:'rgba(0,0,0,0.26)', pointerEvents:'none' } }),
       React.createElement('div', { style: { position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6 } },
-        React.createElement('div', { style: { width:44, height:44, borderRadius:8, overflow:'hidden', border:'2px solid rgba(255,255,255,0.35)', marginBottom:4 } },
-          song.music_artwork
-            ? React.createElement('img', { src: song.music_artwork, style: { width:'100%', height:'100%', objectFit:'cover' } })
-            : React.createElement('div', { style: { width:'100%', height:'100%', background:'#444' } })
-        ),
-        React.createElement('div', { style: { width:220, overflow:'hidden', position:'relative', WebkitMaskImage:'linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%)', maskImage:'linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%)' } },
-          React.createElement('div', { style: { color:'#fff', fontWeight:700, fontSize:15, whiteSpace:'nowrap', animation:'musicTickerScroll 7s linear infinite', display:'inline-block', paddingLeft:'100%' } }, song.music_title||'')),
-        React.createElement('div', { style: { width:200, overflow:'hidden', position:'relative', WebkitMaskImage:'linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%)', maskImage:'linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%)' } },
-          React.createElement('div', { style: { color:'rgba(255,255,255,0.72)', fontSize:11, whiteSpace:'nowrap', animation:'musicTickerScroll 9s linear infinite 0.4s', display:'inline-block', paddingLeft:'100%' } }, song.music_artist||'')),
         React.createElement('button', { onClick: e => { e.stopPropagation(); togglePlay(); }, style: { marginTop:10, background:'rgba(255,255,255,0.18)', border:'2px solid rgba(255,255,255,0.55)', borderRadius:'50%', width:52, height:52, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' } },
           playing
             ? React.createElement('svg', { width:22, height:22, viewBox:'0 0 24 24', fill:'none', stroke:'#fff', strokeWidth:2.5, strokeLinecap:'round', strokeLinejoin:'round' },
