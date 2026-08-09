@@ -19624,9 +19624,9 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
                   var barTime=(i/NUM_BARS)*songDuration;
                   var inClip=barTime>=startSec&&barTime<startSec+clipDuration;
                   var waveHeight=WAVEFORM_PATTERN[i%WAVEFORM_PATTERN.length];
-                  return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:Math.round(waveHeight*(WAVEFORM_HEIGHT-8))+'px',borderRadius:2,background:inClip?'#fff':'rgba(255,255,255,0.58)',flexShrink:0,transformOrigin:'center',animation:'none'}});
+                  return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:Math.max(2,Math.round(waveHeight*(WAVEFORM_HEIGHT-8)/3))+'px',borderRadius:2,background:inClip?'#fff':'rgba(255,255,255,0.58)',flexShrink:0,transformOrigin:'center',animation:'none'}});
                 })
-              :Array.from({length:80},function(_,i){return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:Math.round(WAVEFORM_PATTERN[i%WAVEFORM_PATTERN.length]*(WAVEFORM_HEIGHT-8))+'px',borderRadius:2,background:'rgba(255,255,255,0.35)',flexShrink:0,transformOrigin:'center',animation:'none'}});})
+              :Array.from({length:80},function(_,i){return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:Math.max(2,Math.round(WAVEFORM_PATTERN[i%WAVEFORM_PATTERN.length]*(WAVEFORM_HEIGHT-8)/3))+'px',borderRadius:2,background:'rgba(255,255,255,0.35)',flexShrink:0,transformOrigin:'center',animation:'none'}});})
           ),
           // Wide horizontal rectangle clip box (image 2 style) with yellow fill
           React.createElement('div',{style:{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:clipPx+'px',height:'80%',border:'3.5px solid #FF3B7A',borderRadius:0,pointerEvents:'none',boxSizing:'border-box',overflow:'hidden'}},
