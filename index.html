@@ -23,7 +23,8 @@
 @keyframes musicTickerScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-200%); } }
 @keyframes songHeaderTicker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 @keyframes musicIconSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-video { -webkit-tap-highlight-color: transparent; background: #000; }
+video, [data-media-stage], [data-media-control] { -webkit-tap-highlight-color: transparent; background: #000; }
+button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 @keyframes feedVideoShimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 .bell-shake { animation: bellShake 0.6s ease; }
 button:focus { outline: none !important; box-shadow: none !important; border: none !important; }
@@ -8037,31 +8038,21 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
   return React.createElement('div', { style: { position:'fixed', inset:0, zIndex:3100, background:'#000', display:'flex', flexDirection:'column', overflow:'hidden' } },
     // ── Top bar ──
     React.createElement('div', { style: { position:'absolute', top:0, left:0, right:0, zIndex:5, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 18px 10px', pointerEvents:'none', background:'linear-gradient(to bottom, rgba(0,0,0,0.38), transparent)' } },
-      // Delete / remove music
-      React.createElement('button', { onClick: () => { stopAudio(); onDelete(); }, style: { background:'rgba(0,0,0,0.28)', border:'1px solid rgba(255,255,255,0.25)', borderRadius:'50%', width:40, height:40, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', pointerEvents:'auto' } },
-        React.createElement('svg', { width:20, height:20, viewBox:'0 0 24 24', fill:'none', stroke:'#fff', strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' },
-          React.createElement('polyline', { points:'3 6 5 6 21 6' }),
-          React.createElement('path', { d:'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2' })
-        )
-      ),
-      // Song artwork circle — with ✕ remove overlay
-      React.createElement('div', { style: { position:'relative', width:34, height:34, pointerEvents:'auto' } },
-        song.music_artwork
-          ? React.createElement('img', { src: song.music_artwork, style: { width:34, height:34, borderRadius:6, objectFit:'cover', border:'1.5px solid rgba(255,255,255,0.7)', display:'block' } })
-          : React.createElement('div', { style: { width:34, height:34, borderRadius:6, background:'rgba(0,0,0,0.35)', border:'1.5px solid rgba(255,255,255,0.55)' } }),
-        React.createElement('button', { onClick: () => { stopAudio(); onDelete(); }, title:'Remove music',
-          style: { position:'absolute', top:-7, right:-7, width:18, height:18, borderRadius:'50%', background:'rgba(255,255,255,0.92)', border:'none', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', boxShadow:'0 1px 4px rgba(0,0,0,0.45)', pointerEvents:'auto' } },
-          React.createElement('svg', { width:10, height:10, viewBox:'0 0 24 24', fill:'none', stroke:'#000', strokeWidth:3, strokeLinecap:'round' },
-            React.createElement('line', { x1:18, y1:6, x2:6, y2:18 }),
-            React.createElement('line', { x1:6, y1:6, x2:18, y2:18 })
-          )
-        )
+      // Album artwork and song metadata
+      React.createElement('div', { style: { display:'flex', flexDirection:'column', alignItems:'center', gap:3, pointerEvents:'auto', minWidth:116, maxWidth:190 } },
+        React.createElement('div', { style: { position:'relative', width:38, height:38 } },
+          song.music_artwork
+            ? React.createElement('img', { src: song.music_artwork, alt: song.music_title || 'Album artwork', style: { width:38, height:38, borderRadius:7, objectFit:'cover', border:'1.5px solid rgba(255,255,255,0.7)', display:'block' } })
+            : React.createElement('div', { style: { width:38, height:38, borderRadius:7, background:'rgba(0,0,0,0.35)', border:'1.5px solid rgba(255,255,255,0.55)' } })
+        ),
+        React.createElement('div', { style: { width:'100%', color:'#fff', fontSize:11, lineHeight:'14px', fontWeight:700, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textShadow:'0 1px 4px rgba(0,0,0,0.8)' } }, song.music_title || 'Unknown song'),
+        React.createElement('div', { style: { width:'100%', color:'rgba(255,255,255,0.72)', fontSize:10, lineHeight:'12px', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textShadow:'0 1px 4px rgba(0,0,0,0.8)' } }, song.music_artist || 'Unknown artist')
       ),
       // Done
       React.createElement('button', { onClick: () => { stopAudio(); onConfirm(Math.round(startSecRef.current * 1000)); }, style: { background:'transparent', border:'none', borderRadius:0, padding:'9px 0', fontWeight:700, fontSize:17, cursor:'pointer', color:'#fff', textShadow:'0 1px 4px rgba(0,0,0,0.8)', pointerEvents:'auto' } }, 'Done')
     ),
     // ── Photo/video preview ── (tap anywhere to play/pause)
-    React.createElement('div', { style: { flex:1, position:'relative', overflow:'hidden', cursor:'pointer', background:'#000', minHeight:0 }, onClick: togglePlay },
+    React.createElement('div', { style: { flex:1, position:'relative', overflow:'hidden', cursor:'pointer', background:'#000', minHeight:0, WebkitTapHighlightColor:'transparent', WebkitUserSelect:'none', userSelect:'none', touchAction:'manipulation', outline:'none' }, onClick: togglePlay, onPointerDown: e => { e.currentTarget.style.backgroundColor = '#000'; } },
       videoSrc
         ? React.createElement('video', { key: videoSrc, ref: mediaRef, src: videoSrc, playsInline:true, muted:true, loop:true,
             preload:'auto', onLoadedData: e => { try { e.currentTarget.currentTime = 0; } catch (_) {} },
