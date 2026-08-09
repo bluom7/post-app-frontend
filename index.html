@@ -8037,9 +8037,9 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
 
   return React.createElement('div', { style: { position:'fixed', inset:0, zIndex:3100, background:'#000', display:'flex', flexDirection:'column', overflow:'hidden' } },
     // ── Top bar ──
-    React.createElement('div', { style: { position:'absolute', top:0, left:0, right:0, zIndex:5, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 18px 10px', pointerEvents:'none', background:'linear-gradient(to bottom, rgba(0,0,0,0.38), transparent)' } },
+    React.createElement('div', { style: { position:'absolute', top:0, left:0, right:0, zIndex:5, height:86, pointerEvents:'none', background:'linear-gradient(to bottom, rgba(0,0,0,0.38), transparent)' } },
       // Album artwork and song metadata
-      React.createElement('div', { style: { display:'flex', flexDirection:'column', alignItems:'center', gap:3, pointerEvents:'auto', minWidth:116, maxWidth:190 } },
+      React.createElement('div', { style: { position:'absolute', top:8, left:'50%', transform:'translateX(-50%)', display:'flex', flexDirection:'column', alignItems:'center', gap:3, pointerEvents:'auto', width:'min(190px, calc(100vw - 150px))', minWidth:116, maxWidth:190, zIndex:2 } },
         React.createElement('div', { style: { position:'relative', width:38, height:38 } },
           song.music_artwork
             ? React.createElement('img', { src: song.music_artwork, alt: song.music_title || 'Album artwork', style: { width:38, height:38, borderRadius:7, objectFit:'cover', border:'1.5px solid rgba(255,255,255,0.7)', display:'block' } })
@@ -8049,7 +8049,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
         React.createElement('div', { style: { width:'100%', color:'rgba(255,255,255,0.72)', fontSize:10, lineHeight:'12px', textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textShadow:'0 1px 4px rgba(0,0,0,0.8)' } }, song.music_artist || 'Unknown artist')
       ),
       // Done
-      React.createElement('button', { onClick: () => { stopAudio(); onConfirm(Math.round(startSecRef.current * 1000)); }, style: { background:'transparent', border:'none', borderRadius:0, padding:'9px 0', fontWeight:700, fontSize:17, cursor:'pointer', color:'#fff', textShadow:'0 1px 4px rgba(0,0,0,0.8)', pointerEvents:'auto' } }, 'Done')
+      React.createElement('button', { onClick: () => { stopAudio(); onConfirm(Math.round(startSecRef.current * 1000)); }, style: { position:'absolute', top:20, right:18, background:'transparent', border:'none', borderRadius:0, padding:'9px 0', fontWeight:700, fontSize:17, cursor:'pointer', color:'#fff', textShadow:'0 1px 4px rgba(0,0,0,0.8)', pointerEvents:'auto', zIndex:3 } }, 'Done')
     ),
     // ── Photo/video preview ── (tap anywhere to play/pause)
     React.createElement('div', { style: { flex:1, position:'relative', overflow:'hidden', cursor:'pointer', background:'#000', minHeight:0, WebkitTapHighlightColor:'transparent', WebkitUserSelect:'none', userSelect:'none', touchAction:'manipulation', outline:'none' }, onClick: togglePlay, onPointerDown: e => { e.currentTarget.style.backgroundColor = '#000'; } },
