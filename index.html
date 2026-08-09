@@ -8036,13 +8036,20 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
       dragRef.current.active = false;
       startAudio(startSecRef.current);
     };
+    const onTC = () => {
+      if (!dragRef.current.active) return;
+      dragRef.current.active = false;
+      stopAudio();
+    };
     el.addEventListener('touchstart', onTS, opts);
     el.addEventListener('touchmove', onTM, opts);
     el.addEventListener('touchend', onTE, opts);
+    el.addEventListener('touchcancel', onTC, opts);
     return () => {
       el.removeEventListener('touchstart', onTS, opts);
       el.removeEventListener('touchmove', onTM, opts);
       el.removeEventListener('touchend', onTE, opts);
+      el.removeEventListener('touchcancel', onTC, opts);
     };
   }, [pxPerSec, maxStart, song.music_preview_url]);
 
