@@ -8050,7 +8050,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
     // ── Top bar ──
     React.createElement('div', { style: { position:'absolute', top:0, left:0, right:0, zIndex:5, height:86, pointerEvents:'none', background:'linear-gradient(to bottom, rgba(0,0,0,0.38), transparent)' } },
       // Album artwork and song metadata
-      React.createElement('div', { onClick: onBack, role:'button', tabIndex:0, 'aria-label':'Choose a different song', style: { position:'absolute', top:8, left:'50%', transform:'translateX(-50%)', display:'flex', flexDirection:'column', alignItems:'center', gap:3, pointerEvents:'auto', cursor:'pointer', userSelect:'none', WebkitTapHighlightColor:'transparent', width:'min(190px, calc(100vw - 150px))', minWidth:116, maxWidth:190, zIndex:2 } },
+      React.createElement('div', { style: { position:'absolute', top:8, left:'50%', transform:'translateX(-50%)', display:'flex', flexDirection:'column', alignItems:'center', gap:3, pointerEvents:'auto', width:'min(190px, calc(100vw - 150px))', minWidth:116, maxWidth:190, zIndex:2 } },
         React.createElement('div', { style: { position:'relative', width:38, height:38 } },
           song.music_artwork
             ? React.createElement('img', { src: song.music_artwork, alt: song.music_title || 'Album artwork', style: { width:38, height:38, borderRadius:7, objectFit:'cover', border:'1.5px solid rgba(255,255,255,0.7)', display:'block' } })
