@@ -6974,27 +6974,18 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
 
   const TEXT_COLORS = ['#ffffff','#000000','#FFD600','#FF1744','#00E5FF','#76FF03','#FF6D00'];
 
-  // Auto-select closest crop ratio when image loads
+  // Keep every newly selected photo in its natural shape.
   React.useEffect(() => {
-    const img = new Image();
-    img.onload = () => {
-      const r = img.naturalWidth / img.naturalHeight;
-      const options = [
-        {name:'Square', ratio:1},
-        {name:'4:5',   ratio:4/5},
-        {name:'16:9',  ratio:16/9},
-        {name:'9:16',  ratio:9/16},
-      ];
-      let best = options[0], bestDiff = Infinity;
-      for (const o of options) {
-        const diff = Math.abs(r - o.ratio);
-        if (diff < bestDiff) { bestDiff = diff; best = o; }
-      }
-      setCropRatio(best.name);
-      setCropOffset({x:0.5, y:0.5});
-    };
-    img.src = src;
+    setCropRatio('Original');
+    setCropOffset({x:0.5, y:0.5});
+    setFreeBox({x1:0.05, y1:0.05, x2:0.95, y2:0.95});
   }, [src]);
+
+  React.useEffect(() => {
+    if (cropRatio === 'Original') {
+      setCropOffset({x:0.5, y:0.5});
+    }
+  }, [cropRatio]);
 
   const filterCss = (FILTERS.find(f=>f.name===filter)||FILTERS[0]).css;
   const cropEntry = CROPS.find(c=>c.name===cropRatio)||CROPS[0];
