@@ -19869,6 +19869,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const [dragStickerOverlayId, setDragStickerOverlayId] = React.useState(null);
   const [editEmojiPickerOpen, setEditEmojiPickerOpen] = React.useState(false);
   const [editEmojiPickerCat, setEditEmojiPickerCat] = React.useState(0);
+  const [editEmojiPickerTab, setEditEmojiPickerTab] = React.useState("emoji");
+  const [editEmojiSearch, setEditEmojiSearch] = React.useState("");
   const [editEmojiOverlays, setEditEmojiOverlays] = React.useState([]); // [{id,emoji,xPct,yPct,size}]
   const [dragEmojiId, setDragEmojiId] = React.useState(null);
   const [reelStickerItems, setReelStickerItems] = React.useState([]);
@@ -20663,7 +20665,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
   // fetch Giphy stickers whenever sticker panel opens or query changes
   React.useEffect(() => {
-    if (editTool !== "Stickers") return;
+    if (editTool !== "Stickers" && !(editEmojiPickerOpen && editEmojiPickerTab === "gif")) return;
     let cancelled = false;
     setReelStickerLoading(true);
     const url = reelStickerQuery.trim()
@@ -20681,7 +20683,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       }
     }).catch(() => { if (!cancelled) setReelStickerLoading(false); });
     return () => { cancelled = true; };
-  }, [editTool, reelStickerQuery]);
+  }, [editTool, reelStickerQuery, editEmojiPickerOpen, editEmojiPickerTab]);
 
   // Stable share preview URL — created once when entering share step, not on every render
   React.useEffect(() => {
@@ -21937,46 +21939,76 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
       // ── Big Emoji Picker bottom sheet ──
       editEmojiPickerOpen && (() => {
-        const EMOJI_CATS = [
-          { label: "⭐", title: "Popular", emojis: ["😂","❤️","😍","🔥","💯","😭","🥰","🤣","😊","🙏","👍","💪","🎉","✨","🌟","👀","💥","🎊","🤩","😎","💃","🕺","🥳","😤","🤔","😱","💀","🫶","🤝","🫡"] },
-          { label: "😀", title: "Faces", emojis: ["😀","😃","😄","😁","😆","🤣","😂","😊","🙂","😉","😍","🥰","😘","😗","😚","😙","🤗","🤭","🤫","🤔","🫤","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤑","🤠","😈","👿","💩","🤡","👻","💀","👾","🤖","😺","😸"] },
-          { label: "❤️", title: "Love", emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💕","💞","💓","💗","💖","💝","💘","💌","💋","😍","🥰","😻","💑","👫","💏","🌹","🌷","🌸","💐","🎀","💝"] },
-          { label: "🔥", title: "Trending", emojis: ["🔥","💥","⚡","🌊","🌪️","⭐","🌟","💫","✨","🎯","🏆","👑","💎","🎉","🎊","🎈","🎁","🚀","💯","🤙","🙌","👏","🤌","🫰","🤟","🤘","🤞","✌️","🤙","💪","🦾","⚽","🏀","🎮","🎵","🎶","🎸","🥁","🎤","🎬"] },
+        const EMOJI_TABS = [
+          { id: "popular", icon: "★", title: "Popular" },
+          { id: "gif", icon: "GIF", title: "GIF" },
+          { id: "avatar", icon: "◉", title: "Avatar" },
+          { id: "emoji", icon: "☺", title: "Emoji" },
         ];
-        const cat = EMOJI_CATS[editEmojiPickerCat] || EMOJI_CATS[0];
-        return React.createElement("div", {
-          style: { position: "absolute", inset: 0, zIndex: 32, display: "flex", flexDirection: "column", justifyContent: "flex-end" },
-          onPointerDown: e => e.stopPropagation(),
-        },
-          // Backdrop tap to close
-          React.createElement("div", { style: { position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)" }, onClick: () => setEditEmojiPickerOpen(false) }),
-          // Bottom sheet
-          React.createElement("div", { style: { position: "relative", zIndex: 1, background: "#ffffff", borderRadius: "22px 22px 0 0", maxHeight: "70vh", display: "flex", flexDirection: "column", overflow: "hidden" } },
-            // Handle bar
-            React.createElement("div", { style: { display: "flex", justifyContent: "center", paddingTop: 10, paddingBottom: 4 } },
-              React.createElement("div", { style: { width: 40, height: 4, borderRadius: 2, background: "rgba(0,0,0,0.15)" } })
-            ),
-            // Category tabs
-            React.createElement("div", { style: { display: "flex", gap: 0, padding: "6px 12px 10px", borderBottom: "1px solid rgba(0,0,0,0.1)", flexShrink: 0 } },
-              EMOJI_CATS.map((c, i) => React.createElement("button", { key: i, onClick: () => setEditEmojiPickerCat(i),
-                style: { flex: 1, background: editEmojiPickerCat === i ? "rgba(0,0,0,0.07)" : "transparent", border: "none", borderRadius: 10, padding: "8px 0", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }
-              },
-                React.createElement("span", { style: { fontSize: 22 } }, c.label),
-                React.createElement("span", { style: { fontSize: 9, color: editEmojiPickerCat === i ? "#111" : "rgba(0,0,0,0.4)", fontWeight: 600, letterSpacing: 0.3 } }, c.title)
+        const POPULAR_ITEMS = [
+          { emoji: "😂", label: "Funny" }, { emoji: "❤️", label: "Love" }, { emoji: "😍", label: "In love" }, { emoji: "🔥", label: "Hot" },
+          { emoji: "💯", label: "Perfect" }, { emoji: "😭", label: "Crying" }, { emoji: "🥰", label: "Loved" }, { emoji: "🤣", label: "Laughing" },
+          { emoji: "😊", label: "Happy" }, { emoji: "🙏", label: "Thanks" }, { emoji: "👍", label: "Like" }, { emoji: "💪", label: "Strong" },
+          { emoji: "🎉", label: "Celebrate" }, { emoji: "✨", label: "Sparkle" }, { emoji: "🌟", label: "Star" }, { emoji: "👀", label: "Watching" },
+          { emoji: "💥", label: "Wow" }, { emoji: "🎊", label: "Party" }, { emoji: "🤩", label: "Excited" }, { emoji: "😎", label: "Cool" },
+        ];
+        const AVATAR_ITEMS = [
+          { emoji: "🫶", label: "Heart hands" }, { emoji: "🥰", label: "Sending love" }, { emoji: "😘", label: "Kiss" },
+          { emoji: "🤗", label: "Big hug" }, { emoji: "🙌", label: "Celebrate" }, { emoji: "👏", label: "Applause" },
+          { emoji: "🤝", label: "Together" }, { emoji: "👋", label: "Hello" }, { emoji: "💃", label: "Dance" },
+          { emoji: "🕺", label: "Party" }, { emoji: "🤟", label: "Love" }, { emoji: "😎", label: "Cool" },
+        ];
+        const EMOTION_ITEMS = [
+          { emoji: "🙂", label: "Happy" }, { emoji: "😇", label: "Blessed" }, { emoji: "🥰", label: "Loved" }, { emoji: "😔", label: "Sad" },
+          { emoji: "😍", label: "Lovely" }, { emoji: "😀", label: "Thankful" }, { emoji: "🤩", label: "Excited" }, { emoji: "🥰", label: "In love" },
+          { emoji: "😜", label: "Crazy" }, { emoji: "🤗", label: "Grateful" }, { emoji: "😊", label: "Blissful" }, { emoji: "😁", label: "Fantastic" },
+          { emoji: "🤪", label: "Silly" }, { emoji: "🎉", label: "Festive" }, { emoji: "🙂", label: "Wonderful" }, { emoji: "😎", label: "Cool" },
+          { emoji: "😌", label: "Amused" }, { emoji: "😌", label: "Relaxed" }, { emoji: "😄", label: "Positive" }, { emoji: "😄", label: "Chill" },
+          { emoji: "🌷", label: "Hopeful" }, { emoji: "😊", label: "Joyful" }, { emoji: "😴", label: "Tired" }, { emoji: "🥳", label: "Motivated" },
+          { emoji: "💖", label: "Thankful" }, { emoji: "🤔", label: "Thoughtful" }, { emoji: "😱", label: "Surprised" }, { emoji: "😤", label: "Determined" },
+        ];
+        const tab = editEmojiPickerTab || "emoji";
+        const query = editEmojiSearch.trim().toLowerCase();
+        const emotionItems = EMOTION_ITEMS.filter(item => !query || item.label.toLowerCase().includes(query) || item.emoji.includes(query));
+        const items = tab === "popular" ? POPULAR_ITEMS : tab === "avatar" ? AVATAR_ITEMS : emotionItems;
+        const addEmoji = item => {
+          setEditEmojiOverlays(prev => [...prev, { id: Date.now() + "_" + prev.length, emoji: item.emoji, xPct: 50, yPct: 45, size: 84 }]);
+          setEditEmojiPickerOpen(false);
+          setEditEmojiSearch("");
+        };
+        const addGif = item => {
+          setReelStickerOverlays(prev => [...prev, { id: Date.now() + "_" + item.id, url: item.full, xPct: 50, yPct: 45 }]);
+          setEditEmojiPickerOpen(false);
+        };
+        let content;
+        if (tab === "gif") {
+          content = reelStickerLoading
+            ? React.createElement("div", { style: { display: "flex", justifyContent: "center", padding: 30 } }, React.createElement("div", { style: { width: 26, height: 26, border: "2.5px solid rgba(255,255,255,0.25)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" } }))
+            : React.createElement("div", { style: { overflowY: "auto", padding: "4px 12px 28px", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 } },
+                reelStickerItems.length
+                  ? reelStickerItems.map(item => React.createElement("button", { key: item.id, onClick: () => addGif(item), style: { height: 74, border: "none", borderRadius: 12, background: "rgba(255,255,255,0.08)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 4 } }, React.createElement("img", { src: item.preview || item.full, alt: item.title || "GIF", loading: "lazy", style: { maxWidth: "100%", maxHeight: "100%", objectFit: "contain" } })))
+                  : React.createElement("div", { style: { gridColumn: "1 / -1", padding: 24, textAlign: "center", color: "rgba(255,255,255,0.65)", fontSize: 13 } }, "GIFs load nahi ho paaye. Emoji tab try karein.")
+              );
+        } else {
+          const compact = tab !== "emoji";
+          content = React.createElement("div", { style: { overflowY: "auto", padding: "3px 14px 30px", flex: 1 } },
+            React.createElement("div", { style: { display: "grid", gridTemplateColumns: compact ? "repeat(4, minmax(0, 1fr))" : "repeat(2, minmax(0, 1fr))", columnGap: compact ? 8 : 16, rowGap: 5 } },
+              items.map((item, i) => React.createElement("button", { key: item.label + item.emoji + i, onClick: () => addEmoji(item), style: compact ? { minHeight: 76, border: "none", borderRadius: 14, background: "rgba(255,255,255,0.05)", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, padding: 5, fontFamily: "inherit" } : { minHeight: 58, border: "none", borderRadius: 13, background: "transparent", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, textAlign: "left", padding: "4px 5px", fontFamily: "inherit" } },
+                React.createElement("span", { style: { fontSize: compact ? 40 : 34, lineHeight: 1, flexShrink: 0, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.35))" } }, item.emoji),
+                React.createElement("span", { style: compact ? { fontSize: 9, color: "rgba(255,255,255,0.65)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "100%" } : { fontSize: 15, letterSpacing: 0.4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, item.label)
               ))
-            ),
-            // Emoji grid (scrollable)
-            React.createElement("div", { style: { overflowY: "auto", padding: "10px 8px 24px", flex: 1 } },
-              React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 4 } },
-                cat.emojis.map((em, i) => React.createElement("button", { key: em + i,
-                  onClick: () => {
-                    setEditEmojiOverlays(prev => [...prev, { id: Date.now() + "_" + i, emoji: em, xPct: 50, yPct: 45, size: 64 }]);
-                    setEditEmojiPickerOpen(false);
-                  },
-                  style: { background: "rgba(0,0,0,0.04)", border: "none", borderRadius: 12, padding: "10px 4px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, lineHeight: 1, WebkitTapHighlightColor: "transparent", transition: "background 0.15s", minHeight: 60 }
-                }, em))
-              )
             )
+          );
+        }
+        return React.createElement("div", { style: { position: "absolute", inset: 0, zIndex: 32, display: "flex", flexDirection: "column", justifyContent: "flex-end" }, onPointerDown: e => e.stopPropagation() },
+          React.createElement("div", { style: { position: "absolute", inset: 0, background: "rgba(0,0,0,0.68)" }, onClick: () => setEditEmojiPickerOpen(false) }),
+          React.createElement("div", { style: { position: "relative", zIndex: 1, background: "#242527", color: "#fff", borderRadius: "26px 26px 0 0", maxHeight: "78vh", minHeight: 310, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 -12px 40px rgba(0,0,0,0.35)" } },
+            React.createElement("div", { style: { display: "flex", justifyContent: "center", padding: "10px 0 6px", flexShrink: 0 } }, React.createElement("div", { style: { width: 44, height: 5, borderRadius: 5, background: "rgba(255,255,255,0.45)" } })),
+            React.createElement("div", { style: { display: "flex", margin: "0 16px 10px", padding: 4, borderRadius: 28, background: "rgba(255,255,255,0.08)", gap: 3, flexShrink: 0 } },
+              EMOJI_TABS.map(item => React.createElement("button", { key: item.id, onClick: () => { setEditEmojiPickerTab(item.id); setEditEmojiSearch(""); }, style: { flex: 1, minWidth: 0, height: 38, border: "none", borderRadius: 22, background: tab === item.id ? "#111214" : "transparent", color: tab === item.id ? "#fff" : "rgba(255,255,255,0.72)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 5, fontWeight: 800, fontSize: item.id === "gif" ? 13 : 22 } }, React.createElement("span", null, item.icon), item.id !== "gif" && React.createElement("span", { style: { fontSize: 9, fontWeight: 700 } }, item.title)))
+            ),
+            tab === "emoji" && React.createElement("div", { style: { margin: "0 16px 10px", display: "flex", alignItems: "center", gap: 9, borderRadius: 22, padding: "9px 13px", background: "rgba(255,255,255,0.12)" } }, React.createElement("span", { style: { color: "rgba(255,255,255,0.6)", fontSize: 17 } }, "⌕"), React.createElement("input", { value: editEmojiSearch, onChange: e => setEditEmojiSearch(e.target.value), placeholder: "How are you feeling?", style: { flex: 1, minWidth: 0, border: "none", outline: "none", background: "transparent", color: "#fff", fontSize: 16, fontFamily: "inherit" } })),
+            content
           )
         );
       })(),
@@ -22084,16 +22116,11 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             React.createElement("span", { style: { color: editTextEditorOpen ? "#FFD600" : "#fff", fontSize: 10, fontWeight: 700, textShadow: "0 1px 4px rgba(0,0,0,0.9)" } }, "Text")
           ),
           React.createElement("button", {
-            onClick: () => { setEditEmojiPickerOpen(true); setEditEmojiPickerCat(0); },
+            onClick: () => { setEditEmojiPickerOpen(true); setEditEmojiPickerTab("emoji"); setEditEmojiSearch(""); setEditEmojiPickerCat(0); },
             style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", WebkitTapHighlightColor: "transparent", padding: 0 }
           },
             React.createElement("div", { style: { width: 42, height: 42, borderRadius: 12, background: (editEmojiPickerOpen || editEmojiOverlays.length > 0) ? "#FFD600" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s" } },
-              React.createElement("svg", { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", style: { filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.9))" } },
-                React.createElement("circle", { cx: 12, cy: 12, r: 10 }),
-                React.createElement("path", { d: "M8 13s1.5 2.5 4 2.5 4-2.5 4-2.5" }),
-                React.createElement("circle", { cx: 9, cy: 9, r: 0.8, fill: "#fff", stroke: "none" }),
-                React.createElement("circle", { cx: 15, cy: 9, r: 0.8, fill: "#fff", stroke: "none" })
-              )
+              React.createElement("span", { style: { fontSize: 28, lineHeight: 1, filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.9))" } }, "😀")
             ),
             React.createElement("span", { style: { color: (editEmojiPickerOpen || editEmojiOverlays.length > 0) ? "#FFD600" : "#fff", fontSize: 10, fontWeight: 700, textShadow: "0 1px 4px rgba(0,0,0,0.9)" } }, "Emoji")
           ),
