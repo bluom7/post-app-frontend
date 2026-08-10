@@ -7066,7 +7066,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     style: {background:'none', border:'none', color: activePanel===panel ? '#42A5F5' : '#fff', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:4, padding:'4px 8px'}
   }, icon, React.createElement('span', {style:{fontSize:11, fontWeight:600}}, label));
 
-  return React.createElement('div', {style:{position:'fixed',inset:0,zIndex:500,background:'transparent',display:'flex',flexDirection:'column',boxSizing:'border-box'}},
+  return React.createElement('div', {style:{position:'fixed',inset:0,zIndex:1000,background:'#111',display:'flex',flexDirection:'column',boxSizing:'border-box'}},
     /* ── Header ── */
     React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'14px 18px 10px',flexShrink:0,background:'transparent'}},
       React.createElement('div', {style:{display:'flex',alignItems:'center'}},
