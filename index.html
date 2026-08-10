@@ -6807,10 +6807,8 @@ function PhotoCarousel({photos, post, borderRadius, user, onLike, onComment, onS
   if (!photos || photos.length === 0) return null;
   const r = borderRadius !== undefined ? borderRadius : 12;
   const lbProps = { post, user, onLike, onComment, onSave, onRepost, onShare, onFollow, followingIds, pendingFollowIds, onViewProfile };
-  // Single photo — natural ratio capped at 9:16 portrait max
+  // Single photo — preserve the image's complete natural ratio
   if (photos.length === 1) {
-    const ar916 = 9/16;
-    const cappedAR = natAR ? Math.max(natAR, ar916) : null;
     return /*#__PURE__*/React.createElement(React.Fragment, null,
       lightboxIdx !== null && React.createElement(PhotoLightbox, { photos, startIdx: lightboxIdx, onClose: () => setLightboxIdx(null), ...lbProps }),
       React.createElement('div', {
@@ -6819,12 +6817,12 @@ function PhotoCarousel({photos, post, borderRadius, user, onLike, onComment, onS
           width:'100%', borderRadius:r, cursor:'pointer', overflow:'hidden', background:'var(--input-bg)',
           // aspectRatio alone sizes container to photo's natural ratio — no black bars.
           // Never add maxHeight alongside aspectRatio+width:100% (causes side/top bars).
-          aspectRatio: cappedAR ? String(cappedAR) : undefined,
+          aspectRatio: natAR ? String(natAR) : undefined,
         }
       }, React.createElement('img', {
         src: photos[0],
         onLoad: e => { if(e.target.naturalWidth&&e.target.naturalHeight) setNatAR(e.target.naturalWidth/e.target.naturalHeight); },
-        style:{ width:'100%', height: cappedAR ? '100%' : 'auto', objectFit:'contain', display:'block', borderRadius:r },
+        style:{ width:'100%', height: natAR ? '100%' : 'auto', objectFit:'contain', display:'block', borderRadius:r },
         loading: 'lazy'
       }))
     );
@@ -6847,7 +6845,7 @@ function PhotoCarousel({photos, post, borderRadius, user, onLike, onComment, onS
       },
         photos.map((src, i) => React.createElement('img', {
           key:i, src,
-          onLoad: i===0 ? (e=>{if(e.target.naturalWidth&&e.target.naturalHeight)setNatAR(Math.max(e.target.naturalWidth/e.target.naturalHeight, 9/16));}) : undefined,
+          onLoad: i===0 ? (e=>{if(e.target.naturalWidth&&e.target.naturalHeight)setNatAR(e.target.naturalWidth/e.target.naturalHeight);}) : undefined,
           style:{ minWidth:'100%', width:'100%', height:'100%', objectFit:'contain', display:'block', flexShrink:0, background:'var(--input-bg)' }
         }))
       ),
@@ -8495,7 +8493,7 @@ function ComposeModal({
   const MAX_POST_VIDEO_SECONDS = 30;
   const MAX_PICK_VIDEO_SECONDS = 60; // you can select up to 1 min, then must trim to 30s before posting
   const MAX_POST_VIDEO_BYTES = 100 * 1024 * 1024; // 100MB raw file — uploaded directly to Cloudinary, no base64/Mongo size limit anymore
-  // Compress a File to max 1080px wide, JPEG 0.82 quality
+  // Compress a File to max 1080px wide without cropping its natural ratio.
   const compressPhoto = f => new Promise(res => {
     const r = new FileReader();
     r.onload = ev => {
@@ -8504,19 +8502,10 @@ function ComposeModal({
         const MAX_W = 1080;
         let w = img.width, h = img.height;
         if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
-        // Enforce 9:16 max portrait ratio, hard cap at 1035px height
-        const MAX_H_916 = Math.min(Math.round(w * 16 / 9), 1035);
         const canvas = document.createElement('canvas');
-        if (h > MAX_H_916) {
-          const srcH = Math.round(img.height * MAX_H_916 / h);
-          canvas.width = w; canvas.height = MAX_H_916;
-          canvas.getContext('2d').drawImage(img, 0, 0, img.width, srcH, 0, 0, w, MAX_H_916);
-          res({ src: canvas.toDataURL('image/jpeg', 0.82), w, h: MAX_H_916 });
-        } else {
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          res({ src: canvas.toDataURL('image/jpeg', 0.82), w, h });
-        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        res({ src: canvas.toDataURL('image/jpeg', 0.82), w, h });
       };
       // If image fails to load, fall back to original data URL (don't hang)
       img.onerror = () => res({ src: ev.target.result, w: 0, h: 0 });
