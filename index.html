@@ -19467,7 +19467,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
 
   // waveform constants
   var NUM_BARS=120; var BAR_W=4; var BAR_GAP=3; var WAVEFORM_HEIGHT=64;
-  var WAVEFORM_PATTERN=[0.25,0.4464,0.6786,0.4464,0.25];
+  var WAVEFORM_PATTERN=[0.25,0.4464,0.4464,0.4464,0.25];
   var totalBarsPx=NUM_BARS*(BAR_W+BAR_GAP);
   var maxStart=Math.max(0,songDuration-clipDuration);
   var pxPerSec=totalBarsPx/Math.max(songDuration,1);
