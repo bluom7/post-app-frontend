@@ -19706,8 +19706,9 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
               :Array.from({length:80},function(_,i){return React.createElement('div',{key:i,style:{width:BAR_W+'px',height:Math.round(WAVEFORM_PATTERN[i%WAVEFORM_PATTERN.length]*(WAVEFORM_HEIGHT-8))+'px',borderRadius:2,background:'rgba(255,255,255,0.35)',flexShrink:0,transformOrigin:'center',animation:'none'}});})
           ),
           // Wide horizontal rectangle clip box (image 2 style) with yellow fill
-          React.createElement('div',{style:{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:clipPx+'px',height:'80%',border:'3.5px solid #FF3B7A',borderRadius:0,pointerEvents:'none',boxSizing:'border-box',overflow:'hidden'}},
-            React.createElement('div',{style:{position:'absolute',top:0,left:0,height:'100%',width:(playedSec/clipDuration*100)+'%',background:'rgba(255,214,0,0.52)',borderRadius:11,transition:'width 0.08s linear'}})
+          React.createElement('div',{style:{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',width:clipPx+'px',height:'44px',background:'rgba(190,190,190,0.76)',borderRadius:12,boxShadow:'0 4px 14px rgba(0,0,0,0.18)',pointerEvents:'none',boxSizing:'border-box',overflow:'visible'}},
+            React.createElement('div',{style:{position:'absolute',top:0,left:0,bottom:0,width:Math.min(100,Math.max(0,playedSec/clipDuration*100))+'%',borderRadius:12,background:'linear-gradient(90deg, #FFD600 0%, #20D96B 34%, #FF4D5F 68%, #3B82F6 100%)',opacity:0.82,transition:'width 0.08s linear'}}),
+            React.createElement('div',{style:{position:'absolute',inset:0,borderRadius:12,background:'rgba(255,255,255,0.08)',transition:'opacity 0.08s linear'}})
           )),
         // Yellow second-by-second progress bar
         React.createElement('div',{style:{margin:'8px 16px 2px',height:6,background:'rgba(255,255,255,0.13)',borderRadius:4,overflow:'hidden'}},
