@@ -7082,7 +7082,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
         React.createElement('button', {onClick:onClose, style:{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:4,display:'flex',alignItems:'center'}},
           React.createElement('svg', {width:26,height:26,viewBox:'0 0 24 24',fill:'none',stroke:'#fff',strokeWidth:2.2,strokeLinecap:'round',strokeLinejoin:'round'},
             React.createElement('line',{x1:18,y1:6,x2:6,y2:18}),
-            React.createElement('line',{x1:6,y1:6,x2:18,y2:18})
+            React.createElement('line',{x1:6,y1:6,x2:18,y2:18}),
           )
       ),
       React.createElement('span', {style:{color:'#fff',fontSize:16,fontWeight:700}},
@@ -7148,7 +7148,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
           style:{flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:4,background:'none',border:'none',cursor:'pointer',padding:4}
         },
           React.createElement('div', {style:{width:60,height:60,borderRadius:10,overflow:'hidden',border: filter===f.name ? '2.5px solid #42A5F5':'2px solid #333'}},
-            React.createElement('img', {src, alt:'', style:{width:'100%',height:'100%',objectFit:'cover',filter:f.css}}
+            React.createElement('img', {src, alt:'', style:{width:'100%',height:'100%',objectFit:'cover',filter:f.css}})
           ),
           React.createElement('span', {style:{fontSize:11,color:filter===f.name?'#42A5F5':'#aaa',fontWeight:600}}, f.name)
         ))
