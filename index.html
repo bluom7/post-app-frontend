@@ -7088,8 +7088,9 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
       React.createElement('span', {style:{color:'#fff',fontSize:16,fontWeight:700}},
         filter!=='Original' ? filter : cropRatio!=='Original' ? cropRatio : overlayText ? 'Text' : 'Edit Photo'
       ),
-      React.createElement('button', {onClick:applyAndSave, style:{background:'#fff',color:'#000',border:'none',borderRadius:20,padding:'8px 22px',fontWeight:800,fontSize:15,cursor:'pointer'}}, 'DONE')
+    React.createElement('button', {onClick:applyAndSave, style:{background:'#fff',color:'#000',border:'none',borderRadius:20,padding:'8px 22px',fontWeight:800,fontSize:15,cursor:'pointer'}}, 'DONE')
     ),
+  ),
 
     /* ── Photo preview ── */
     React.createElement('div', {
@@ -7141,16 +7142,29 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     ),
 
     /* ── Active panel ── */
-    activePanel === 'effects' && React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 12px 6px',background:'transparent',borderTop:'none'}},
-      React.createElement('div', {style:{display:'flex',gap:8,overflowX:'auto',paddingBottom:4}},
-        FILTERS.map(f => React.createElement('button', {
-          key:f.name, onClick:()=>setFilter(f.name),
-          style:{flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:4,background:'none',border:'none',cursor:'pointer',padding:4}
-        },
-          React.createElement('div', {style:{width:60,height:60,borderRadius:10,overflow:'hidden',border: filter===f.name ? '2.5px solid #42A5F5':'2px solid #333'}},
-            React.createElement('img', {src, alt:'', style:{width:'100%',height:'100%',objectFit:'cover',filter:f.css}},
+    activePanel === 'effects' && React.createElement(
+      'div',
+      {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 12px 6px',background:'transparent',borderTop:'none'}},
+      React.createElement(
+        'div',
+        {style:{display:'flex',gap:8,overflowX:'auto',paddingBottom:4}},
+        FILTERS.map(f => React.createElement(
+          'button',
+          {
+            key:f.name,
+            onClick:()=>setFilter(f.name),
+            style:{flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:4,background:'none',border:'none',cursor:'pointer',padding:4}
+          },
+          React.createElement(
+            'div',
+            {style:{width:60,height:60,borderRadius:10,overflow:'hidden',border:filter===f.name?'2.5px solid #42A5F5':'2px solid #333'}},
+            React.createElement('img', {src, alt:'', style:{width:'100%',height:'100%',objectFit:'cover',filter:f.css}})
           ),
-          React.createElement('span', {style:{fontSize:11,color:filter===f.name?'#42A5F5':'#aaa',fontWeight:600}}, f.name)
+          React.createElement(
+            'span',
+            {style:{fontSize:11,color:filter===f.name?'#42A5F5':'#aaa',fontWeight:600}},
+            f.name
+          )
         ))
       )
     ),
