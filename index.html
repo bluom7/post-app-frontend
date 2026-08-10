@@ -6940,6 +6940,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
   const [activePanel, setActivePanel] = React.useState(null);
   const [filter, setFilter] = React.useState('Original');
   const [cropRatio, setCropRatio] = React.useState('Original');
+  const [cropSelectionEnabled, setCropSelectionEnabled] = React.useState(false);
   const [overlayText, setOverlayText] = React.useState('');
   const [textColor, setTextColor] = React.useState('#ffffff');
   const [textSize, setTextSize] = React.useState(40);
@@ -6979,6 +6980,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
   // Keep every newly selected photo in its natural shape.
   React.useEffect(() => {
     setCropRatio('Original');
+    setCropSelectionEnabled(false);
     setCropOffset({x:0.5, y:0.5});
     setFreeBox({x1:0.05, y1:0.05, x2:0.95, y2:0.95});
   }, [src]);
@@ -7037,7 +7039,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
 
   // Free-crop overlay (corner handles + dark mask)
   const freeCropOverlay = (() => {
-    if (cropRatio !== 'Free') return null;
+    if (!cropSelectionEnabled || cropRatio !== 'Free') return null;
     const cont = previewRef.current, img = imgRef.current;
     const cW = cont ? cont.offsetWidth : 300, cH = cont ? cont.offsetHeight : 500;
     const natW = img && img.naturalWidth ? img.naturalWidth : 1, natH = img && img.naturalHeight ? img.naturalHeight : 1;
@@ -7162,7 +7164,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     activePanel === 'crop' && React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 12px 6px',background:'transparent',borderTop:'none'}},
       React.createElement('div', {className:'photo-editor-crops',style:{display:'flex',gap:8,overflowX:'auto',paddingBottom:4,scrollbarWidth:'none',msOverflowStyle:'none'}},
         CROPS.map(c => React.createElement('button', {
-          key:c.name, onClick:()=>{ setCropRatio(c.name); setCropOffset({x:0.5,y:0.5}); if(c.name==='Free') setFreeBox({x1:0.05,y1:0.05,x2:0.95,y2:0.95}); },
+          key:c.name, onClick:()=>{ setCropSelectionEnabled(true); setCropRatio(c.name); setCropOffset({x:0.5,y:0.5}); if(c.name==='Free') setFreeBox({x1:0.05,y1:0.05,x2:0.95,y2:0.95}); },
           style:{flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:6,background:'none',border:'none',cursor:'pointer',padding:'4px 8px'}
         },
           React.createElement('div', {style:{
