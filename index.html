@@ -5704,6 +5704,22 @@ function FeedVideo({ post }) {
       }
     }),
 
+    // ── Emoji overlays (stored in MongoDB, rendered on top of video in feed) ──
+    post.emoji_overlays && post.emoji_overlays.map(e => React.createElement('div', {
+      key: e.id,
+      style: {
+        position: 'absolute',
+        left: (e.x || e.xPct || 50) + '%', top: (e.y || e.yPct || 50) + '%',
+        transform: 'translate(-50%,-50%)',
+        fontSize: (e.size || 72) + 'px',
+        lineHeight: 1,
+        zIndex: 3,
+        pointerEvents: 'none',
+        userSelect: 'none',
+        filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.65))'
+      }
+    }, e.emoji)),
+
     // ── Text overlays (stored in MongoDB, rendered on top of video in feed) ──
     post.video_text_overlays && post.video_text_overlays.map(t => React.createElement('div', {
       key: t.id,
@@ -7946,6 +7962,75 @@ function StickerPickerModal({ onSelect, onClose }) {
   );
 }
 
+function VideoStickerPickerModal({ onSelect, onClose }) {
+  const [tab, setTab] = React.useState("emoji");
+  const [category, setCategory] = React.useState("popular");
+  const [query, setQuery] = React.useState("");
+  const [gifItems, setGifItems] = React.useState([]);
+  const [gifLoading, setGifLoading] = React.useState(false);
+  const [gifError, setGifError] = React.useState("");
+  const loadGifs = React.useCallback(async (term) => {
+    setGifLoading(true); setGifError("");
+    try {
+      const endpoint = term.trim()
+        ? `https://api.giphy.com/v1/stickers/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(term.trim())}&limit=30&rating=pg`
+        : `https://api.giphy.com/v1/stickers/trending?api_key=${GIPHY_KEY}&limit=30&rating=pg`;
+      const response = await fetch(endpoint);
+      const data = await response.json();
+      if (data.meta && data.meta.status !== 200) throw new Error(data.meta.msg || "Sticker search failed");
+      setGifItems((data.data || []).map(g => ({
+        id: g.id,
+        title: g.title || "Sticker",
+        preview: (g.images.fixed_width_small || g.images.fixed_width || {}).url || "",
+        url: (g.images.fixed_width || g.images.original || {}).url || ""
+      })).filter(g => g.url));
+    } catch (error) {
+      setGifItems([]); setGifError(error.message || "Sticker search failed");
+    } finally { setGifLoading(false); }
+  }, []);
+  React.useEffect(() => {
+    if (tab !== "gif") return;
+    const timer = setTimeout(() => loadGifs(query), query.trim() ? 350 : 0);
+    return () => clearTimeout(timer);
+  }, [tab, query, loadGifs]);
+  const EMOJI_GROUPS = {
+    popular: ["😂","❤️","😍","🔥","👏","🎉","😎","💯","😊","🥰","😭","💪","✨","🙏","👍","😘","🤣","💀","🫶","⭐","🌟","💥","😜","🤩","🎊","🫠","🥳","🤯","😱","💫","😁","😇","🤗","🙌","🤝","👋","🤟","😴","🤔","😤","😮‍💨","😈","🤍","💖","💘","💯","✅","❌","⚡","🌈","☀️","🌙","🎂","🎁","🎈","🎵","🏆","🚀","💎","🌸","🍀","🍕","☕"],
+    love: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💖","💗","💓","💞","💕","💘","💝","💟","❣️","💔","❤️‍🔥","😘","🥰","😍","🫶","💋","💌","🌹","🌷","💐","🫂"],
+    reaction: ["😂","🤣","😭","😅","😆","😇","🙂","🙃","😉","😊","😎","🤩","🥳","😜","🤪","🤯","😱","😮","😴","🤔","😤","😡","🤬","😈","💀","🤡","👏","🙌","👍","👎","👌","🤝","🙏","💪","✌️","🤟","👋","💯","🔥"],
+    symbols: ["🔥","✨","⭐","🌟","💥","⚡","💫","💯","✅","❌","❗","❓","‼️","⁉️","➕","➖","🎉","🎊","🎁","🎂","🎈","🏆","🚀","💎","👑","🌈","☀️","🌙","☁️","🌸","🍀","🎵","🎶","📸","💡","🔒","🔔","🆕","🆒"]
+  };
+  const AVATAR_EMOJI = ["🫶","🥰","😘","🤗","🙌","👏","🤝","👋","💃","🕺","🤟","😎","💪","🙏","🤩","🥳","😇","😊","😜","🤭","🤫","😮","😱","😂","😭","😴","🤔","😤","❤️","💖"];
+  const source = tab === "avatar" ? AVATAR_EMOJI : (EMOJI_GROUPS[category] || EMOJI_GROUPS.popular);
+  const filtered = source.filter(em => !query || em.includes(query));
+  return React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 3002, background: "rgba(0,0,0,0.42)", display: "flex", alignItems: "flex-end", justifyContent: "center" } },
+    React.createElement("div", { style: { width: "100%", maxWidth: 520, maxHeight: "78vh", overflow: "hidden", background: "#242526", color: "#fff", borderRadius: "24px 24px 0 0", padding: "12px 14px max(18px, env(safe-area-inset-bottom))", boxSizing: "border-box" } },
+      React.createElement("div", { style: { width: 46, height: 4, borderRadius: 9, background: "#858585", margin: "0 auto 12px" } }),
+      React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 } },
+        React.createElement("strong", { style: { fontSize: 18 } }, "Stickers"),
+        React.createElement("button", { onClick: onClose, style: { border: 0, background: "transparent", color: "#fff", fontSize: 25, cursor: "pointer", lineHeight: 1 } }, "×")
+      ),
+      React.createElement("div", { style: { display: "flex", gap: 8, background: "#303133", borderRadius: 22, padding: 4, marginBottom: 12 } },
+        [["emoji","Emoji"],["avatar","Avatar"],["gif","GIF"]].map(([value, label]) => React.createElement("button", { key: value, onClick: () => setTab(value), style: { flex: 1, border: 0, borderRadius: 18, padding: "9px 4px", background: tab === value ? "#111" : "transparent", color: "#fff", fontWeight: 800, cursor: "pointer" } }, label))
+      ),
+      tab !== "gif" && React.createElement("input", { value: query, onChange: e => setQuery(e.target.value), placeholder: "Search emoji…", style: { width: "100%", boxSizing: "border-box", background: "#303133", border: "1px solid #454648", borderRadius: 12, padding: "10px 12px", color: "#fff", outline: "none", marginBottom: 10, fontSize: 14 } }),
+      tab === "emoji" && React.createElement("div", { style: { display: "flex", gap: 6, overflowX: "auto", paddingBottom: 10 } },
+        [["popular","Popular"],["love","Love"],["reaction","Reactions"],["symbols","Symbols"]].map(([value, label]) => React.createElement("button", { key: value, onClick: () => setCategory(value), style: { flexShrink: 0, border: "1px solid " + (category === value ? "#fff" : "#555"), borderRadius: 16, padding: "6px 10px", background: category === value ? "#fff" : "transparent", color: category === value ? "#111" : "#fff", fontSize: 12, cursor: "pointer" } }, label))
+      ),
+      tab === "gif"
+        ? gifLoading
+          ? React.createElement("div", { style: { padding: 30, textAlign: "center", color: "#bbb" } }, "Loading stickers…")
+          : React.createElement("div", { style: { overflowY: "auto", maxHeight: "48vh", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, padding: "4px 2px 12px" } },
+              gifItems.length
+                ? gifItems.map(item => React.createElement("button", { key: item.id, onClick: () => onSelect({ type: "sticker", url: item.url }), style: { height: 78, border: 0, borderRadius: 10, background: "#303133", padding: 5, cursor: "pointer" } }, React.createElement("img", { src: item.preview || item.url, alt: item.title, loading: "lazy", style: { width: "100%", height: "100%", objectFit: "contain" } })))
+                : React.createElement("div", { style: { gridColumn: "1 / -1", padding: 22, textAlign: "center", color: "#bbb", fontSize: 13 } }, gifError || "No stickers found")
+            )
+        : React.createElement("div", { style: { overflowY: "auto", maxHeight: "48vh", display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 5, padding: "4px 2px 12px" } },
+            filtered.map((em, i) => React.createElement("button", { key: em + i, onClick: () => onSelect({ type: "emoji", emoji: em }), "aria-label": "Add " + em, style: { border: 0, background: "transparent", color: "#fff", fontSize: 31, lineHeight: 1.25, padding: "7px 2px", cursor: "pointer", borderRadius: 10 } }, em))
+          )
+    )
+  );
+}
+
 function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete }) {
   const [CLIP_DUR, setClipDur] = React.useState(15);
   const [showClipDurationPicker, setShowClipDurationPicker] = React.useState(false);
@@ -8494,6 +8579,7 @@ function ComposeModal({
   const [showStickerPicker, setShowStickerPicker] = useState(false);
   const [saveDone, setSaveDone] = useState(false);
   const [stickerOverlays, setStickerOverlays] = useState([]); // [{id,url,x,y}]
+  const [emojiOverlays, setEmojiOverlays] = useState([]); // [{id,emoji,x,y,size}]
   const [dragSticker, setDragSticker] = useState(null); // {id, startX, startY, origX, origY}
   const stickerContainerRef = useRef(null);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
@@ -8512,7 +8598,7 @@ function ComposeModal({
     // Compose exit flow: empty compose closes to home; active compose offers three real choices.
     const hasUnsavedCompose = () => Boolean(
       text.trim() || photoUrls.length || videoUrl || localVideoPreviewUrl || pendingVideoFile ||
-      gifUrl || stickerOverlays.length || selectedMusic || location || feeling || taggedUsers.length
+      gifUrl || stickerOverlays.length || emojiOverlays.length || selectedMusic || location || feeling || taggedUsers.length
     );
     const clearComposeState = () => {
       if (postMusicAudioRef.current) {
@@ -8525,7 +8611,7 @@ function ComposeModal({
       setVideoUrl(null); setVideoDuration(0); setVideoWidth(0); setVideoHeight(0);
       setLocalVideoPreviewUrl(null); setPendingVideoFile(null); setPendingVideoObjectUrl(null);
       setPendingVideoDuration(0); setPickerDraft([]); setPickerLoading(false);
-      setGifUrl(null); setStickerOverlays([]); setSelectedMusic(null);
+      setGifUrl(null); setStickerOverlays([]); setEmojiOverlays([]); setSelectedMusic(null);
       setLocation(""); setFeeling(""); setTaggedUsers([]);
       setAudience({ type: "public", users: [] }); setPhotoAudience("everyone");
       setCommentsEnabled(true); setAltText("");
@@ -8533,7 +8619,7 @@ function ComposeModal({
     const closeComposeToHome = () => { clearComposeState(); onClose(); };
     const handleComposeClose = () => { if (hasUnsavedCompose()) setShowDiscardDialog(true); else closeComposeToHome(); };
     const saveComposeDraft = () => {
-      const draft = { version: 1, savedAt: Date.now(), text, photoUrls, location, feeling, taggedUsers, audience, photoAudience, commentsEnabled, altText, gifUrl, stickerOverlays, videoUrl, hasLocalVideo: Boolean(pendingVideoFile || localVideoPreviewUrl) };
+      const draft = { version: 1, savedAt: Date.now(), text, photoUrls, location, feeling, taggedUsers, audience, photoAudience, commentsEnabled, altText, gifUrl, stickerOverlays, emojiOverlays, videoUrl, hasLocalVideo: Boolean(pendingVideoFile || localVideoPreviewUrl) };
       try { localStorage.setItem("post_compose_draft", JSON.stringify(draft)); showToast("Draft saved", COLORS.green); closeComposeToHome(); }
       catch (_) { showToast("Draft save failed — media is too large", COLORS.red); }
     };
@@ -8785,6 +8871,7 @@ function ComposeModal({
         gif_url: gifUrl || undefined,
         alt_text: altText.trim() || undefined,
         sticker_overlays: stickerOverlays.length ? stickerOverlays : undefined,
+        emoji_overlays: (finalVideoUrl && emojiOverlays.length) ? emojiOverlays : undefined,
         video_text_overlays: (finalVideoUrl && videoTextOverlays.length) ? videoTextOverlays : undefined,
         video_effect: (finalVideoUrl && videoEffect !== 'none') ? videoEffect : undefined
       }, token, postTimeout);
@@ -8879,8 +8966,13 @@ function ComposeModal({
       style: { position: 'fixed', inset: 0, background: '#050505', zIndex: 2100, display: 'flex', flexDirection: 'column', userSelect: 'none', overflow: 'hidden' }
     },
       /* Sticker picker shown on top via its own zIndex:3001 */
-      showStickerPicker && React.createElement(StickerPickerModal, {
-        onSelect: (url) => { const sid = Math.random().toString(36).slice(2); setStickerOverlays(prev => [...prev, { id: sid, url, x: 50, y: 50 }]); setShowStickerPicker(false); },
+      showStickerPicker && React.createElement(VideoStickerPickerModal, {
+        onSelect: (item) => {
+          const id = Math.random().toString(36).slice(2);
+          if (item.type === "emoji") setEmojiOverlays(prev => [...prev, { id, emoji: item.emoji, x: 50, y: 45, size: 72 }]);
+          else setStickerOverlays(prev => [...prev, { id, url: item.url, x: 50, y: 50 }]);
+          setShowStickerPicker(false);
+        },
         onClose: () => setShowStickerPicker(false)
       }),
       /* Music picker + trimmer shown on top */
@@ -8951,6 +9043,29 @@ function ComposeModal({
           },
             React.createElement('img', { src: s.url, alt: '', style: { width: 72, objectFit: 'contain', display: 'block', pointerEvents: 'none' } }),
             React.createElement('button', { onClick: (e) => { e.stopPropagation(); setStickerOverlays(prev => prev.filter(o => o.id !== s.id)); }, style: { position: 'absolute', top: -8, right: -8, background: 'rgba(220,20,60,0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: 18, height: 18, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1 } }, '✕')
+          )),
+          /* Emoji overlays preview — draggable */
+          emojiOverlays.map(o => React.createElement('div', {
+            key: o.id,
+            style: { position: 'absolute', left: o.x + '%', top: o.y + '%', transform: 'translate(-50%,-50%)', zIndex: 6, cursor: 'move', userSelect: 'none', touchAction: 'none', fontSize: (o.size || 72) + 'px', lineHeight: 1, filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.7))' },
+            onPointerDown: (ev) => {
+              ev.preventDefault(); ev.currentTarget.setPointerCapture(ev.pointerId);
+              const cont = videoPreviewRef.current; if (!cont) return;
+              const rect = cont.getBoundingClientRect();
+              const startX = ev.clientX, startY = ev.clientY, origX = o.x, origY = o.y;
+              const onMove = (me) => {
+                const dx = ((me.clientX - startX) / rect.width) * 100;
+                const dy = ((me.clientY - startY) / rect.height) * 100;
+                setEmojiOverlays(prev => prev.map(item => item.id === o.id ? { ...item, x: Math.max(5, Math.min(95, origX + dx)), y: Math.max(5, Math.min(95, origY + dy)) } : item));
+              };
+              const el = ev.currentTarget;
+              const onUp = () => { el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerup', onUp); };
+              el.addEventListener('pointermove', onMove);
+              el.addEventListener('pointerup', onUp);
+            }
+          },
+            o.emoji,
+            React.createElement('button', { onClick: (e) => { e.stopPropagation(); setEmojiOverlays(prev => prev.filter(item => item.id !== o.id)); }, style: { position: 'absolute', top: -8, right: -8, background: 'rgba(220,20,60,0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: 18, height: 18, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1 } }, '✕')
           )),
           /* ── Bottom controls: time LEFT, media icon RIGHT, no scrub ── */
           React.createElement('div', { style: { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10, background: 'linear-gradient(transparent, rgba(0,0,0,0.75))', padding: '20px 14px 12px' } },
