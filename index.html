@@ -6950,6 +6950,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
   const textDragRef = React.useRef(null);
   const [freeBox, setFreeBox] = React.useState({x1:0.05, y1:0.05, x2:0.95, y2:0.95});
   const freeHandleRef = React.useRef(null);
+  const [showDiscardSheet, setShowDiscardSheet] = React.useState(false);
 
   const FILTERS = [
     {name:'Original', css:'none'},
@@ -7070,7 +7071,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     /* ── Header ── */
     React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'14px 18px 10px',flexShrink:0,background:'transparent'}},
       React.createElement('div', {style:{display:'flex',alignItems:'center'}},
-        React.createElement('button', {onClick:onClose, style:{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:4,display:'flex',alignItems:'center'}},
+        React.createElement('button', {onClick:()=>setShowDiscardSheet(true), style:{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:4,display:'flex',alignItems:'center'}},
           React.createElement('svg', {width:26,height:26,viewBox:'0 0 24 24',fill:'none',stroke:'#fff',strokeWidth:2.2,strokeLinecap:'round',strokeLinejoin:'round'},
             React.createElement('line',{x1:18,y1:6,x2:6,y2:18}),
             React.createElement('line',{x1:6,y1:6,x2:18,y2:18}),
@@ -7212,6 +7213,33 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
       ),
       btnTab('text','Text',
         React.createElement('span',{style:{fontSize:22,fontWeight:900,lineHeight:1,fontFamily:"'Segoe UI',sans-serif"}},'Aa')
+      )
+    ),
+
+    showDiscardSheet && React.createElement('div', {
+      style:{position:'absolute',inset:0,zIndex:20,background:'rgba(0,0,0,0.28)',display:'flex',alignItems:'flex-end'},
+      onClick:(event)=>{if(event.target===event.currentTarget)setShowDiscardSheet(false);}
+    },
+      React.createElement('div', {
+        style:{width:'100%',background:'#fff',color:'#111',borderRadius:'22px 22px 0 0',padding:'10px 18px 28px',boxSizing:'border-box',boxShadow:'0 -8px 28px rgba(0,0,0,0.35)'}
+      },
+        React.createElement('div', {style:{width:46,height:5,borderRadius:6,background:'#9b9b9b',margin:'0 auto 18px'}}),
+        React.createElement('div', {style:{fontSize:21,fontWeight:700,letterSpacing:'0.2px',marginBottom:4}}, 'Discard changes?'),
+        React.createElement('div', {style:{fontSize:16,lineHeight:1.45,color:'#333',marginBottom:18}}, "You'll lose any changes you've made to this photo."),
+        React.createElement('button', {
+          onClick:()=>setShowDiscardSheet(false),
+          style:{width:'100%',display:'flex',alignItems:'center',gap:14,border:'none',background:'transparent',color:'#111',padding:'12px 0',fontSize:17,textAlign:'left',cursor:'pointer'}
+        },
+          React.createElement('span', {style:{width:42,height:42,borderRadius:'50%',background:'#e9edf2',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}, '✎'),
+          React.createElement('span', null, 'Continue editing')
+        ),
+        React.createElement('button', {
+          onClick:onClose,
+          style:{width:'100%',display:'flex',alignItems:'center',gap:14,border:'none',background:'transparent',color:'#111',padding:'12px 0 4px',fontSize:17,textAlign:'left',cursor:'pointer'}
+        },
+          React.createElement('span', {style:{width:42,height:42,borderRadius:'50%',background:'#e9edf2',display:'flex',alignItems:'center',justifyContent:'center',fontSize:22}}, '▣'),
+          React.createElement('span', null, 'Discard changes')
+        )
       )
     )
   );
