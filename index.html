@@ -19668,14 +19668,14 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
           React.createElement('button',{
             onClick:function(){stopTrimAudio();setSelectedSong(null);},
             title:'Change song',
-            style:{width:24,height:24,borderRadius:4,overflow:'hidden',border:'1.5px solid rgba(255,255,255,0.55)',background:'#333',flexShrink:0,cursor:'pointer',padding:0,display:'block'}},
+            style:{width:30,height:30,borderRadius:4,overflow:'hidden',border:'1.5px solid rgba(255,255,255,0.55)',background:'#333',flexShrink:0,cursor:'pointer',padding:0,display:'block'}},
             artThumb?React.createElement('img',{src:artThumb,style:{width:'100%',height:'100%',objectFit:'cover'},alt:''}):null),
           React.createElement('div',{style:{color:'#fff',fontWeight:700,fontSize:13,textAlign:'center',maxWidth:170,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',textShadow:'0 1px 6px rgba(0,0,0,0.9)'}},selectedSong.trackName),
           React.createElement('div',{style:{color:'rgba(255,255,255,0.72)',fontSize:11,textAlign:'center',textShadow:'0 1px 6px rgba(0,0,0,0.9)'}},selectedSong.artistName)),
         // right: Done button
         React.createElement('div',{style:{flex:1,display:'flex',justifyContent:'flex-end',paddingTop:14}},
           React.createElement('button',{onClick:handleUse,
-            style:{background:'none',border:'none',cursor:'pointer',color:'#fff',fontWeight:700,fontSize:17,padding:0,textShadow:'0 1px 6px rgba(0,0,0,0.9)'}},
+            style:{background:'#fff',border:'none',borderRadius:6,cursor:'pointer',color:'#000',fontWeight:700,fontSize:17,padding:'6px 10px'}},
             'Done'))),
       // ── spacer (video fills this area) — tap to toggle song play/pause ──
       React.createElement('div',{onClick:toggleTrimPlay,style:{flex:1,position:'relative',zIndex:2,cursor:'pointer',WebkitTapHighlightColor:'transparent'}},
