@@ -52,6 +52,7 @@ input, textarea, button { font-family: inherit; }
 ::-webkit-scrollbar { width: 4px; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .photo-editor-crops::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.photo-editor-text-fonts::-webkit-scrollbar { display: none; width: 0; height: 0; }
 ::-webkit-scrollbar-track { background: var(--input-bg); }
 ::-webkit-scrollbar-thumb { background: #888; border-radius: 2px; }
 ::-webkit-media-controls-overlay-cast-button { display: none !important; }
@@ -7240,7 +7241,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
       )
     ),
 
-    activePanel === 'text' && React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 14px 8px',background:'rgba(17,17,17,0.92)',borderTop:'none'}},
+    activePanel === 'text' && React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 14px 8px',background:'transparent',borderTop:'none'}},
         React.createElement('textarea', {
           value:overlayText,
           onChange:e=>setOverlayText(e.target.value),
@@ -7249,7 +7250,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
           autoFocus:true,
           style:{width:'100%',minHeight:44,maxHeight:120,background:'transparent',border:'none',color:'#fff',fontSize:18,padding:'8px 4px',resize:'none',boxSizing:'border-box',outline:'none',fontFamily:'inherit',textAlign:'center'}
         }),
-        React.createElement('div', {style:{display:'flex',gap:3,overflowX:'auto',padding:'4px 0 2px',justifyContent:'center'}},
+        React.createElement('div', {className:'photo-editor-text-fonts',style:{display:'flex',gap:3,overflowX:'auto',padding:'4px 0 2px',justifyContent:'center',scrollbarWidth:'none',msOverflowStyle:'none'}},
           TEXT_FONTS.map(f => React.createElement('button', {
             key:f.id,
             onClick:()=>setTextFont(f.id),
