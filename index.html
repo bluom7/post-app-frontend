@@ -7141,7 +7141,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     ),
 
     /* ── Active panel ── */
-    activePanel === 'effects' && React.createElement('div', {style:{flexShrink:0,padding:'10px 12px 6px',borderTop:'1px solid #222'}},
+    activePanel === 'effects' && React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 12px 6px',background:'transparent',borderTop:'none'}},
       React.createElement('div', {style:{display:'flex',gap:8,overflowX:'auto',paddingBottom:4}},
         FILTERS.map(f => React.createElement('button', {
           key:f.name, onClick:()=>setFilter(f.name),
@@ -7155,7 +7155,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
       )
     ),
 
-    activePanel === 'crop' && React.createElement('div', {style:{flexShrink:0,padding:'10px 12px 6px',borderTop:'1px solid #222'}},
+    activePanel === 'crop' && React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 12px 6px',background:'transparent',borderTop:'none'}},
       React.createElement('div', {style:{display:'flex',gap:8,overflowX:'auto',paddingBottom:4}},
         CROPS.map(c => React.createElement('button', {
           key:c.name, onClick:()=>{ setCropRatio(c.name); setCropOffset({x:0.5,y:0.5}); if(c.name==='Free') setFreeBox({x1:0.05,y1:0.05,x2:0.95,y2:0.95}); },
@@ -7173,7 +7173,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
       )
     ),
 
-    activePanel === 'text' && React.createElement('div', {style:{flexShrink:0,padding:'10px 14px 8px',borderTop:'1px solid #222'}},
+    activePanel === 'text' && React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 14px 8px',background:'transparent',borderTop:'none'}},
       React.createElement('textarea', {
         value:overlayText, onChange:e=>setOverlayText(e.target.value),
         placeholder:'Type text here...',
@@ -7196,7 +7196,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     ),
 
     /* ── Bottom toolbar ── */
-    React.createElement('div', {style:{display:'flex',justifyContent:'center',gap:32,padding:'10px 24px 28px',flexShrink:0,borderTop:'1px solid #1a1a1a'}},
+    React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:0,zIndex:3,display:'flex',justifyContent:'center',gap:32,padding:'10px 24px 28px',background:'transparent',borderTop:'none'}},
       btnTab('effects','Effects',
         React.createElement('svg',{width:24,height:24,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round'},
           React.createElement('path',{d:'M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z'})
