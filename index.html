@@ -51,6 +51,7 @@ body { background: var(--bg); color: var(--text); font-family: -apple-system, Bl
 input, textarea, button { font-family: inherit; }
 ::-webkit-scrollbar { width: 4px; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+.photo-editor-crops::-webkit-scrollbar { display: none; width: 0; height: 0; }
 ::-webkit-scrollbar-track { background: var(--input-bg); }
 ::-webkit-scrollbar-thumb { background: #888; border-radius: 2px; }
 ::-webkit-media-controls-overlay-cast-button { display: none !important; }
@@ -7046,7 +7047,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     const hX1 = oXp+freeBox.x1*wP, hY1 = oYp+freeBox.y1*hP;
     const hX2 = oXp+freeBox.x2*wP, hY2 = oYp+freeBox.y2*hP;
     const mkH = (n,lp,tp) => React.createElement('div',{key:n,
-      style:{position:'absolute',left:lp+'%',top:tp+'%',transform:'translate(-50%,-50%)',width:28,height:28,borderRadius:'50%',background:'#fff',border:'2.5px solid #42A5F5',touchAction:'none',zIndex:10,boxShadow:'0 2px 8px rgba(0,0,0,0.5)',cursor:'grab'},
+      style:{position:'absolute',left:lp+'%',top:tp+'%',transform:'translate(-50%,-50%)',width:32,height:32,borderRadius:0,background:'transparent',border:'none',touchAction:'none',zIndex:10,boxShadow:'none',cursor:'grab'},
       onPointerDown:(ev)=>{ev.stopPropagation();ev.currentTarget.setPointerCapture(ev.pointerId);freeHandleRef.current={handle:n,startX:ev.clientX,startY:ev.clientY,box:{...freeBox},cW,cH,wP,hP};},
       onPointerMove:(ev)=>{const d=freeHandleRef.current;if(!d||d.handle!==n)return;const dxI=(ev.clientX-d.startX)/d.cW/(d.wP/100),dyI=(ev.clientY-d.startY)/d.cH/(d.hP/100);setFreeBox(()=>{const b={...d.box};if(n.includes('l'))b.x1=Math.min(b.x2-0.05,Math.max(0,d.box.x1+dxI));if(n.includes('r'))b.x2=Math.max(b.x1+0.05,Math.min(1,d.box.x2+dxI));if(n.includes('t'))b.y1=Math.min(b.y2-0.05,Math.max(0,d.box.y1+dyI));if(n.includes('b'))b.y2=Math.max(b.y1+0.05,Math.min(1,d.box.y2+dyI));return b;});},
       onPointerUp:()=>{freeHandleRef.current=null;},
@@ -7159,7 +7160,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     ),
 
     activePanel === 'crop' && React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 12px 6px',background:'transparent',borderTop:'none'}},
-      React.createElement('div', {style:{display:'flex',gap:8,overflowX:'auto',paddingBottom:4}},
+      React.createElement('div', {className:'photo-editor-crops',style:{display:'flex',gap:8,overflowX:'auto',paddingBottom:4,scrollbarWidth:'none',msOverflowStyle:'none'}},
         CROPS.map(c => React.createElement('button', {
           key:c.name, onClick:()=>{ setCropRatio(c.name); setCropOffset({x:0.5,y:0.5}); if(c.name==='Free') setFreeBox({x1:0.05,y1:0.05,x2:0.95,y2:0.95}); },
           style:{flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:6,background:'none',border:'none',cursor:'pointer',padding:'4px 8px'}
