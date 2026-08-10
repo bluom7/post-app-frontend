@@ -8833,7 +8833,7 @@ function ComposeModal({
         onDelete: () => { setShowMusicTrimmer(false); setPendingTrimSong(null); setSelectedMusic(null); setShowMusicPicker(true); }
       }),
       /* ── Header ── */
-      React.createElement('div', { style: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'max(12px, env(safe-area-inset-top)) 18px 12px', minHeight: 60, flexShrink: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.92), rgba(0,0,0,0.42))', borderBottom: '1px solid rgba(255,255,255,0.08)' } },
+      React.createElement('div', { style: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'max(12px, env(safe-area-inset-top)) 18px 12px', minHeight: 60, flexShrink: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.92), rgba(0,0,0,0.42))', borderBottom: 'none' } },
         React.createElement('button', { 'aria-label': 'Close video editor', onClick: () => { setShowVideoEditor(false); setVideoEditorTab(null); }, style: { position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '50%', color: '#fff', fontSize: 25, lineHeight: 1, cursor: 'pointer', padding: 0 } }, '×'),
       ),
       /* ── Main: centered video preview with floating tools ── */
@@ -8991,7 +8991,7 @@ function ComposeModal({
         )
       ),
       /* ── Fixed bottom actions ── */
-      React.createElement('div', { style: { display: 'flex', gap: 10, flexShrink: 0, padding: '10px 16px max(12px, env(safe-area-inset-bottom))', background: 'rgba(0,0,0,0.94)', borderTop: '1px solid rgba(255,255,255,0.1)' } },
+      React.createElement('div', { style: { display: 'flex', gap: 10, flexShrink: 0, padding: '10px 16px max(12px, env(safe-area-inset-bottom))', background: 'rgba(0,0,0,0.94)', borderTop: 'none' } },
         React.createElement('button', { onClick: () => setVideoEditorTab(prev => prev || 'trim'), style: { flex: 1, minHeight: 48, borderRadius: 14, border: '1px solid rgba(255,255,255,0.28)', background: '#fff', color: '#111', fontSize: 15, fontWeight: 800, cursor: 'pointer' } }, 'Edit'),
         React.createElement('button', { onClick: () => { confirmVideoTrim(); setShowVideoEditor(false); setVideoEditorTab(null); }, style: { flex: 1, minHeight: 48, borderRadius: 14, border: 'none', background: '#fff', color: '#111', fontSize: 15, fontWeight: 800, cursor: 'pointer', boxShadow: '0 5px 18px rgba(0,0,0,0.18)' } }, 'Next')
       )
