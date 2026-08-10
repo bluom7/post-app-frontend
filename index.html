@@ -7075,28 +7075,20 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     style: {background:'none', border:'none', color: activePanel===panel ? '#42A5F5' : '#fff', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:4, padding:'4px 8px'}
   }, icon, React.createElement('span', {style:{fontSize:11, fontWeight:600}}, label));
 
-  return React.createElement('div', {style:{position:'fixed',inset:0,zIndex:500,background:'#000',display:'flex',flexDirection:'column',boxSizing:'border-box'}},
+  return React.createElement('div', {style:{position:'fixed',inset:0,zIndex:500,background:'transparent',display:'flex',flexDirection:'column',boxSizing:'border-box'}},
     /* ── Header ── */
-    React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'14px 18px 10px',flexShrink:0}},
-      React.createElement('div', {style:{display:'flex',alignItems:'center',gap:8}},
+    React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'14px 18px 10px',flexShrink:0,background:'transparent'}},
+      React.createElement('div', {style:{display:'flex',alignItems:'center'}},
         React.createElement('button', {onClick:onClose, style:{background:'none',border:'none',color:'#fff',cursor:'pointer',padding:4,display:'flex',alignItems:'center'}},
           React.createElement('svg', {width:26,height:26,viewBox:'0 0 24 24',fill:'none',stroke:'#fff',strokeWidth:2.2,strokeLinecap:'round',strokeLinejoin:'round'},
             React.createElement('line',{x1:18,y1:6,x2:6,y2:18}),
             React.createElement('line',{x1:6,y1:6,x2:18,y2:18})
           )
-        ),
-        onDelete && React.createElement('button', {onClick:onDelete, style:{background:'rgba(255,23,68,0.18)',border:'1px solid rgba(255,23,68,0.5)',borderRadius:'50%',width:34,height:34,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',padding:0}},
-          React.createElement('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none',stroke:'#FF1744',strokeWidth:2.3,strokeLinecap:'round',strokeLinejoin:'round'},
-            React.createElement('line',{x1:9,y1:4,x2:15,y2:4}),
-            React.createElement('line',{x1:5,y1:7,x2:19,y2:7}),
-            React.createElement('path',{d:'M7 7v11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7'})
-          )
-        )
       ),
       React.createElement('span', {style:{color:'#fff',fontSize:16,fontWeight:700}},
         filter!=='Original' ? filter : cropRatio!=='Original' ? cropRatio : overlayText ? 'Text' : 'Edit Photo'
       ),
-      React.createElement('button', {onClick:applyAndSave, style:{background:'#1565C0',color:'#fff',border:'none',borderRadius:20,padding:'8px 22px',fontWeight:800,fontSize:15,cursor:'pointer'}}, 'DONE')
+      React.createElement('button', {onClick:applyAndSave, style:{background:'#fff',color:'#000',border:'none',borderRadius:20,padding:'8px 22px',fontWeight:800,fontSize:15,cursor:'pointer'}}, 'DONE')
     ),
 
     /* ── Photo preview ── */
