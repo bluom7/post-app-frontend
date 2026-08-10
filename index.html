@@ -8834,9 +8834,7 @@ function ComposeModal({
       }),
       /* ── Header ── */
       React.createElement('div', { style: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'max(12px, env(safe-area-inset-top)) 18px 12px', minHeight: 60, flexShrink: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.92), rgba(0,0,0,0.42))', borderBottom: '1px solid rgba(255,255,255,0.08)' } },
-        React.createElement('button', { 'aria-label': 'Close video editor', onClick: () => { setShowVideoEditor(false); setVideoEditorTab(null); }, style: { position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: '50%', color: '#fff', fontSize: 25, lineHeight: 1, cursor: 'pointer', padding: 0 } }, '×'),
-        React.createElement('span', { style: { color: '#fff', fontWeight: 800, fontSize: 17, letterSpacing: '-0.01em' } }, 'Edit Video'),
-        React.createElement('span', { style: { position: 'absolute', right: 18, color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: 600 } }, 'POST')
+        React.createElement('button', { 'aria-label': 'Close video editor', onClick: () => { setShowVideoEditor(false); setVideoEditorTab(null); }, style: { position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '50%', color: '#fff', fontSize: 25, lineHeight: 1, cursor: 'pointer', padding: 0 } }, '×'),
       ),
       /* ── Main: centered video preview with floating tools ── */
       React.createElement('div', { style: { position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', minHeight: 0, padding: '12px 78px 18px 18px', background: '#050505' } },
