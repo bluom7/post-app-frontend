@@ -7220,14 +7220,21 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
       )
     ),
 
-    activePanel === 'text' && React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 14px 8px',background:'transparent',borderTop:'none'}},
-        React.createElement('div', {style:{display:'flex',gap:8,alignItems:'center',overflowX:'hidden',padding:'2px 0',border:'none',boxShadow:'none'}},
-          TEXT_BACKGROUNDS.map(c => React.createElement('button', {
-            key:c,
-            onClick:()=>setTextBgColor(c),
-            'aria-label':c === 'transparent' ? 'No text background' : `Text background ${c}`,
-            style:{width:28,height:28,borderRadius:'50%',background:c === 'transparent' ? 'linear-gradient(135deg, transparent 45%, #ff1744 46%, #ff1744 54%, transparent 55%), #fff' : c,border:textBgColor===c?'3px solid #fff':'2px solid rgba(255,255,255,0.35)',boxShadow:textBgColor===c?'0 0 0 2px rgba(0,0,0,0.7)':'none',cursor:'pointer',padding:0,flexShrink:0,boxSizing:'border-box'}
-          }))
+    activePanel === 'text' && React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 14px 8px',background:'rgba(17,17,17,0.92)',borderTop:'none'}},
+        React.createElement('textarea', {
+          value:overlayText,
+          onChange:e=>setOverlayText(e.target.value),
+          placeholder:'Type or @Tag',
+          rows:1,
+          autoFocus:true,
+          style:{width:'100%',minHeight:44,maxHeight:120,background:'transparent',border:'none',color:'#fff',fontSize:18,padding:'8px 4px',resize:'none',boxSizing:'border-box',outline:'none',fontFamily:'inherit',textAlign:'center'}
+        }),
+        React.createElement('div', {style:{display:'flex',gap:3,overflowX:'auto',padding:'4px 0 2px',justifyContent:'center'}},
+          TEXT_FONTS.map(f => React.createElement('button', {
+            key:f.id,
+            onClick:()=>setTextFont(f.id),
+            style:{background:textFont===f.id?'#fff':'transparent',border:textFont===f.id?'1px solid #fff':'1px solid transparent',borderRadius:18,padding:'7px 14px',color:textFont===f.id?'#111':'#fff',fontFamily:f.fontFamily,fontWeight:f.fontWeight,fontStyle:f.fontStyle,fontSize:15,cursor:'pointer',flexShrink:0,whiteSpace:'nowrap',textShadow:f.id==='Glow'?'0 0 8px #fff':'0 1px 3px #000'}
+          }, f.label))
         )
       ),
 
