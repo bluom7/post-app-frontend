@@ -11,6 +11,8 @@
 (function(){ var t=localStorage.getItem('post_theme'); if(t==='dark') document.documentElement.setAttribute('data-theme','dark'); })();
 </script>
 <style>
+.reel-effects-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.reel-effects-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 @keyframes popUp { from { opacity:0; transform: translateX(-50%) scale(0.7); } to { opacity:1; transform: translateX(-50%) scale(1); } }
 @keyframes bellShake { 0%{transform:rotate(0)} 15%{transform:rotate(18deg)} 30%{transform:rotate(-16deg)} 45%{transform:rotate(12deg)} 60%{transform:rotate(-8deg)} 75%{transform:rotate(4deg)} 90%{transform:rotate(-2deg)} 100%{transform:rotate(0)} }
@@ -9481,7 +9483,7 @@ function ComposeModal({
         )
       ),
           /* ── Bottom sub-panel (slides up when a tool is active) ── */
-      videoEditorTab && React.createElement('div', { style: { position: 'absolute', zIndex: 25, left: 12, right: 12, bottom: 'calc(76px + env(safe-area-inset-bottom))', maxWidth: 460, margin: '0 auto', background: 'rgba(18,18,18,0.96)', backdropFilter: 'blur(18px)', WebkitBackdropFilter: 'blur(18px)', border: '1px solid rgba(255,255,255,0.16)', borderRadius: 20, padding: '16px 18px 18px', maxHeight: '38vh', overflowY: 'auto', boxShadow: '0 12px 34px rgba(0,0,0,0.42)' } },
+      videoEditorTab && React.createElement('div', { style: { position: 'absolute', zIndex: 25, left: 12, right: 12, bottom: 'calc(76px + env(safe-area-inset-bottom))', maxWidth: 460, margin: '0 auto', background: 'transparent', backdropFilter: 'none', WebkitBackdropFilter: 'none', border: 'none', borderRadius: 20, padding: '16px 18px 18px', maxHeight: '38vh', overflowY: 'auto', boxShadow: 'none' } },
         /* TRIM panel */
         videoEditorTab === 'trim' && React.createElement('div', null,
           pendingVideoFile
@@ -9501,7 +9503,7 @@ function ComposeModal({
         /* EFFECTS panel */
         videoEditorTab === 'effects' && React.createElement('div', null,
           React.createElement('div', { style: { color: '#ccc', fontSize: 13, fontWeight: 700, marginBottom: 14, textAlign: 'center' } }, 'Choose a filter'),
-          React.createElement('div', { style: { display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 } },
+          React.createElement('div', { className: 'reel-effects-scroll', style: { display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 0 } },
             VIDEO_EFFECTS.map(eff => React.createElement('div', { key: eff.id, onClick: () => setVideoEffect(eff.id), style: { flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer' } },
               React.createElement('div', { style: { width: 64, height: 64, borderRadius: 12, overflow: 'hidden', border: videoEffect === eff.id ? '3px solid ' + COLORS.blue : '3px solid transparent', background: '#333' } },
                 React.createElement('video', { src: _edSrc, muted: true, playsInline: true, autoPlay: true, loop: true, style: { width: '100%', height: '100%', objectFit: 'cover', filter: eff.filter } })
