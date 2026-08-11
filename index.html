@@ -7355,7 +7355,9 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
           touchAction:'none',
           boxSizing:'border-box',
         },
-        ...textGestureProps
+        ...textGestureProps,
+        onPointerDown:(ev)=>{ ev.stopPropagation(); ev.currentTarget.focus(); startTextGesture(ev); },
+        onClick:(ev)=>{ ev.stopPropagation(); ev.currentTarget.focus(); },
       }),
     ),
 
