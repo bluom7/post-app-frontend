@@ -54,6 +54,7 @@ input, textarea, button { font-family: inherit; }
 ::-webkit-scrollbar { width: 4px; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .photo-editor-crops::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.photo-editor-effects::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .photo-editor-text-fonts::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .photo-editor-color-palette::-webkit-scrollbar { display: none; width: 0; height: 0; }
 ::-webkit-scrollbar-track { background: var(--input-bg); }
@@ -7249,7 +7250,9 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
       React.createElement('div',{key:'ol',style:{position:'absolute',left:0,top:hY1+'%',bottom:(100-hY2)+'%',width:hX1+'%',background:'rgba(0,0,0,0.5)',pointerEvents:'none'}}),
       React.createElement('div',{key:'or',style:{position:'absolute',right:0,top:hY1+'%',bottom:(100-hY2)+'%',width:(100-hX2)+'%',background:'rgba(0,0,0,0.5)',pointerEvents:'none'}}),
       React.createElement('div',{key:'cb',style:{position:'absolute',left:hX1+'%',top:hY1+'%',width:(hX2-hX1)+'%',height:(hY2-hY1)+'%',border:'2px solid rgba(255,255,255,0.85)',pointerEvents:'none',boxSizing:'border-box'}}),
-      mkH('tl',hX1,hY1), mkH('tr',hX2,hY1), mkH('bl',hX1,hY2), mkH('br',hX2,hY2),
+      mkH('tl',hX1,hY1), mkH('tm',(hX1+hX2)/2,hY1), mkH('tr',hX2,hY1),
+      mkH('ml',hX1,(hY1+hY2)/2), mkH('mr',hX2,(hY1+hY2)/2),
+      mkH('bl',hX1,hY2), mkH('bm',(hX1+hX2)/2,hY2), mkH('br',hX2,hY2),
       React.createElement('div',{key:'hint',style:{position:'absolute',bottom:10,left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.55)',color:'#fff',borderRadius:20,padding:'4px 12px',fontSize:12,fontWeight:600,pointerEvents:'none',whiteSpace:'nowrap'}},'✥ Drag anywhere to crop'),
     ];
   })();
@@ -7377,7 +7380,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
       {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 12px 6px',background:'transparent',borderTop:'none'}},
       React.createElement(
         'div',
-        {style:{display:'flex',gap:8,overflowX:'auto',paddingBottom:4}},
+        {className:'photo-editor-effects',style:{display:'flex',gap:8,overflowX:'auto',paddingBottom:0,scrollbarWidth:'none',msOverflowStyle:'none'}},
         FILTERS.map(f => React.createElement(
           'button',
           {
@@ -7387,7 +7390,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
           },
           React.createElement(
             'div',
-            {style:{width:60,height:60,borderRadius:10,overflow:'hidden',border:filter===f.name?'2.5px solid #42A5F5':'2px solid #333'}},
+            {style:{width:54,height:54,borderRadius:'50%',overflow:'hidden',border:filter===f.name?'2.5px solid #42A5F5':'2px solid #333'}},
             React.createElement('img', {src, alt:'', style:{width:'100%',height:'100%',objectFit:'cover',filter:f.css}})
           ),
           React.createElement(
