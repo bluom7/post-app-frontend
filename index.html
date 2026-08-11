@@ -9484,7 +9484,7 @@ function ComposeModal({
         )
       ),
           /* ── Bottom sub-panel (slides up when a tool is active) ── */
-      videoEditorTab && React.createElement('div', { style: { position: 'absolute', zIndex: 25, left: 12, right: 12, bottom: 'calc(76px + env(safe-area-inset-bottom))', maxWidth: 460, margin: '0 auto', background: 'transparent', backdropFilter: 'none', WebkitBackdropFilter: 'none', border: 'none', borderRadius: 20, padding: '16px 18px 18px', maxHeight: '38vh', overflowY: 'auto', boxShadow: 'none' } },
+      videoEditorTab && React.createElement('div', { style: { position: 'absolute', zIndex: 25, left: 0, right: 0, bottom: 'calc(78px + env(safe-area-inset-bottom))', maxWidth: 'none', margin: '0 auto', background: 'transparent', backdropFilter: 'none', WebkitBackdropFilter: 'none', border: 'none', borderRadius: 0, padding: '0 16px', maxHeight: 'none', overflow: 'visible', boxShadow: 'none' } },
         /* TRIM panel */
         videoEditorTab === 'trim' && React.createElement('div', null,
           pendingVideoFile
@@ -9502,14 +9502,12 @@ function ComposeModal({
             : React.createElement('div', { style: { textAlign: 'center', color: '#aaa', fontSize: 13, padding: '8px 0' } }, 'Video already uploaded — trim not needed.')
         ),
         /* EFFECTS panel */
-        videoEditorTab === 'effects' && React.createElement('div', null,
-          React.createElement('div', { style: { color: '#ccc', fontSize: 13, fontWeight: 700, marginBottom: 14, textAlign: 'center' } }, 'Choose a filter'),
-          React.createElement('div', { className: 'reel-effects-scroll', style: { display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 0 } },
-            VIDEO_EFFECTS.map(eff => React.createElement('div', { key: eff.id, onClick: () => setVideoEffect(eff.id), style: { flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer' } },
-              React.createElement('div', { style: { width: 64, height: 64, borderRadius: 12, overflow: 'hidden', border: videoEffect === eff.id ? '3px solid ' + COLORS.blue : '3px solid transparent', background: '#333' } },
-                React.createElement('video', { src: _edSrc, muted: true, playsInline: true, autoPlay: true, loop: true, style: { width: '100%', height: '100%', objectFit: 'cover', filter: eff.filter } })
-              ),
-              React.createElement('span', { style: { fontSize: 11, color: videoEffect === eff.id ? COLORS.blue : '#ccc', fontWeight: videoEffect === eff.id ? 700 : 400 } }, eff.label)
+        videoEditorTab === 'effects' && React.createElement('div', { style: { width: '100%', background: 'transparent' } },
+          React.createElement('div', { className: 'reel-effects-scroll', style: { display: 'flex', alignItems: 'center', gap: 10, overflowX: 'auto', padding: '0 2px 2px', background: 'transparent' } },
+            VIDEO_EFFECTS.map(eff => React.createElement('div', { key: eff.id, onClick: () => setVideoEffect(eff.id), style: { flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', width: 58, height: 58 } },
+              React.createElement('div', { style: { width: 58, height: 58, borderRadius: '50%', overflow: 'hidden', border: videoEffect === eff.id ? '2px solid #fff' : '2px solid rgba(255,255,255,0.55)', background: 'rgba(0,0,0,0.28)', boxShadow: videoEffect === eff.id ? '0 0 0 2px rgba(24,119,242,0.85)' : '0 2px 8px rgba(0,0,0,0.35)' } },
+                React.createElement('video', { src: _edSrc, muted: true, playsInline: true, autoPlay: true, loop: true, style: { width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', filter: eff.filter } })
+              )
             ))
           )
         ),
