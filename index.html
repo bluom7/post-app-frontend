@@ -7009,7 +7009,10 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     {id:'Headline', label:'Headline', fontFamily:"'Arial Black', Impact, sans-serif", fontWeight:900, fontStyle:'normal', textShadow:'0 2px 6px rgba(0,0,0,0.9)'},
     {id:'Glow', label:'Glow', fontFamily:'Arial, sans-serif', fontWeight:700, fontStyle:'normal', textShadow:'0 0 20px currentColor, 0 0 40px currentColor, 0 2px 6px rgba(0,0,0,0.75)'},
     {id:'Fancy', label:'Fancy', fontFamily:"Georgia, 'Times New Roman', serif", fontWeight:600, fontStyle:'italic', textShadow:'0 2px 8px rgba(0,0,0,0.9)'},
-    {id:'Pop', label:'Pop', fontFamily:'Arial, sans-serif', fontWeight:900, fontStyle:'normal', textShadow:'0 2px 5px rgba(0,0,0,0.9)'}
+    {id:'Pop', label:'Pop', fontFamily:'Arial, sans-serif', fontWeight:900, fontStyle:'normal', textShadow:'0 2px 5px rgba(0,0,0,0.9)'}    {id:'Bubble', label:'Bubble', fontFamily:'Arial Rounded MT Bold, Arial, sans-serif', fontWeight:900, fontStyle:'normal', textShadow:'0 3px 0 rgba(0,0,0,0.65)'},
+    {id:'Slab Serif', label:'Slab Serif', fontFamily:"'Roboto Slab', Georgia, serif", fontWeight:700, fontStyle:'normal', textShadow:'0 2px 6px rgba(0,0,0,0.9)'},
+    {id:'Geometric', label:'Geometric', fontFamily:"'Arial Black', Impact, sans-serif", fontWeight:800, fontStyle:'normal', textShadow:'0 2px 5px rgba(0,0,0,0.9)'},
+
   ];
 
   // Keep every newly selected photo in its natural shape.
@@ -7282,7 +7285,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
         style:{width:38,height:34,borderRadius:9,border:'1px solid rgba(255,255,255,0.9)',background:textBgColor==='transparent'?'rgba(255,255,255,0.08)':textBgColor,color:textInkColor,fontFamily:"'Arial Black',Impact,sans-serif",fontSize:19,fontWeight:900,lineHeight:1,cursor:'pointer',padding:0,textShadow:textBgColor==='transparent'?'0 1px 3px #000':'none'}
       }, 'A')
     ),
-    React.createElement('button', {onClick:applyAndSave, style:{background:'#fff',color:'#000',border:'none',borderRadius:20,padding:'8px 22px',fontWeight:800,fontSize:15,cursor:'pointer'}}, 'DONE')
+    React.createElement('button', {onClick:applyAndSave, style:{width:58,height:38,background:'#fff',color:'#000',border:'none',borderRadius:8,padding:0,fontWeight:800,fontSize:14,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}, 'Done')
     ),
     activePanel === 'text' && showTextColorPalette && React.createElement('div', {
       className:'photo-editor-color-palette',
