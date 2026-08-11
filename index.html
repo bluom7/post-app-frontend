@@ -8835,7 +8835,7 @@ function ComposeModal({
   const [videoEditorTab, setVideoEditorTab] = useState(null);     // 'trim'|'effects'|'text'|null
   const [newVideoText, setNewVideoText] = useState('');
   const [newVideoTextColor, setNewVideoTextColor] = useState('#ffffff');
-  const videoPreviewRef = useRef(null);
+  const videoPreviewRef = useRef(null); const videoTextGestureRef = useRef({});
   const edVideoRef = useRef(null);
   const edAudioRef = useRef(null);
   const [edAudioOn, setEdAudioOn] = useState(false);
@@ -9297,50 +9297,63 @@ function ComposeModal({
               el.setPointerCapture(ev.pointerId);
               const cont = videoPreviewRef.current; if (!cont) return;
               const rect = cont.getBoundingClientRect();
-              let startX = ev.clientX, startY = ev.clientY;
-              let origX = t.x, origY = t.y;
-              let currentX = t.x, currentY = t.y;
-              let pinchStartDistance = null;
-              let pinchStartSize = t.size || 20;
-              const pointers = new Map([[ev.pointerId, { x: ev.clientX, y: ev.clientY }]]);
-              const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-              const onMove = (me) => {
-                pointers.set(me.pointerId, { x: me.clientX, y: me.clientY });
-                const activePointers = Array.from(pointers.values());
-                if (activePointers.length >= 2) {
-                  if (pinchStartDistance === null) {
-                    pinchStartDistance = distance(activePointers[0], activePointers[1]);
-                    pinchStartSize = t.size || 20;
+              let gesture = videoTextGestureRef.current[t.id];
+              if (!gesture) {
+                gesture = {
+                  pointers: new Map(),
+                  startX: ev.clientX, startY: ev.clientY,
+                  origX: t.x, origY: t.y,
+                  currentX: t.x, currentY: t.y,
+                  pinchStartDistance: null,
+                  pinchStartSize: t.size || 20,
+                  element: el
+                };
+                const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+                const onMove = (me) => {
+                  const activeGesture = videoTextGestureRef.current[t.id];
+                  if (!activeGesture) return;
+                  activeGesture.pointers.set(me.pointerId, { x: me.clientX, y: me.clientY });
+                  const activePointers = Array.from(activeGesture.pointers.values());
+                  if (activePointers.length >= 2) {
+                    if (activeGesture.pinchStartDistance === null) {
+                      activeGesture.pinchStartDistance = distance(activePointers[0], activePointers[1]);
+                      activeGesture.pinchStartSize = t.size || 20;
+                    }
+                    const scale = distance(activePointers[0], activePointers[1]) / Math.max(1, activeGesture.pinchStartDistance);
+                    const nextSize = Math.max(10, Math.min(120, activeGesture.pinchStartSize * scale));
+                    setVideoTextOverlays(prev => prev.map(o => o.id === t.id ? { ...o, size: nextSize } : o));
+                    return;
                   }
-                  const scale = distance(activePointers[0], activePointers[1]) / Math.max(1, pinchStartDistance);
-                  const nextSize = Math.max(10, Math.min(120, pinchStartSize * scale));
-                  setVideoTextOverlays(prev => prev.map(o => o.id === t.id ? { ...o, size: nextSize } : o));
-                  return;
-                }
-                const dx = ((me.clientX - startX) / rect.width) * 100;
-                const dy = ((me.clientY - startY) / rect.height) * 100;
-                currentX = Math.max(5, Math.min(95, origX + dx));
-                currentY = Math.max(5, Math.min(95, origY + dy));
-                setVideoTextOverlays(prev => prev.map(o => o.id === t.id ? { ...o, x: currentX, y: currentY } : o));
-              };
-              const cleanup = () => {
-                el.removeEventListener('pointermove', onMove);
-                el.removeEventListener('pointerup', onEnd);
-                el.removeEventListener('pointercancel', onEnd);
-              };
-              const onEnd = (pe) => {
-                pointers.delete(pe.pointerId);
-                if (pointers.size === 1) {
-                  const remaining = Array.from(pointers.values())[0];
-                  startX = remaining.x; startY = remaining.y;
-                  origX = currentX; origY = currentY;
-                  pinchStartDistance = null;
-                }
-                if (pointers.size === 0) cleanup();
-              };
-              el.addEventListener('pointermove', onMove);
-              el.addEventListener('pointerup', onEnd);
-              el.addEventListener('pointercancel', onEnd);
+                  const dx = ((me.clientX - activeGesture.startX) / rect.width) * 100;
+                  const dy = ((me.clientY - activeGesture.startY) / rect.height) * 100;
+                  activeGesture.currentX = Math.max(5, Math.min(95, activeGesture.origX + dx));
+                  activeGesture.currentY = Math.max(5, Math.min(95, activeGesture.origY + dy));
+                  setVideoTextOverlays(prev => prev.map(o => o.id === t.id ? { ...o, x: activeGesture.currentX, y: activeGesture.currentY } : o));
+                };
+                const cleanup = () => {
+                  el.removeEventListener('pointermove', onMove);
+                  el.removeEventListener('pointerup', onEnd);
+                  el.removeEventListener('pointercancel', onEnd);
+                  delete videoTextGestureRef.current[t.id];
+                };
+                const onEnd = (pe) => {
+                  const activeGesture = videoTextGestureRef.current[t.id];
+                  if (!activeGesture) return;
+                  activeGesture.pointers.delete(pe.pointerId);
+                  if (activeGesture.pointers.size === 1) {
+                    const remaining = Array.from(activeGesture.pointers.values())[0];
+                    activeGesture.startX = remaining.x; activeGesture.startY = remaining.y;
+                    activeGesture.origX = activeGesture.currentX; activeGesture.origY = activeGesture.currentY;
+                    activeGesture.pinchStartDistance = null;
+                  }
+                  if (activeGesture.pointers.size === 0) cleanup();
+                };
+                videoTextGestureRef.current[t.id] = gesture;
+                el.addEventListener('pointermove', onMove);
+                el.addEventListener('pointerup', onEnd);
+                el.addEventListener('pointercancel', onEnd);
+              }
+              gesture.pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
             }
           },
             t.text,
