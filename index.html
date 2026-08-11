@@ -9243,12 +9243,9 @@ function ComposeModal({
   if (showVideoEditor) {
     const _edSrc = activeVideoSource;
     const _videoAR = videoWidth && videoHeight ? videoWidth / videoHeight : null;
-    const _editorMaxHeight = Math.min(window.innerHeight * 0.72, window.innerHeight - 190);
-    const _editorMaxWidth = Math.min(430, Math.max(0, window.innerWidth - 96));
-    const _editorFrameWidth = _videoAR
-      ? Math.min(_editorMaxWidth, _editorMaxHeight * _videoAR)
-      : _editorMaxWidth;
-    const _editorFrameHeight = _videoAR ? _editorFrameWidth / _videoAR : _editorMaxHeight;
+    // Full-screen preview: the tool rail floats above the media instead of reserving side space.
+    const _editorFrameWidth = '100%';
+    const _editorFrameHeight = '100%';
     const _actEff = (VIDEO_EFFECTS.find(e => e.id === videoEffect) || VIDEO_EFFECTS[0]).filter;
     const VID_TEXT_COLORS = ['#ffffff','#000000','#ffeb3b','#ff5722','#e91e63','#9c27b0','#2196f3','#4caf50','#ff9800','#00bcd4'];
     const _fmtTime = s => { const m = Math.floor(s/60); return m + ':' + String(Math.floor(s%60)).padStart(2,'0'); };
@@ -9279,15 +9276,15 @@ function ComposeModal({
         onDelete: () => { setShowMusicTrimmer(false); setPendingTrimSong(null); setSelectedMusic(null); setShowMusicPicker(true); }
       }),
       /* ── Header ── */
-      React.createElement('div', { style: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'max(12px, env(safe-area-inset-top)) 18px 12px', minHeight: 60, flexShrink: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.92), rgba(0,0,0,0.42))', borderBottom: 'none' } },
+      React.createElement('div', { style: { position: 'absolute', left: 0, right: 0, top: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'max(12px, env(safe-area-inset-top)) 18px 12px', minHeight: 60, background: 'linear-gradient(180deg, rgba(0,0,0,0.72), transparent)', borderBottom: 'none' } },
         React.createElement('button', { 'aria-label': 'Close video editor', onClick: () => { setShowVideoEditor(false); setVideoEditorTab(null); }, style: { position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '50%', color: '#fff', fontSize: 25, lineHeight: 1, cursor: 'pointer', padding: 0 } }, '×'),
       ),
       /* ── Main: centered video preview with floating tools ── */
-      React.createElement('div', { style: { position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', minHeight: 0, padding: '12px 78px 18px 18px', background: '#050505' } },
+      React.createElement('div', { style: { position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', minHeight: 0, padding: 0, background: '#000' } },
         /* Video with text overlays + playback controls */
-        React.createElement('div', { ref: videoPreviewRef, style: { width: _editorFrameWidth || 'min(100%, 430px)', height: _editorFrameHeight || 'min(100%, 72vh)', aspectRatio: _videoAR ? String(_videoAR) : undefined, position: 'relative', overflow: 'hidden', borderRadius: 18, background: '#000', boxShadow: '0 16px 45px rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.12)' } },
+        React.createElement('div', { ref: videoPreviewRef, style: { width: _editorFrameWidth, height: _editorFrameHeight, position: 'relative', overflow: 'hidden', borderRadius: 0, background: '#000', boxShadow: 'none', border: 'none' } },
           React.createElement('div', { style: { position: 'absolute', inset: 0, filter: _actEff, zIndex: 0 } },
-            React.createElement('video', { key: _edSrc + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), ref: edVideoRef, src: _edSrc, preload: 'auto', playsInline: true, autoPlay: true, muted: selectedMusic ? true : !edAudioOn, onLoadedData: (e) => { e.target.play().catch(() => {}); }, onError: () => { recoverLocalVideoPreview(); }, style: { width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'translateZ(0)', background: '#000' }, onLoadedMetadata: (e) => { if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } setEdDuration(e.target.duration); setEdCurrentTime(0); }, onTimeUpdate: (e) => { setEdCurrentTime(e.target.currentTime); if (trimEnd > 0 && e.target.currentTime >= trimEnd) { e.target.currentTime = trimStart; } }, onEnded: () => { if (edVideoRef.current) { edVideoRef.current.currentTime = trimStart; edVideoRef.current.play().catch(()=>{}); } } })
+            React.createElement('video', { key: _edSrc + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), ref: edVideoRef, src: _edSrc, preload: 'auto', playsInline: true, autoPlay: true, muted: selectedMusic ? true : !edAudioOn, onLoadedData: (e) => { e.target.play().catch(() => {}); }, onError: () => { recoverLocalVideoPreview(); }, style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'translateZ(0)', background: '#000' }, onLoadedMetadata: (e) => { if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } setEdDuration(e.target.duration); setEdCurrentTime(0); }, onTimeUpdate: (e) => { setEdCurrentTime(e.target.currentTime); if (trimEnd > 0 && e.target.currentTime >= trimEnd) { e.target.currentTime = trimStart; } }, onEnded: () => { if (edVideoRef.current) { edVideoRef.current.currentTime = trimStart; edVideoRef.current.play().catch(()=>{}); } } })
           ),
           /* Draggable text overlays */
           videoTextOverlays.map(t => React.createElement('div', {
@@ -9529,7 +9526,7 @@ function ComposeModal({
         )
       ),
       /* ── Fixed bottom actions ── */
-      React.createElement('div', { style: { display: 'flex', gap: 10, flexShrink: 0, padding: '10px 16px max(12px, env(safe-area-inset-bottom))', background: 'rgba(0,0,0,0.94)', borderTop: 'none' } },
+      React.createElement('div', { style: { position: 'absolute', left: 18, right: 18, bottom: 'max(12px, env(safe-area-inset-bottom))', zIndex: 30, display: 'flex', gap: 10, padding: 0, background: 'transparent', borderTop: 'none' } },
         React.createElement('button', { onClick: () => { setShowVideoEditor(false); setVideoEditorTab(null); setShowVideoTrim(true); }, style: { flex: 1, minHeight: 44, borderRadius: 12, border: '1px solid rgba(255,255,255,0.28)', background: '#fff', color: '#111', fontSize: 17, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 } }, 'Edit'),
         React.createElement('button', { onClick: () => { confirmVideoTrim(); setShowVideoEditor(false); setVideoEditorTab(null); }, style: { flex: 1, minHeight: 44, borderRadius: 12, border: 'none', background: '#fff', color: '#111', fontSize: 15, fontWeight: 800, cursor: 'pointer', boxShadow: '0 5px 18px rgba(0,0,0,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, lineHeight: 1 } }, 'Next →')
       )
