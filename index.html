@@ -22832,8 +22832,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 14 } },
               React.createElement("div", { style: { width: 62, height: 42 } }),
               React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } },
-                React.createElement("button", { onPointerDown: e => { e.stopPropagation(); setEditTextPaletteOpen(v => !v); }, "aria-label": "Text background colors", style: { width: 42, height: 42, borderRadius: "50%", border: "2px solid #fff", background: editTextColorFull === "transparent" ? "conic-gradient(#FF1744,#FFD600,#00C853,#1877F2,#9C27B0,#FF1744)" : editTextColorFull, boxShadow: "0 2px 8px rgba(0,0,0,0.5)", cursor: "pointer", padding: 0 } }),
-                React.createElement("button", { onClick: toggleTextBackground, "aria-label": "Toggle text background", style: { width: 44, height: 42, borderRadius: 8, border: "none", background: "#fff", color: "#111", fontSize: 19, fontWeight: 800, cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.35)" } }, "A")
+                React.createElement("button", { onPointerDown: e => { e.stopPropagation(); setEditTextPaletteOpen(v => !v); }, "aria-label": "Text background colors", style: { width: 36, height: 36, borderRadius: "50%", border: "2px solid #fff", background: editTextColorFull === "transparent" ? "conic-gradient(#FF1744,#FFD600,#00C853,#1877F2,#9C27B0,#FF1744)" : editTextColorFull, boxShadow: "0 2px 8px rgba(0,0,0,0.5)", cursor: "pointer", padding: 0 } }),
+                React.createElement("button", { onClick: toggleTextBackground, "aria-label": "Toggle text background", style: { width: 38, height: 36, borderRadius: 7, border: "none", background: "#fff", color: "#111", fontSize: 17, fontWeight: 800, cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.35)" } }, "A")
               ),
               React.createElement("button", { onClick: placeText, style: { minWidth: 76, height: 44, borderRadius: 8, border: "none", background: "#fff", color: "#111", fontWeight: 800, fontSize: 16, cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.35)" } }, "Done")
             ),
@@ -22849,7 +22849,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
               React.createElement("input", { type: "text", value: editTextDraftFull, onChange: e => setEditTextDraftFull(e.target.value), maxLength: 80, autoFocus: true, onKeyDown: e => { if (e.key === "Enter") { e.preventDefault(); placeText(); } }, style: { position: "absolute", inset: 0, width: "100%", height: "100%", opacity: 0, cursor: "text", border: "none", outline: "none", background: "transparent", fontSize: 1 } })
             )
           ),
-          React.createElement("div", { style: { background: "rgba(0,0,0,0.38)", padding: "12px 0 calc(20px + env(safe-area-inset-bottom))", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", flexShrink: 0 } },
+          React.createElement("div", { style: { background: "transparent", padding: "12px 0 calc(20px + env(safe-area-inset-bottom))", backdropFilter: "none", WebkitBackdropFilter: "none", flexShrink: 0 } },
 
             React.createElement("div", { style: { overflowX: "auto", display: "flex", gap: 0, padding: "0 6px", scrollbarWidth: "none" } },
               EDIT_FONTS.map(f => React.createElement("button", { key: f.id, onPointerDown: e => { e.stopPropagation(); setEditTextFontFull(f.id); }, style: { background: editTextFontFull === f.id ? "#fff" : "transparent", border: "none", borderRadius: 22, padding: "8px 18px", color: editTextFontFull === f.id ? "#111" : "rgba(255,255,255,0.72)", fontFamily: f.fontFamily, fontWeight: f.fontWeight, fontStyle: f.fontStyle, fontSize: 16, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" } }, f.label))
