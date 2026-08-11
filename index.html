@@ -20298,7 +20298,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
     var previewDur=(trimAudioRef.current&&isFinite(trimAudioRef.current.duration)&&trimAudioRef.current.duration>0)?trimAudioRef.current.duration:30;
     var scaledSec=maxStart>0?(startSecRef.current/maxStart)*Math.max(0,previewDur-clipDuration):0;
     scaledSec=Math.max(0,Math.min(scaledSec,previewDur-0.5));
-    onSelect(selectedSong.previewUrl, selectedSong.trackName, Math.round(scaledSec*1000), (selectedSong.artworkUrl100||'').replace('100x100bb','300x300bb'), selectedSong.artistName||'');
+    onSelect(selectedSong.previewUrl, selectedSong.trackName, Math.round(scaledSec*1000), (selectedSong.artworkUrl100||'').replace('100x100bb','300x300bb'), selectedSong.artistName||'', clipDuration);
   }
 
   // ── Full-screen trimmer (when song selected) — video background style ───────
@@ -20649,6 +20649,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const audioFileRef = React.useRef(null);
   const audioUrlRef = React.useRef(null);
   const audioStartTimeRef = React.useRef(0);
+  const audioClipDurationRef = React.useRef(15);
   const previewMusicAudioRef = React.useRef(null);
   const editVideoRef = React.useRef(null);
   const trimVideoRef = React.useRef(null); // Ref for Trim overlay's preview video
@@ -21070,7 +21071,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         finally { clearTimeout(pTimeout); }
         if (!pResp.ok) { const d = await pResp.json().catch(() => ({})); throw new Error(d.detail || "Photo upload failed"); }
         const pData = await pResp.json(); setUploadProgress(75);
-        const _allTxtOvPh = [...(textOverlays||[]), ...(reviewTextOverlays||[])]; const _allEmoOvPh = [...(editEmojiOverlays||[]), ...(reviewEmojiOverlays||[])]; const reel = await api("/reels", "POST", { photo_url: pData.url, caption: caption.trim(), audio_label: audioLabel, music_url: audioUrlRef.current || undefined, music_start_time: audioStartTimeRef.current || 0, music_title: (audioLabel && audioLabel !== "Original Audio") ? audioLabel : undefined, music_artist: audioArtist || undefined, music_artwork: audioArtwork || undefined, sticker_overlays: reelStickerOverlays.length ? reelStickerOverlays : undefined, text_overlays: _allTxtOvPh.length ? _allTxtOvPh : undefined, emoji_overlays: _allEmoOvPh.length ? _allEmoOvPh : undefined, video_effect: (effect && effect !== 'none') ? effect : undefined, location: reelLocation || undefined, tagged_users: reelTaggedUsers.length ? reelTaggedUsers : undefined, audience: reelAudience.type, audience_users: reelAudience.type === "only_show" && reelAudience.users.length ? reelAudience.users : undefined }, token, 30000);
+        const _allTxtOvPh = [...(textOverlays||[]), ...(reviewTextOverlays||[])]; const _allEmoOvPh = [...(editEmojiOverlays||[]), ...(reviewEmojiOverlays||[])]; const reel = await api("/reels", "POST", { photo_url: pData.url, caption: caption.trim(), audio_label: audioLabel, music_url: audioUrlRef.current || undefined, music_start_time: audioStartTimeRef.current || 0, music_clip_duration: audioClipDurationRef.current || 15, music_title: (audioLabel && audioLabel !== "Original Audio") ? audioLabel : undefined, music_artist: audioArtist || undefined, music_artwork: audioArtwork || undefined, sticker_overlays: reelStickerOverlays.length ? reelStickerOverlays : undefined, text_overlays: _allTxtOvPh.length ? _allTxtOvPh : undefined, emoji_overlays: _allEmoOvPh.length ? _allEmoOvPh : undefined, video_effect: (effect && effect !== 'none') ? effect : undefined, location: reelLocation || undefined, tagged_users: reelTaggedUsers.length ? reelTaggedUsers : undefined, audience: reelAudience.type, audience_users: reelAudience.type === "only_show" && reelAudience.users.length ? reelAudience.users : undefined }, token, 30000);
         setUploadProgress(100);
         showToast && showToast("Photo reel posted! 📸", "#FF1744");
         onUploaded && onUploaded(reel); onClose();
@@ -21123,7 +21124,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       const finalDuration = (upData.duration && upData.duration > 0)
         ? upData.duration
         : (exportedBlob ? (trimEnd - trimStart) : recordTime);
-      const _allTxtOvVid = [...(textOverlays||[]), ...(reviewTextOverlays||[])]; const _allEmoOvVid = [...(editEmojiOverlays||[]), ...(reviewEmojiOverlays||[])]; const reel = await api("/reels", "POST", { video_url: upData.video_url, caption: caption.trim(), audio_label: audioLabel, music_title: (audioLabel && audioLabel !== "Original Audio") ? audioLabel : undefined, music_artist: audioArtist || undefined, music_artwork: audioArtwork || undefined, duration: Math.max(1, Math.min(MAX_REEL_SECONDS, Math.round(finalDuration))), sticker_overlays: reelStickerOverlays.length ? reelStickerOverlays : undefined, text_overlays: _allTxtOvVid.length ? _allTxtOvVid : undefined, emoji_overlays: _allEmoOvVid.length ? _allEmoOvVid : undefined, video_effect: (effect && effect !== 'none') ? effect : undefined, location: reelLocation || undefined, tagged_users: reelTaggedUsers.length ? reelTaggedUsers : undefined, audience: reelAudience.type, audience_users: reelAudience.type === "only_show" && reelAudience.users.length ? reelAudience.users : undefined }, token, 30000);
+      const _allTxtOvVid = [...(textOverlays||[]), ...(reviewTextOverlays||[])]; const _allEmoOvVid = [...(editEmojiOverlays||[]), ...(reviewEmojiOverlays||[])]; const reel = await api("/reels", "POST", { video_url: upData.video_url, caption: caption.trim(), audio_label: audioLabel, music_url: audioUrlRef.current || undefined, music_start_time: audioStartTimeRef.current || 0, music_clip_duration: audioClipDurationRef.current || 15, music_title: (audioLabel && audioLabel !== "Original Audio") ? audioLabel : undefined, music_artist: audioArtist || undefined, music_artwork: audioArtwork || undefined, duration: Math.max(1, Math.min(MAX_REEL_SECONDS, Math.round(finalDuration))), sticker_overlays: reelStickerOverlays.length ? reelStickerOverlays : undefined, text_overlays: _allTxtOvVid.length ? _allTxtOvVid : undefined, emoji_overlays: _allEmoOvVid.length ? _allEmoOvVid : undefined, video_effect: (effect && effect !== 'none') ? effect : undefined, location: reelLocation || undefined, tagged_users: reelTaggedUsers.length ? reelTaggedUsers : undefined, audience: reelAudience.type, audience_users: reelAudience.type === "only_show" && reelAudience.users.length ? reelAudience.users : undefined }, token, 30000);
       setUploadProgress(100);
       showToast && showToast("Reel posted! 🎬", "#FF1744");
       onUploaded && onUploaded(reel); onClose();
@@ -23164,7 +23165,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) trimVideoRef.current.muted = true; setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setPreviewPlaying(false); showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } })
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) trimVideoRef.current.muted = true; setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setPreviewPlaying(false); showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } })
     );
   }
 
@@ -23936,7 +23937,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) { trimVideoRef.current.muted = true; } setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setPreviewPlaying(false); showToast && showToast("Song add hua ✓", "#22C55E"); if (recordedBlob) { const _a = new Audio(); _a.src = url; _a.loop = true; _a.currentTime = (startTime || 0) / 1000; _a.play().catch(() => {}); previewMusicAudioRef.current = _a; stopStream(); setReviewMode(true); } } }),
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) { trimVideoRef.current.muted = true; } setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setPreviewPlaying(false); showToast && showToast("Song add hua ✓", "#22C55E"); if (recordedBlob) { const _a = new Audio(); _a.src = url; _a.loop = true; _a.currentTime = (startTime || 0) / 1000; _a.play().catch(() => {}); previewMusicAudioRef.current = _a; stopStream(); setReviewMode(true); } } }),
     // CSS animations
     React.createElement("style", null, `
       @keyframes countdownPop { 0%{transform:scale(0.5);opacity:0;} 30%{transform:scale(1.2);opacity:1;} 60%{transform:scale(1);} 100%{transform:scale(0.9);opacity:0.8;} }
@@ -25506,7 +25507,40 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
   const [photoMusicPlaying, setPhotoMusicPlaying] = React.useState(false);
   const [reelNatW, setReelNatW] = React.useState(0);
   const [reelNatH, setReelNatH] = React.useState(0);
+  const musicStartTime = Math.max(0, Number(reel.music_start_time) || 0);
+  const musicClipDuration = Math.max(1, Math.min(30, Number(reel.music_clip_duration) || 15));
+  const musicClipTimerRef = React.useRef(null);
   const progressBarRef = React.useRef(null);
+
+  const clearMusicClipTimer = () => {
+    if (musicClipTimerRef.current) { clearTimeout(musicClipTimerRef.current); musicClipTimerRef.current = null; }
+  };
+  const createMusicAudio = () => {
+    if (!reel.music_url) return null;
+    const a = new Audio(reel.music_url);
+    a.loop = false;
+    a.currentTime = musicStartTime;
+    a.onloadedmetadata = () => { try { a.currentTime = musicStartTime; } catch (_) {} };
+    a.onended = () => {
+      if (musicRef.current === a) { musicRef.current = null; setPhotoMusicPlaying(false); }
+    };
+    musicRef.current = a;
+    return a;
+  };
+  const startMusicClip = () => {
+    const a = musicRef.current || createMusicAudio();
+    if (!a) return;
+    clearMusicClipTimer();
+    musicClipTimerRef.current = setTimeout(() => {
+      if (musicRef.current === a) {
+        a.pause();
+        try { a.currentTime = musicStartTime; } catch (_) {}
+        musicRef.current = null;
+        setPhotoMusicPlaying(false);
+      }
+    }, musicClipDuration * 1000);
+    a.play().catch(() => {});
+  };
   const timingRef = React.useRef(null);
   const rafRef = React.useRef(null);
   // durationKnownRef removed — progress bar now uses wall-clock estimation when duration is NaN
@@ -25525,11 +25559,11 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
     }
     const v = videoRef.current;
     if (!v) return;
-    if (reel.music_preview_url) {
+    if (reel.music_url) {
       // Separate music track: video always muted, music plays when enabled
       if (enabled) {
-        if (!musicRef.current) { musicRef.current = new Audio(reel.music_preview_url); musicRef.current.loop = true; }
-        if (!v.paused) musicRef.current.play().catch(() => {});
+        if (!musicRef.current) createMusicAudio();
+        if (!v.paused) startMusicClip();
         v.muted = true;
       } else {
         if (musicRef.current) musicRef.current.pause();
@@ -25550,12 +25584,12 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
     if (progressBarRef.current) progressBarRef.current.style.width = '0%';
     // Try with audio first; if browser blocks, fall back to muted
     if (!paused) {
-      if (reel.music_preview_url) {
+      if (reel.music_url) {
         // Has song: start video muted, start music track
         v.muted = true;
         v.play().catch(() => {});
-        if (!musicRef.current) { musicRef.current = new Audio(reel.music_preview_url); musicRef.current.loop = true; }
-        musicRef.current.play().catch(() => {});
+        if (!musicRef.current) createMusicAudio();
+        startMusicClip();
       } else {
         // Original video audio: try unmuted, fallback muted
         v.muted = false;
@@ -25589,15 +25623,15 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
     if (!isPhotoReel || !reel.music_url) return;
     if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; }
     if (!paused) {
-      const a = new Audio(reel.music_url);
-      a.loop = true;
-      musicRef.current = a;
-      // Auto-start music (audio is ON by default)
-      a.play().then(() => setPhotoMusicPlaying(true)).catch(() => setPhotoMusicPlaying(false));
+      const a = createMusicAudio();
+      if (a) {
+        startMusicClip();
+        a.play().then(() => setPhotoMusicPlaying(true)).catch(() => setPhotoMusicPlaying(false));
+      }
     } else {
       setPhotoMusicPlaying(false);
     }
-    return () => { if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; } };
+    return () => { clearMusicClipTimer(); if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; } };
   }, [paused, reel.id]);
 
   // Progress bar — 60fps RAF loop.
