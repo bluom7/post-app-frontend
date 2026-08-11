@@ -53,6 +53,7 @@ input, textarea, button { font-family: inherit; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .photo-editor-crops::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .photo-editor-text-fonts::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.photo-editor-color-palette::-webkit-scrollbar { display: none; width: 0; height: 0; }
 ::-webkit-scrollbar-track { background: var(--input-bg); }
 ::-webkit-scrollbar-thumb { background: #888; border-radius: 2px; }
 ::-webkit-media-controls-overlay-cast-button { display: none !important; }
@@ -7040,6 +7041,11 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
   const textPadding = textBgColor === 'transparent'
     ? '4px 8px'
     : `${Math.max(5, textSize * 0.22)}px ${Math.max(9, textSize * 0.38)}px`;
+  // Keep the background pill coupled to the text while pinch-resizing.
+  // Transparent text keeps the wide editing area so long text remains easy to edit.
+  const textBoxWidth = textBgColor === 'transparent'
+    ? '90%'
+    : `${Math.min(90, Math.max(24, 90 * textSize / 44))}%`;
   const updateTextPointers = (ev) => {
     const gesture = textGestureRef.current;
     if (!gesture.pointers.has(ev.pointerId)) return;
@@ -7227,7 +7233,8 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     React.createElement('button', {onClick:applyAndSave, style:{background:'#fff',color:'#000',border:'none',borderRadius:20,padding:'8px 22px',fontWeight:800,fontSize:15,cursor:'pointer'}}, 'DONE')
     ),
     activePanel === 'text' && showTextColorPalette && React.createElement('div', {
-      style:{position:'absolute',top:58,left:'50%',transform:'translateX(-50%)',zIndex:20,display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderRadius:24,background:'rgba(0,0,0,0.86)',boxShadow:'0 8px 24px rgba(0,0,0,0.45)',backdropFilter:'blur(10px)',WebkitBackdropFilter:'blur(10px)',maxWidth:'calc(100% - 24px)',overflowX:'auto'}
+      className:'photo-editor-color-palette',
+      style:{position:'absolute',top:58,left:'50%',transform:'translateX(-50%)',zIndex:20,display:'flex',alignItems:'center',gap:8,padding:'10px 12px',borderRadius:0,background:'transparent',boxShadow:'none',backdropFilter:'none',WebkitBackdropFilter:'none',maxWidth:'calc(100% - 24px)',overflowX:'auto',scrollbarWidth:'none',msOverflowStyle:'none'}
     },
       TEXT_BACKGROUNDS.map(color => React.createElement('button', {
         key:color,
@@ -7275,7 +7282,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
           top:(textXY.y*100)+'%',
           transform:'translate(-50%,-50%)',
           zIndex:4,
-          width:'90%',
+          width:textBoxWidth,
           minHeight:Math.max(58, textSize * 1.3),
           maxHeight:'42%',
           padding:textPadding,
