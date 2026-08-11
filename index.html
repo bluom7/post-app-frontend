@@ -8842,6 +8842,7 @@ function ComposeModal({
   const [newVideoText, setNewVideoText] = useState('');
   const [newVideoTextColor, setNewVideoTextColor] = useState('#ffffff');
   const [newVideoTextBg, setNewVideoTextBg] = useState('transparent');
+  const [newVideoTextLastBg, setNewVideoTextLastBg] = useState('#ffffff');
   const [newVideoTextFont, setNewVideoTextFont] = useState('Classic');
   const [showVideoTextColors, setShowVideoTextColors] = useState(false);
   const videoPreviewRef = useRef(null); const videoTextGestureRef = useRef({});
@@ -9268,6 +9269,7 @@ function ComposeModal({
       { id: 'PopPlus', label: 'Pop', family: 'Arial Rounded MT Bold, Arial, sans-serif', weight: 900, style: 'normal', shadow: '0 3px 0 rgba(0,0,0,0.65)' }
     ];
     const _activeVideoTextFont = _videoTextFonts.find(font => font.id === newVideoTextFont) || _videoTextFonts[0];
+    const _videoTextContrast = color => { const hex = (color || '#ffffff').replace('#', ''); const r = parseInt(hex.slice(0, 2), 16) || 255; const g = parseInt(hex.slice(2, 4), 16) || 255; const b = parseInt(hex.slice(4, 6), 16) || 255; return (0.299 * r + 0.587 * g + 0.114 * b) > 170 ? '#111' : '#fff'; };
     const _commitVideoText = () => {
       const value = newVideoText.trim();
       setShowVideoTextColors(false);
@@ -9289,12 +9291,12 @@ function ComposeModal({
         React.createElement('div', { style: { position: 'absolute', left: 0, right: 0, top: 0, zIndex: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 18, padding: 'max(14px, env(safe-area-inset-top)) 14px 14px', background: 'linear-gradient(180deg, rgba(0,0,0,0.7), transparent)' } },
           React.createElement('button', { onClick: () => { setShowVideoTextColors(false); setVideoEditorTab(null); }, 'aria-label': 'Close text editor', style: { position: 'absolute', left: 14, top: 'max(12px, env(safe-area-inset-top))', width: 38, height: 38, border: 'none', background: 'transparent', color: '#fff', fontSize: 25, cursor: 'pointer' } }, '×'),
           React.createElement('button', { onClick: () => setShowVideoTextColors(open => !open), 'aria-label': 'Choose text color', style: { width: 32, height: 32, borderRadius: '50%', border: '2px solid #fff', background: 'conic-gradient(#ff1744,#ffd600,#00c853,#2196f3,#9c27b0,#ff1744)', boxShadow: '0 1px 5px rgba(0,0,0,0.45)', cursor: 'pointer', padding: 0 } }),
-          React.createElement('button', { onClick: () => setNewVideoTextBg(bg => bg === 'transparent' ? 'rgba(0,0,0,0.68)' : 'transparent'), 'aria-label': 'Toggle text background', 'aria-pressed': newVideoTextBg !== 'transparent', style: { width: 40, height: 36, borderRadius: 9, border: '1px solid rgba(255,255,255,0.9)', background: newVideoTextBg === 'transparent' ? 'rgba(255,255,255,0.08)' : newVideoTextBg, color: newVideoTextBg === 'transparent' ? '#fff' : '#fff', fontFamily: "'Arial Black', Impact, sans-serif", fontSize: 19, fontWeight: 900, cursor: 'pointer', padding: 0 } } , 'A'),
+          React.createElement('button', { onClick: () => setNewVideoTextBg(bg => bg === 'transparent' ? newVideoTextLastBg : 'transparent'), 'aria-label': 'Toggle text background', 'aria-pressed': newVideoTextBg !== 'transparent', style: { width: 40, height: 36, borderRadius: 9, border: '1px solid rgba(255,255,255,0.9)', background: newVideoTextBg === 'transparent' ? 'rgba(255,255,255,0.08)' : newVideoTextBg, color: newVideoTextBg === 'transparent' ? '#fff' : _videoTextContrast(newVideoTextBg), fontFamily: "'Arial Black', Impact, sans-serif", fontSize: 19, fontWeight: 900, cursor: 'pointer', padding: 0 } } , 'A'),
           React.createElement('button', { 'aria-label': 'Text alignment', style: { width: 38, height: 36, border: 'none', background: 'transparent', color: '#fff', fontSize: 26, lineHeight: 1, cursor: 'pointer' } }, '≡'),
           React.createElement('button', { onClick: _commitVideoText, style: { position: 'absolute', right: 14, top: 'max(10px, env(safe-area-inset-top))', border: 'none', borderRadius: 8, padding: '10px 15px', background: '#fff', color: '#111', fontSize: 16, fontWeight: 700, cursor: 'pointer' } }, 'Done')
         ),
         showVideoTextColors && React.createElement('div', { style: { position: 'absolute', top: 'max(64px, calc(env(safe-area-inset-top) + 54px))', left: '50%', transform: 'translateX(-50%)', zIndex: 15, display: 'flex', gap: 9, padding: '10px 13px', borderRadius: 20, background: 'rgba(0,0,0,0.72)', boxShadow: '0 4px 16px rgba(0,0,0,0.35)' } },
-          ['#ffffff','#111111','#ff1744','#ffd600','#00c853','#2196f3','#9c27b0','#ff9800','#00bcd4'].map(color => React.createElement('button', { key: color, onClick: () => { setNewVideoTextColor(color); setShowVideoTextColors(false); }, 'aria-label': 'Text color ' + color, style: { width: 30, height: 30, padding: 0, borderRadius: '50%', border: newVideoTextColor === color ? '3px solid #fff' : '2px solid rgba(255,255,255,0.45)', background: color, cursor: 'pointer' } }))
+          ['#ffffff','#111111','#ff1744','#ffd600','#00c853','#2196f3','#9c27b0','#ff9800','#00bcd4'].map(color => React.createElement('button', { key: color, onClick: () => { setNewVideoTextLastBg(color); setNewVideoTextBg(color); setNewVideoTextColor(_videoTextContrast(color)); setShowVideoTextColors(false); }, 'aria-label': 'Text color ' + color, style: { width: 30, height: 30, padding: 0, borderRadius: '50%', border: newVideoTextBg === color ? '3px solid #fff' : '2px solid rgba(255,255,255,0.45)', background: color, cursor: 'pointer' } }))
         ),
         React.createElement('div', { style: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 10, padding: '10px 0 max(18px, env(safe-area-inset-bottom))', background: 'linear-gradient(transparent, rgba(0,0,0,0.86) 34%)' } },
           React.createElement('div', { style: { display: 'flex', gap: 10, overflowX: 'auto', padding: '14px 16px 6px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' } },
