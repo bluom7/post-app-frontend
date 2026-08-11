@@ -7257,9 +7257,6 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
         },
         ...textGestureProps
       }),
-      activePanel !== 'text' && !overlayText.trim() && React.createElement('div', {
-        style:{position:'absolute',left:'50%',top:'50%',transform:'translate(-50%,-50%)',zIndex:4,color:'rgba(255,255,255,0.88)',fontSize:44,fontFamily:activeTextFont.fontFamily,fontWeight:activeTextFont.fontWeight,fontStyle:activeTextFont.fontStyle,textShadow:activeTextFont.textShadow,pointerEvents:'none',whiteSpace:'nowrap'}
-      }, 'Type or @Tag')
     ),
 
     /* ── Active panel ── */
