@@ -5731,10 +5731,14 @@ function FeedVideo({ post }) {
         position: 'absolute',
         left: t.x + '%', top: t.y + '%',
         transform: 'translate(-50%,-50%)',
-        color: t.color || '#fff',
-        fontSize: (t.size || 20) + 'px',
-        fontWeight: 800,
-        textShadow: '0 1px 5px rgba(0,0,0,0.8)',
+        color: t.bgColor && t.bgColor !== 'transparent' ? (t.textColor || '#fff') : (t.color || '#fff'),
+        fontFamily: t.fontFamily || (t.font === 'Headline' ? "'Arial Black', Impact, sans-serif" : t.font === 'Glow' ? 'Arial, sans-serif' : t.font === 'Fancy' ? "Georgia, 'Times New Roman', serif" : t.font === 'Pop' ? 'Arial, sans-serif' : 'Georgia, serif'),
+        fontStyle: t.font === 'Fancy' ? 'italic' : 'normal',
+        fontWeight: t.font === 'Classic' || t.font === 'Fancy' ? 700 : 900,
+        background: t.bgColor && t.bgColor !== 'transparent' ? t.bgColor : 'transparent',
+        padding: t.bgColor && t.bgColor !== 'transparent' ? '6px 10px' : '4px 8px',
+        borderRadius: t.bgColor && t.bgColor !== 'transparent' ? 8 : 0,
+        textShadow: t.bgColor && t.bgColor !== 'transparent' ? 'none' : (t.textShadow || '0 1px 5px rgba(0,0,0,0.8)'),
         zIndex: 2,
         pointerEvents: 'none',
         whiteSpace: 'nowrap',
@@ -8832,11 +8836,13 @@ function ComposeModal({
   const [pendingVideoDuration, setPendingVideoDuration] = useState(0);
   const [showVideoTrim, setShowVideoTrim] = useState(false);
   const [showVideoEditor, setShowVideoEditor] = useState(false);
-  const [videoTextOverlays, setVideoTextOverlays] = useState([]); // [{id,text,x,y,color,size}] — draggable text overlays on video
+  const [videoTextOverlays, setVideoTextOverlays] = useState([]); // [{id,text,x,y,color,size,font,bgColor}] — draggable text overlays on video
   const [videoEffect, setVideoEffect] = useState('none');         // VIDEO_EFFECTS id
   const [videoEditorTab, setVideoEditorTab] = useState(null);     // 'trim'|'effects'|'text'|null
   const [newVideoText, setNewVideoText] = useState('');
   const [newVideoTextColor, setNewVideoTextColor] = useState('#ffffff');
+  const [newVideoTextBg, setNewVideoTextBg] = useState('transparent');
+  const [newVideoTextFont, setNewVideoTextFont] = useState('Classic');
   const videoPreviewRef = useRef(null); const videoTextGestureRef = useRef({});
   const edVideoRef = useRef(null);
   const edAudioRef = useRef(null);
@@ -9289,7 +9295,7 @@ function ComposeModal({
           /* Draggable text overlays */
           videoTextOverlays.map(t => React.createElement('div', {
             key: t.id,
-            style: { position: 'absolute', left: t.x + '%', top: t.y + '%', transform: 'translate(-50%,-50%)', color: t.color || '#fff', fontSize: (t.size || 20) + 'px', fontWeight: 800, textShadow: '0 1px 5px rgba(0,0,0,0.8)', cursor: 'move', zIndex: 4, whiteSpace: 'nowrap', userSelect: 'none', touchAction: 'none' },
+            style: { position: 'absolute', left: t.x + '%', top: t.y + '%', transform: 'translate(-50%,-50%)', color: t.bgColor && t.bgColor !== 'transparent' ? (t.textColor || '#fff') : (t.color || '#fff'), fontFamily: t.fontFamily || (t.font === 'Headline' ? "'Arial Black', Impact, sans-serif" : t.font === 'Glow' ? 'Arial, sans-serif' : t.font === 'Fancy' ? "Georgia, 'Times New Roman', serif" : t.font === 'Pop' ? 'Arial, sans-serif' : 'Georgia, serif'), fontStyle: t.font === 'Fancy' ? 'italic' : 'normal', fontSize: (t.size || 44) + 'px', fontWeight: t.font === 'Classic' || t.font === 'Fancy' ? 700 : 900, background: t.bgColor && t.bgColor !== 'transparent' ? t.bgColor : 'transparent', padding: t.bgColor && t.bgColor !== 'transparent' ? Math.max(5, (t.size || 44) * 0.22) + 'px ' + Math.max(9, (t.size || 44) * 0.38) + 'px' : '4px 8px', borderRadius: t.bgColor && t.bgColor !== 'transparent' ? 8 : 0, textShadow: t.bgColor && t.bgColor !== 'transparent' ? 'none' : (t.textShadow || '0 1px 5px rgba(0,0,0,0.8)'), cursor: 'move', zIndex: 4, whiteSpace: 'nowrap', userSelect: 'none', touchAction: 'none' },
             onPointerDown: (ev) => {
               if (ev.pointerType === 'touch') return;
               ev.preventDefault();
@@ -9514,14 +9520,29 @@ function ComposeModal({
         /* TEXT panel */
         videoEditorTab === 'text' && React.createElement('div', null,
           React.createElement('div', { style: { color: '#ccc', fontSize: 13, fontWeight: 700, marginBottom: 10 } }, 'Add text overlay'),
-          React.createElement('input', { type: 'text', value: newVideoText, onChange: e => setNewVideoText(e.target.value), placeholder: 'Type something…', style: { width: '100%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, padding: '10px 14px', color: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box', marginBottom: 10, fontFamily: 'inherit' } }),
-          React.createElement('div', { style: { display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' } },
-            VID_TEXT_COLORS.map(c => React.createElement('div', { key: c, onClick: () => setNewVideoTextColor(c), style: { width: 28, height: 28, borderRadius: '50%', background: c, cursor: 'pointer', border: newVideoTextColor === c ? '3px solid #fff' : '2px solid rgba(255,255,255,0.3)', flexShrink: 0, boxSizing: 'border-box' } }))
+          React.createElement('input', { type: 'text', value: newVideoText, onChange: e => setNewVideoText(e.target.value), placeholder: 'Type something…', maxLength: 180, style: { width: '100%', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 10, padding: '10px 14px', color: '#fff', fontSize: 15, outline: 'none', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'inherit' } }),
+          React.createElement('div', { style: { color: '#aaa', fontSize: 12, fontWeight: 700, marginBottom: 7 } }, 'Text style'),
+          React.createElement('div', { style: { display: 'flex', gap: 6, overflowX: 'auto', padding: '2px 0 10px', scrollbarWidth: 'none' } },
+            [
+              { id: 'Classic', label: 'Classic', fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'normal', textShadow: '0 2px 8px rgba(0,0,0,0.9)' },
+              { id: 'Headline', label: 'Headline', fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: 'normal', textShadow: '0 2px 6px rgba(0,0,0,0.9)' },
+              { id: 'Glow', label: 'Glow', fontFamily: 'Arial, sans-serif', fontWeight: 700, fontStyle: 'normal', textShadow: '0 0 20px currentColor, 0 0 40px currentColor, 0 2px 6px rgba(0,0,0,0.75)' },
+              { id: 'Fancy', label: 'Fancy', fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 600, fontStyle: 'italic', textShadow: '0 2px 8px rgba(0,0,0,0.9)' },
+              { id: 'Pop', label: 'Pop', fontFamily: 'Arial, sans-serif', fontWeight: 900, fontStyle: 'normal', textShadow: '0 2px 5px rgba(0,0,0,0.9)' }
+            ].map(f => React.createElement('button', { key: f.id, onClick: () => setNewVideoTextFont(f.id), style: { background: newVideoTextFont === f.id ? '#fff' : 'transparent', border: newVideoTextFont === f.id ? '1px solid #fff' : '1px solid rgba(255,255,255,0.32)', borderRadius: 18, padding: '7px 12px', color: newVideoTextFont === f.id ? '#111' : '#fff', fontFamily: f.fontFamily, fontWeight: f.fontWeight, fontStyle: f.fontStyle, fontSize: 14, cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap', textShadow: newVideoTextFont === f.id ? 'none' : f.textShadow } }, f.label))
           ),
-          React.createElement('button', { onClick: () => { if (!newVideoText.trim()) return; setVideoTextOverlays(prev => [...prev, { id: Math.random().toString(36).slice(2), text: newVideoText.trim(), x: 50, y: 45, color: newVideoTextColor, size: 22 }]); setNewVideoText(''); }, style: { width: '100%', background: COLORS.blue, color: '#fff', border: 'none', borderRadius: 10, padding: '11px', fontWeight: 800, fontSize: 15, cursor: 'pointer' } }, '+ Add Text'),
+          React.createElement('div', { style: { color: '#aaa', fontSize: 12, fontWeight: 700, marginBottom: 7 } }, 'Text color'),
+          React.createElement('div', { style: { display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' } },
+            ['#ffffff','#111111','#ff1744','#ffd600','#00c853','#2196f3','#9c27b0'].map(c => React.createElement('button', { key: c, onClick: () => setNewVideoTextColor(c), 'aria-label': 'Text color ' + c, style: { width: 28, height: 28, borderRadius: '50%', background: c, cursor: 'pointer', border: newVideoTextColor === c ? '3px solid #fff' : '2px solid rgba(255,255,255,0.3)', flexShrink: 0, boxSizing: 'border-box', padding: 0 } }))
+          ),
+          React.createElement('div', { style: { color: '#aaa', fontSize: 12, fontWeight: 700, marginBottom: 7 } }, 'Text background'),
+          React.createElement('div', { style: { display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' } },
+            ['transparent','#5A2A18','#FFFFFF','#000000','#2196F3','#4CAF50','#FFD600','#FF9800','#FF1744','#E91E63','#9C27B0'].map(c => React.createElement('button', { key: c, onClick: () => setNewVideoTextBg(c), 'aria-label': c === 'transparent' ? 'Transparent text background' : 'Text background ' + c, style: { width: 28, height: 28, borderRadius: '50%', background: c === 'transparent' ? 'repeating-conic-gradient(#777 0 25%, #fff 0 50%) 50% / 10px 10px' : c, cursor: 'pointer', border: newVideoTextBg === c ? '3px solid #fff' : '2px solid rgba(255,255,255,0.3)', flexShrink: 0, boxSizing: 'border-box', padding: 0 } }))
+          ),
+          React.createElement('button', { onClick: () => { if (!newVideoText.trim()) return; const font = newVideoTextFont === 'Headline' ? { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: 'normal', textShadow: '0 2px 6px rgba(0,0,0,0.9)' } : newVideoTextFont === 'Glow' ? { fontFamily: 'Arial, sans-serif', fontWeight: 700, fontStyle: 'normal', textShadow: '0 0 20px currentColor, 0 0 40px currentColor, 0 2px 6px rgba(0,0,0,0.75)' } : newVideoTextFont === 'Fancy' ? { fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 600, fontStyle: 'italic', textShadow: '0 2px 8px rgba(0,0,0,0.9)' } : newVideoTextFont === 'Pop' ? { fontFamily: 'Arial, sans-serif', fontWeight: 900, fontStyle: 'normal', textShadow: '0 2px 5px rgba(0,0,0,0.9)' } : { fontFamily: 'Georgia, serif', fontWeight: 700, fontStyle: 'normal', textShadow: '0 2px 8px rgba(0,0,0,0.9)' }; setVideoTextOverlays(prev => [...prev, { id: Math.random().toString(36).slice(2), text: newVideoText.trim(), x: 50, y: 45, color: newVideoTextColor, textColor: newVideoTextColor, bgColor: newVideoTextBg, font: newVideoTextFont, ...font, size: 44 }]); setNewVideoText(''); }, style: { width: '100%', background: COLORS.blue, color: '#fff', border: 'none', borderRadius: 10, padding: '11px', fontWeight: 800, fontSize: 15, cursor: 'pointer' } }, '+ Add Text'),
           videoTextOverlays.length > 0 && React.createElement('div', { style: { marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 6 } },
             videoTextOverlays.map(t => React.createElement('div', { key: t.id, style: { background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 6 } },
-              React.createElement('span', { style: { color: t.color || '#fff', fontWeight: 700, fontSize: 13, maxWidth: 100, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' } }, t.text),
+              React.createElement('span', { style: { color: t.textColor || t.color || '#fff', fontFamily: t.fontFamily || 'Georgia, serif', fontStyle: t.fontStyle || 'normal', fontWeight: t.fontWeight || 700, fontSize: 13, maxWidth: 100, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' } }, t.text),
               React.createElement('button', { onClick: () => setVideoTextOverlays(prev => prev.filter(o => o.id !== t.id)), style: { background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: 14, padding: '0 2px', lineHeight: 1 } }, '✕')
             ))
           )
