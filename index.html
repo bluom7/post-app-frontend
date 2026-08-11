@@ -20549,9 +20549,10 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const [editTextFontFull, setEditTextFontFull] = React.useState("Classic");
   const [editTextSizeFull, setEditTextSizeFull] = React.useState(32);
   const [editTextScaleFull, setEditTextScaleFull] = React.useState(1);
+  const [editTextPositionFull, setEditTextPositionFull] = React.useState({ xPct: 50, yPct: 45 });
   const [lastEditTextColorFull, setLastEditTextColorFull] = React.useState("#FFD600");
   const [editTextPaletteOpen, setEditTextPaletteOpen] = React.useState(false);
-  const editTextGestureRef = React.useRef({ pointers: new Map(), startDistance: 0, startScale: 1 });
+  const editTextGestureRef = React.useRef({ pointers: new Map(), startDistance: 0, startScale: 1, startPoint: null, startPosition: { xPct: 50, yPct: 45 } });
   const editOverlayGestureRef = React.useRef({ id: null, pointers: new Map(), startDistance: 0, startSize: 22 });
   const [dragOverlayId, setDragOverlayId] = React.useState(null);
   const [reelStickerOverlays, setReelStickerOverlays] = React.useState([]); // [{id,url,xPct,yPct}]
@@ -22783,12 +22784,16 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           if (editTextColorFull === "transparent") setEditTextColorFull(lastEditTextColorFull || "#FFD600");
           else setEditTextColorFull("transparent");
         };
+        const clampTextPosition = value => Math.min(96, Math.max(4, value));
         const startPinch = e => {
           e.stopPropagation();
           const gesture = editTextGestureRef.current;
           gesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
           try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
-          if (gesture.pointers.size >= 2) {
+          if (gesture.pointers.size === 1) {
+            gesture.startPoint = { x: e.clientX, y: e.clientY };
+            gesture.startPosition = { ...editTextPositionFull };
+          } else if (gesture.pointers.size >= 2) {
             const points = Array.from(gesture.pointers.values());
             gesture.startDistance = Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y));
             gesture.startScale = editTextScaleFull;
@@ -22799,8 +22804,18 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           const gesture = editTextGestureRef.current;
           if (!gesture.pointers.has(e.pointerId)) return;
           gesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-          if (gesture.pointers.size < 2) return;
           const points = Array.from(gesture.pointers.values());
+          if (points.length === 1 && gesture.startPoint) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const dxPct = ((e.clientX - gesture.startPoint.x) / Math.max(1, rect.width)) * 100;
+            const dyPct = ((e.clientY - gesture.startPoint.y) / Math.max(1, rect.height)) * 100;
+            setEditTextPositionFull({
+              xPct: clampTextPosition(gesture.startPosition.xPct + dxPct),
+              yPct: clampTextPosition(gesture.startPosition.yPct + dyPct),
+            });
+            return;
+          }
+          if (points.length < 2) return;
           const distance = Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y));
           if (!gesture.startDistance) {
             gesture.startDistance = distance;
@@ -22812,16 +22827,25 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           e.stopPropagation();
           const gesture = editTextGestureRef.current;
           gesture.pointers.delete(e.pointerId);
-          if (gesture.pointers.size < 2) gesture.startDistance = 0;
+          if (gesture.pointers.size >= 2) return;
+          gesture.startDistance = 0;
+          if (gesture.pointers.size === 1) {
+            const remaining = Array.from(gesture.pointers.values())[0];
+            gesture.startPoint = { x: remaining.x, y: remaining.y };
+            gesture.startPosition = { ...editTextPositionFull };
+          } else {
+            gesture.startPoint = null;
+          }
         };
         const placeText = () => {
           if (editTextDraftFull.trim()) {
-            setTextOverlays(prev => [...prev, { id: Date.now().toString(), text: editTextDraftFull.trim(), color: "#ffffff", bgColor: editTextColorFull, font: editTextFontFull, size: renderSize, xPct: 50, yPct: 45 }]);
+            setTextOverlays(prev => [...prev, { id: Date.now().toString(), text: editTextDraftFull.trim(), color: "#ffffff", bgColor: editTextColorFull, font: editTextFontFull, size: renderSize, xPct: editTextPositionFull.xPct, yPct: editTextPositionFull.yPct }]);
             setEditTextDraftFull("");
           }
           setEditTextPaletteOpen(false);
           setEditTextEditorOpen(false);
           setEditTextScaleFull(1);
+          setEditTextPositionFull({ xPct: 50, yPct: 45 });
         };
         const palette = [...DARK_COLORS, ...VIVID_COLORS];
         return React.createElement("div", {
@@ -22841,8 +22865,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
               palette.map((c, i) => React.createElement("button", { key: c + i, onPointerDown: e => { e.stopPropagation(); chooseColor(c); }, "aria-label": c === "transparent" ? "Transparent text background" : "Text background " + c, style: { width: 30, height: 30, borderRadius: "50%", border: editTextColorFull === c ? "3px solid #fff" : "2px solid rgba(255,255,255,0.42)", background: c === "transparent" ? "repeating-linear-gradient(45deg,#777 0,#777 4px,rgba(255,255,255,0.8) 4px,rgba(255,255,255,0.8) 8px)" : c, boxShadow: editTextColorFull === c ? "0 0 0 2px rgba(0,0,0,0.6)" : "none", cursor: "pointer", padding: 0 } }))
             )
           ),
-          React.createElement("div", { style: { flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 20px", touchAction: "none" }, onPointerDown: startPinch, onPointerMove: movePinch, onPointerUp: endPinch, onPointerCancel: endPinch },
-            React.createElement("div", { style: { position: "relative", width: "100%", textAlign: "center", display: "flex", justifyContent: "center", alignItems: "center", minHeight: 64 } },
+          React.createElement("div", { style: { flex: 1, minHeight: 0, position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", padding: "0 20px", touchAction: "none" }, onPointerDown: startPinch, onPointerMove: movePinch, onPointerUp: endPinch, onPointerCancel: endPinch },
+            React.createElement("div", { style: { position: "absolute", left: editTextPositionFull.xPct + "%", top: editTextPositionFull.yPct + "%", transform: "translate(-50%, -50%)", width: "min(92%, 520px)", textAlign: "center", display: "flex", justifyContent: "center", alignItems: "center", minHeight: 64, touchAction: "none", userSelect: "none", WebkitUserSelect: "none", cursor: "move" } },
               React.createElement("div", { style: { wordBreak: "break-word", minHeight: 44, pointerEvents: "none", ...textStyle } },
                 editTextDraftFull || React.createElement("span", { style: { color: "rgba(255,255,255,0.66)", fontFamily: fDef.fontFamily, fontWeight: fDef.fontWeight, fontSize: renderSize + "px", fontStyle: fDef.fontStyle } }, "Type or @Tag")
               ),
@@ -22869,7 +22893,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         ),
         !editTextEditorOpen && React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 10 } },
           React.createElement("button", {
-            onClick: () => { setEditTextEditorOpen(true); setEditTextDraftFull(""); setEditTextScaleFull(1); setEditTextPaletteOpen(false); },
+            onClick: () => { setEditTextEditorOpen(true); setEditTextDraftFull(""); setEditTextScaleFull(1); setEditTextPositionFull({ xPct: 50, yPct: 45 }); setEditTextPaletteOpen(false); },
             style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", WebkitTapHighlightColor: "transparent", padding: 0 }
           },
             React.createElement("div", { style: { width: 42, height: 42, borderRadius: 12, background: editTextEditorOpen ? "#FFD600" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s" } },
