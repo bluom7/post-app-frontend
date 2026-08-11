@@ -7133,11 +7133,17 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     }
     canvas.width = Math.round(sw); canvas.height = Math.round(sh);
     if (filterCss !== 'none') ctx.filter = filterCss;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
     ctx.filter = 'none';
     if (overlayText.trim()) {
       const textFontDef = TEXT_FONTS.find(f => f.id === textFont) || TEXT_FONTS[0];
-      const fs2 = Math.round(canvas.width * textSize / 400);
+      // Match the editor's on-screen text size to the natural image pixels.
+      // The preview may be scaled to fit the phone, so a fixed 400px reference
+      // makes the saved text look smaller than it did while editing.
+      const renderedWidth = img.getBoundingClientRect().width || 400;
+      const fs2 = Math.max(1, Math.round(textSize * canvas.width / renderedWidth));
       ctx.font = `${textFontDef.fontStyle} ${textFontDef.fontWeight} ${fs2}px ${textFontDef.fontFamily}`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -7178,7 +7184,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
     }
-    onSave(canvas.toDataURL('image/jpeg', 0.88));
+    onSave(canvas.toDataURL('image/jpeg', 0.96));
   };
 
   const getFreeCropPoint = (ev, cont) => {
@@ -8955,13 +8961,16 @@ function ComposeModal({
     r.onload = ev => {
       const img = new Image();
       img.onload = () => {
-        const MAX_W = 1080;
+        const MAX_W = 2048;
         let w = img.width, h = img.height;
         if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        res({ src: canvas.toDataURL('image/jpeg', 0.82), w, h });
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w, h);
+        res({ src: canvas.toDataURL('image/jpeg', 0.94), w, h });
       };
       // If image fails to load, fall back to original data URL (don't hang)
       img.onerror = () => res({ src: ev.target.result, w: 0, h: 0 });
