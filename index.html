@@ -22778,7 +22778,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         const chooseColor = color => {
           if (color !== "transparent") setLastEditTextColorFull(color);
           setEditTextColorFull(color);
-          setEditTextPaletteOpen(false);
+          setEditTextPaletteOpen(true);
         };
         const toggleTextBackground = () => {
           if (editTextColorFull === "transparent") setEditTextColorFull(lastEditTextColorFull || "#FFD600");
@@ -22857,7 +22857,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
               React.createElement("div", { style: { width: 62, height: 42 } }),
               React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } },
                 React.createElement("button", { onPointerDown: e => { e.stopPropagation(); setEditTextPaletteOpen(v => !v); }, "aria-label": "Text background colors", style: { width: 36, height: 36, borderRadius: "50%", border: "2px solid #fff", background: editTextColorFull === "transparent" ? "conic-gradient(#FF1744,#FFD600,#00C853,#1877F2,#9C27B0,#FF1744)" : editTextColorFull, boxShadow: "0 2px 8px rgba(0,0,0,0.5)", cursor: "pointer", padding: 0 } }),
-                React.createElement("button", { onClick: toggleTextBackground, "aria-label": "Toggle text background", style: { width: 38, height: 36, borderRadius: 7, border: "none", background: "#fff", color: "#111", fontSize: 17, fontWeight: 800, cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.35)" } }, "A")
+                React.createElement("button", { onClick: toggleTextBackground, "aria-label": "Toggle text background", style: { width: 38, height: 36, borderRadius: 7, border: "none", background: editTextColorFull === "transparent" ? "#fff" : editTextColorFull, color: editTextColorFull === "transparent" || editTextColorFull === "#FFD600" ? "#111" : "#fff", fontSize: 17, fontWeight: 800, cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.35)" } }, "A")
               ),
               React.createElement("button", { onClick: placeText, style: { minWidth: 76, height: 44, borderRadius: 8, border: "none", background: "#fff", color: "#111", fontWeight: 800, fontSize: 16, cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.35)" } }, "Done")
             ),
@@ -22884,7 +22884,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
       // ── Top bar: X close (left) + Text & Emoji (right, vertical) ──
       React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, padding: "14px 16px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" } },
-        React.createElement("button", {
+        !editTextEditorOpen && React.createElement("button", {
           onClick: () => { if (!uploading && !exporting) { /* music keeps playing continuously — no pause on navigate back to review */ setEditTool(null); setStep("camera"); setReviewMode(true); } },
           style: { width: 38, height: 38, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }
         },
