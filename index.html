@@ -6957,8 +6957,8 @@ function PostMedia({ post, maxHeight, borderRadius, user, onLike, onComment, onS
 function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
   const [activePanel, setActivePanel] = React.useState(null);
   const [filter, setFilter] = React.useState('Original');
-  const [cropRatio, setCropRatio] = React.useState('Free');
-  const [cropSelectionEnabled, setCropSelectionEnabled] = React.useState(true);
+  const [cropRatio, setCropRatio] = React.useState('Original');
+  const [cropSelectionEnabled, setCropSelectionEnabled] = React.useState(false);
   const [overlayText, setOverlayText] = React.useState('');
   const [textBgColor, setTextBgColor] = React.useState('transparent');
   const [lastTextBgColor, setLastTextBgColor] = React.useState('#000000');
@@ -7008,8 +7008,8 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
 
   // Keep every newly selected photo in its natural shape.
   React.useEffect(() => {
-    setCropRatio('Free');
-    setCropSelectionEnabled(true);
+    setCropRatio('Original');
+    setCropSelectionEnabled(false);
     setCropOffset({x:0.5, y:0.5});
     setFreeBox({x1:0.05, y1:0.05, x2:0.95, y2:0.95});
     setTextXY({x:0.5, y:0.5});
