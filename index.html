@@ -9280,9 +9280,9 @@ function ComposeModal({
         React.createElement('button', { 'aria-label': 'Close video editor', onClick: () => { setShowVideoEditor(false); setVideoEditorTab(null); }, style: { position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: '50%', color: '#fff', fontSize: 25, lineHeight: 1, cursor: 'pointer', padding: 0 } }, '×'),
       ),
       /* ── Main: centered video preview with floating tools ── */
-      React.createElement('div', { style: { position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', minHeight: 0, padding: '26px 0 24px', background: '#000' } },
+      React.createElement('div', { style: { position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', minHeight: 0, padding: 0, background: '#000' } },
         /* Video with text overlays + playback controls */
-        React.createElement('div', { ref: videoPreviewRef, style: { width: _editorFrameWidth, height: '100%', position: 'relative', overflow: 'hidden', borderRadius: 0, background: '#000', boxShadow: 'none', border: 'none' } },
+        React.createElement('div', { ref: videoPreviewRef, style: { width: _editorFrameWidth, height: _editorFrameHeight, position: 'relative', overflow: 'hidden', borderRadius: 0, background: '#000', boxShadow: 'none', border: 'none' } },
           React.createElement('div', { style: { position: 'absolute', inset: 0, filter: _actEff, zIndex: 0 } },
             React.createElement('video', { key: _edSrc + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), ref: edVideoRef, src: _edSrc, preload: 'auto', playsInline: true, autoPlay: true, muted: selectedMusic ? true : !edAudioOn, onLoadedData: (e) => { e.target.play().catch(() => {}); }, onError: () => { recoverLocalVideoPreview(); }, style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'translateZ(0)', background: '#000' }, onLoadedMetadata: (e) => { if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } setEdDuration(e.target.duration); setEdCurrentTime(0); }, onTimeUpdate: (e) => { setEdCurrentTime(e.target.currentTime); if (trimEnd > 0 && e.target.currentTime >= trimEnd) { e.target.currentTime = trimStart; } }, onEnded: () => { if (edVideoRef.current) { edVideoRef.current.currentTime = trimStart; edVideoRef.current.play().catch(()=>{}); } } })
           ),
@@ -9453,7 +9453,11 @@ function ComposeModal({
           ),
           /* Effects */
           React.createElement('button', { onClick: () => setVideoEditorTab(prev => prev === 'effects' ? null : 'effects'), 'aria-label': 'Effects tool', 'aria-pressed': videoEditorTab === 'effects', style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: videoEditorTab === 'effects' ? 'rgba(255,255,255,0.18)' : 'transparent', border: '1px solid ' + (videoEditorTab === 'effects' ? 'rgba(255,255,255,0.42)' : 'transparent'), color: '#fff', cursor: 'pointer', padding: '10px 3px', borderRadius: 16, width: '100%', minHeight: 58, touchAction: 'manipulation', WebkitTapHighlightColor: 'transparent', userSelect: 'none' } },
-            React.createElement('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, React.createElement('path', { d: 'M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z' })),
+            React.createElement('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' },
+               React.createElement('path', { d: 'M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2z' }),
+               React.createElement('path', { d: 'M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z' }),
+               React.createElement('path', { d: 'M5 4l.6 1.4L7 6l-1.4.6L5 8l-.6-1.4L3 6l1.4-.6L5 4z' })
+             ),
             React.createElement('span', { style: { fontSize: 10, fontWeight: 700, lineHeight: 1 } }, 'Effects')
           ),
           /* Stickers */
