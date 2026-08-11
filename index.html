@@ -20544,6 +20544,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const [textOverlays, setTextOverlays] = React.useState([]);
   const [textDraft, setTextDraft] = React.useState("");
   const [editTextEditorOpen, setEditTextEditorOpen] = React.useState(false);
+  const [editTextOverlayIdFull, setEditTextOverlayIdFull] = React.useState(null);
   const [editTextDraftFull, setEditTextDraftFull] = React.useState("");
   const [editTextColorFull, setEditTextColorFull] = React.useState("transparent");
   const [editTextFontFull, setEditTextFontFull] = React.useState("Classic");
@@ -21351,7 +21352,27 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     setTextDraft("");
   }
 
-  function removeTextOverlay(id) { setTextOverlays(prev => prev.filter(o => o.id !== id)); }
+  function removeTextOverlay(id) {
+    setTextOverlays(prev => prev.filter(o => o.id !== id));
+    if (editTextOverlayIdFull === id) {
+      setEditTextOverlayIdFull(null);
+      setEditTextEditorOpen(false);
+    }
+  }
+
+  function editTextOverlayInAa(id) {
+    const overlay = textOverlays.find(o => o.id === id);
+    if (!overlay) return;
+    setEditTextOverlayIdFull(id);
+    setEditTextDraftFull(overlay.text || "");
+    setEditTextColorFull(overlay.bgColor || "transparent");
+    setEditTextFontFull(overlay.font || "Classic");
+    setEditTextSizeFull(Math.min(140, Math.max(12, overlay.size || 32)));
+    setEditTextScaleFull(1);
+    setEditTextPositionFull({ xPct: overlay.xPct || 50, yPct: overlay.yPct || 45 });
+    setEditTextPaletteOpen(false);
+    setEditTextEditorOpen(true);
+  }
 
   // fetch Giphy stickers whenever sticker panel opens or query changes
   React.useEffect(() => {
@@ -22341,6 +22362,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         onPointerMove: e => { e.stopPropagation(); updateEditOverlayGesture(e); },
         onPointerUp: e => { e.stopPropagation(); endEditOverlayGesture(e); },
         onPointerCancel: e => { e.stopPropagation(); endEditOverlayGesture(e); },
+        onClick: e => { e.stopPropagation(); editTextOverlayInAa(o.id); },
         onTouchStart: e => { e.stopPropagation(); startEditOverlayGesture(o.id, e); }
           },
             (() => { const _FM3 = { Bubble: { fontFamily: "'Arial Rounded MT Bold', Arial, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "none", textShadow: "0 3px 0 rgba(0,0,0,0.65)" }, "Slab Serif": { fontFamily: "'Roboto Slab', Georgia, serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 6px rgba(0,0,0,0.9)" }, Geometric: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 800, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 5px rgba(0,0,0,0.9)" }, Classic: { fontFamily: "Georgia, serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }, Headline: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.85)" }, Glow: { fontFamily: "Arial, sans-serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 0 20px #fff, 0 0 40px #fff" }, Fancy: { fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 600, fontStyle: "italic", textTransform: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }, Pop: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "uppercase", textShadow: "2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000" } }; const _f3 = _FM3[o.font] || _FM3.Classic; const _hasBg3 = o.bgColor && o.bgColor !== "transparent"; return React.createElement("span", { style: { color: o.color || "#ffffff", fontSize: (o.size||22)+"px", fontWeight: _f3.fontWeight, fontFamily: _f3.fontFamily, fontStyle: _f3.fontStyle, textTransform: _f3.textTransform, textShadow: _hasBg3 ? "none" : _f3.textShadow, background: _hasBg3 ? o.bgColor : "transparent", padding: _hasBg3 ? "5px 12px" : "0", borderRadius: _hasBg3 ? "7px" : "0", whiteSpace: "nowrap", display: "inline-block" } }, o.text); })(),
@@ -22839,11 +22861,20 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         };
         const placeText = () => {
           if (editTextDraftFull.trim()) {
-            setTextOverlays(prev => [...prev, { id: Date.now().toString(), text: editTextDraftFull.trim(), color: "#ffffff", bgColor: editTextColorFull, font: editTextFontFull, size: renderSize, xPct: editTextPositionFull.xPct, yPct: editTextPositionFull.yPct }]);
+            const nextText = editTextDraftFull.trim();
+            if (editTextOverlayIdFull) {
+              setTextOverlays(prev => prev.map(o => o.id === editTextOverlayIdFull
+                ? { ...o, text: nextText, color: o.color || "#ffffff", bgColor: editTextColorFull, font: editTextFontFull, size: renderSize, xPct: editTextPositionFull.xPct, yPct: editTextPositionFull.yPct }
+                : o));
+            } else {
+              setTextOverlays(prev => [...prev, { id: Date.now().toString(), text: nextText, color: "#ffffff", bgColor: editTextColorFull, font: editTextFontFull, size: renderSize, xPct: editTextPositionFull.xPct, yPct: editTextPositionFull.yPct }]);
+            }
             setEditTextDraftFull("");
           }
+          setEditTextOverlayIdFull(null);
           setEditTextPaletteOpen(false);
           setEditTextEditorOpen(false);
+          setEditTextOverlayIdFull(null);
           setEditTextScaleFull(1);
           setEditTextPositionFull({ xPct: 50, yPct: 45 });
         };
@@ -22893,7 +22924,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         ),
         !editTextEditorOpen && React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 10 } },
           React.createElement("button", {
-            onClick: () => { setEditTextEditorOpen(true); setEditTextDraftFull(""); setEditTextScaleFull(1); setEditTextPositionFull({ xPct: 50, yPct: 45 }); setEditTextPaletteOpen(false); },
+            onClick: () => { setEditTextEditorOpen(true); setEditTextOverlayIdFull(null); setEditTextDraftFull(""); setEditTextScaleFull(1); setEditTextPositionFull({ xPct: 50, yPct: 45 }); setEditTextPaletteOpen(false); },
             style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", WebkitTapHighlightColor: "transparent", padding: 0 }
           },
             React.createElement("div", { style: { width: 42, height: 42, borderRadius: 12, background: editTextEditorOpen ? "#FFD600" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s" } },
