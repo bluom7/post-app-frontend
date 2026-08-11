@@ -6957,8 +6957,8 @@ function PostMedia({ post, maxHeight, borderRadius, user, onLike, onComment, onS
 function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
   const [activePanel, setActivePanel] = React.useState(null);
   const [filter, setFilter] = React.useState('Original');
-  const [cropRatio, setCropRatio] = React.useState('Original');
-  const [cropSelectionEnabled, setCropSelectionEnabled] = React.useState(false);
+  const [cropRatio, setCropRatio] = React.useState('Free');
+  const [cropSelectionEnabled, setCropSelectionEnabled] = React.useState(true);
   const [overlayText, setOverlayText] = React.useState('');
   const [textBgColor, setTextBgColor] = React.useState('transparent');
   const [lastTextBgColor, setLastTextBgColor] = React.useState('#000000');
@@ -6974,6 +6974,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
   const textGestureRef = React.useRef({pointers:new Map(), mode:null, startDistance:0, startSize:44});
   const [freeBox, setFreeBox] = React.useState({x1:0.05, y1:0.05, x2:0.95, y2:0.95});
   const freeHandleRef = React.useRef(null);
+  const freeCropGestureRef = React.useRef(null);
   const [showDiscardSheet, setShowDiscardSheet] = React.useState(false);
 
   const FILTERS = [
@@ -6990,7 +6991,6 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
 
   const CROPS = [
     {name:'Original', ratio:null},
-    {name:'Free',     ratio:'free'},
     {name:'Square',   ratio:1},
     {name:'4:5',      ratio:4/5},
     {name:'16:9',     ratio:16/9},
@@ -7008,8 +7008,8 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
 
   // Keep every newly selected photo in its natural shape.
   React.useEffect(() => {
-    setCropRatio('Original');
-    setCropSelectionEnabled(false);
+    setCropRatio('Free');
+    setCropSelectionEnabled(true);
     setCropOffset({x:0.5, y:0.5});
     setFreeBox({x1:0.05, y1:0.05, x2:0.95, y2:0.95});
     setTextXY({x:0.5, y:0.5});
@@ -7023,7 +7023,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
   }, [cropRatio]);
 
   const filterCss = (FILTERS.find(f=>f.name===filter)||FILTERS[0]).css;
-  const cropEntry = CROPS.find(c=>c.name===cropRatio)||CROPS[0];
+  const cropEntry = CROPS.find(c=>c.name===cropRatio)|| (cropRatio==='Free' ? {name:'Free', ratio:'free'} : CROPS[0]);
   const activeTextFont = TEXT_FONTS.find(f=>f.id===textFont)||TEXT_FONTS[0];
   const textInkColor = (() => {
     if (textBgColor === 'transparent') return '#fff';
@@ -7170,7 +7170,53 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     onSave(canvas.toDataURL('image/jpeg', 0.88));
   };
 
-  // Free-crop overlay (corner handles + dark mask)
+  const getFreeCropPoint = (ev, cont) => {
+    const img = imgRef.current;
+    const cW = cont.offsetWidth || 1, cH = cont.offsetHeight || 1;
+    const natW = img && img.naturalWidth ? img.naturalWidth : 1;
+    const natH = img && img.naturalHeight ? img.naturalHeight : 1;
+    const scale = Math.min(cW / natW, cH / natH);
+    const rW = natW * scale, rH = natH * scale;
+    const rect = cont.getBoundingClientRect();
+    return {
+      x: Math.min(1, Math.max(0, (ev.clientX - rect.left - (cW - rW) / 2) / rW)),
+      y: Math.min(1, Math.max(0, (ev.clientY - rect.top - (cH - rH) / 2) / rH)),
+    };
+  };
+  const startFreeCropGesture = (ev) => {
+    const cont = previewRef.current;
+    if (!cont || cropRatio !== 'Free') return;
+    const point = getFreeCropPoint(ev, cont);
+    const inside = point.x >= freeBox.x1 && point.x <= freeBox.x2 && point.y >= freeBox.y1 && point.y <= freeBox.y2;
+    cont.setPointerCapture(ev.pointerId);
+    freeCropGestureRef.current = { mode: inside ? 'move' : 'draw', start: point, box: {...freeBox} };
+    ev.preventDefault();
+  };
+  const updateFreeCropGesture = (ev) => {
+    const gesture = freeCropGestureRef.current;
+    const cont = previewRef.current;
+    if (!gesture || !cont || cropRatio !== 'Free') return;
+    const point = getFreeCropPoint(ev, cont);
+    if (gesture.mode === 'draw') {
+      setFreeBox({
+        x1: Math.min(gesture.start.x, point.x),
+        y1: Math.min(gesture.start.y, point.y),
+        x2: Math.max(gesture.start.x, point.x),
+        y2: Math.max(gesture.start.y, point.y),
+      });
+      return;
+    }
+    const width = gesture.box.x2 - gesture.box.x1;
+    const height = gesture.box.y2 - gesture.box.y1;
+    const dx = point.x - gesture.start.x;
+    const dy = point.y - gesture.start.y;
+    const x1 = Math.min(1 - width, Math.max(0, gesture.box.x1 + dx));
+    const y1 = Math.min(1 - height, Math.max(0, gesture.box.y1 + dy));
+    setFreeBox({x1, y1, x2:x1 + width, y2:y1 + height});
+  };
+  const endFreeCropGesture = () => { freeCropGestureRef.current = null; };
+
+  // Free-crop overlay (drag anywhere + corner handles + dark mask)
   const freeCropOverlay = (() => {
     if (!cropSelectionEnabled || cropRatio !== 'Free') return null;
     const cont = previewRef.current, img = imgRef.current;
@@ -7194,12 +7240,12 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
       React.createElement('div',{key:'or',style:{position:'absolute',right:0,top:hY1+'%',bottom:(100-hY2)+'%',width:(100-hX2)+'%',background:'rgba(0,0,0,0.5)',pointerEvents:'none'}}),
       React.createElement('div',{key:'cb',style:{position:'absolute',left:hX1+'%',top:hY1+'%',width:(hX2-hX1)+'%',height:(hY2-hY1)+'%',border:'2px solid rgba(255,255,255,0.85)',pointerEvents:'none',boxSizing:'border-box'}}),
       mkH('tl',hX1,hY1), mkH('tr',hX2,hY1), mkH('bl',hX1,hY2), mkH('br',hX2,hY2),
-      React.createElement('div',{key:'hint',style:{position:'absolute',bottom:10,left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.55)',color:'#fff',borderRadius:20,padding:'4px 12px',fontSize:12,fontWeight:600,pointerEvents:'none',whiteSpace:'nowrap'}},'✥ Drag corners to crop'),
+      React.createElement('div',{key:'hint',style:{position:'absolute',bottom:10,left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.55)',color:'#fff',borderRadius:20,padding:'4px 12px',fontSize:12,fontWeight:600,pointerEvents:'none',whiteSpace:'nowrap'}},'✥ Drag anywhere to crop'),
     ];
   })();
 
   const btnTab = (panel, label, icon) => React.createElement('button', {
-    onClick: () => setActivePanel(p => p===panel ? null : panel),
+    onClick: () => { if (panel === 'crop') { setActivePanel(p => p === 'crop' ? null : 'crop'); setCropRatio('Free'); setCropSelectionEnabled(true); setFreeBox({x1:0.05,y1:0.05,x2:0.95,y2:0.95}); } else { setActivePanel(p => p===panel ? null : panel); } },
     style: {background:'none', border:'none', color: activePanel===panel ? '#42A5F5' : '#fff', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:4, padding:'4px 8px'}
   }, icon, React.createElement('span', {style:{fontSize:11, fontWeight:600}}, label));
 
@@ -7252,20 +7298,21 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     /* ── Photo preview ── */
     React.createElement('div', {
       ref: previewRef,
-      style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',position:'relative',background:'#111', touchAction: (cropEntry.ratio && cropEntry.ratio!=='free') ? 'none' : 'auto', cursor: (cropEntry.ratio && cropEntry.ratio!=='free') ? 'grab' : 'default'},
-      onPointerDown: (cropEntry.ratio && cropEntry.ratio!=='free') ? (ev) => {
+      style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',position:'relative',background:'#111', touchAction: cropEntry.ratio ? 'none' : 'auto', cursor: cropEntry.ratio === 'free' ? 'crosshair' : (cropEntry.ratio ? 'grab' : 'default')},
+      onPointerDown: cropEntry.ratio === 'free' ? startFreeCropGesture : (cropEntry.ratio ? (ev) => {
         ev.currentTarget.setPointerCapture(ev.pointerId);
         dragRef.current = { startX: ev.clientX, startY: ev.clientY, ox: cropOffset.x, oy: cropOffset.y, w: ev.currentTarget.offsetWidth, h: ev.currentTarget.offsetHeight };
-      } : null,
-      onPointerMove: (cropEntry.ratio && cropEntry.ratio!=='free') ? (ev) => {
+      } : null),
+      onPointerMove: cropEntry.ratio === 'free' ? updateFreeCropGesture : (cropEntry.ratio ? (ev) => {
         if (!dragRef.current) return;
         const dx = ev.clientX - dragRef.current.startX;
         const dy = ev.clientY - dragRef.current.startY;
         const newX = Math.min(1, Math.max(0, dragRef.current.ox - dx / dragRef.current.w));
         const newY = Math.min(1, Math.max(0, dragRef.current.oy - dy / dragRef.current.h));
         setCropOffset({x: newX, y: newY});
-      } : null,
-      onPointerUp: (cropEntry.ratio && cropEntry.ratio!=='free') ? () => { dragRef.current = null; } : null,
+      } : null),
+      onPointerUp: cropEntry.ratio === 'free' ? endFreeCropGesture : (cropEntry.ratio ? () => { dragRef.current = null; } : null),
+      onPointerCancel: cropEntry.ratio === 'free' ? endFreeCropGesture : null,
     },
       React.createElement('img', {ref:imgRef, src, alt:'', style:imgPreviewStyle}),
       (cropEntry.ratio && cropEntry.ratio!=='free') && React.createElement('div', {style:{position:'absolute',bottom:10,left:'50%',transform:'translateX(-50%)',background:'rgba(0,0,0,0.55)',color:'#fff',borderRadius:20,padding:'4px 12px',fontSize:12,fontWeight:600,pointerEvents:'none',whiteSpace:'nowrap'}}, '✥ Drag to reposition'),
@@ -7343,7 +7390,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     activePanel === 'crop' && React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 12px 6px',background:'transparent',borderTop:'none'}},
       React.createElement('div', {className:'photo-editor-crops',style:{display:'flex',gap:8,overflowX:'auto',paddingBottom:4,scrollbarWidth:'none',msOverflowStyle:'none'}},
         CROPS.map(c => React.createElement('button', {
-          key:c.name, onClick:()=>{ setCropSelectionEnabled(true); setCropRatio(c.name); setCropOffset({x:0.5,y:0.5}); if(c.name==='Free') setFreeBox({x1:0.05,y1:0.05,x2:0.95,y2:0.95}); },
+          key:c.name, onClick:()=>{ setCropSelectionEnabled(true); setCropRatio(c.name); setCropOffset({x:0.5,y:0.5}); },
           style:{flexShrink:0,display:'flex',flexDirection:'column',alignItems:'center',gap:6,background:'none',border:'none',cursor:'pointer',padding:'4px 8px'}
         },
           React.createElement('div', {style:{
