@@ -22852,7 +22852,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           React.createElement("div", { style: { background: "rgba(0,0,0,0.38)", padding: "12px 0 calc(20px + env(safe-area-inset-bottom))", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", flexShrink: 0 } },
 
             React.createElement("div", { style: { overflowX: "auto", display: "flex", gap: 0, padding: "0 6px", scrollbarWidth: "none" } },
-              EDIT_FONTS.map(f => React.createElement("button", { key: f.id, onPointerDown: e => { e.stopPropagation(); setEditTextFontFull(f.id); }, style: { background: editTextFontFull === f.id ? "rgba(255,255,255,0.22)" : "transparent", border: "none", borderRadius: 22, padding: "8px 18px", color: editTextFontFull === f.id ? "#fff" : "rgba(255,255,255,0.72)", fontFamily: f.fontFamily, fontWeight: f.fontWeight, fontStyle: f.fontStyle, fontSize: 16, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap", textDecoration: editTextFontFull === f.id ? "underline" : "none", textUnderlineOffset: 4 } }, f.label))
+              EDIT_FONTS.map(f => React.createElement("button", { key: f.id, onPointerDown: e => { e.stopPropagation(); setEditTextFontFull(f.id); }, style: { background: editTextFontFull === f.id ? "#fff" : "transparent", border: "none", borderRadius: 22, padding: "8px 18px", color: editTextFontFull === f.id ? "#111" : "rgba(255,255,255,0.72)", fontFamily: f.fontFamily, fontWeight: f.fontWeight, fontStyle: f.fontStyle, fontSize: 16, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" } }, f.label))
             )
           )
         );
@@ -23061,7 +23061,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         ),
 
         // Bottom action buttons: Edit + Next →
-        React.createElement("div",{style:{display:"flex",gap:10,padding:"6px 16px 40px"}},
+        !editTextEditorOpen && React.createElement("div",{style:{display:"flex",gap:10,padding:"6px 16px 40px"}},
           React.createElement("button",{
             onClick:()=>setStep("edit"),
             style:{flex:1,padding:"13px 0",borderRadius:28,background:"#fff",border:"none",color:"#000",fontWeight:700,fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7,letterSpacing:0.2}
