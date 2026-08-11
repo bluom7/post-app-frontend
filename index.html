@@ -9292,19 +9292,55 @@ function ComposeModal({
             key: t.id,
             style: { position: 'absolute', left: t.x + '%', top: t.y + '%', transform: 'translate(-50%,-50%)', color: t.color || '#fff', fontSize: (t.size || 20) + 'px', fontWeight: 800, textShadow: '0 1px 5px rgba(0,0,0,0.8)', cursor: 'move', zIndex: 4, whiteSpace: 'nowrap', userSelect: 'none', touchAction: 'none' },
             onPointerDown: (ev) => {
-              ev.preventDefault(); ev.currentTarget.setPointerCapture(ev.pointerId);
+              ev.preventDefault();
+              const el = ev.currentTarget;
+              el.setPointerCapture(ev.pointerId);
               const cont = videoPreviewRef.current; if (!cont) return;
               const rect = cont.getBoundingClientRect();
-              const startX = ev.clientX, startY = ev.clientY, origX = t.x, origY = t.y;
+              let startX = ev.clientX, startY = ev.clientY;
+              let origX = t.x, origY = t.y;
+              let currentX = t.x, currentY = t.y;
+              let pinchStartDistance = null;
+              let pinchStartSize = t.size || 20;
+              const pointers = new Map([[ev.pointerId, { x: ev.clientX, y: ev.clientY }]]);
+              const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
               const onMove = (me) => {
+                pointers.set(me.pointerId, { x: me.clientX, y: me.clientY });
+                const activePointers = Array.from(pointers.values());
+                if (activePointers.length >= 2) {
+                  if (pinchStartDistance === null) {
+                    pinchStartDistance = distance(activePointers[0], activePointers[1]);
+                    pinchStartSize = t.size || 20;
+                  }
+                  const scale = distance(activePointers[0], activePointers[1]) / Math.max(1, pinchStartDistance);
+                  const nextSize = Math.max(10, Math.min(120, pinchStartSize * scale));
+                  setVideoTextOverlays(prev => prev.map(o => o.id === t.id ? { ...o, size: nextSize } : o));
+                  return;
+                }
                 const dx = ((me.clientX - startX) / rect.width) * 100;
                 const dy = ((me.clientY - startY) / rect.height) * 100;
-                setVideoTextOverlays(prev => prev.map(o => o.id === t.id ? { ...o, x: Math.max(5, Math.min(95, origX + dx)), y: Math.max(5, Math.min(95, origY + dy)) } : o));
+                currentX = Math.max(5, Math.min(95, origX + dx));
+                currentY = Math.max(5, Math.min(95, origY + dy));
+                setVideoTextOverlays(prev => prev.map(o => o.id === t.id ? { ...o, x: currentX, y: currentY } : o));
               };
-              const el = ev.currentTarget;
-              const onUp = () => { el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerup', onUp); };
+              const cleanup = () => {
+                el.removeEventListener('pointermove', onMove);
+                el.removeEventListener('pointerup', onEnd);
+                el.removeEventListener('pointercancel', onEnd);
+              };
+              const onEnd = (pe) => {
+                pointers.delete(pe.pointerId);
+                if (pointers.size === 1) {
+                  const remaining = Array.from(pointers.values())[0];
+                  startX = remaining.x; startY = remaining.y;
+                  origX = currentX; origY = currentY;
+                  pinchStartDistance = null;
+                }
+                if (pointers.size === 0) cleanup();
+              };
               el.addEventListener('pointermove', onMove);
-              el.addEventListener('pointerup', onUp);
+              el.addEventListener('pointerup', onEnd);
+              el.addEventListener('pointercancel', onEnd);
             }
           },
             t.text,
