@@ -21682,79 +21682,142 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     return () => { clearInterval(iv); v.removeEventListener("seeked", onReady); v.removeEventListener("loadeddata", onReady); };
   }, [editTool, isPhotoReel, recordedURL]);
 
-  // Generate timeline frame strip from recorded video
+  // Generate the Reels timeline frame strip with the same decoded-frame
+  // capture path used by the Compose video trimmer. In particular, waiting
+  // for a decoded frame after every seek avoids ending up with ten empty
+  // placeholder tiles on mobile browsers.
   React.useEffect(() => {
-    if (!recordedURL) { setFrameStrip([]); return; }
-    if (isPhotoReel) { setFrameStrip([]); return; }
-    const NUM = 10;
-    const vid = document.createElement("video");
-    let _stripUrl = recordedURL;
-    try { if (recordedBlob) _stripUrl = URL.createObjectURL(recordedBlob); } catch(_) {}
-    let _stripCancelled = false;
-    let _stripStarted = false;
-    const _stripCleanup = () => {
-      _stripCancelled = true;
-      try { vid.pause(); vid.removeAttribute('src'); vid.load(); } catch(_) {}
-      if (_stripUrl !== recordedURL) { try { URL.revokeObjectURL(_stripUrl); } catch(_) {} }
-    };
-    vid.muted = true;
-    vid.playsInline = true;
-    vid.preload = "auto";
-    const frames = [];
-    const startStrip = () => {
-      if (_stripCancelled || _stripStarted) return;
-      _stripStarted = true;
-      const dur = vid.duration || 1;
-      let i = 0;
-      const captureFrame = () => {
-        if (_stripCancelled) return;
-        try {
-          const c = document.createElement("canvas");
-          c.width = 36; c.height = 48;
-          const ctx = c.getContext("2d");
-          if (!ctx) throw new Error('canvas unavailable');
-          const sw = vid.videoWidth || 9;
-          const sh = vid.videoHeight || 16;
-          const scale = Math.max(c.width / sw, c.height / sh);
-          const dw = sw * scale;
-          const dh = sh * scale;
-          ctx.fillStyle = '#1a1a1a';
-          ctx.fillRect(0, 0, c.width, c.height);
-          ctx.drawImage(vid, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
-          frames.push(c.toDataURL("image/jpeg", 0.62));
-        } catch(_) { frames.push(null); }
-        setFrameStrip(frames.slice());
-        i++;
-        next();
+    let cancelled = false;
+    setFrameStrip([]);
+    if (!recordedURL || isPhotoReel) return () => { cancelled = true; };
+
+    const thumbnailCount = 10;
+    const probe = document.createElement("video");
+    const source = recordedBlob instanceof Blob
+      ? URL.createObjectURL(recordedBlob)
+      : recordedURL;
+    if (/^https?:\/\//i.test(source)) probe.crossOrigin = "anonymous";
+    probe.muted = true;
+    probe.playsInline = true;
+    probe.preload = "auto";
+
+    const waitForDecodedFrame = () => new Promise(resolve => {
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        resolve();
       };
-      function next() {
-        if (_stripCancelled) return;
-        if (i >= NUM) { setFrameStrip(frames); _stripCleanup(); return; }
-        const target = (i / Math.max(NUM - 1, 1)) * dur * 0.98;
-        let captured = false;
-        const captureOnce = () => {
-          if (captured || _stripCancelled) return;
-          captured = true;
-          captureFrame();
-        };
-        vid.onseeked = captureOnce;
-        // Android Chrome may not emit seeked when the first frame is already
-        // at currentTime 0, so capture that frame on the next paint instead.
-        if (Math.abs((vid.currentTime || 0) - target) < 0.001) {
-          requestAnimationFrame(captureOnce);
-        } else {
-          vid.currentTime = target;
+      if (typeof probe.requestVideoFrameCallback === "function") {
+        probe.requestVideoFrameCallback(finish);
+      } else {
+        window.requestAnimationFrame(() => window.requestAnimationFrame(finish));
+      }
+      window.setTimeout(finish, 1200);
+    });
+
+    const seekTo = time => new Promise(resolve => {
+      let finished = false;
+      const finish = async () => {
+        if (finished) return;
+        finished = true;
+        probe.removeEventListener("seeked", onSeeked);
+        await waitForDecodedFrame();
+        resolve();
+      };
+      const onSeeked = () => { finish(); };
+      probe.addEventListener("seeked", onSeeked, { once: true });
+      try {
+        probe.currentTime = time;
+        if (Math.abs((probe.currentTime || 0) - time) < 0.02 && probe.readyState >= 2) finish();
+      } catch (_) {
+        finish();
+      }
+      window.setTimeout(finish, 1800);
+    });
+
+    const generateFrames = async () => {
+      try {
+        await new Promise((resolve, reject) => {
+          let hasMetadata = false;
+          let hasFrameData = false;
+          let settled = false;
+          const cleanup = () => {
+            probe.removeEventListener("loadedmetadata", onMetadata);
+            probe.removeEventListener("loadeddata", onFrameData);
+            probe.removeEventListener("canplay", onFrameData);
+            probe.removeEventListener("error", onError);
+          };
+          const finish = () => {
+            if (settled || !hasMetadata || !hasFrameData) return;
+            settled = true;
+            cleanup();
+            resolve();
+          };
+          const onMetadata = () => { hasMetadata = true; finish(); };
+          const onFrameData = () => { hasFrameData = true; finish(); };
+          const onError = () => { cleanup(); reject(new Error("timeline thumbnail load failed")); };
+          probe.addEventListener("loadedmetadata", onMetadata);
+          probe.addEventListener("loadeddata", onFrameData);
+          probe.addEventListener("canplay", onFrameData);
+          probe.addEventListener("error", onError);
+          probe.src = source;
+          probe.load();
+        });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 120;
+        canvas.height = 68;
+        const context = canvas.getContext("2d");
+        if (!context) return;
+        const width = probe.videoWidth || 16;
+        const height = probe.videoHeight || 9;
+        const scale = Math.max(canvas.width / width, canvas.height / height);
+        const drawWidth = width * scale;
+        const drawHeight = height * scale;
+        const offsetX = (canvas.width - drawWidth) / 2;
+        const offsetY = (canvas.height - drawHeight) / 2;
+        const frames = [];
+        const duration = Math.max(Number(probe.duration) || 0, 0.1);
+
+        for (let index = 0; index < thumbnailCount && !cancelled; index += 1) {
+          const time = Math.min(
+            Math.max(0.02, duration - 0.05),
+            (index + 0.5) * duration / thumbnailCount
+          );
+          await seekTo(time);
+          if (cancelled) break;
+          try {
+            context.fillStyle = "#151515";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(probe, offsetX, offsetY, drawWidth, drawHeight);
+            frames.push(canvas.toDataURL("image/jpeg", 0.82));
+          } catch (_) {
+            frames.push(null);
+          }
+          if (frames.some(Boolean)) setFrameStrip(frames.slice());
+        }
+        if (!cancelled && frames.some(Boolean)) setFrameStrip(frames);
+      } catch (_) {
+        if (!cancelled) setFrameStrip([]);
+      } finally {
+        probe.pause();
+        probe.removeAttribute("src");
+        probe.load();
+        if (source !== recordedURL) {
+          try { URL.revokeObjectURL(source); } catch (_) {}
         }
       }
-      next();
     };
-    vid.onloadedmetadata = startStrip;
-    vid.onloadeddata = startStrip;
-    vid.oncanplay = startStrip;
-    vid.onerror = () => { setFrameStrip([]); _stripCleanup(); };
-    vid.src = _stripUrl;
-    vid.load();
-    return _stripCleanup;
+
+    generateFrames();
+    return () => {
+      cancelled = true;
+      probe.pause();
+      if (source !== recordedURL) {
+        try { URL.revokeObjectURL(source); } catch (_) {}
+      }
+    };
   }, [recordedURL, recordedBlob, isPhotoReel]);
 
   function addTextOverlay() {
