@@ -8593,7 +8593,7 @@ function MusicPickerModal({ onSelect, onClose, showToast }) {
       music_preview_url: song.previewUrl,
       music_duration_ms: song.trackTimeMillis
     });
-    onClose();
+
   };
   const fmtDur = ms => { if (!ms) return ''; const s = Math.round(ms/1000); return Math.floor(s/60) + ':' + (s%60).toString().padStart(2,'0'); };
   return /*#__PURE__*/React.createElement("div", { style:{ position:"fixed", inset:0, zIndex:3000, display:"flex", flexDirection:"column", background:"var(--bg)" } },
@@ -9358,13 +9358,69 @@ function ComposeModal({
     onSelect: function(val) { setFeeling(val); setShowFeelingOverlay(false); },
     onClear: function() { setFeeling(""); setShowFeelingOverlay(false); }
   });
+  // Keep audio selection in the video trim flow instead of opening the full editor.
+  if (showMusicPicker) return React.createElement(MusicPickerModal, {
+    onSelect: (music) => {
+      setPendingTrimSong(music);
+      setShowMusicPicker(false);
+      setShowMusicTrimmer(true);
+    },
+    onClose: () => {
+      setShowMusicPicker(false);
+      if (returnToVideoTrimAfterMusic) {
+        setShowVideoTrim(true);
+        setReturnToVideoTrimAfterMusic(false);
+      }
+    },
+    showToast
+  });
+
+  if (showMusicTrimmer && pendingTrimSong) return React.createElement(MusicTrimmerModal, {
+    song: pendingTrimSong,
+    photos: photoUrls,
+    videoSrc: activeVideoSource,
+    onConfirm: (startMs) => {
+      setSelectedMusic({ ...pendingTrimSong, music_start_ms: startMs });
+      setShowMusicTrimmer(false);
+      setPendingTrimSong(null);
+      if (returnToVideoTrimAfterMusic) {
+        setShowVideoEditor(false);
+        setVideoEditorTab(null);
+        setShowVideoTrim(true);
+        setReturnToVideoTrimAfterMusic(false);
+      }
+    },
+    onBack: () => {
+      setShowMusicTrimmer(false);
+      setShowMusicPicker(true);
+    },
+    onChangeSong: () => {
+      setShowMusicTrimmer(false);
+      setShowMusicPicker(true);
+    },
+    onDelete: () => {
+      setShowMusicTrimmer(false);
+      setPendingTrimSong(null);
+      setSelectedMusic(null);
+      setShowMusicPicker(true);
+    }
+  });
+
   if (showVideoTrim && activeVideoSource) return React.createElement(ComposeVideoTrimOverlay, {
     src: activeVideoSource,
     duration: pendingVideoDuration || videoDuration,
     trimStart, trimEnd, setTrimStart, setTrimEnd,
     onDone: () => { confirmVideoTrim(); },
     onCancel: () => setShowVideoTrim(false),
-    onAudio: () => { setReturnToVideoTrimAfterMusic(true); setShowVideoTrim(false); setShowVideoEditor(true); setVideoEditorTab(null); setShowMusicPicker(true); },
+    onAudio: () => {
+      setReturnToVideoTrimAfterMusic(true);
+      setShowVideoTrim(false);
+      setShowVideoEditor(false);
+      setVideoEditorTab(null);
+      setShowMusicTrimmer(false);
+      setPendingTrimSong(null);
+      setShowMusicPicker(true);
+    },
     onText: () => { setShowVideoTrim(false); setShowVideoEditor(true); setVideoEditorTab('text'); }
   });
 
