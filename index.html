@@ -932,7 +932,7 @@ const TRANSLATIONS = {
     reels: "রিলস",
     alerts: "সতর্কতা",
     reply: "উত্তর দিন",
-    share: "শেয়ার করুন",
+    share: "শেয়���র করুন",
     delete: "মুছুন",
     report: "রিপোর্ট করুন",
     block: "ব্লক করুন",
@@ -5737,8 +5737,8 @@ function FeedVideo({ post }) {
         fontStyle: t.font === 'Fancy' ? 'italic' : 'normal',
         fontWeight: t.font === 'Classic' || t.font === 'Fancy' ? 700 : 900,
         background: t.bgColor && t.bgColor !== 'transparent' ? t.bgColor : 'transparent',
-        padding: t.bgColor && t.bgColor !== 'transparent' ? '6px 10px' : '4px 8px',
-        borderRadius: t.bgColor && t.bgColor !== 'transparent' ? 8 : 0,
+        padding: t.bgColor && t.bgColor !== 'transparent' ? (Math.max(4, 6 * (Number(t.bgScale) || 1)) + 'px ' + Math.max(7, 10 * (Number(t.bgScale) || 1)) + 'px') : '4px 8px',
+        borderRadius: t.bgColor && t.bgColor !== 'transparent' ? Math.max(4, 8 * (Number(t.bgScale) || 1)) : 0,
         textShadow: t.bgColor && t.bgColor !== 'transparent' ? 'none' : (t.textShadow || '0 1px 5px rgba(0,0,0,0.8)'),
         zIndex: 2,
         pointerEvents: 'none',
@@ -8865,7 +8865,8 @@ function ComposeModal({
   const [showVideoTextColors, setShowVideoTextColors] = useState(false);
   const [videoTextEditPosition, setVideoTextEditPosition] = useState({ x: 50, y: 50 });
   const [videoTextEditSize, setVideoTextEditSize] = useState(44);
-  const videoTextEditGestureRef = useRef({ pointers: new Map(), mode: null, startX: 0, startY: 0, startXPercent: 50, startYPercent: 50, startDistance: 0, startSize: 44 });
+  const [videoTextEditBgScale, setVideoTextEditBgScale] = useState(1);
+  const videoTextEditGestureRef = useRef({ pointers: new Map(), mode: null, startX: 0, startY: 0, startXPercent: 50, startYPercent: 50, startDistance: 0, startSize: 44, startBgScale: 1 });
   const videoTextEditSurfaceRef = useRef(null);
   const videoPreviewRef = useRef(null); const videoTextGestureRef = useRef({});
   const edVideoRef = useRef(null);
@@ -9304,7 +9305,11 @@ function ComposeModal({
         const distance = Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y));
         if (!gesture.startDistance) gesture.startDistance = distance;
         event.preventDefault();
-        setVideoTextEditSize(Math.max(18, Math.min(140, gesture.startSize * distance / gesture.startDistance)));
+        const pinchScale = distance / gesture.startDistance;
+        setVideoTextEditSize(Math.max(18, Math.min(140, gesture.startSize * pinchScale)));
+        if (newVideoTextBg !== 'transparent') {
+          setVideoTextEditBgScale(Math.max(0.6, Math.min(1.8, gesture.startBgScale * pinchScale)));
+        }
         return;
       }
       if (gesture.mode !== 'drag' || !videoTextEditSurfaceRef.current) return;
@@ -9326,6 +9331,7 @@ function ComposeModal({
         gesture.mode = 'pinch';
         gesture.startDistance = Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y));
         gesture.startSize = videoTextEditSize;
+        gesture.startBgScale = videoTextEditBgScale;
       } else {
         gesture.mode = 'drag';
         gesture.startX = event.clientX;
@@ -9334,6 +9340,7 @@ function ComposeModal({
         gesture.startYPercent = videoTextEditPosition.y;
         gesture.startDistance = 0;
         gesture.startSize = videoTextEditSize;
+        gesture.startBgScale = videoTextEditBgScale;
       }
     };
     const _endVideoTextGesture = event => {
@@ -9345,8 +9352,9 @@ function ComposeModal({
       const value = newVideoText.trim();
       setShowVideoTextColors(false);
       if (!value) { setVideoEditorTab(null); return; }
-      setVideoTextOverlays(prev => [...prev, { id: Math.random().toString(36).slice(2), text: value, x: videoTextEditPosition.x, y: videoTextEditPosition.y, color: newVideoTextColor, textColor: newVideoTextColor, bgColor: newVideoTextBg, font: _activeVideoTextFont.id, fontFamily: _activeVideoTextFont.family, fontWeight: _activeVideoTextFont.weight, fontStyle: _activeVideoTextFont.style, textShadow: _activeVideoTextFont.shadow, size: videoTextEditSize }]);
+      setVideoTextOverlays(prev => [...prev, { id: Math.random().toString(36).slice(2), text: value, x: videoTextEditPosition.x, y: videoTextEditPosition.y, color: newVideoTextColor, textColor: newVideoTextColor, bgColor: newVideoTextBg, bgScale: newVideoTextBg === 'transparent' ? 1 : videoTextEditBgScale, font: _activeVideoTextFont.id, fontFamily: _activeVideoTextFont.family, fontWeight: _activeVideoTextFont.weight, fontStyle: _activeVideoTextFont.style, textShadow: _activeVideoTextFont.shadow, size: videoTextEditSize }]);
       setNewVideoText('');
+      setVideoTextEditBgScale(1);
       setVideoEditorTab(null);
     };
     if (videoEditorTab === 'text') {
@@ -9354,8 +9362,8 @@ function ComposeModal({
         React.createElement('div', { style: { position: 'absolute', inset: 0, background: '#000' } },
           React.createElement('video', { ref: edVideoRef, src: _edSrc, muted: true, autoPlay: true, loop: true, playsInline: true, style: { width: '100%', height: '100%', objectFit: 'contain', filter: _actEff, display: 'block' } }),
           React.createElement('div', { ref: videoTextEditSurfaceRef, style: { position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.16)', pointerEvents: 'none', touchAction: 'none' } }),
-          React.createElement('div', { style: { position: 'absolute', left: videoTextEditPosition.x + '%', top: videoTextEditPosition.y + '%', transform: 'translate(-50%,-50%)', width: '92%', textAlign: 'center', zIndex: 4, pointerEvents: 'auto', touchAction: 'none' } },
-            React.createElement('textarea', { autoFocus: true, onPointerDown: _startVideoTextGesture, onPointerMove: _updateVideoTextGesture, onPointerUp: _endVideoTextGesture, onPointerCancel: _endVideoTextGesture, value: newVideoText, onChange: event => setNewVideoText(event.target.value), placeholder: 'Type or @tag', 'aria-label': 'Type text for video', rows: 1, maxLength: 180, spellCheck: false, style: { display: 'block', width: '100%', minHeight: 58, resize: 'none', overflow: 'hidden', boxSizing: 'border-box', border: 'none', outline: 'none', textAlign: 'center', color: newVideoTextColor, background: newVideoTextBg === 'transparent' ? 'transparent' : newVideoTextBg, padding: newVideoTextBg === 'transparent' ? '4px 8px' : '10px 14px', borderRadius: newVideoTextBg === 'transparent' ? 0 : 10, fontFamily: _activeVideoTextFont.family, fontSize: videoTextEditSize, lineHeight: 1.15, fontWeight: _activeVideoTextFont.weight, fontStyle: _activeVideoTextFont.style, textShadow: newVideoTextBg === 'transparent' ? _activeVideoTextFont.shadow : 'none', pointerEvents: 'auto', userSelect: 'text' } })
+          React.createElement('div', { style: { position: 'absolute', left: videoTextEditPosition.x + '%', top: videoTextEditPosition.y + '%', transform: 'translate(-50%,-50%)', width: newVideoTextBg === 'transparent' ? '92%' : Math.min(135, Math.max(55, 92 * videoTextEditBgScale)) + '%', textAlign: 'center', zIndex: 4, pointerEvents: 'auto', touchAction: 'none' } },
+            React.createElement('textarea', { autoFocus: true, onPointerDown: _startVideoTextGesture, onPointerMove: _updateVideoTextGesture, onPointerUp: _endVideoTextGesture, onPointerCancel: _endVideoTextGesture, value: newVideoText, onChange: event => setNewVideoText(event.target.value), placeholder: 'Type or @tag', 'aria-label': 'Type text for video', rows: 1, maxLength: 180, spellCheck: false, style: { display: 'block', width: '100%', minHeight: newVideoTextBg === 'transparent' ? 58 : Math.max(34, 58 * videoTextEditBgScale), resize: 'none', overflow: 'hidden', boxSizing: 'border-box', border: 'none', outline: 'none', textAlign: 'center', color: newVideoTextColor, background: newVideoTextBg === 'transparent' ? 'transparent' : newVideoTextBg, padding: newVideoTextBg === 'transparent' ? '4px 8px' : (Math.max(6, 10 * videoTextEditBgScale) + 'px ' + Math.max(8, 14 * videoTextEditBgScale) + 'px'), borderRadius: newVideoTextBg === 'transparent' ? 0 : Math.max(6, 10 * videoTextEditBgScale), fontFamily: _activeVideoTextFont.family, fontSize: videoTextEditSize, lineHeight: 1.15, fontWeight: _activeVideoTextFont.weight, fontStyle: _activeVideoTextFont.style, textShadow: newVideoTextBg === 'transparent' ? _activeVideoTextFont.shadow : 'none', pointerEvents: 'auto', userSelect: 'text' } })
           ),
           React.createElement('button', { onClick: () => setNewVideoText(value => value ? value + (value.endsWith(' ') ? '' : ' ') + '@' : '@'), 'aria-label': 'Tag someone', style: { position: 'absolute', left: '50%', top: 'calc(50% + 74px)', transform: 'translateX(-50%)', zIndex: 5, border: 'none', borderRadius: 18, padding: '9px 24px', background: 'rgba(0,0,0,0.62)', color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap' } }, '@ Tag someone')
         ),
@@ -10181,7 +10189,7 @@ function DiscoverTab({ token, user, showToast, onViewProfile, onBack }) {
     } catch(e){ setCommentState(s=>({...s,submitting:false})); showToast&&showToast('Failed',COLORS.red); }
   }
 
-  // ── helpers ───────────────────────────────────────────────────────────────
+  // ── helpers ──────────────────────────────────────────────���────────────────
   function timeAgo(ts){
     if(!ts)return'';
     const s=Math.floor((Date.now()-new Date(ts).getTime())/1000);
@@ -14158,7 +14166,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
 
   // ═══════════════════════════════════════════════════════════════════════════
   // CONVERSATION LIST
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════���═══════════════════════════════════════════════
   return React.createElement('div', { style: { background: 'var(--bg)', minHeight: '100vh', paddingBottom: 80 } },
 
 
