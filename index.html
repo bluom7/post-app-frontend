@@ -8650,7 +8650,6 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const dragSideRef = React.useRef(null);
   const [playing, setPlaying] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(trimStart || 0);
-  const [thumbnailFrames, setThumbnailFrames] = React.useState([]);
   const safeDuration = Math.max(Number(duration) || 0, 0.1);
   const selectedDuration = Math.max(0.1, trimEnd - trimStart);
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -8659,68 +8658,6 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     if (value >= 60) return Math.floor(value / 60) + ':' + String(Math.floor(value % 60)).padStart(2, '0');
     return value.toFixed(1);
   };
-
-  React.useEffect(() => {
-    let cancelled = false;
-    setThumbnailFrames([]);
-    if (!src || safeDuration <= 0.1) return () => { cancelled = true; };
-    const probe = document.createElement('video');
-    probe.muted = true;
-    probe.playsInline = true;
-    probe.preload = 'auto';
-    probe.crossOrigin = 'anonymous';
-    const makeFrames = async () => {
-      try {
-        await new Promise((resolve, reject) => {
-          probe.onloadedmetadata = resolve;
-          probe.onerror = () => reject(new Error('thumbnail metadata failed'));
-          probe.src = src;
-          probe.load();
-        });
-        const canvas = document.createElement('canvas');
-        canvas.width = 160;
-        canvas.height = 90;
-        const context = canvas.getContext('2d');
-        if (!context) return;
-        const width = probe.videoWidth || 16;
-        const height = probe.videoHeight || 9;
-        const scale = Math.max(canvas.width / width, canvas.height / height);
-        const drawWidth = width * scale;
-        const drawHeight = height * scale;
-        const offsetX = (canvas.width - drawWidth) / 2;
-        const offsetY = (canvas.height - drawHeight) / 2;
-        const frames = [];
-        const seekTo = time => new Promise(resolve => {
-          let finished = false;
-          const finish = () => {
-            if (finished) return;
-            finished = true;
-            probe.removeEventListener('seeked', finish);
-            resolve();
-          };
-          probe.addEventListener('seeked', finish, { once: true });
-          probe.currentTime = time;
-          window.setTimeout(finish, 900);
-        });
-        for (let index = 0; index < 10 && !cancelled; index += 1) {
-          await seekTo(Math.min(Math.max(0, safeDuration - 0.05), (index + 0.5) * safeDuration / 10));
-          context.fillStyle = '#151515';
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          context.drawImage(probe, offsetX, offsetY, drawWidth, drawHeight);
-          frames.push(canvas.toDataURL('image/jpeg', 0.72));
-        }
-        if (!cancelled) setThumbnailFrames(frames);
-      } catch (_) {
-        if (!cancelled) setThumbnailFrames([]);
-      } finally {
-        probe.pause();
-        probe.removeAttribute('src');
-        probe.load();
-      }
-    };
-    makeFrames();
-    return () => { cancelled = true; probe.pause(); };
-  }, [src, safeDuration]);
 
   React.useEffect(() => {
     const video = videoRef.current;
@@ -8800,16 +8737,6 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const selectedLeft = (trimStart / safeDuration) * 100;
   const selectedRight = ((safeDuration - trimEnd) / safeDuration) * 100;
   const playhead = (clamp(currentTime, 0, safeDuration) / safeDuration) * 100;
-  const frameStyle = index => ({
-    flex: 1,
-    minWidth: 0,
-    height: '100%',
-    backgroundColor: '#1a1a1a',
-    backgroundImage: thumbnailFrames[index] ? 'url(' + thumbnailFrames[index] + ')' : 'linear-gradient(90deg, #151515, #252525)',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    borderRight: index < 9 ? '1px solid rgba(255,255,255,0.12)' : 'none'
-  });
   return React.createElement('div', { style: { position: 'fixed', inset: 0, zIndex: 2500, background: '#000', color: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden', userSelect: 'none' } },
     React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'max(18px, env(safe-area-inset-top)) 16px 12px', flexShrink: 0 } },
       React.createElement('button', { onClick: onCancel, style: { background: '#151515', border: '1px solid #202020', borderRadius: 8, color: '#fff', fontSize: 16, padding: '11px 20px', cursor: 'pointer' } }, 'Cancel'),
@@ -8827,16 +8754,15 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         React.createElement('button', { onClick: () => seek(10), 'aria-label': 'Forward 10 seconds', style: { background: 'none', border: 'none', color: '#fff', padding: 4, cursor: 'pointer' } }, React.createElement('span', { style: { fontSize: 15, fontWeight: 800 } }, '10↷'))
       ),
       React.createElement('div', { style: { textAlign: 'center', fontSize: 16, letterSpacing: 1.4, padding: '4px 0 12px', fontVariantNumeric: 'tabular-nums', color: '#f3f3f3' } }, formatTime(currentTime - trimStart) + ' / ' + formatTime(selectedDuration)),
-      React.createElement('div', { ref: timelineRef, onPointerDown: jumpToTimelinePoint, style: { position: 'relative', height: 58, margin: '0 auto 10px', width: 'min(268px, calc(100vw - 40px))', padding: 5, boxSizing: 'border-box', borderRadius: 13, background: '#FFD600', boxShadow: '0 2px 10px rgba(255,214,0,0.2)', touchAction: 'none' } },
-        React.createElement('div', { style: { position: 'absolute', inset: 5, display: 'flex', overflow: 'hidden', borderRadius: 8, background: '#171717' } },
-          Array.from({ length: 10 }).map((_, index) => React.createElement('div', { key: index, style: frameStyle(index) }))
+      React.createElement('div', { ref: timelineRef, onPointerDown: jumpToTimelinePoint, style: { position: 'relative', height: 66, margin: '0 auto 10px', width: 'min(224px, calc(100vw - 80px))', touchAction: 'none' } },
+        React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: selectedLeft + '%', right: selectedRight + '%', background: '#111', border: '2px solid #FFD600', borderRadius: 4, boxSizing: 'border-box', pointerEvents: 'none' } }),
+        React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, 'aria-label': 'Trim start', style: { position: 'absolute', top: 9, bottom: 9, left: 'calc(' + selectedLeft + '% - 7px)', width: 15, background: '#FFD600', borderRadius: 4, cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+          React.createElement('div', { style: { width: 2, height: 34, borderRadius: 2, background: '#6d5900' } })
         ),
-        React.createElement('div', { style: { position: 'absolute', top: 5, bottom: 5, left: 5, width: selectedLeft + '%', background: 'rgba(0,0,0,0.58)', pointerEvents: 'none', borderRadius: '8px 0 0 8px' } }),
-        React.createElement('div', { style: { position: 'absolute', top: 5, bottom: 5, right: 5, width: selectedRight + '%', background: 'rgba(0,0,0,0.58)', pointerEvents: 'none', borderRadius: '0 8px 8px 0' } }),
-        React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: selectedLeft + '%', right: selectedRight + '%', border: '2px solid #FFD600', borderRadius: 12, pointerEvents: 'none', zIndex: 2 } }),
-        React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, 'aria-label': 'Trim start', style: { position: 'absolute', top: 5, bottom: 5, left: 'calc(' + selectedLeft + '% - 1px)', width: 10, background: '#FFD600', borderRadius: 5, boxShadow: '0 0 0 2px rgba(255,214,0,0.18)', cursor: 'ew-resize', touchAction: 'none', zIndex: 4 } }),
-        React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, 'aria-label': 'Trim end', style: { position: 'absolute', top: 5, bottom: 5, right: 'calc(' + selectedRight + '% - 1px)', width: 10, background: '#FFD600', borderRadius: 5, boxShadow: '0 0 0 2px rgba(255,214,0,0.18)', cursor: 'ew-resize', touchAction: 'none', zIndex: 4 } }),
-        React.createElement('div', { style: { position: 'absolute', top: 1, bottom: 1, left: playhead + '%', width: 2, background: '#fff', boxShadow: '0 0 2px rgba(0,0,0,0.65)', pointerEvents: 'none', zIndex: 5 } })
+        React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, 'aria-label': 'Trim end', style: { position: 'absolute', top: 9, bottom: 9, right: 'calc(' + selectedRight + '% - 7px)', width: 15, background: '#FFD600', borderRadius: 4, cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+          React.createElement('span', { style: { color: '#6d5900', fontSize: 20, lineHeight: 1, fontWeight: 900, transform: 'translateY(-1px)' } }, '›')
+        ),
+        React.createElement('div', { style: { position: 'absolute', top: 4, bottom: 4, left: playhead + '%', width: 2, background: '#fff', boxShadow: '0 0 2px rgba(0,0,0,0.65)', pointerEvents: 'none', zIndex: 5 } })
       ),
       React.createElement('div', { style: { display: 'flex', justifyContent: 'center', gap: 12 } },
         React.createElement('button', { onClick: onAudio, style: { width: 96, padding: '10px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer' } }, '+ Audio'),
