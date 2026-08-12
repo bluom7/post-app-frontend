@@ -20617,7 +20617,6 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const [showBrightnessPicker, setShowBrightnessPicker] = React.useState(false);
   const [facingMode, setFacingMode] = React.useState("environment");
   const [cameraError, setCameraError] = React.useState(null);
-  const [cameraRetrying, setCameraRetrying] = React.useState(false);
   const [audioLabel, setAudioLabel] = React.useState("Original Audio");
   const [audioArtist, setAudioArtist] = React.useState("");
   const [audioArtwork, setAudioArtwork] = React.useState("");
@@ -20746,8 +20745,6 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const reviewImgRef = React.useRef(null);
   const autoPostRef = React.useRef(false);
   const trimTimelineRef = React.useRef(null);
-  const cameraRequestRef = React.useRef(0);
-  const cameraRequestInFlightRef = React.useRef(false);
   const trimDragSideRef = React.useRef(null); // "left" | "right" | null
   const [frameStrip, setFrameStrip] = React.useState([]);
   const [showTimeline, setShowTimeline] = React.useState(false);
@@ -20778,45 +20775,13 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   }
 
   async function startCamera() {
-    // A retry must always come from the visible button's user gesture.
-    // Ignore duplicate requests while the browser permission prompt is open.
-    if (cameraRequestInFlightRef.current) return;
-    const requestId = cameraRequestRef.current + 1;
-    cameraRequestRef.current = requestId;
-    cameraRequestInFlightRef.current = true;
-    setCameraRetrying(true);
     setCameraError(null);
-    stopStream();
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Camera access is not supported in this browser.");
-      }
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: true
-      });
-      // If a newer retry started, do not attach this stale stream.
-      if (requestId !== cameraRequestRef.current) {
-        stream.getTracks().forEach(track => track.stop());
-        return;
-      }
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true });
       streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(() => {});
-      }
-      setCameraError(null);
+      if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}); }
     } catch(e) {
-      if (requestId !== cameraRequestRef.current) return;
-      const denied = e && (e.name === "NotAllowedError" || e.name === "PermissionDeniedError");
-      setCameraError(denied
-        ? "Camera permission denied.\nTap Allow Camera to try again."
-        : "Camera error: " + ((e && e.message) || "Unable to access camera."));
-    } finally {
-      if (requestId === cameraRequestRef.current) {
-        cameraRequestInFlightRef.current = false;
-        setCameraRetrying(false);
-      }
+      setCameraError(e.name === "NotAllowedError" ? "Camera permission denied.\nPlease allow camera access." : "Camera error: " + e.message);
     }
   }
 
@@ -22673,13 +22638,15 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             // Clip box width = proportional to video duration vs MAX (30s)
             var _vd = videoDuration > 0 ? videoDuration : 1;
             var _cPct = videoDuration > 0 ? Math.min(100, (videoDuration / MAX_REEL_SECONDS) * 100) : 100;
+            // Keep the trim UI compact on mobile while preserving duration proportions.
+            var _trackWidth = "min(" + _cPct + "%, 320px)";
 
             return React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center" } },
 
               // ── 1. Video filmstrip track (proportional width) ──
               !isPhotoReel && React.createElement("div", {
                 ref: trimTimelineRef,
-                style: { position: "relative", height: 48, width: _cPct + "%", borderRadius: 6, overflow: "visible", touchAction: "none" }
+                style: { position: "relative", height: 48, width: _trackWidth, borderRadius: 6, overflow: "visible", touchAction: "none" }
               },
                 // Filmstrip frames (fill clip box)
                 React.createElement("div", { style: { position: "absolute", inset: 0, display: "flex", borderRadius: 6, overflow: "hidden", background: "#111" } },
@@ -22747,7 +22714,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                 ? React.createElement("div", {
                     onClick: function() { setShowMusicPicker(true); },
                     title: "Tap to change song",
-                    style: { position: "relative", display: "flex", alignItems: "center", gap: 0, marginTop: 3, height: 32, width: _cPct + "%", background: "rgba(199,21,133,0.9)", borderRadius: 4, overflow: "hidden", cursor: "pointer", boxSizing: "border-box" }
+                    style: { position: "relative", display: "flex", alignItems: "center", gap: 0, marginTop: 3, height: 32, width: _trackWidth, background: "rgba(199,21,133,0.9)", borderRadius: 4, overflow: "hidden", cursor: "pointer", boxSizing: "border-box" }
                   },
                   // Left handle
                   React.createElement("div", { style: { width: 12, height: "100%", background: "#FFD600", borderRadius: "4px 0 0 4px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
@@ -22791,7 +22758,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                 return React.createElement("div", {
                   key: o.id,
                   onClick: function() { setTextDraft(o.text); setEditingOverlayId(o.id); setTrimTextOpen(true); },
-                  style: { position: "relative", display: "flex", alignItems: "center", marginTop: 3, height: 30, width: _cPct + "%", background: "#4361EE", borderRadius: 4, overflow: "hidden", boxSizing: "border-box", cursor: "pointer" }
+                  style: { position: "relative", display: "flex", alignItems: "center", marginTop: 3, height: 30, width: _trackWidth, background: "#4361EE", borderRadius: 4, overflow: "hidden", boxSizing: "border-box", cursor: "pointer" }
                 },
                   // Left yellow handle
                   React.createElement("div", { style: { width: 12, height: "100%", background: "#FFD600", borderRadius: "4px 0 0 4px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
@@ -23533,7 +23500,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       React.createElement("div", { style: { background: "rgba(10,10,10,0.95)", borderRadius: 20, padding: "28px 22px", textAlign: "center", color: "#fff", maxWidth: 300 } },
         React.createElement("div", { style: { fontSize: 44, marginBottom: 14 } }, "📷"),
         React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, whiteSpace: "pre-wrap", marginBottom: 20 } }, cameraError),
-        React.createElement("button", { onClick: startCamera, disabled: cameraRetrying, style: { background: "#FF1744", color: "#fff", border: "none", borderRadius: 22, padding: "11px 28px", fontWeight: 700, fontSize: 15, cursor: cameraRetrying ? "wait" : "pointer", opacity: cameraRetrying ? 0.72 : 1 } }, cameraRetrying ? "Requesting..." : "Allow Camera")
+        React.createElement("button", { onClick: startCamera, style: { background: "#FF1744", color: "#fff", border: "none", borderRadius: 22, padding: "11px 28px", fontWeight: 700, fontSize: 15, cursor: "pointer" } }, "Allow Camera")
       )
     ),
 
