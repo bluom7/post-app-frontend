@@ -21431,31 +21431,45 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       _stripStarted = true;
       const dur = vid.duration || 1;
       let i = 0;
+      const captureFrame = () => {
+        if (_stripCancelled) return;
+        try {
+          const c = document.createElement("canvas");
+          c.width = 36; c.height = 48;
+          const ctx = c.getContext("2d");
+          if (!ctx) throw new Error('canvas unavailable');
+          const sw = vid.videoWidth || 9;
+          const sh = vid.videoHeight || 16;
+          const scale = Math.max(c.width / sw, c.height / sh);
+          const dw = sw * scale;
+          const dh = sh * scale;
+          ctx.fillStyle = '#1a1a1a';
+          ctx.fillRect(0, 0, c.width, c.height);
+          ctx.drawImage(vid, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+          frames.push(c.toDataURL("image/jpeg", 0.62));
+        } catch(_) { frames.push(null); }
+        setFrameStrip(frames.slice());
+        i++;
+        next();
+      };
       function next() {
         if (_stripCancelled) return;
         if (i >= NUM) { setFrameStrip(frames); _stripCleanup(); return; }
-        vid.currentTime = (i / Math.max(NUM - 1, 1)) * dur * 0.98;
-        vid.onseeked = () => {
-          if (_stripCancelled) return;
-          try {
-            const c = document.createElement("canvas");
-            c.width = 36; c.height = 48;
-            const ctx = c.getContext("2d");
-            if (!ctx) throw new Error('canvas unavailable');
-            const sw = vid.videoWidth || 9;
-            const sh = vid.videoHeight || 16;
-            const scale = Math.max(c.width / sw, c.height / sh);
-            const dw = sw * scale;
-            const dh = sh * scale;
-            ctx.fillStyle = '#1a1a1a';
-            ctx.fillRect(0, 0, c.width, c.height);
-            ctx.drawImage(vid, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
-            frames.push(c.toDataURL("image/jpeg", 0.62));
-          } catch(_) { frames.push(null); }
-          setFrameStrip(frames.slice());
-          i++;
-          next();
+        const target = (i / Math.max(NUM - 1, 1)) * dur * 0.98;
+        let captured = false;
+        const captureOnce = () => {
+          if (captured || _stripCancelled) return;
+          captured = true;
+          captureFrame();
         };
+        vid.onseeked = captureOnce;
+        // Android Chrome may not emit seeked when the first frame is already
+        // at currentTime 0, so capture that frame on the next paint instead.
+        if (Math.abs((vid.currentTime || 0) - target) < 0.001) {
+          requestAnimationFrame(captureOnce);
+        } else {
+          vid.currentTime = target;
+        }
       }
       next();
     };
