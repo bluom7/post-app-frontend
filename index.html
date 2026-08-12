@@ -25551,10 +25551,14 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
   // Apply audio state to all audio sources (video track or separate music)
   function applyAudioState(enabled) {
     if (isPhotoReel) {
-      const a = musicRef.current;
-      if (!a) return;
-      if (enabled) { a.play().catch(() => {}); setPhotoMusicPlaying(true); }
-      else { a.pause(); setPhotoMusicPlaying(false); }
+      if (enabled) {
+        const a = musicRef.current || createMusicAudio();
+        if (a) { startMusicClip(); setPhotoMusicPlaying(true); }
+      } else {
+        if (musicRef.current) musicRef.current.pause();
+        clearMusicClipTimer();
+        setPhotoMusicPlaying(false);
+      }
       return;
     }
     const v = videoRef.current;
@@ -25601,7 +25605,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
     } else {
       v.muted = true;
     }
-    return () => { v.pause(); if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; } };
+    return () => { clearMusicClipTimer(); v.pause(); if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; } };
   }, [reel.id]);
 
   // Video reels: respond to paused prop (tab switch, upload modal, etc.)
@@ -25693,10 +25697,14 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
   function handleTap() {
     onTap && onTap();
     if (isPhotoReel) {
-      const a = musicRef.current;
-      if (!a) return;
-      if (photoMusicPlaying) { a.pause(); setPhotoMusicPlaying(false); }
-      else if (audioEnabledRef.current) { a.play().catch(() => {}); setPhotoMusicPlaying(true); }
+      if (photoMusicPlaying) {
+        if (musicRef.current) musicRef.current.pause();
+        clearMusicClipTimer();
+        setPhotoMusicPlaying(false);
+      } else if (audioEnabledRef.current) {
+        const a = musicRef.current || createMusicAudio();
+        if (a) { startMusicClip(); setPhotoMusicPlaying(true); }
+      }
       return;
     }
     const v = videoRef.current;
