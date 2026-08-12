@@ -8652,6 +8652,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const [currentTime, setCurrentTime] = React.useState(trimStart || 0);
   const safeDuration = Math.max(Number(duration) || 0, 0.1);
   const selectedDuration = Math.max(0.1, trimEnd - trimStart);
+  const timelineWidth = 'min(224px, calc(100vw - 80px))';
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const formatTime = seconds => {
     const value = Math.max(0, Number(seconds) || 0);
@@ -8817,7 +8818,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         React.createElement('button', { onClick: () => seek(10), 'aria-label': 'Forward 10 seconds', style: { background: 'none', border: 'none', color: '#fff', padding: 4, cursor: 'pointer' } }, React.createElement('span', { style: { fontSize: 15, fontWeight: 800 } }, '10↷'))
       ),
       React.createElement('div', { style: { textAlign: 'center', fontSize: 16, letterSpacing: 1.4, padding: '4px 0 12px', fontVariantNumeric: 'tabular-nums', color: '#f3f3f3' } }, formatTime(currentTime - trimStart) + ' / ' + formatTime(selectedDuration)),
-      React.createElement('div', { ref: timelineRef, onPointerDown: jumpToTimelinePoint, style: { position: 'relative', height: 48, margin: '0 auto 6px', width: 'min(224px, calc(100vw - 80px))', touchAction: 'none' } },
+      React.createElement('div', { ref: timelineRef, onPointerDown: jumpToTimelinePoint, style: { position: 'relative', height: 48, margin: '0 auto 6px', width: timelineWidth, touchAction: 'none' } },
         React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: selectedLeft + '%', right: selectedRight + '%', background: '#111', border: '2px solid #FFD600', borderRadius: 4, boxSizing: 'border-box', overflow: 'hidden', pointerEvents: 'none' } },
           React.createElement('div', { style: { position: 'absolute', inset: 2, display: 'flex', overflow: 'hidden', borderRadius: 2, background: '#171717' } },
             Array.from({ length: 10 }).map((_, index) => React.createElement('div', { key: index, style: { flex: 1, minWidth: 0, height: '100%', backgroundColor: '#1a1a1a', backgroundImage: thumbnailFrames[index] ? 'url(' + thumbnailFrames[index] + ')' : 'linear-gradient(90deg, #151515, #252525)', backgroundSize: 'cover', backgroundPosition: 'center', borderRight: index < 9 ? '1px solid rgba(255,255,255,0.12)' : 'none' } }))
@@ -8829,11 +8830,10 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, 'aria-label': 'Trim end', style: { position: 'absolute', top: 6, bottom: 6, right: 'calc(' + selectedRight + '% - 7px)', width: 15, background: '#FFD600', borderRadius: 4, cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
           React.createElement('span', { style: { color: '#6d5900', fontSize: 20, lineHeight: 1, fontWeight: 900, transform: 'translateY(-1px)' } }, '›')
         ),
-        React.createElement('div', { style: { position: 'absolute', top: 3, bottom: 3, left: playhead + '%', width: 2, background: '#fff', boxShadow: '0 0 2px rgba(0,0,0,0.65)', pointerEvents: 'none', zIndex: 5 } })
-      ),
-      React.createElement('div', { style: { display: 'flex', justifyContent: 'center', gap: 12 } },
-        React.createElement('button', { onClick: onAudio, style: { width: 96, padding: '10px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer' } }, '+ Audio'),
-        React.createElement('button', { onClick: onText, style: { width: 96, padding: '10px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer' } }, '+ Text')
+        React.createElement('div', { style: { position: 'absolute', top: 3, bottom: 3, left: playhead + '%', width: 2, background: '#fff', boxShadow: '0 0 2px rgba(0,0,0,0.65)', pointerEvents:React.createElement('div', { style: { display: 'flex', justifyContent: 'center', gap: 10, width: timelineWidth, margin: '0 auto', boxSizing: 'border-box' } },
+          React.createElement('button', { onClick: onAudio, style: { flex: 1, minWidth: 0, height: 36, padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Audio'),
+          React.createElement('button', { onClick: onText, style: { flex: 1, minWidth: 0, height: 36, padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Text')
+        )e: 14, cursor: 'pointer' } }, '+ Text')
       )
     )
   );
