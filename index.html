@@ -8830,12 +8830,13 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, 'aria-label': 'Trim end', style: { position: 'absolute', top: 6, bottom: 6, right: 'calc(' + selectedRight + '% - 7px)', width: 15, background: '#FFD600', borderRadius: 4, cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
           React.createElement('span', { style: { color: '#6d5900', fontSize: 20, lineHeight: 1, fontWeight: 900, transform: 'translateY(-1px)' } }, '›')
         ),
-        React.createElement('div', { style: { position: 'absolute', top: 3, bottom: 3, left: playhead + '%', width: 2, background: '#fff', boxShadow: '0 0 2px rgba(0,0,0,0.65)', pointerEvents:React.createElement('div', { style: { display: 'flex', justifyContent: 'center', gap: 10, width: timelineWidth, margin: '0 auto', boxSizing: 'border-box' } },
+              React.createElement('div', { style: { position: 'absolute', top: 3, bottom: 3, left: playhead + '%', width: 2, background: '#fff', boxShadow: '0 0 2px rgba(0,0,0,0.65)', pointerEvents: 'none', zIndex: 5 } })
+        ),
+        React.createElement('div', { style: { display: 'flex', justifyContent: 'center', gap: 10, width: timelineWidth, margin: '0 auto', boxSizing: 'border-box' } },
           React.createElement('button', { onClick: onAudio, style: { flex: 1, minWidth: 0, height: 36, padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Audio'),
           React.createElement('button', { onClick: onText, style: { flex: 1, minWidth: 0, height: 36, padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Text')
-        )e: 14, cursor: 'pointer' } }, '+ Text')
+        )
       )
-    )
   );
 }
 function ComposeModal({
