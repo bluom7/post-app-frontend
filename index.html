@@ -23162,13 +23162,14 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       showMusicPicker && React.createElement(MusicPickerModalRC, { 
         onClose: () => {
           setShowMusicPicker(false);
+          setEditTool(null);
           // FIX: Restore editVideoRef src after music picker (bgVideoRef was using recordedURL)
           const _ev = editVideoRef.current;
           if (_ev && !isPhotoReel && recordedURL) {
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) trimVideoRef.current.muted = true; setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setPreviewPlaying(false); showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } })
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) trimVideoRef.current.muted = true; setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } })
     );
   }
 
