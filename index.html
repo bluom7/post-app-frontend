@@ -8659,6 +8659,69 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     return value.toFixed(1);
   };
 
+  const [thumbnailFrames, setThumbnailFrames] = React.useState([]);
+  React.useEffect(() => {
+    let cancelled = false;
+    setThumbnailFrames([]);
+    if (!src || safeDuration <= 0.1) return () => { cancelled = true; };
+    const probe = document.createElement('video');
+    probe.muted = true;
+    probe.playsInline = true;
+    probe.preload = 'auto';
+    const makeFrames = async () => {
+      try {
+        await new Promise((resolve, reject) => {
+          probe.onloadedmetadata = resolve;
+          probe.onerror = () => reject(new Error('thumbnail metadata failed'));
+          probe.src = src;
+          probe.load();
+        });
+        const canvas = document.createElement('canvas');
+        canvas.width = 160;
+        canvas.height = 90;
+        const context = canvas.getContext('2d');
+        if (!context) return;
+        const width = probe.videoWidth || 16;
+        const height = probe.videoHeight || 9;
+        const scale = Math.max(canvas.width / width, canvas.height / height);
+        const drawWidth = width * scale;
+        const drawHeight = height * scale;
+        const offsetX = (canvas.width - drawWidth) / 2;
+        const offsetY = (canvas.height - drawHeight) / 2;
+        const frames = [];
+        const seekTo = time => new Promise(resolve => {
+          let finished = false;
+          const finish = () => {
+            if (finished) return;
+            finished = true;
+            probe.removeEventListener('seeked', finish);
+            resolve();
+          };
+          probe.addEventListener('seeked', finish, { once: true });
+          probe.currentTime = time;
+          window.setTimeout(finish, 900);
+        });
+        for (let index = 0; index < 10 && !cancelled; index += 1) {
+          await seekTo(Math.min(Math.max(0, safeDuration - 0.05), (index + 0.5) * safeDuration / 10));
+          context.fillStyle = '#151515';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(probe, offsetX, offsetY, drawWidth, drawHeight);
+          frames.push(canvas.toDataURL('image/jpeg', 0.72));
+        }
+        if (!cancelled) setThumbnailFrames(frames);
+      } catch (_) {
+        if (!cancelled) setThumbnailFrames([]);
+      } finally {
+        probe.pause();
+        probe.removeAttribute('src');
+        probe.load();
+      }
+    };
+    makeFrames();
+    return () => { cancelled = true; probe.pause(); };
+  }, [src, safeDuration]);
+
+
   React.useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -8755,7 +8818,11 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       ),
       React.createElement('div', { style: { textAlign: 'center', fontSize: 16, letterSpacing: 1.4, padding: '4px 0 12px', fontVariantNumeric: 'tabular-nums', color: '#f3f3f3' } }, formatTime(currentTime - trimStart) + ' / ' + formatTime(selectedDuration)),
       React.createElement('div', { ref: timelineRef, onPointerDown: jumpToTimelinePoint, style: { position: 'relative', height: 48, margin: '0 auto 6px', width: 'min(224px, calc(100vw - 80px))', touchAction: 'none' } },
-        React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: selectedLeft + '%', right: selectedRight + '%', background: '#111', border: '2px solid #FFD600', borderRadius: 4, boxSizing: 'border-box', pointerEvents: 'none' } }),
+        React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: selectedLeft + '%', right: selectedRight + '%', background: '#111', border: '2px solid #FFD600', borderRadius: 4, boxSizing: 'border-box', overflow: 'hidden', pointerEvents: 'none' } },
+          React.createElement('div', { style: { position: 'absolute', inset: 2, display: 'flex', overflow: 'hidden', borderRadius: 2, background: '#171717' } },
+            Array.from({ length: 10 }).map((_, index) => React.createElement('div', { key: index, style: { flex: 1, minWidth: 0, height: '100%', backgroundColor: '#1a1a1a', backgroundImage: thumbnailFrames[index] ? 'url(' + thumbnailFrames[index] + ')' : 'linear-gradient(90deg, #151515, #252525)', backgroundSize: 'cover', backgroundPosition: 'center', borderRight: index < 9 ? '1px solid rgba(255,255,255,0.12)' : 'none' } }))
+          )
+        ),
         React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, 'aria-label': 'Trim start', style: { position: 'absolute', top: 6, bottom: 6, left: 'calc(' + selectedLeft + '% - 7px)', width: 15, background: '#FFD600', borderRadius: 4, cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
           React.createElement('div', { style: { width: 2, height: 24, borderRadius: 2, background: '#6d5900' } })
         ),
