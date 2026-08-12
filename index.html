@@ -8848,10 +8848,10 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         ),
               React.createElement('div', { style: { position: 'absolute', top: 3, bottom: 3, left: playhead + '%', width: 2, background: '#fff', boxShadow: '0 0 2px rgba(0,0,0,0.65)', pointerEvents: 'none', zIndex: 5 } })
         ),
-        React.createElement('div', { style: { display: 'flex', justifyContent: 'center', gap: 10, width: timelineWidth, margin: '0 auto', boxSizing: 'border-box' } },
-          React.createElement('button', { onClick: onAudio, style: { flex: 1, minWidth: 0, height: 36, padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Audio'),
-          React.createElement('button', { onClick: onText, style: { flex: 1, minWidth: 0, height: 36, padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Text')
-        )
+        React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 8, width: timelineWidth, margin: '0 auto', boxSizing: 'border-box' } },
+            React.createElement('button', { onClick: onAudio, style: { width: '100%', height: 36, flex: '0 0 auto', padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Audio'),
+            React.createElement('button', { onClick: onText, style: { width: '100%', height: 36, flex: '0 0 auto', padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Text')
+          )
       )
   );
 }
@@ -8946,7 +8946,6 @@ function ComposeModal({
   }, []);
   const [pendingVideoDuration, setPendingVideoDuration] = useState(0);
   const [showVideoTrim, setShowVideoTrim] = useState(false);
-  const [returnToVideoTrimAfterMusic, setReturnToVideoTrimAfterMusic] = useState(false);
   const [showVideoEditor, setShowVideoEditor] = useState(false);
   const [videoTextOverlays, setVideoTextOverlays] = useState([]); // [{id,text,x,y,color,size,font,bgColor}] — draggable text overlays on video
   const [videoEffect, setVideoEffect] = useState('none');         // VIDEO_EFFECTS id
@@ -9364,7 +9363,7 @@ function ComposeModal({
     trimStart, trimEnd, setTrimStart, setTrimEnd,
     onDone: () => { confirmVideoTrim(); },
     onCancel: () => setShowVideoTrim(false),
-    onAudio: () => { setReturnToVideoTrimAfterMusic(true); setShowVideoTrim(false); setShowVideoEditor(true); setVideoEditorTab(null); setShowMusicPicker(true); },
+    onAudio: () => { setShowVideoTrim(false); setShowVideoEditor(true); setVideoEditorTab(null); setShowMusicPicker(true); },
     onText: () => { setShowVideoTrim(false); setShowVideoEditor(true); setVideoEditorTab('text'); }
   });
 
@@ -9494,12 +9493,12 @@ function ComposeModal({
       /* Music picker + trimmer shown on top */
       showMusicPicker && React.createElement(MusicPickerModal, {
         onSelect: (music) => { setPendingTrimSong(music); setShowMusicPicker(false); setShowMusicTrimmer(true); },
-        onClose: () => { setShowMusicPicker(false); setReturnToVideoTrimAfterMusic(false); },
+        onClose: () => setShowMusicPicker(false),
         showToast
       }),
       showMusicTrimmer && pendingTrimSong && React.createElement(MusicTrimmerModal, {
         song: pendingTrimSong, photos: photoUrls,
-        onConfirm: (startMs) => { setSelectedMusic({ ...pendingTrimSong, music_start_ms: startMs }); setShowMusicTrimmer(false); setPendingTrimSong(null); if (returnToVideoTrimAfterMusic) { setShowVideoEditor(false); setVideoEditorTab(null); setShowVideoTrim(true); setReturnToVideoTrimAfterMusic(false); } },
+        onConfirm: (startMs) => { setSelectedMusic({ ...pendingTrimSong, music_start_ms: startMs }); setShowMusicTrimmer(false); setPendingTrimSong(null); },
         onBack: () => { setShowMusicTrimmer(false); setShowMusicPicker(true); },
         onChangeSong: () => { setShowMusicTrimmer(false); setShowMusicPicker(true); },
         onDelete: () => { setShowMusicTrimmer(false); setPendingTrimSong(null); setSelectedMusic(null); setShowMusicPicker(true); }
