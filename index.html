@@ -21623,9 +21623,22 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
   function startEditOverlayGesture(id, e) {
     e.stopPropagation();
+    // Pointer events are the single source of truth for touch + mouse. The old
+    // touch handler passed a TouchEvent here, which has no pointerId/clientX
+    // shape and prevented two-finger pinch from ever getting a valid distance.
+    const pointerId = e && e.pointerId;
+    if (pointerId === undefined || pointerId === null || !Number.isFinite(e.clientX) || !Number.isFinite(e.clientY)) return;
     const gesture = editOverlayGestureRef.current;
-    gesture.id = id;
-    gesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (gesture.id !== id) {
+      gesture.id = id;
+      gesture.pointers.clear();
+      gesture.startDistance = 0;
+      gesture.startSize = 22;
+    }
+    gesture.pointers.set(pointerId, { x: e.clientX, y: e.clientY });
+    if (e.currentTarget && e.currentTarget.setPointerCapture) {
+      try { e.currentTarget.setPointerCapture(pointerId); } catch (_) {}
+    }
     if (gesture.pointers.size >= 2) {
       const points = Array.from(gesture.pointers.values());
       const overlay = textOverlays.find(o => o.id === id);
@@ -21639,8 +21652,9 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
   function updateEditOverlayGesture(e) {
     const gesture = editOverlayGestureRef.current;
-    if (!gesture.id || !gesture.pointers.has(e.pointerId)) return false;
-    gesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const pointerId = e && e.pointerId;
+    if (pointerId === undefined || pointerId === null || !gesture.id || !gesture.pointers.has(pointerId)) return false;
+    gesture.pointers.set(pointerId, { x: e.clientX, y: e.clientY });
     if (gesture.pointers.size < 2) return false;
     const points = Array.from(gesture.pointers.values());
     const distance = Math.max(1, Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y));
@@ -21656,8 +21670,15 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
   function endEditOverlayGesture(e) {
     const gesture = editOverlayGestureRef.current;
-    if (e && gesture.pointers.has(e.pointerId)) gesture.pointers.delete(e.pointerId);
-    if (!gesture.pointers.size) { gesture.id = null; gesture.startDistance = 0; }
+    const pointerId = e && e.pointerId;
+    if (pointerId !== undefined && pointerId !== null) gesture.pointers.delete(pointerId);
+    if (gesture.pointers.size === 1) {
+      setDragOverlayId(gesture.id);
+    } else if (!gesture.pointers.size) {
+      gesture.id = null;
+      gesture.startDistance = 0;
+      setDragOverlayId(null);
+    }
   }
 
   function onPreviewPointerMove(e) {
@@ -21920,7 +21941,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           ctx.restore();
           textOverlays.forEach(o => {
             ctx.save();
-            ctx.font = "bold " + Math.round(outW * 0.055) + "px sans-serif";
+            ctx.font = "bold " + Math.round(outW * ((o.size || 22) / 390)) + "px sans-serif";
             ctx.fillStyle = o.color;
             ctx.strokeStyle = "rgba(0,0,0,0.6)";
             ctx.lineWidth = Math.max(2, outW * 0.004);
@@ -22164,10 +22185,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           )
         ),
         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginTop: 6, padding: "0 2px" } },
-          React.createElement("span", { style: { color: "rgba(255,255,255,0.55)", fontSize: 12, fontWeight: 700, minWidth: 14, textAlign: "center" } }, "A"),
           React.createElement("input", { type: "range", min: 14, max: 58, value: selectedTextSize, onChange: e => setSelectedTextSize(+e.target.value),
             style: { flex: 1, accentColor: selectedTextColor === '#000000' ? '#fff' : selectedTextColor, cursor: "pointer" } }),
-          React.createElement("span", { style: { color: "#fff", fontSize: 18, fontWeight: 800, minWidth: 18, textAlign: "center" } }, "A")
         ),
         textOverlays.length > 0 && React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 6 } },
           textOverlays.map(o => React.createElement("div", { key: o.id, style: { display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.15)", borderRadius: 14, padding: "5px 10px" } },
@@ -22388,7 +22407,6 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         onPointerUp: e => { e.stopPropagation(); endEditOverlayGesture(e); },
         onPointerCancel: e => { e.stopPropagation(); endEditOverlayGesture(e); },
         onClick: e => { e.stopPropagation(); editTextOverlayInAa(o.id); },
-        onTouchStart: e => { e.stopPropagation(); startEditOverlayGesture(o.id, e); }
           },
             (() => { const _FM3 = { Bubble: { fontFamily: "'Arial Rounded MT Bold', Arial, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "none", textShadow: "0 3px 0 rgba(0,0,0,0.65)" }, "Slab Serif": { fontFamily: "'Roboto Slab', Georgia, serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 6px rgba(0,0,0,0.9)" }, Geometric: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 800, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 5px rgba(0,0,0,0.9)" }, Classic: { fontFamily: "Georgia, serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }, Headline: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.85)" }, Glow: { fontFamily: "Arial, sans-serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 0 20px #fff, 0 0 40px #fff" }, Fancy: { fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 600, fontStyle: "italic", textTransform: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }, Pop: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "uppercase", textShadow: "2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000" } }; const _f3 = _FM3[o.font] || _FM3.Classic; const _hasBg3 = o.bgColor && o.bgColor !== "transparent"; return React.createElement("span", { style: { color: o.color || "#ffffff", fontSize: (o.size||22)+"px", fontWeight: _f3.fontWeight, fontFamily: _f3.fontFamily, fontStyle: _f3.fontStyle, textTransform: _f3.textTransform, textShadow: _hasBg3 ? "none" : _f3.textShadow, background: _hasBg3 ? o.bgColor : "transparent", padding: _hasBg3 ? "5px 12px" : "0", borderRadius: _hasBg3 ? "7px" : "0", whiteSpace: "nowrap", display: "inline-block" } }, o.text); })(),
             React.createElement("button", {
@@ -22680,7 +22698,6 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         onPointerMove: e => { e.stopPropagation(); updateEditOverlayGesture(e); },
         onPointerUp: e => { e.stopPropagation(); endEditOverlayGesture(e); },
         onPointerCancel: e => { e.stopPropagation(); endEditOverlayGesture(e); },
-        onTouchStart: e => { e.stopPropagation(); startEditOverlayGesture(o.id, e); }
       },
         (() => { const _FM2 = { Bubble: { fontFamily: "'Arial Rounded MT Bold', Arial, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "none", textShadow: "0 3px 0 rgba(0,0,0,0.65)" }, "Slab Serif": { fontFamily: "'Roboto Slab', Georgia, serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 6px rgba(0,0,0,0.9)" }, Geometric: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 800, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 5px rgba(0,0,0,0.9)" }, Classic: { fontFamily: "Georgia, serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }, Headline: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.85)" }, Glow: { fontFamily: "Arial, sans-serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 0 20px #fff, 0 0 40px #fff" }, Fancy: { fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 600, fontStyle: "italic", textTransform: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }, Pop: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "uppercase", textShadow: "2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000" } }; const _f2 = _FM2[o.font] || _FM2.Classic; const _hasBg2 = o.bgColor && o.bgColor !== "transparent"; return React.createElement("span", { style: { color: o.color || "#ffffff", fontSize: (o.size || 22) + "px", fontWeight: _f2.fontWeight, fontFamily: _f2.fontFamily, fontStyle: _f2.fontStyle, textTransform: _f2.textTransform, textShadow: _hasBg2 ? "none" : _f2.textShadow, background: _hasBg2 ? o.bgColor : "transparent", padding: _hasBg2 ? "5px 12px" : "0", borderRadius: _hasBg2 ? "7px" : "0", whiteSpace: "nowrap", display: "inline-block" } }, o.text); })(),
         React.createElement("button", {
