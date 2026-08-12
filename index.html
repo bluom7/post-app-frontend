@@ -21413,47 +21413,60 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     if (isPhotoReel) { setFrameStrip([]); return; }
     const NUM = 10;
     const vid = document.createElement("video");
-    // FIX: Use a dedicated blob URL so editVideoRef keeps exclusive ownership of
-    // recordedURL. Two video elements sharing the same blob URL on Android Chrome
-    // causes one (or both) to show a black frame — the frame-strip detached element
-    // was competing with the edit-preview element for the same resource.
     let _stripUrl = recordedURL;
     try { if (recordedBlob) _stripUrl = URL.createObjectURL(recordedBlob); } catch(_) {}
     let _stripCancelled = false;
+    let _stripStarted = false;
     const _stripCleanup = () => {
       _stripCancelled = true;
-      try { vid.removeAttribute('src'); vid.load(); } catch(_) {}
+      try { vid.pause(); vid.removeAttribute('src'); vid.load(); } catch(_) {}
       if (_stripUrl !== recordedURL) { try { URL.revokeObjectURL(_stripUrl); } catch(_) {} }
     };
-    vid.src = _stripUrl; vid.muted = true; vid.playsInline = true;
+    vid.muted = true;
+    vid.playsInline = true;
+    vid.preload = "auto";
     const frames = [];
-    vid.onloadedmetadata = () => {
+    const startStrip = () => {
+      if (_stripCancelled || _stripStarted) return;
+      _stripStarted = true;
       const dur = vid.duration || 1;
       let i = 0;
       function next() {
         if (_stripCancelled) return;
-        if (i >= NUM) {
-          setFrameStrip(frames);
-          _stripCleanup();
-          return;
-        }
+        if (i >= NUM) { setFrameStrip(frames); _stripCleanup(); return; }
         vid.currentTime = (i / Math.max(NUM - 1, 1)) * dur * 0.98;
         vid.onseeked = () => {
           if (_stripCancelled) return;
           try {
-            const c = document.createElement("canvas"); c.width = 36; c.height = 56;
-            c.getContext("2d").drawImage(vid, 0, 0, 36, 56);
-            frames.push(c.toDataURL("image/jpeg", 0.5));
+            const c = document.createElement("canvas");
+            c.width = 36; c.height = 48;
+            const ctx = c.getContext("2d");
+            if (!ctx) throw new Error('canvas unavailable');
+            const sw = vid.videoWidth || 9;
+            const sh = vid.videoHeight || 16;
+            const scale = Math.max(c.width / sw, c.height / sh);
+            const dw = sw * scale;
+            const dh = sh * scale;
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(0, 0, c.width, c.height);
+            ctx.drawImage(vid, (c.width - dw) / 2, (c.height - dh) / 2, dw, dh);
+            frames.push(c.toDataURL("image/jpeg", 0.62));
           } catch(_) { frames.push(null); }
-          i++; next();
+          setFrameStrip(frames.slice());
+          i++;
+          next();
         };
       }
       next();
     };
+    vid.onloadedmetadata = startStrip;
+    vid.onloadeddata = startStrip;
+    vid.oncanplay = startStrip;
     vid.onerror = () => { setFrameStrip([]); _stripCleanup(); };
+    vid.src = _stripUrl;
     vid.load();
     return _stripCleanup;
-  }, [recordedURL]);
+  }, [recordedURL, recordedBlob, isPhotoReel]);
 
   function addTextOverlay() {
     const txt = textDraft.trim();
@@ -22631,7 +22644,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
               // ── 1. Video filmstrip track (proportional width) ──
               !isPhotoReel && React.createElement("div", {
                 ref: trimTimelineRef,
-                style: { position: "relative", height: 58, width: _cPct + "%", borderRadius: 6, overflow: "visible", touchAction: "none" }
+                style: { position: "relative", height: 48, width: _cPct + "%", borderRadius: 6, overflow: "visible", touchAction: "none" }
               },
                 // Filmstrip frames (fill clip box)
                 React.createElement("div", { style: { position: "absolute", inset: 0, display: "flex", borderRadius: 6, overflow: "hidden", background: "#111" } },
@@ -22648,7 +22661,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                   position: "absolute", top: 0, bottom: 0,
                   left: ((trimStart / _vd) * 100) + "%",
                   right: ((_vd - trimEnd) / _vd * 100) + "%",
-                  border: "3px solid #FFD600", borderRadius: 4, pointerEvents: "none"
+                  border: "2px solid #FFD600", borderRadius: 4, pointerEvents: "none"
                 } }),
                 // Left drag handle
                 React.createElement("div", {
