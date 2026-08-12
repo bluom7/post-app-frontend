@@ -22638,13 +22638,15 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             // Clip box width = proportional to video duration vs MAX (30s)
             var _vd = videoDuration > 0 ? videoDuration : 1;
             var _cPct = videoDuration > 0 ? Math.min(100, (videoDuration / MAX_REEL_SECONDS) * 100) : 100;
+            // Keep the trim UI compact on mobile while preserving duration proportions.
+            var _trackWidth = "min(" + _cPct + "%, 320px)";
 
             return React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center" } },
 
               // ── 1. Video filmstrip track (proportional width) ──
               !isPhotoReel && React.createElement("div", {
                 ref: trimTimelineRef,
-                style: { position: "relative", height: 48, width: _cPct + "%", borderRadius: 6, overflow: "visible", touchAction: "none" }
+                style: { position: "relative", height: 48, width: _trackWidth, borderRadius: 6, overflow: "visible", touchAction: "none" }
               },
                 // Filmstrip frames (fill clip box)
                 React.createElement("div", { style: { position: "absolute", inset: 0, display: "flex", borderRadius: 6, overflow: "hidden", background: "#111" } },
@@ -22712,7 +22714,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                 ? React.createElement("div", {
                     onClick: function() { setShowMusicPicker(true); },
                     title: "Tap to change song",
-                    style: { position: "relative", display: "flex", alignItems: "center", gap: 0, marginTop: 3, height: 32, width: _cPct + "%", background: "rgba(199,21,133,0.9)", borderRadius: 4, overflow: "hidden", cursor: "pointer", boxSizing: "border-box" }
+                    style: { position: "relative", display: "flex", alignItems: "center", gap: 0, marginTop: 3, height: 32, width: _trackWidth, background: "rgba(199,21,133,0.9)", borderRadius: 4, overflow: "hidden", cursor: "pointer", boxSizing: "border-box" }
                   },
                   // Left handle
                   React.createElement("div", { style: { width: 12, height: "100%", background: "#FFD600", borderRadius: "4px 0 0 4px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
@@ -22756,7 +22758,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                 return React.createElement("div", {
                   key: o.id,
                   onClick: function() { setTextDraft(o.text); setEditingOverlayId(o.id); setTrimTextOpen(true); },
-                  style: { position: "relative", display: "flex", alignItems: "center", marginTop: 3, height: 30, width: _cPct + "%", background: "#4361EE", borderRadius: 4, overflow: "hidden", boxSizing: "border-box", cursor: "pointer" }
+                  style: { position: "relative", display: "flex", alignItems: "center", marginTop: 3, height: 30, width: _trackWidth, background: "#4361EE", borderRadius: 4, overflow: "hidden", boxSizing: "border-box", cursor: "pointer" }
                 },
                   // Left yellow handle
                   React.createElement("div", { style: { width: 12, height: "100%", background: "#FFD600", borderRadius: "4px 0 0 4px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
