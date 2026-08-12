@@ -8726,25 +8726,56 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   }, [musicUrl]);
 
   const [thumbnailFrames, setThumbnailFrames] = React.useState([]);
+  const thumbnailCount = 12;
   React.useEffect(() => {
     let cancelled = false;
     setThumbnailFrames([]);
     if (!src || safeDuration <= 0.1) return () => { cancelled = true; };
     const probe = document.createElement('video');
+    if (/^https?:\/\//i.test(src)) probe.crossOrigin = 'anonymous';
     probe.muted = true;
     probe.playsInline = true;
     probe.preload = 'auto';
     const makeFrames = async () => {
       try {
         await new Promise((resolve, reject) => {
-          probe.onloadedmetadata = resolve;
-          probe.onerror = () => reject(new Error('thumbnail metadata failed'));
+          let hasMetadata = false;
+          let hasFrameData = false;
+          let settled = false;
+          const finish = () => {
+            if (settled || !hasMetadata || !hasFrameData) return;
+            settled = true;
+            cleanup();
+            resolve();
+          };
+          const cleanup = () => {
+            probe.removeEventListener('loadedmetadata', onMetadata);
+            probe.removeEventListener('loadeddata', onFrameData);
+            probe.removeEventListener('canplay', onFrameData);
+            probe.removeEventListener('error', onError);
+          };
+          const onMetadata = () => {
+            hasMetadata = true;
+            finish();
+          };
+          const onFrameData = () => {
+            hasFrameData = true;
+            finish();
+          };
+          const onError = () => {
+            cleanup();
+            reject(new Error('thumbnail metadata failed'));
+          };
+          probe.addEventListener('loadedmetadata', onMetadata);
+          probe.addEventListener('loadeddata', onFrameData);
+          probe.addEventListener('canplay', onFrameData);
+          probe.addEventListener('error', onError);
           probe.src = src;
           probe.load();
         });
         const canvas = document.createElement('canvas');
-        canvas.width = 160;
-        canvas.height = 90;
+        canvas.width = 320;
+        canvas.height = 180;
         const context = canvas.getContext('2d');
         if (!context) return;
         const width = probe.videoWidth || 16;
@@ -8755,26 +8786,53 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         const offsetX = (canvas.width - drawWidth) / 2;
         const offsetY = (canvas.height - drawHeight) / 2;
         const frames = [];
-        const seekTo = time => new Promise(resolve => {
+        const waitForDecodedFrame = () => new Promise(resolve => {
           let finished = false;
           const finish = () => {
             if (finished) return;
             finished = true;
-            probe.removeEventListener('seeked', finish);
             resolve();
           };
-          probe.addEventListener('seeked', finish, { once: true });
-          probe.currentTime = time;
-          window.setTimeout(finish, 900);
+          if (typeof probe.requestVideoFrameCallback === 'function') {
+            probe.requestVideoFrameCallback(finish);
+          } else {
+            window.requestAnimationFrame(() => window.requestAnimationFrame(finish));
+          }
+          window.setTimeout(finish, 1200);
         });
-        for (let index = 0; index < 10 && !cancelled; index += 1) {
-          await seekTo(Math.min(Math.max(0, safeDuration - 0.05), (index + 0.5) * safeDuration / 10));
-          context.fillStyle = '#151515';
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          context.drawImage(probe, offsetX, offsetY, drawWidth, drawHeight);
-          frames.push(canvas.toDataURL('image/jpeg', 0.72));
+        const seekTo = time => new Promise(resolve => {
+          let finished = false;
+          const finish = async () => {
+            if (finished) return;
+            finished = true;
+            probe.removeEventListener('seeked', onSeeked);
+            await waitForDecodedFrame();
+            resolve();
+          };
+          const onSeeked = () => { finish(); };
+          probe.addEventListener('seeked', onSeeked, { once: true });
+          try {
+            probe.currentTime = time;
+            if (Math.abs((probe.currentTime || 0) - time) < 0.02 && probe.readyState >= 2) finish();
+          } catch (_) {
+            finish();
+          }
+          window.setTimeout(finish, 1800);
+        });
+        for (let index = 0; index < thumbnailCount && !cancelled; index += 1) {
+          const time = Math.min(Math.max(0.02, safeDuration - 0.05), (index + 0.5) * safeDuration / thumbnailCount);
+          await seekTo(time);
+          try {
+            context.fillStyle = '#151515';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(probe, offsetX, offsetY, drawWidth, drawHeight);
+            frames.push(canvas.toDataURL('image/jpeg', 0.82));
+          } catch (_) {
+            // Keep the other decoded frames instead of blanking the entire strip.
+            frames.push(null);
+          }
         }
-        if (!cancelled) setThumbnailFrames(frames);
+        if (!cancelled && frames.some(Boolean)) setThumbnailFrames(frames);
       } catch (_) {
         if (!cancelled) setThumbnailFrames([]);
       } finally {
@@ -8924,7 +8982,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       React.createElement('div', { ref: timelineRef, onPointerDown: jumpToTimelinePoint, style: { position: 'relative', height: 48, margin: '0 auto 6px', width: timelineWidth, touchAction: 'none' } },
         React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: selectedLeft + '%', right: selectedRight + '%', background: '#111', border: '2px solid #FFD600', borderRadius: 4, boxSizing: 'border-box', overflow: 'hidden', pointerEvents: 'none' } },
           React.createElement('div', { style: { position: 'absolute', inset: 2, display: 'flex', overflow: 'hidden', borderRadius: 2, background: '#171717' } },
-            Array.from({ length: 10 }).map((_, index) => React.createElement('div', { key: index, style: { flex: 1, minWidth: 0, height: '100%', backgroundColor: '#1a1a1a', backgroundImage: thumbnailFrames[index] ? 'url(' + thumbnailFrames[index] + ')' : 'linear-gradient(90deg, #151515, #252525)', backgroundSize: 'cover', backgroundPosition: 'center', borderRight: index < 9 ? '1px solid rgba(255,255,255,0.12)' : 'none' } }))
+            Array.from({ length: thumbnailCount }).map((_, index) => React.createElement('div', { key: index, style: { flex: 1, minWidth: 0, height: '100%', backgroundColor: '#1a1a1a', backgroundImage: thumbnailFrames[index] ? 'url(' + thumbnailFrames[index] + ')' : 'linear-gradient(90deg, #151515, #252525)', backgroundSize: 'cover', backgroundPosition: 'center', borderRight: index < thumbnailCount - 1 ? '1px solid rgba(255,255,255,0.12)' : 'none' } }))
           )
         ),
         React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, 'aria-label': 'Trim start', style: { position: 'absolute', top: 6, bottom: 6, left: 'calc(' + selectedLeft + '% - 7px)', width: 15, background: '#FFD600', borderRadius: 4, cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
