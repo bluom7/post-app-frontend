@@ -8210,9 +8210,9 @@ function VideoStickerPickerModal({ onSelect, onClose }) {
 }
 
 function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete, onChangeSong }) {
-  const [CLIP_DUR, setClipDur] = React.useState(15);
+  const [CLIP_DUR, setClipDur] = React.useState(30);
   const [showClipDurationPicker, setShowClipDurationPicker] = React.useState(false);
-  const songDur = Math.max(CLIP_DUR + 1, Math.round((song.music_duration_ms || 30000) / 1000));
+  const songDur = Math.max(CLIP_DUR, Math.round((song.music_duration_ms || 30000) / 1000));
   const maxStart = Math.max(0, songDur - CLIP_DUR);
 
   // Use refs for drag state to avoid stale closures
@@ -8392,7 +8392,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
         React.createElement('div', { style: { width:'100%', color:'rgba(255,255,255,0.82)', fontSize:11, lineHeight:'13px', fontWeight:700, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', textShadow:'0 1px 4px rgba(0,0,0,0.8)' } }, song.music_artist || 'Unknown artist')
       ),
       // Done
-      React.createElement('button', { onClick: () => { stopAudio(); onConfirm(Math.round(startSecRef.current * 1000)); }, style: { position:'absolute', top:14, right:18, width:56, height:40, display:'flex', alignItems:'center', justifyContent:'center', background:'#fff', border:'none', borderRadius:4, padding:0, fontWeight:700, fontSize:17, cursor:'pointer', color:'#111', textShadow:'none', pointerEvents:'auto', zIndex:3 } }, 'Done'),
+      React.createElement('button', { onClick: () => { stopAudio(); onConfirm(Math.round(startSecRef.current * 1000), CLIP_DUR); }, style: { position:'absolute', top:14, right:18, width:56, height:40, display:'flex', alignItems:'center', justifyContent:'center', background:'#fff', border:'none', borderRadius:4, padding:0, fontWeight:700, fontSize:17, cursor:'pointer', color:'#111', textShadow:'none', pointerEvents:'auto', zIndex:3 } }, 'Done'),
       // Compact clip-duration control directly beneath Done, like the camera time tool.
       React.createElement('div', { style: { position:'absolute', top:58, right:12, zIndex:6, pointerEvents:'auto' } },
         React.createElement('button', {
@@ -9339,6 +9339,7 @@ function ComposeModal({
         music_preview_url: selectedMusic ? selectedMusic.music_preview_url : undefined,
         music_duration_ms: selectedMusic ? selectedMusic.music_duration_ms : undefined,
         music_start_ms: selectedMusic ? selectedMusic.music_start_ms : undefined,
+        music_clip_duration_ms: selectedMusic ? selectedMusic.music_clip_duration_ms : undefined,
         gif_url: gifUrl || undefined,
         alt_text: altText.trim() || undefined,
         sticker_overlays: stickerOverlays.length ? stickerOverlays : undefined,
@@ -9618,7 +9619,7 @@ function ComposeModal({
       }),
       showMusicTrimmer && pendingTrimSong && React.createElement(MusicTrimmerModal, {
         song: pendingTrimSong, photos: photoUrls,
-        onConfirm: (startMs) => { setSelectedMusic({ ...pendingTrimSong, music_start_ms: startMs }); setShowMusicTrimmer(false); setPendingTrimSong(null); if (returnToVideoTrimAfterMusic) { setShowVideoEditor(false); setVideoEditorTab(null); setShowVideoTrim(true); setReturnToVideoTrimAfterMusic(false); } },
+        onConfirm: (startMs, clipDurationSec) => { setSelectedMusic({ ...pendingTrimSong, music_start_ms: startMs, music_clip_duration_ms: Math.max(1, Math.min(30, Number(clipDurationSec) || 30)) * 1000 }); setShowMusicTrimmer(false); setPendingTrimSong(null); if (returnToVideoTrimAfterMusic) { setShowVideoEditor(false); setVideoEditorTab(null); setShowVideoTrim(true); setReturnToVideoTrimAfterMusic(false); } },
         onBack: () => { setShowMusicTrimmer(false); setShowMusicPicker(true); },
         onChangeSong: () => { setShowMusicTrimmer(false); setShowMusicPicker(true); },
         onDelete: () => { setShowMusicTrimmer(false); setPendingTrimSong(null); setSelectedMusic(null); setShowMusicPicker(true); }
@@ -9982,7 +9983,7 @@ function ComposeModal({
     song: pendingTrimSong,
     photos: photoUrls,
     videoSrc: activeVideoSource,
-    onConfirm: (startMs) => { setSelectedMusic({ ...pendingTrimSong, music_start_ms: startMs }); setShowMusicTrimmer(false); setPendingTrimSong(null); },
+    onConfirm: (startMs, clipDurationSec) => { setSelectedMusic({ ...pendingTrimSong, music_start_ms: startMs, music_clip_duration_ms: Math.max(1, Math.min(30, Number(clipDurationSec) || 30)) * 1000 }); setShowMusicTrimmer(false); setPendingTrimSong(null); },
     onBack: () => { setShowMusicTrimmer(false); setShowMusicPicker(true); },
     onChangeSong: () => { setShowMusicTrimmer(false); setShowMusicPicker(true); },
     onDelete: () => { setShowMusicTrimmer(false); setPendingTrimSong(null); setSelectedMusic(null); setShowMusicPicker(true); }
