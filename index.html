@@ -8644,10 +8644,11 @@ function MusicPickerModal({ onSelect, onClose, showToast }) {
   );
 }
 
-function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimStart, setTrimEnd, onDone, onCancel, onAudio, onText }) {
+function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimStart, setTrimEnd, onDone, onCancel, onAudio, onText, selectedMusic }) {
   const videoRef = React.useRef(null);
   const timelineRef = React.useRef(null);
   const dragSideRef = React.useRef(null);
+  const audioRef = React.useRef(null);
   const [playing, setPlaying] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(trimStart || 0);
   const safeDuration = Math.max(Number(duration) || 0, 0.1);
@@ -8659,6 +8660,36 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     if (value >= 60) return Math.floor(value / 60) + ':' + String(Math.floor(value % 60)).padStart(2, '0');
     return value.toFixed(1);
   };
+
+  const musicUrl = selectedMusic && selectedMusic.music_preview_url;
+  const musicStartSec = Math.max(0, Number(selectedMusic && selectedMusic.music_start_ms) || 0) / 1000;
+  const syncMusicToVideo = () => {
+    const audio = audioRef.current;
+    const video = videoRef.current;
+    if (!audio || !video || !musicUrl) return;
+    const target = Math.max(0, musicStartSec + Math.max(0, (video.currentTime || 0) - trimStart));
+    if (Number.isFinite(target) && Math.abs((audio.currentTime || 0) - target) > 0.35) {
+      try { audio.currentTime = target; } catch (_) {}
+    }
+  };
+
+  React.useEffect(() => {
+    const previousAudio = audioRef.current;
+    if (previousAudio) {
+      previousAudio.pause();
+      previousAudio.src = '';
+    }
+    audioRef.current = null;
+    if (!musicUrl) return () => {};
+    const audio = new Audio(musicUrl);
+    audio.preload = 'auto';
+    audioRef.current = audio;
+    return () => {
+      audio.pause();
+      audio.src = '';
+      if (audioRef.current === audio) audioRef.current = null;
+    };
+  }, [musicUrl]);
 
   const [thumbnailFrames, setThumbnailFrames] = React.useState([]);
   React.useEffect(() => {
@@ -8726,6 +8757,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   React.useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+    video.muted = Boolean(musicUrl);
     const onTimeUpdate = () => {
       const next = video.currentTime || 0;
       if (next >= trimEnd) {
@@ -8733,9 +8765,17 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         setCurrentTime(trimStart);
         setPlaying(false);
         video.pause();
-      } else setCurrentTime(next);
+        if (audioRef.current) audioRef.current.pause();
+      } else {
+        setCurrentTime(next);
+        if (musicUrl && audioRef.current && !audioRef.current.paused) syncMusicToVideo();
+      }
     };
-    const onEnded = () => { setPlaying(false); setCurrentTime(trimStart); };
+    const onEnded = () => {
+      setPlaying(false);
+      setCurrentTime(trimStart);
+      if (audioRef.current) audioRef.current.pause();
+    };
     video.addEventListener('timeupdate', onTimeUpdate);
     video.addEventListener('ended', onEnded);
     video.currentTime = clamp(trimStart, 0, safeDuration);
@@ -8745,7 +8785,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       video.removeEventListener('ended', onEnded);
       video.pause();
     };
-  }, [src, trimStart, trimEnd, safeDuration]);
+  }, [src, trimStart, trimEnd, safeDuration, musicUrl]);
 
   React.useEffect(() => {
     const move = event => {
@@ -8781,9 +8821,22 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-    if (playing) { video.pause(); setPlaying(false); return; }
+    const audio = audioRef.current;
+    if (playing) {
+      video.pause();
+      if (audio) audio.pause();
+      setPlaying(false);
+      return;
+    }
     if (video.currentTime < trimStart || video.currentTime >= trimEnd) video.currentTime = trimStart;
-    video.play().then(() => setPlaying(true)).catch(() => {});
+    video.muted = Boolean(musicUrl);
+    if (musicUrl && audio) {
+      syncMusicToVideo();
+      audio.play().catch(() => {});
+    }
+    video.play().then(() => setPlaying(true)).catch(() => {
+      if (audio) audio.pause();
+    });
   };
   const seek = amount => {
     const video = videoRef.current;
@@ -8807,7 +8860,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       React.createElement('button', { onClick: onDone, style: { background: '#151515', border: '1px solid #202020', borderRadius: 8, color: '#fff', fontSize: 16, padding: '11px 20px', cursor: 'pointer' } }, 'Done')
     ),
     React.createElement('div', { style: { flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 24px 0' } },
-      React.createElement('video', { ref: videoRef, src, playsInline: true, preload: 'auto', onClick: togglePlay, style: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block', background: '#000', cursor: 'pointer' } })
+      React.createElement('video', { ref: videoRef, src, playsInline: true, preload: 'auto', muted: Boolean(musicUrl), onClick: togglePlay, style: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block', background: '#000', cursor: 'pointer' } })
     ),
     React.createElement('div', { style: { flexShrink: 0, padding: '8px 24px calc(18px + env(safe-area-inset-bottom))' } },
       React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 28, height: 44 } },
@@ -8849,7 +8902,16 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
               React.createElement('div', { style: { position: 'absolute', top: 3, bottom: 3, left: playhead + '%', width: 2, background: '#fff', boxShadow: '0 0 2px rgba(0,0,0,0.65)', pointerEvents: 'none', zIndex: 5 } })
         ),
         React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 8, width: timelineWidth, margin: '0 auto', boxSizing: 'border-box' } },
-            React.createElement('button', { onClick: onAudio, style: { width: '100%', height: 36, flex: '0 0 auto', padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Audio'),
+            selectedMusic
+              ? React.createElement('button', { onClick: onAudio, 'aria-label': 'Change selected song', style: { width: '100%', minHeight: 46, flex: '0 0 auto', padding: '6px 8px', border: '1px solid rgba(255,214,0,0.8)', borderRadius: 8, background: 'rgba(255,214,0,0.08)', color: '#fff', cursor: 'pointer', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' } },
+                  selectedMusic.music_artwork ? React.createElement('img', { src: selectedMusic.music_artwork, alt: '', style: { width: 32, height: 32, borderRadius: 5, objectFit: 'cover', flexShrink: 0 } }) : React.createElement('div', { style: { width: 32, height: 32, borderRadius: 5, background: '#FFD600', color: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12, flexShrink: 0 } }, '♪'),
+                  React.createElement('div', { style: { minWidth: 0, flex: 1 } },
+                    React.createElement('div', { style: { fontSize: 12, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, selectedMusic.music_title || 'Selected song'),
+                    React.createElement('div', { style: { fontSize: 10, color: '#bdbdbd', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, selectedMusic.music_artist || 'Audio selected')
+                  ),
+                  React.createElement('span', { style: { color: '#FFD600', fontSize: 10, fontWeight: 800, flexShrink: 0 } }, 'Change')
+                )
+              : React.createElement('button', { onClick: onAudio, style: { width: '100%', height: 36, flex: '0 0 auto', padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Audio'),
             React.createElement('button', { onClick: onText, style: { width: '100%', height: 36, flex: '0 0 auto', padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Text')
           )
       )
@@ -9410,6 +9472,7 @@ function ComposeModal({
     src: activeVideoSource,
     duration: pendingVideoDuration || videoDuration,
     trimStart, trimEnd, setTrimStart, setTrimEnd,
+    selectedMusic,
     onDone: () => { confirmVideoTrim(); },
     onCancel: () => setShowVideoTrim(false),
     onAudio: () => {
