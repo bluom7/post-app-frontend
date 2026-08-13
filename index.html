@@ -8702,6 +8702,103 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     return value.toFixed(1);
   };
 
+  const overlayGestureRef = React.useRef(null);
+  const overlayLastGestureRef = React.useRef({ id: null, moved: false });
+  const updateInlineOverlay = (id, patch) => {
+    setInlineTextOverlays(prev => prev.map(item => item.id === id ? { ...item, ...patch } : item));
+    if (typeof setTextOverlays === 'function') {
+      setTextOverlays(prev => (Array.isArray(prev) ? prev : []).map(item => item.id === id ? { ...item, ...patch } : item));
+    }
+  };
+  const overlayStageRect = target => {
+    const parent = target && target.parentElement;
+    return parent ? parent.getBoundingClientRect() : null;
+  };
+  const overlayPointerDown = (event, overlay) => {
+    event.preventDefault();
+    event.stopPropagation();
+    let gesture = overlayGestureRef.current;
+    if (!gesture || gesture.id !== overlay.id || gesture.pointers.size === 0) {
+      const base = { ...overlay, xPct: Number(overlay.xPct ?? 50), yPct: Number(overlay.yPct ?? 45), scale: Number(overlay.scale) || 1 };
+      gesture = { id: overlay.id, pointers: new Map(), current: base, mode: 'drag', moved: false, startX: event.clientX, startY: event.clientY, startDistance: 0, startCenterX: event.clientX, startCenterY: event.clientY };
+      overlayGestureRef.current = gesture;
+    }
+    gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (gesture.pointers.size >= 2) {
+      const points = Array.from(gesture.pointers.values());
+      const first = points[0];
+      const second = points[1];
+      gesture.mode = 'pinch';
+      gesture.current = { ...gesture.current };
+      gesture.startDistance = Math.max(1, Math.hypot(second.x - first.x, second.y - first.y));
+      gesture.startCenterX = (first.x + second.x) / 2;
+      gesture.startCenterY = (first.y + second.y) / 2;
+      gesture.startX = gesture.startCenterX;
+      gesture.startY = gesture.startCenterY;
+    } else {
+      gesture.mode = 'drag';
+      gesture.startX = event.clientX;
+      gesture.startY = event.clientY;
+    }
+    if (event.currentTarget.setPointerCapture) event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const overlayPointerMove = event => {
+    const gesture = overlayGestureRef.current;
+    if (!gesture || !gesture.pointers.has(event.pointerId)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    gesture.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const rect = overlayStageRect(event.currentTarget);
+    if (!rect || !rect.width || !rect.height) return;
+    let patch;
+    if (gesture.pointers.size >= 2) {
+      const points = Array.from(gesture.pointers.values());
+      const first = points[0];
+      const second = points[1];
+      const centerX = (first.x + second.x) / 2;
+      const centerY = (first.y + second.y) / 2;
+      const distance = Math.max(1, Math.hypot(second.x - first.x, second.y - first.y));
+      patch = {
+        xPct: clamp(gesture.current.xPct + ((centerX - gesture.startCenterX) / rect.width) * 100, 4, 96),
+        yPct: clamp(gesture.current.yPct + ((centerY - gesture.startCenterY) / rect.height) * 100, 4, 96),
+        scale: clamp((gesture.current.scale || 1) * (distance / gesture.startDistance), 0.5, 3)
+      };
+      gesture.startCenterX = centerX;
+      gesture.startCenterY = centerY;
+      gesture.startDistance = distance;
+    } else {
+      const dx = event.clientX - gesture.startX;
+      const dy = event.clientY - gesture.startY;
+      const moved = Math.abs(dx) > 2 || Math.abs(dy) > 2;
+      patch = {
+        xPct: clamp(gesture.current.xPct + (dx / rect.width) * 100, 4, 96),
+        yPct: clamp(gesture.current.yPct + (dy / rect.height) * 100, 4, 96)
+      };
+      gesture.startX = event.clientX;
+      gesture.startY = event.clientY;
+      if (moved) gesture.moved = true;
+    }
+    if (gesture.pointers.size > 1) gesture.moved = true;
+    gesture.current = { ...gesture.current, ...patch };
+    updateInlineOverlay(gesture.id, patch);
+  };
+  const overlayPointerUp = event => {
+    const gesture = overlayGestureRef.current;
+    if (!gesture) return;
+    gesture.pointers.delete(event.pointerId);
+    overlayLastGestureRef.current = { id: gesture.id, moved: gesture.moved };
+    if (gesture.pointers.size === 1) {
+      const remaining = Array.from(gesture.pointers.values())[0];
+      gesture.mode = 'drag';
+      gesture.startX = remaining.x;
+      gesture.startY = remaining.y;
+      gesture.startCenterX = remaining.x;
+      gesture.startCenterY = remaining.y;
+      gesture.startDistance = 0;
+    } else if (gesture.pointers.size === 0) {
+      overlayGestureRef.current = null;
+    }
+  };
   const musicUrl = selectedMusic && selectedMusic.music_preview_url;
   const musicStartSec = Math.max(0, Number(selectedMusic && selectedMusic.music_start_ms) || 0) / 1000;
   const syncMusicToVideo = () => {
@@ -9013,7 +9110,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     ),
     React.createElement('div', { style: { flex: 1, minHeight: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 24px 0' } },
       React.createElement('video', { ref: videoRef, src, poster: poster || undefined, playsInline: true, preload: 'auto', muted: Boolean(musicUrl), onClick: togglePlay, style: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block', background: '#000', cursor: 'pointer' } }),
-      inlineTextOverlays.filter(overlay => inlineEditingOverlayId !== overlay.id).map(overlay => React.createElement('div', { key: overlay.id, onPointerDown: event => event.stopPropagation(), onClick: event => { event.stopPropagation(); editInlineText(overlay); }, style: { position: 'absolute', left: (overlay.xPct || 50) + '%', top: (overlay.yPct || 45) + '%', transform: 'translate(-50%,-50%)', zIndex: 6, pointerEvents: 'auto', cursor: 'text', color: overlay.color || '#fff', fontSize: (overlay.size || 32) + 'px', fontWeight: 700, textAlign: 'center', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: '82%', textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9)' } }, overlay.text)),
+      inlineTextOverlays.filter(overlay => inlineEditingOverlayId !== overlay.id).map(overlay => React.createElement('div', { key: overlay.id, onPointerDown: event => overlayPointerDown(event, overlay), onPointerMove: overlayPointerMove, onPointerUp: overlayPointerUp, onPointerCancel: overlayPointerUp, onClick: event => { event.stopPropagation(); const tap = overlayLastGestureRef.current; overlayLastGestureRef.current = { id: null, moved: false }; if (tap && tap.id === overlay.id && tap.moved) return; editInlineText(overlay); }, style: { position: 'absolute', left: (overlay.xPct || 50) + '%', top: (overlay.yPct || 45) + '%', transform: 'translate(-50%,-50%) scale(' + (overlay.scale || 1) + ')', transformOrigin: 'center center', zIndex: 6, pointerEvents: 'auto', cursor: 'grab', touchAction: 'none', userSelect: 'none', color: overlay.color || '#fff', fontSize: (overlay.size || 32) + 'px', fontWeight: 700, textAlign: 'center', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: '82%', textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9)' } }, overlay.text)),
       // Draft text is edited directly over the video; never render a second copy near the bottom input.
     ),
     inlineTextEditorOpen && React.createElement('div', { style: { position: 'absolute', inset: 0, zIndex: 20, pointerEvents: 'none' } },
@@ -9022,14 +9119,6 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         ['#ffffff','#111111','#ffd600','#ff1744','#1877f2','#00c853','#ff9800','#e91e63'].map(color => React.createElement('button', { key: color, onClick: () => { setInlineTextColor(color); setInlineTextPaletteOpen(false); }, 'aria-label': 'Text color ' + color, style: { width: 30, height: 30, padding: 0, borderRadius: '50%', border: inlineTextColor === color ? '3px solid #fff' : '2px solid rgba(255,255,255,0.55)', background: color, cursor: 'pointer', boxShadow: inlineTextColor === color ? '0 0 0 2px rgba(0,0,0,0.55)' : 'none' } }))
       ),
       React.createElement('input', { autoFocus: true, type: 'text', value: inlineTextDraft, onPointerDown: event => { if (inlineTextDraft.trim() && document.activeElement === event.currentTarget) { event.preventDefault(); finishInlineTextEditing(); } }, onChange: event => setInlineTextDraft(event.target.value), onKeyDown: event => { if (event.key === 'Enter') { event.preventDefault(); finishInlineTextEditing(); } }, placeholder: 'Type text…', maxLength: 80, 'aria-label': 'Text to overlay', style: { pointerEvents: 'auto', position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 'min(82vw, 360px)', boxSizing: 'border-box', border: 'none', background: 'transparent', color: inlineTextColor, caretColor: inlineTextColor, padding: 0, fontSize: inlineTextSize + 'px', fontWeight: 700, lineHeight: 1.2, textAlign: 'center', textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9)', outline: 'none' } }),
-      inlineTextOverlays.length > 0 && React.createElement('div', { style: { pointerEvents: 'auto', position: 'absolute', left: 14, right: 14, bottom: 'max(88px, calc(env(safe-area-inset-bottom) + 88px))', display: 'flex', justifyContent: 'center' } },
-        React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 8, maxWidth: '92vw', padding: '9px 11px', borderRadius: 14, background: 'rgba(35,35,35,0.88)', border: '1px solid rgba(255,255,255,0.18)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' } },
-          inlineTextOverlays.map(overlay => React.createElement('div', { key: overlay.id, onClick: event => { event.stopPropagation(); editInlineText(overlay); }, style: { display: 'flex', alignItems: 'center', gap: 6, maxWidth: '78vw', padding: '5px 7px 5px 10px', borderRadius: 10, background: 'rgba(255,255,255,0.14)', cursor: 'text' } },
-            React.createElement('span', { style: { color: overlay.color || '#fff', maxWidth: '62vw', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13, fontWeight: 700 } }, overlay.text),
-            React.createElement('button', { onClick: event => { event.stopPropagation(); removeInlineText(overlay.id); }, 'aria-label': 'Remove text ' + overlay.text, style: { width: 22, height: 22, padding: 0, border: 'none', borderRadius: '50%', background: 'rgba(0,0,0,0.58)', color: '#fff', fontSize: 15, lineHeight: 1, cursor: 'pointer' } }, '×')
-          ))
-        )
-      )
     ),
     React.createElement('div', { style: { flexShrink: 0, padding: '8px 24px calc(18px + env(safe-area-inset-bottom))' } },
       React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 28, height: 44 } },
