@@ -23462,12 +23462,12 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, padding: "28px 16px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" } },
         !editTextEditorOpen && React.createElement("button", {
           onClick: () => { if (!uploading && !exporting) { /* music keeps playing continuously — no pause on navigate back to review */ setEditTool(null); setStep("camera"); setReviewMode(true); } },
-          style: { width: 38, height: 38, borderRadius: "50%", background: "transparent", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "none" }
+          style: { width: 44, height: 44, borderRadius: "50%", background: "transparent", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "none" }
         },
-          React.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"#fff",strokeWidth:2.5,strokeLinecap:"round"},
+          React.createElement("svg",{width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"#fff",strokeWidth:2.5,strokeLinecap:"round",style:{mixBlendMode:"difference"}},
             React.createElement("path",{d:"M18 6 6 18M6 6l12 12"}))
         ),
-        !editTextEditorOpen && React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 10 } },
+        !editTextEditorOpen && React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 10, transform: "translateY(7px)" } },
           React.createElement("button", {
             onClick: () => { setEditTextEditorOpen(true); setEditTextOverlayIdFull(null); setEditTextDraftFull(""); setEditTextScaleFull(1); setEditTextPositionFull({ xPct: 50, yPct: 45 }); setEditTextPaletteOpen(false); },
             style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 0, background: "none", border: "none", cursor: "pointer", WebkitTapHighlightColor: "transparent", padding: 0 }
