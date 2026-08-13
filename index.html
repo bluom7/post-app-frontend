@@ -8800,6 +8800,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     }
   };
   const musicUrl = selectedMusic && selectedMusic.music_preview_url;
+  const selectedMusicArtwork = selectedMusic ? (selectedMusic.music_artwork || selectedMusic.artworkUrl100 || selectedMusic.artwork_url || selectedMusic.album_artwork_url || '').replace('100x100bb', '300x300bb') : '';
   const musicStartSec = Math.max(0, Number(selectedMusic && selectedMusic.music_start_ms) || 0) / 1000;
   const syncMusicToVideo = () => {
     const audio = audioRef.current;
@@ -9168,7 +9169,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
             ),
             selectedMusic
               ? React.createElement('button', { onClick: onAudio, 'aria-label': 'Change selected song', style: { width: '100%', minHeight: 46, flex: '0 0 auto', padding: '6px 8px', border: '1px solid rgba(255,214,0,0.8)', borderRadius: 8, background: 'rgba(255,214,0,0.08)', color: '#fff', cursor: 'pointer', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left' } },
-                  selectedMusic.music_artwork ? React.createElement('img', { src: selectedMusic.music_artwork, alt: '', style: { width: 32, height: 32, borderRadius: 5, objectFit: 'cover', flexShrink: 0 } }) : React.createElement('div', { style: { width: 32, height: 32, borderRadius: 5, background: '#FFD600', color: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12, flexShrink: 0 } }, '♪'),
+                  selectedMusicArtwork ? React.createElement('img', { src: selectedMusicArtwork, alt: '', style: { width: 32, height: 32, borderRadius: 5, objectFit: 'cover', flexShrink: 0 } }) : React.createElement('div', { style: { width: 32, height: 32, borderRadius: 5, background: '#FFD600', color: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12, flexShrink: 0 } }, '♪'),
                   React.createElement('div', { style: { minWidth: 0, flex: 1 } },
                     React.createElement('div', { style: { fontSize: 12, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, selectedMusic.music_title || 'Selected song'),
                     React.createElement('div', { style: { fontSize: 10, color: '#bdbdbd', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, selectedMusic.music_artist || 'Audio selected')
@@ -9928,7 +9929,7 @@ function ComposeModal({
       }),
       showMusicTrimmer && pendingTrimSong && React.createElement(MusicTrimmerModal, {
         song: pendingTrimSong, photos: photoUrls,
-        onConfirm: (startMs, clipDurationSec) => { setSelectedMusic({ ...pendingTrimSong, music_start_ms: startMs, music_clip_duration_ms: Math.max(1, Math.min(30, Number(clipDurationSec) || 30)) * 1000 }); setShowMusicTrimmer(false); setPendingTrimSong(null); if (returnToVideoTrimAfterMusic) { setShowVideoEditor(false); setVideoEditorTab(null); setShowVideoTrim(true); setReturnToVideoTrimAfterMusic(false); } },
+        onConfirm: (startMs, clipDurationSec) => { setSelectedMusic({ ...pendingTrimSong, music_artwork: pendingTrimSong.music_artwork || pendingTrimSong.artworkUrl100 || pendingTrimSong.artwork_url || pendingTrimSong.album_artwork_url || '', music_start_ms: startMs, music_clip_duration_ms: Math.max(1, Math.min(30, Number(clipDurationSec) || 30)) * 1000 }); setShowMusicTrimmer(false); setPendingTrimSong(null); if (returnToVideoTrimAfterMusic) { setShowVideoEditor(false); setVideoEditorTab(null); setShowVideoTrim(true); setReturnToVideoTrimAfterMusic(false); } },
         onBack: () => { setShowMusicTrimmer(false); setShowMusicPicker(true); },
         onChangeSong: () => { setShowMusicTrimmer(false); setShowMusicPicker(true); },
         onDelete: () => { setShowMusicTrimmer(false); setPendingTrimSong(null); setSelectedMusic(null); setShowMusicPicker(true); }
@@ -10292,7 +10293,7 @@ function ComposeModal({
     song: pendingTrimSong,
     photos: photoUrls,
     videoSrc: activeVideoSource,
-    onConfirm: (startMs, clipDurationSec) => { setSelectedMusic({ ...pendingTrimSong, music_start_ms: startMs, music_clip_duration_ms: Math.max(1, Math.min(30, Number(clipDurationSec) || 30)) * 1000 }); setShowMusicTrimmer(false); setPendingTrimSong(null); },
+    onConfirm: (startMs, clipDurationSec) => { setSelectedMusic({ ...pendingTrimSong, music_artwork: pendingTrimSong.music_artwork || pendingTrimSong.artworkUrl100 || pendingTrimSong.artwork_url || pendingTrimSong.album_artwork_url || '', music_start_ms: startMs, music_clip_duration_ms: Math.max(1, Math.min(30, Number(clipDurationSec) || 30)) * 1000 }); setShowMusicTrimmer(false); setPendingTrimSong(null); },
     onBack: () => { setShowMusicTrimmer(false); setShowMusicPicker(true); },
     onChangeSong: () => { setShowMusicTrimmer(false); setShowMusicPicker(true); },
     onDelete: () => { setShowMusicTrimmer(false); setPendingTrimSong(null); setSelectedMusic(null); setShowMusicPicker(true); }
