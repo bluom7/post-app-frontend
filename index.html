@@ -23500,7 +23500,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       // ── Top bar: X close (left) + Text & Emoji (right, vertical) ──
       React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, padding: "28px 16px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" } },
         !editTextEditorOpen && React.createElement("button", {
-          onClick: () => { if (!uploading && !exporting) { setShowEditDiscardDialog(true); } },
+          onClick: () => { if (!uploading && !exporting) { /* music keeps playing continuously — no pause on navigate back to review */ setEditTool(null); setStep("camera"); setReviewMode(true); } },
           style: { width: 44, height: 44, borderRadius: "50%", background: "transparent", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "none" }
         },
           React.createElement("svg",{width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"#fff",strokeWidth:2.5,strokeLinecap:"round",style:{mixBlendMode:"difference"}},
