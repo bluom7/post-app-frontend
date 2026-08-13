@@ -8678,7 +8678,7 @@ function MusicPickerModal({ onSelect, onClose, showToast }) {
   );
 }
 
-function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimStart, setTrimEnd, onDone, onCancel, onAudio, onText, selectedMusic }) {
+function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimStart, setTrimEnd, onDone, onCancel, onAudio, onText, selectedMusic, poster }) {
   const videoRef = React.useRef(null);
   const timelineRef = React.useRef(null);
   const dragSideRef = React.useRef(null);
@@ -8952,7 +8952,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       React.createElement('button', { onClick: onDone, style: { background: '#151515', border: '1px solid #202020', borderRadius: 8, color: '#fff', fontSize: 16, padding: '11px 20px', cursor: 'pointer' } }, 'Done')
     ),
     React.createElement('div', { style: { flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 24px 0' } },
-      React.createElement('video', { ref: videoRef, src, playsInline: true, preload: 'auto', muted: Boolean(musicUrl), onClick: togglePlay, style: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block', background: '#000', cursor: 'pointer' } })
+      React.createElement('video', { ref: videoRef, src, poster: poster || undefined, playsInline: true, preload: 'auto', muted: Boolean(musicUrl), onClick: togglePlay, style: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block', background: '#000', cursor: 'pointer' } })
     ),
     React.createElement('div', { style: { flexShrink: 0, padding: '8px 24px calc(18px + env(safe-area-inset-bottom))' } },
       React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 28, height: 44 } },
@@ -21024,6 +21024,25 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const trimDragSideRef = React.useRef(null); // "left" | "right" | null
   const [frameStrip, setFrameStrip] = React.useState([]);
   const [showTimeline, setShowTimeline] = React.useState(false);
+  const [trimPoster, setTrimPoster] = React.useState(null);
+
+  const captureTrimPoster = () => {
+    const video = editVideoRef.current;
+    if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return null;
+    try {
+      const maxWidth = 720;
+      const scale = Math.min(1, maxWidth / video.videoWidth);
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(video.videoWidth * scale));
+      canvas.height = Math.max(1, Math.round(video.videoHeight * scale));
+      const context = canvas.getContext('2d');
+      if (!context) return null;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/jpeg', 0.86);
+    } catch (_) {
+      return null;
+    }
+  };
 
   React.useEffect(() => {
     // During recording + camera flip: flipCamera() already swapped the track directly.
@@ -22674,14 +22693,15 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       src: recordedURL,
       duration: videoDuration || recordTime,
       trimStart, trimEnd, setTrimStart, setTrimEnd,
+      poster: trimPoster,
       selectedMusic: audioUrlRef.current ? {
         music_preview_url: audioUrlRef.current,
         music_start_ms: audioStartTimeRef.current || 0
       } : null,
-      onDone: () => setStep("edit"),
-      onCancel: () => setStep("edit"),
-      onAudio: () => { setStep("edit"); setShowMusicPicker(true); },
-      onText: () => { setStep("edit"); setEditTool("Text"); }
+      onDone: () => { setTrimPoster(null); setStep("edit"); },
+      onCancel: () => { setTrimPoster(null); setStep("edit"); },
+      onAudio: () => { setTrimPoster(null); setStep("edit"); setShowMusicPicker(true); },
+      onText: () => { setTrimPoster(null); setStep("edit"); setEditTool("Text"); }
     });
   }
 
@@ -23725,7 +23745,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         // Bottom action buttons: Edit + Next →
         !editTextEditorOpen && React.createElement("div",{style:{display:"flex",justifyContent:"space-between",gap:0,padding:"6px 16px calc(6px + env(safe-area-inset-bottom))"}},
           React.createElement("button",{
-            onClick:e=>{ e.preventDefault(); e.stopPropagation(); setStep("trim"); },
+            onClick:e=>{ e.preventDefault(); e.stopPropagation(); setTrimPoster(captureTrimPoster()); setStep("trim"); },
             style:{flex:"0 0 110px",width:110,height:56,padding:0,borderRadius:8,background:"#fff",border:"none",color:"#000",fontWeight:700,fontSize:17,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.1}
           },
             "Edit"
