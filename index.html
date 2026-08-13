@@ -8678,13 +8678,18 @@ function MusicPickerModal({ onSelect, onClose, showToast }) {
   );
 }
 
-function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimStart, setTrimEnd, onDone, onCancel, onAudio, onText, selectedMusic, poster }) {
+function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimStart, setTrimEnd, onDone, onCancel, onAudio, onText, selectedMusic, poster, textOverlays: initialTextOverlays = [], setTextOverlays }) {
   const videoRef = React.useRef(null);
   const timelineRef = React.useRef(null);
   const dragSideRef = React.useRef(null);
   const audioRef = React.useRef(null);
   const [playing, setPlaying] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(trimStart || 0);
+  const [inlineTextEditorOpen, setInlineTextEditorOpen] = React.useState(false);
+  const [inlineTextDraft, setInlineTextDraft] = React.useState("");
+  const [inlineTextColor, setInlineTextColor] = React.useState("#ffffff");
+  const [inlineTextSize, setInlineTextSize] = React.useState(32);
+  const [inlineTextOverlays, setInlineTextOverlays] = React.useState(() => Array.isArray(initialTextOverlays) ? initialTextOverlays : []);
   const safeDuration = Math.max(Number(duration) || 0, 0.1);
   const selectedDuration = Math.max(0.1, trimEnd - trimStart);
   const timelineWidth = 'min(224px, calc(100vw - 80px))';
@@ -8943,6 +8948,28 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     if (videoRef.current) videoRef.current.currentTime = next;
     setCurrentTime(next);
   };
+  const openInlineTextEditor = () => {
+    if (typeof setTextOverlays !== 'function') {
+      if (typeof onText === 'function') onText();
+      return;
+    }
+    setInlineTextDraft("");
+    setInlineTextEditorOpen(true);
+  };
+  const closeInlineTextEditor = () => {
+    setInlineTextDraft("");
+    setInlineTextEditorOpen(false);
+  };
+  const applyInlineText = () => {
+    const text = inlineTextDraft.trim();
+    if (!text) return;
+    const overlay = { id: Date.now() + "", text, xPct: 50, yPct: 45, color: inlineTextColor, size: inlineTextSize };
+    setInlineTextOverlays(prev => [...prev, overlay]);
+    if (typeof setTextOverlays === 'function') {
+      setTextOverlays(prev => [...(Array.isArray(prev) ? prev : []), overlay]);
+    }
+    setInlineTextDraft("");
+  };
   const selectedLeft = (trimStart / safeDuration) * 100;
   const selectedRight = ((safeDuration - trimEnd) / safeDuration) * 100;
   const playhead = (clamp(currentTime, 0, safeDuration) / safeDuration) * 100;
@@ -8951,8 +8978,23 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       React.createElement('button', { onClick: onCancel, style: { background: '#151515', border: '1px solid #202020', borderRadius: 8, color: '#fff', fontSize: 16, padding: '11px 20px', cursor: 'pointer' } }, 'Cancel'),
       React.createElement('button', { onClick: onDone, style: { background: '#151515', border: '1px solid #202020', borderRadius: 8, color: '#fff', fontSize: 16, padding: '11px 20px', cursor: 'pointer' } }, 'Done')
     ),
-    React.createElement('div', { style: { flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 24px 0' } },
-      React.createElement('video', { ref: videoRef, src, poster: poster || undefined, playsInline: true, preload: 'auto', muted: Boolean(musicUrl), onClick: togglePlay, style: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block', background: '#000', cursor: 'pointer' } })
+    React.createElement('div', { style: { flex: 1, minHeight: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 24px 0' } },
+      React.createElement('video', { ref: videoRef, src, poster: poster || undefined, playsInline: true, preload: 'auto', muted: Boolean(musicUrl), onClick: togglePlay, style: { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', display: 'block', background: '#000', cursor: 'pointer' } }),
+      inlineTextOverlays.map(overlay => React.createElement('div', { key: overlay.id, style: { position: 'absolute', left: (overlay.xPct || 50) + '%', top: (overlay.yPct || 45) + '%', transform: 'translate(-50%,-50%)', zIndex: 6, pointerEvents: 'none', color: overlay.color || '#fff', fontSize: (overlay.size || 32) + 'px', fontWeight: 700, textAlign: 'center', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: '82%', textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9)' } }, overlay.text)),
+      inlineTextEditorOpen && inlineTextDraft.trim() && React.createElement('div', { style: { position: 'absolute', left: '50%', top: '45%', transform: 'translate(-50%,-50%)', zIndex: 7, pointerEvents: 'none', color: inlineTextColor, fontSize: inlineTextSize + 'px', fontWeight: 700, textAlign: 'center', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: '82%', textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9)' } }, inlineTextDraft)
+    ),
+    inlineTextEditorOpen && React.createElement('div', { style: { position: 'absolute', inset: 0, zIndex: 20, pointerEvents: 'none' } },
+      React.createElement('button', { onClick: closeInlineTextEditor, 'aria-label': 'Close text editor', style: { pointerEvents: 'auto', position: 'absolute', left: 16, top: 'max(18px, env(safe-area-inset-top))', width: 40, height: 40, border: 'none', background: 'rgba(0,0,0,0.45)', color: '#fff', borderRadius: 20, fontSize: 26, lineHeight: 1, cursor: 'pointer' } }, '×'),
+      React.createElement('button', { onClick: closeInlineTextEditor, style: { pointerEvents: 'auto', position: 'absolute', right: 16, top: 'max(18px, env(safe-area-inset-top))', border: 'none', borderRadius: 8, padding: '10px 15px', background: '#fff', color: '#111', fontSize: 16, fontWeight: 700, cursor: 'pointer' } }, 'Done'),
+      React.createElement('div', { style: { pointerEvents: 'auto', position: 'absolute', left: 0, right: 0, bottom: 0, padding: '14px 14px max(18px, env(safe-area-inset-bottom))', background: 'linear-gradient(transparent, rgba(0,0,0,0.94) 28%)' } },
+        React.createElement('div', { style: { display: 'flex', gap: 8, alignItems: 'center', background: 'rgba(35,35,35,0.96)', borderRadius: 14, padding: 10 } },
+          React.createElement('input', { autoFocus: true, type: 'text', value: inlineTextDraft, onChange: event => setInlineTextDraft(event.target.value), onKeyDown: event => { if (event.key === 'Enter') applyInlineText(); }, placeholder: 'Type text to overlay...', maxLength: 80, 'aria-label': 'Text to overlay', style: { flex: 1, minWidth: 0, height: 44, boxSizing: 'border-box', border: '1px solid rgba(255,255,255,0.32)', borderRadius: 10, background: 'rgba(255,255,255,0.16)', color: '#fff', padding: '0 12px', fontSize: 14, outline: 'none' } }),
+          React.createElement('button', { onClick: applyInlineText, disabled: !inlineTextDraft.trim(), style: { height: 44, border: 'none', borderRadius: 10, padding: '0 16px', background: inlineTextDraft.trim() ? '#fff' : 'rgba(255,255,255,0.35)', color: '#111', fontWeight: 800, fontSize: 14, cursor: inlineTextDraft.trim() ? 'pointer' : 'default' } }, 'Add')
+        ),
+        React.createElement('div', { style: { display: 'flex', gap: 10, padding: '10px 4px 0', justifyContent: 'flex-start' } },
+          ['#ffffff','#111111','#ffd600','#ff1744','#1877f2','#00c853','#ff9800','#e91e63'].map(color => React.createElement('button', { key: color, onClick: () => setInlineTextColor(color), 'aria-label': 'Text color ' + color, style: { width: 32, height: 32, padding: 0, borderRadius: '50%', border: inlineTextColor === color ? '3px solid #fff' : '2px solid rgba(255,255,255,0.45)', background: color, cursor: 'pointer' } }))
+        )
+      )
     ),
     React.createElement('div', { style: { flexShrink: 0, padding: '8px 24px calc(18px + env(safe-area-inset-bottom))' } },
       React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 28, height: 44 } },
@@ -9004,7 +9046,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
                   React.createElement('span', { style: { color: '#FFD600', fontSize: 10, fontWeight: 800, flexShrink: 0 } }, 'Change')
                 )
               : React.createElement('button', { onClick: onAudio, style: { width: '100%', height: 36, flex: '0 0 auto', padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Audio'),
-            React.createElement('button', { onClick: onText, style: { width: '100%', height: 36, flex: '0 0 auto', padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Text')
+            React.createElement('button', { onClick: openInlineTextEditor, style: { width: '100%', height: 36, flex: '0 0 auto', padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Text')
           )
       )
   );
@@ -22695,6 +22737,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       duration: videoDuration || recordTime,
       trimStart, trimEnd, setTrimStart, setTrimEnd,
       poster: trimPoster,
+      textOverlays, setTextOverlays,
       selectedMusic: audioUrlRef.current ? {
         music_preview_url: audioUrlRef.current,
         music_start_ms: audioStartTimeRef.current || 0
