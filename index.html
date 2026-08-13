@@ -22630,8 +22630,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     function tabBtn(id, iconEl, label) {
       const active = editTool === id;
       return React.createElement("button", { key: id, onClick: () => { if (id !== "Trim") setEditTool(t => t === id ? null : id); },
-        style: { background: "none", border: "none", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, cursor: "pointer", fontSize: 10, fontWeight: active ? 800 : 500, padding: "4px 2px", minWidth: 44, WebkitTapHighlightColor: "transparent" } },
-        React.createElement("div", { style: { width: 40, height: 34, borderRadius: 10, background: active ? "#FFD600" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s" } }, iconEl),
+        style: { background: "rgba(42,47,53,0.92)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 9, color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", gap: 1, cursor: "pointer", fontSize: 10, fontWeight: active ? 800 : 500, padding: "5px 2px 4px", width: 64, minWidth: 64, height: 48, boxSizing: "border-box", WebkitTapHighlightColor: "transparent" } },
+        React.createElement("div", { style: { width: 40, height: 27, borderRadius: 7, background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s" } }, iconEl),
         React.createElement("span", { style: { color: active ? "#FFD600" : "rgba(255,255,255,0.6)" } }, label)
       );
     }
