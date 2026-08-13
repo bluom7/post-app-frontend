@@ -23218,10 +23218,10 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       // Android Chrome skips CSS filter on hardware-decoded video elements;
       // a wrapper div creates a new compositing layer that the filter IS applied to.
       recordedURL && React.createElement("div", {
-        style: { position: "absolute", inset: 0, display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", filter: videoFilter, background: "#000", willChange: "filter" }
+        style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", filter: videoFilter, background: "#000", willChange: "filter" }
       },
         isPhotoReel
-          ? React.createElement("img", { src: recordedURL, onClick: togglePreviewPlay, style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center top", display: "block", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
+          ? React.createElement("img", { src: recordedURL, onClick: togglePreviewPlay, style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
           : React.createElement("video", {
               key: recordedURL,
               ref: editVideoRef, src: recordedURL, playsInline: true, autoPlay: true, muted: true, loop: true,
@@ -23231,7 +23231,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
               onError: e => { const v = e.target; if (v.src && recordedURL) { v.removeAttribute('src'); v.load(); v.src = recordedURL; v.load(); } },
               onTimeUpdate: e => { if (editTool === "Trim") return; const t = e.target.currentTime; setPreviewTime(t); if (trimEnd > 0 && t >= trimEnd) { e.target.currentTime = trimStart; } },
               onClick: togglePreviewPlay,
-              style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center top", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000" }
+              style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000" }
             })
       ),
 
