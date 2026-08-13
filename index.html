@@ -22629,7 +22629,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     // ── Tab helper ──
     function tabBtn(id, iconEl, label) {
       const active = editTool === id;
-      return React.createElement("button", { key: id, onClick: () => setEditTool(t => t === id ? null : id),
+      return React.createElement("button", { key: id, onClick: () => { if (id !== "Trim") setEditTool(t => t === id ? null : id); },
         style: { background: "none", border: "none", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", gap: 3, cursor: "pointer", fontSize: 10, fontWeight: active ? 800 : 500, padding: "4px 2px", minWidth: 44, WebkitTapHighlightColor: "transparent" } },
         React.createElement("div", { style: { width: 40, height: 34, borderRadius: 10, background: active ? "#FFD600" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s" } }, iconEl),
         React.createElement("span", { style: { color: active ? "#FFD600" : "rgba(255,255,255,0.6)" } }, label)
@@ -22648,7 +22648,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     // ── Tool panels ──
     let panel = null;
     if (editTool === "Trim") {
-      panel = null; // Trim uses a full-screen overlay instead
+      panel = null; // Trim icon remains visible, but its editor is removed.
     } else if (editTool === "Audio") {
       panel = React.createElement("div", { style: { padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 } },
         React.createElement("div", { style: { color: "rgba(255,255,255,0.55)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 } }, "Music"),
@@ -22754,8 +22754,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         onSelect: val => { setReelAudience(val); setShowReelAudiencePicker(false); }
       }),
 
-      // ── Full-screen CapCut-style Trim Overlay ──
-      editTool === "Trim" && React.createElement("div", {
+      // ── Trim editor removed; keep only the Trim icon in the tool row. ──
+      false && editTool === "Trim" && React.createElement("div", {
         style: { position: "fixed", inset: 0, background: "#000", zIndex: 600, display: "flex", flexDirection: "column", overflow: "hidden" },
         onPointerMove: e => {
           // Timeline handle dragging
@@ -23589,7 +23589,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             // Row 3: Video filmstrip with trim handles
             React.createElement("div", {
               style: { position: "relative", height: 54, margin: "0 14px", borderRadius: 7, overflow: "hidden", cursor: "pointer", border: "1.5px solid rgba(255,214,0,0.5)" },
-              onClick: () => { setEditTool("Trim"); setShowTimeline(false); }
+              onClick: () => {}
             },
               // Frame thumbnails
               React.createElement("div", { style: { display: "flex", height: "100%", width: "100%", gap: 0 } },
