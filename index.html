@@ -22702,7 +22702,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       onDone: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setStep("edit"); },
       onCancel: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setStep("edit"); },
       onAudio: () => { setReturnToTrimAfterMusic(true); setStep("edit"); setShowMusicPicker(true); },
-      onText: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setStep("edit"); setEditTool("Text"); }
+      onText: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setTextDraft(""); setEditingOverlayId(null); setStep("edit"); setEditTool("Text"); }
     });
   }
 
@@ -23272,6 +23272,14 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
               onClick: togglePreviewPlay,
               style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000" }
             })
+      ),
+
+      // Live draft preview: keep the exact text in sync with the bottom Text input while typing.
+      editTool === "Text" && textDraft.trim() && React.createElement("div", {
+        key: "text-draft-preview",
+        style: { position: "absolute", left: "50%", top: "45%", transform: "translate(-50%,-50%)", zIndex: 11, pointerEvents: "none", textAlign: "center", maxWidth: "80vw" }
+      },
+        React.createElement("span", { style: { color: selectedTextColor, fontSize: selectedTextSize + "px", fontWeight: 600, textShadow: "0 2px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9)", whiteSpace: "pre-wrap", wordBreak: "break-word", display: "block" } }, textDraft)
       ),
 
       // Text overlays on video (draggable + removable)
