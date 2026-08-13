@@ -23538,7 +23538,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
               React.createElement("button", { onClick: () => setEditTool(t => t ? null : "Audio"),
                 style: { background: "none", border: "none", cursor: "pointer", padding: "2px 24px 6px", color: "rgba(255,255,255,0.45)" } },
                 React.createElement("svg",{width:24,height:13,viewBox:"0 0 24 13",fill:"none",stroke:"rgba(255,255,255,0.45)",strokeWidth:2.5,strokeLinecap:"round",strokeLinejoin:"round"},
-                  React.createElement("path",{d:"M2 11 L12 2 L22 11"}))
+                  React.createElement("path",{d:editTool ? "M2 2 L12 11 L22 2" : "M2 11 L12 2 L22 11"}))
               )
             )
           ];
