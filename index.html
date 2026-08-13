@@ -23660,18 +23660,18 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         ),
 
         // Bottom action buttons: Edit + Next →
-        !editTextEditorOpen && React.createElement("div",{style:{display:"flex",gap:10,padding:"6px 16px 40px"}},
+        !editTextEditorOpen && React.createElement("div",{style:{display:"flex",gap:8,padding:"6px 16px calc(6px + env(safe-area-inset-bottom))"}},
           React.createElement("button",{
             onClick:()=>setStep("edit"),
-            style:{flex:1,padding:"13px 0",borderRadius:28,background:"#fff",border:"none",color:"#000",fontWeight:700,fontSize:15,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7,letterSpacing:0.2}
+            style:{flex:1,padding:"10px 0",borderRadius:10,background:"#fff",border:"none",color:"#000",fontWeight:700,fontSize:14,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.1}
           },
             "Edit"
           ),
           React.createElement("button",{
             onClick:()=>{ handleExport(); }, disabled:exporting||uploading,
-            style:{flex:1,padding:"13px 0",borderRadius:28,background:exporting||uploading?"#f2f2f2":"#fff",border:"none",color:"#000",fontWeight:700,fontSize:15,cursor:(exporting||uploading)?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:7,letterSpacing:0.2}
+            style:{flex:1,padding:"10px 0",borderRadius:10,background:exporting||uploading?"#8fb7ef":"#1877F2",border:"none",color:"#fff",fontWeight:700,fontSize:14,cursor:(exporting||uploading)?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.1}
           },
-            exporting&&React.createElement("div",{style:{width:14,height:14,borderRadius:"50%",border:"2px solid rgba(0,0,0,0.2)",borderTopColor:"#000",animation:"spin 0.7s linear infinite"}}),
+            exporting&&React.createElement("div",{style:{width:13,height:13,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.35)",borderTopColor:"#fff",animation:"spin 0.7s linear infinite"}}),
             exporting?"Processing...":"Next →"
           )
         )
