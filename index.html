@@ -23725,13 +23725,13 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         // Bottom action buttons: Edit + Next →
         !editTextEditorOpen && React.createElement("div",{style:{display:"flex",justifyContent:"space-between",gap:0,padding:"6px 16px calc(6px + env(safe-area-inset-bottom))"}},
           React.createElement("button",{
-            onClick:()=>setStep("trim"),
+            onClick:e=>{ e.preventDefault(); e.stopPropagation(); setStep("trim"); },
             style:{flex:"0 0 110px",width:110,height:56,padding:0,borderRadius:8,background:"#fff",border:"none",color:"#000",fontWeight:700,fontSize:17,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.1}
           },
             "Edit"
           ),
           React.createElement("button",{
-            onClick:()=>{ handleExport(); }, disabled:exporting||uploading,
+            onClick:e=>{ e.preventDefault(); e.stopPropagation(); if (!exporting && !uploading) handleExport(); }, disabled:exporting||uploading,
             style:{flex:"0 0 110px",width:110,height:56,padding:0,borderRadius:8,background:exporting||uploading?"#8fb7ef":"#1877F2",border:"none",color:"#fff",fontWeight:700,fontSize:17,cursor:(exporting||uploading)?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.1}
           },
             exporting&&React.createElement("div",{style:{width:15,height:15,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.35)",borderTopColor:"#fff",animation:"spin 0.7s linear infinite"}}),
