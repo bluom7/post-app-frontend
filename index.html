@@ -20897,6 +20897,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const [audioArtwork, setAudioArtwork] = React.useState("");
   const [activeBottomTab, setActiveBottomTab] = React.useState("reel");
   const [showMusicPicker, setShowMusicPicker] = React.useState(false);
+  const [returnToTrimAfterMusic, setReturnToTrimAfterMusic] = React.useState(false);
   const [recordedBlob, setRecordedBlob] = React.useState(null);
   const [recordedURL, setRecordedURL] = React.useState(null);
   const [caption, setCaption] = React.useState("");
@@ -22698,10 +22699,10 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         music_preview_url: audioUrlRef.current,
         music_start_ms: audioStartTimeRef.current || 0
       } : null,
-      onDone: () => { setTrimPoster(null); setStep("edit"); },
-      onCancel: () => { setTrimPoster(null); setStep("edit"); },
-      onAudio: () => { setTrimPoster(null); setStep("edit"); setShowMusicPicker(true); },
-      onText: () => { setTrimPoster(null); setStep("edit"); setEditTool("Text"); }
+      onDone: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setStep("edit"); },
+      onCancel: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setStep("edit"); },
+      onAudio: () => { setReturnToTrimAfterMusic(true); setStep("edit"); setShowMusicPicker(true); },
+      onText: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setStep("edit"); setEditTool("Text"); }
     });
   }
 
@@ -23765,13 +23766,14 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         onClose: () => {
           setShowMusicPicker(false);
           setEditTool(null);
+          if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); return; }
           // FIX: Restore editVideoRef src after music picker (bgVideoRef was using recordedURL)
           const _ev = editVideoRef.current;
           if (_ev && !isPhotoReel && recordedURL) {
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) trimVideoRef.current.muted = true; setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) trimVideoRef.current.muted = true; setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); } showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
 
       // Editor discard sheet must be rendered in the editor return path.
       discardDialogFromEditor && showReelDiscardDialog && React.createElement("div", {
