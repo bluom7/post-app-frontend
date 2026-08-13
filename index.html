@@ -21024,6 +21024,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const trimDragSideRef = React.useRef(null); // "left" | "right" | null
   const [frameStrip, setFrameStrip] = React.useState([]);
   const [showTimeline, setShowTimeline] = React.useState(false);
+  const [showComposeReelTrim, setShowComposeReelTrim] = React.useState(false);
 
   React.useEffect(() => {
     // During recording + camera flip: flipCamera() already swapped the track directly.
@@ -22558,8 +22559,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         onClose: () => setShowReelAudiencePicker(false),
         onSelect: val => { setReelAudience(val); setShowReelAudiencePicker(false); }
       }),
-      // Compose module's exact video trimming experience for Reels.
-      editTool === "Trim" && recordedURL && !isPhotoReel && React.createElement(ComposeVideoTrimOverlay, {
+      // Open the exact Compose trimming experience directly from Reels Edit.
+      showComposeReelTrim && recordedURL && React.createElement(ComposeVideoTrimOverlay, {
         src: recordedURL,
         duration: videoDuration || recordTime,
         trimStart, trimEnd, setTrimStart, setTrimEnd,
@@ -22567,10 +22568,10 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           music_preview_url: audioUrlRef.current,
           music_start_ms: audioStartTimeRef.current || 0
         } : null,
-        onDone: () => setEditTool(null),
-        onCancel: () => setEditTool(null),
-        onAudio: () => { setEditTool(null); setShowMusicPicker(true); },
-        onText: () => { setEditTool("Text"); }
+        onDone: () => setShowComposeReelTrim(false),
+        onCancel: () => setShowComposeReelTrim(false),
+        onAudio: () => { setShowComposeReelTrim(false); setShowMusicPicker(true); },
+        onText: () => { setShowComposeReelTrim(false); setEditTool("Text"); }
       }),
       // Header
       React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "14px 16px 12px", borderBottom: "1px solid #f0f0f0", flexShrink: 0 } },
@@ -23721,7 +23722,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         // Bottom action buttons: Edit + Next →
         !editTextEditorOpen && React.createElement("div",{style:{display:"flex",justifyContent:"space-between",gap:0,padding:"6px 16px calc(6px + env(safe-area-inset-bottom))"}},
           React.createElement("button",{
-            onClick:()=>setEditTool("Trim"),
+            onClick:()=>{ setShowComposeReelTrim(true); setEditTool(null); },
             style:{flex:"0 0 110px",width:110,height:56,padding:0,borderRadius:8,background:"#fff",border:"none",color:"#000",fontWeight:700,fontSize:17,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.1}
           },
             "Edit"
