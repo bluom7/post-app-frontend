@@ -20905,6 +20905,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const [uploadError, setUploadError] = React.useState(null);
   const [showReelDiscardDialog, setShowReelDiscardDialog] = React.useState(false);
   const [showEditDiscardDialog, setShowEditDiscardDialog] = React.useState(false);
+  const [discardDialogFromEditor, setDiscardDialogFromEditor] = React.useState(false);
   const [showPickGallery, setShowPickGallery] = React.useState(false);
   const [galleryFiles, setGalleryFiles] = React.useState([]);
   const [galleryPreviews, setGalleryPreviews] = React.useState([]);
@@ -21416,6 +21417,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   function discardReelEdits() {
     // Keep the selected original media; remove only changes made in the editor.
     setShowEditDiscardDialog(false);
+    setShowReelDiscardDialog(false);
+    setDiscardDialogFromEditor(false);
     setExportedBlob(null);
     setShareSrc(null);
     setReviewTool(null);
@@ -21450,6 +21453,9 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     }
     setOrigAudioOn(false);
     setPreviewPlaying(false);
+    setStep("camera");
+    setReviewMode(true);
+    stopStream();
   }
 
   async function handlePost() {
@@ -23500,7 +23506,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       // ── Top bar: X close (left) + Text & Emoji (right, vertical) ──
       React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, padding: "28px 16px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" } },
         !editTextEditorOpen && React.createElement("button", {
-          onClick: () => { if (!uploading && !exporting) { /* music keeps playing continuously — no pause on navigate back to review */ setEditTool(null); setStep("camera"); setReviewMode(true); } },
+          onClick: () => { if (!uploading && !exporting) { setDiscardDialogFromEditor(true); setShowReelDiscardDialog(true); } },
           style: { width: 44, height: 44, borderRadius: "50%", background: "transparent", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "none" }
         },
           React.createElement("svg",{width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"#fff",strokeWidth:2.5,strokeLinecap:"round",style:{mixBlendMode:"difference"}},
@@ -23899,7 +23905,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     // ── Top bar — hidden during recording (full-screen minimal mode) ──
     !recording && React.createElement("div", { style: { position: "relative", zIndex: 20, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 14px 0" } },
       // X close
-      React.createElement("button", { onClick: () => { if (!recordedBlob && !recordedURL) { onClose(); } else { setShowEditDiscardDialog(true); } }, style: { width: 40, height: 40, borderRadius: "50%", background: "rgba(20,20,20,0.6)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" } },
+      React.createElement("button", { onClick: () => { if (!recordedBlob && !recordedURL) { onClose(); } else { setDiscardDialogFromEditor(false); setShowReelDiscardDialog(true); } }, style: { width: 40, height: 40, borderRadius: "50%", background: "rgba(20,20,20,0.6)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" } },
         React.createElement("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2.5, strokeLinecap: "round" },
           React.createElement("path", { d: "M18 6 6 18M6 6l12 12" })
         )
@@ -24395,7 +24401,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           React.createElement("span", { style: { fontWeight: 700, fontSize: 15 } }, "Save as draft")
         ),
         React.createElement("button", {
-          onClick: () => { setShowReelDiscardDialog(false); setCaption(""); setExportedBlob(null); setTextOverlays([]); setReelStickerOverlays([]); setReelStickerQuery(""); setUploadError(null); setShowShareSheet(false); setPreviewPlaying(false); audioUrlRef.current = null; audioFileRef.current = null; audioStartTimeRef.current = 0; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } setRecordedBlob(null); if (recordedURL) URL.revokeObjectURL(recordedURL); setRecordedURL(null); allSegmentsRef.current = []; setTotalSegmentTime(0); recordTimeRef.current = 0; setAudioLabel("Original Audio"); setAudioArtist(""); setAudioArtwork(""); setReviewTextOverlays([]); setReviewEmojiOverlays([]); setReviewCrop({ left: 0, top: 0, right: 0, bottom: 0 }); setReviewTool(null); setReviewTextDraft(""); setTextDraft(""); setEditTool(null); setTrimStart(0); setTrimEnd(0); setIsPhotoReel(false); setFilterThumb(null); setOrigAudioOn(false); setShareSrc(null); setFrameStrip([]); setReviewMode(false); stopStream(); setTimeout(function(){ if (fileInputRef.current) { fileInputRef.current.value = ''; fileInputRef.current.click(); } var _ov=function(){if(document.visibilityState==='visible'){document.removeEventListener('visibilitychange',_ov);if(!streamRef.current)startCamera();}}; document.addEventListener('visibilitychange',_ov); }, 80); },
+          onClick: () => { if (discardDialogFromEditor) { discardReelEdits(); return; } setShowReelDiscardDialog(false); setCaption(""); setExportedBlob(null); setTextOverlays([]); setReelStickerOverlays([]); setReelStickerQuery(""); setUploadError(null); setShowShareSheet(false); setPreviewPlaying(false); audioUrlRef.current = null; audioFileRef.current = null; audioStartTimeRef.current = 0; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } setRecordedBlob(null); if (recordedURL) URL.revokeObjectURL(recordedURL); setRecordedURL(null); allSegmentsRef.current = []; setTotalSegmentTime(0); recordTimeRef.current = 0; setAudioLabel("Original Audio"); setAudioArtist(""); setAudioArtwork(""); setReviewTextOverlays([]); setReviewEmojiOverlays([]); setReviewCrop({ left: 0, top: 0, right: 0, bottom: 0 }); setReviewTool(null); setReviewTextDraft(""); setTextDraft(""); setEditTool(null); setTrimStart(0); setTrimEnd(0); setIsPhotoReel(false); setFilterThumb(null); setOrigAudioOn(false); setShareSrc(null); setFrameStrip([]); setReviewMode(false); stopStream(); setTimeout(function(){ if (fileInputRef.current) { fileInputRef.current.value = ''; fileInputRef.current.click(); } var _ov=function(){if(document.visibilityState==='visible'){document.removeEventListener('visibilitychange',_ov);if(!streamRef.current)startCamera();}}; document.addEventListener('visibilitychange',_ov); }, 80); },
           style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 24px", background: "none", border: "none", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 15, color: "var(--text)", textAlign: "left" }
         },
           React.createElement("span", { style: { width: 36, height: 36, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
