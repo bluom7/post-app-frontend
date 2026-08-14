@@ -9234,6 +9234,8 @@ function ComposeModal({
   const [localVideoPreviewUrl, setLocalVideoPreviewUrl] = useState(null);
   const [videoPosterUrl, setVideoPosterUrl] = useState(null);
   const [videoPreviewReadySource, setVideoPreviewReadySource] = useState(null);
+  // Gate the Compose media frame until its real dimensions and first-frame poster exist.
+  const [videoPreviewLayout, setVideoPreviewLayout] = useState(null);
   // Video trim: user can pick up to 1 min, but must trim to <=30s before posting
   const [pendingVideoFile, setPendingVideoFile] = useState(null);
   const [pendingVideoObjectUrl, setPendingVideoObjectUrl] = useState(null);
@@ -9261,6 +9263,7 @@ function ComposeModal({
     }
     setLocalVideoPreviewUrl(url || null);
     setVideoPreviewReadySource(null);
+    setVideoPreviewLayout(prev => prev ? (url ? { ...prev, source: url } : null) : prev);
     setPendingVideoObjectUrl(url || null);
     if (previous && previous !== url) deferRevokeVideoUrl(previous);
   };
@@ -9268,6 +9271,7 @@ function ComposeModal({
     localVideoUrlRef.current = null;
     setLocalVideoPreviewUrl(null);
     setVideoPreviewReadySource(null);
+    setVideoPreviewLayout(null);
     setVideoPosterUrl(null);
     setPendingVideoObjectUrl(null);
     localVideoUrlsRef.current.forEach(deferRevokeVideoUrl);
@@ -9490,6 +9494,14 @@ function ComposeModal({
         setVideoUrl(null);
         clearLocalVideoPreview();
         if (poster) setVideoPosterUrl(poster);
+        // Publish one complete preview layout before Compose is allowed to render
+        // the media frame. This prevents a default square container from flashing.
+        setVideoPreviewLayout({
+          source: objectUrl,
+          width: probe.videoWidth || 16,
+          height: probe.videoHeight || 9,
+          poster: poster || null
+        });
         // Capture natural video dimensions before the first Compose render so the
         // preview frame always has the correct aspect ratio from the start.
         if (probe.videoWidth && probe.videoHeight) {
@@ -10357,6 +10369,12 @@ function ComposeModal({
     onDelete: function() { setPhotoUrls(function(prev){ return prev.filter(function(_,i){ return i!==editingPhotoIdx; }); }); setEditingPhotoIdx(null); }
   });
 
+  const hasVideoPreview = Boolean(videoUrl || (localVideoPreviewUrl && videoPreviewLayout));
+  const previewAspectRatio = videoPreviewLayout && videoPreviewLayout.width && videoPreviewLayout.height
+    ? videoPreviewLayout.width / videoPreviewLayout.height
+    : (videoWidth && videoHeight ? videoWidth / videoHeight : null);
+  const previewPosterUrl = (videoPreviewLayout && videoPreviewLayout.poster) || videoPosterUrl;
+
   return /*#__PURE__*/React.createElement("div", {
     style: {
       position: "fixed",
@@ -10442,10 +10460,10 @@ function ComposeModal({
       /*#__PURE__*/React.createElement("button", { onClick:()=>{ if(postMusicAudioRef.current){postMusicAudioRef.current.pause();postMusicAudioRef.current=null;setMusicPlaying(false);} setSelectedMusic(null); }, style:{ background:"none", border:"none", cursor:"pointer", color:"var(--muted)", fontSize:18, lineHeight:1, padding:"4px", flexShrink:0 } }, "✕")
     ),
     /* Photo / Video area — keep selected video at its natural aspect ratio */
-    (photoUrls.length > 0 || videoUrl || localVideoPreviewUrl || videoUploading) && /*#__PURE__*/React.createElement("div", { style: { position: "relative", overflow: "hidden", background: "var(--card-bg)", flexShrink: 0 } },
-      (videoUrl || localVideoPreviewUrl) && /*#__PURE__*/React.createElement("div", { style: { position: "relative", display: "block", width: "100%", maxWidth: "100%", aspectRatio: videoWidth && videoHeight ? String(videoWidth / videoHeight) : undefined, margin: "0 auto", overflow: "hidden" } },
+    (photoUrls.length > 0 || hasVideoPreview || videoUploading) && /*#__PURE__*/React.createElement("div", { style: { position: "relative", overflow: "hidden", background: "var(--card-bg)", flexShrink: 0 } },
+      hasVideoPreview && /*#__PURE__*/React.createElement("div", { style: { position: "relative", display: "block", width: "100%", maxWidth: "100%", aspectRatio: previewAspectRatio ? String(previewAspectRatio) : undefined, margin: "0 auto", overflow: "hidden" } },
         /*#__PURE__*/React.createElement("div", { style: { filter: (VIDEO_EFFECTS.find(e=>e.id===videoEffect)||VIDEO_EFFECTS[0]).filter, lineHeight: 0 } },
-          videoPosterUrl && /*#__PURE__*/React.createElement("img", { src: videoPosterUrl, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, zIndex: 2, width: "100%", height: "100%", objectFit: "contain", display: "block", pointerEvents: "none", opacity: videoPreviewReadySource === activeVideoSource ? 0 : 1, background: "var(--card-bg)" } }),
+          previewPosterUrl && /*#__PURE__*/React.createElement("img", { src: previewPosterUrl, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, zIndex: 2, width: "100%", height: "100%", objectFit: "contain", display: "block", pointerEvents: "none", opacity: videoPreviewReadySource === activeVideoSource ? 0 : 1, background: "var(--card-bg)" } }),
           /*#__PURE__*/React.createElement("video", { key: activeVideoSource + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: true, loop: true, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onLoadedData: function(e){ e.target.play().catch(function(){}); }, onPlaying: function(){ var reveal = function(){ setVideoPreviewReadySource(activeVideoSource); }; if (window.requestAnimationFrame) { requestAnimationFrame(function(){ requestAnimationFrame(reveal); }); } else { setTimeout(reveal, 80); } }, onError: function(){ recoverLocalVideoPreview(); }, style: { position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: (!videoUploading && localVideoPreviewUrl) ? "pointer" : "default", transform: "translateZ(0)", opacity: videoPreviewReadySource === activeVideoSource ? 1 : 0, visibility: videoPreviewReadySource === activeVideoSource ? "visible" : "hidden", background: "transparent" } })
         ),
         videoTextOverlays.map(t => /*#__PURE__*/React.createElement("div", { key: t.id, style: { position: "absolute", left: t.x+"%", top: t.y+"%", transform: "translate(-50%,-50%)", color: t.color||"#fff", fontSize: (t.size||20)+"px", fontWeight: 800, textShadow: "0 1px 5px rgba(0,0,0,0.8)", zIndex: 3, pointerEvents: "none", whiteSpace: "nowrap" } }, t.text)),
