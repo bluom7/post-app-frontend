@@ -9452,30 +9452,39 @@ function ComposeModal({
         showToast('Videos must be ' + MAX_PICK_VIDEO_SECONDS + ' seconds or less.', COLORS.red);
         return;
       }
-      // Photos and video are mutually exclusive on a single post
-      setPhotoUrls([]); setPhotoAspect(null);
-      setVideoUrl(null);
-      clearLocalVideoPreview();
-      // Capture natural video dimensions for aspect_ratio storage (layout-jump prevention in feed)
-      if (probe.videoWidth && probe.videoHeight) {
-        setVideoWidth(probe.videoWidth);
-        setVideoHeight(probe.videoHeight);
-      }
-      if (dur <= MAX_POST_VIDEO_SECONDS + 0.5) {
-        // Show local preview immediately — upload only when Share is tapped
+      // Photos and video are mutually exclusive on a single post.
+      // This metadata callback is outside React's event system on Android Chrome.
+      // Batch the selection state so Compose never paints an aspect-ratio-less
+      // video element first (that intermediate paint appears as a black band).
+      const applyVideoSelection = () => {
         setPhotoUrls([]); setPhotoAspect(null);
-        replaceLocalVideoPreview(objectUrl);
-        setPendingVideoFile(file);
-        setPendingVideoDuration(dur);
-        setTrimStart(0);
-        setTrimEnd(dur);
+        setVideoUrl(null);
+        clearLocalVideoPreview();
+        // Capture natural video dimensions for aspect_ratio storage (layout-jump prevention in feed)
+        if (probe.videoWidth && probe.videoHeight) {
+          setVideoWidth(probe.videoWidth);
+          setVideoHeight(probe.videoHeight);
+        }
+        if (dur <= MAX_POST_VIDEO_SECONDS + 0.5) {
+          // Show local preview immediately — upload only when Share is tapped
+          replaceLocalVideoPreview(objectUrl);
+          setPendingVideoFile(file);
+          setPendingVideoDuration(dur);
+          setTrimStart(0);
+          setTrimEnd(dur);
+        } else {
+          // Longer than 30s — show in compose first, user edits manually
+          setPendingVideoFile(file);
+          replaceLocalVideoPreview(objectUrl);
+          setPendingVideoDuration(dur);
+          setTrimStart(0);
+          setTrimEnd(Math.min(MAX_POST_VIDEO_SECONDS, dur));
+        }
+      };
+      if (window.ReactDOM && ReactDOM.unstable_batchedUpdates) {
+        ReactDOM.unstable_batchedUpdates(applyVideoSelection);
       } else {
-        // Longer than 30s — show in compose first, user edits manually
-        setPendingVideoFile(file);
-        replaceLocalVideoPreview(objectUrl);
-        setPendingVideoDuration(dur);
-        setTrimStart(0);
-        setTrimEnd(Math.min(MAX_POST_VIDEO_SECONDS, dur));
+        applyVideoSelection();
       }
       // Keep the selected video visible in Compose. The exit sheet opens only when X is tapped.
     };
