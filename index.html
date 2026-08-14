@@ -14250,11 +14250,10 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
       const f = e.target.files && e.target.files[0];
       if (!f) return;
       if (f.size > 10 * 1024 * 1024) { showToast('Max 10MB allowed'); return; }
-      // Store actual File object for upload; FileReader only for local preview
+      // Store the File for upload and create an instant local preview.
+      // FileReader was causing a visible delay before the selected photo appeared.
       photoFileRef.current = f;
-      const r = new FileReader();
-      r.onload = ev => setPhotoPreview(ev.target.result);
-      r.readAsDataURL(f);
+      setPhotoPreview(URL.createObjectURL(f));
     } catch(e) {}
   };
 
