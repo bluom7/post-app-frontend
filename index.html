@@ -9483,25 +9483,34 @@ function ComposeModal({
       if (selectionApplied || !metadataReady) return;
       selectionApplied = true;
       const poster = captureFirstFrame();
-      if (poster) setVideoPosterUrl(poster);
-      setVideoPreviewReadySource(null);
-      // Photos and video are mutually exclusive on a single post.
-      setPhotoUrls([]); setPhotoAspect(null);
-      setVideoUrl(null);
-      clearLocalVideoPreview();
-      if (poster) setVideoPosterUrl(poster);
-      // Capture natural video dimensions before the first Compose render so the
-      // preview frame always has the correct aspect ratio from the start.
-      if (probe.videoWidth && probe.videoHeight) {
-        setVideoWidth(probe.videoWidth);
-        setVideoHeight(probe.videoHeight);
+      const commitVideoSelection = () => {
+        setVideoPreviewReadySource(null);
+        // Photos and video are mutually exclusive on a single post.
+        setPhotoUrls([]); setPhotoAspect(null);
+        setVideoUrl(null);
+        clearLocalVideoPreview();
+        if (poster) setVideoPosterUrl(poster);
+        // Capture natural video dimensions before the first Compose render so the
+        // preview frame always has the correct aspect ratio from the start.
+        if (probe.videoWidth && probe.videoHeight) {
+          setVideoWidth(probe.videoWidth);
+          setVideoHeight(probe.videoHeight);
+        }
+        // Show the decoded first frame immediately; upload remains deferred to Share.
+        replaceLocalVideoPreview(objectUrl);
+        setPendingVideoFile(file);
+        setPendingVideoDuration(probe.duration);
+        setTrimStart(0);
+        setTrimEnd(probe.duration <= MAX_POST_VIDEO_SECONDS + 0.5 ? probe.duration : Math.min(MAX_POST_VIDEO_SECONDS, probe.duration));
+      };
+      // Metadata/frame callbacks can run outside React's event system. Commit
+      // the media source, poster, dimensions, and ready flag in one paint so a
+      // transient black video surface can never appear between those updates.
+      if (window.ReactDOM && ReactDOM.unstable_batchedUpdates) {
+        ReactDOM.unstable_batchedUpdates(commitVideoSelection);
+      } else {
+        commitVideoSelection();
       }
-      // Show the decoded first frame immediately; upload remains deferred to Share.
-      replaceLocalVideoPreview(objectUrl);
-      setPendingVideoFile(file);
-      setPendingVideoDuration(probe.duration);
-      setTrimStart(0);
-      setTrimEnd(probe.duration <= MAX_POST_VIDEO_SECONDS + 0.5 ? probe.duration : Math.min(MAX_POST_VIDEO_SECONDS, probe.duration));
     };
 
     probe.onloadedmetadata = () => {
@@ -10437,7 +10446,7 @@ function ComposeModal({
       (videoUrl || localVideoPreviewUrl) && /*#__PURE__*/React.createElement("div", { style: { position: "relative", display: "block", width: "100%", maxWidth: "100%", aspectRatio: videoWidth && videoHeight ? String(videoWidth / videoHeight) : undefined, margin: "0 auto", overflow: "hidden" } },
         /*#__PURE__*/React.createElement("div", { style: { filter: (VIDEO_EFFECTS.find(e=>e.id===videoEffect)||VIDEO_EFFECTS[0]).filter, lineHeight: 0 } },
           videoPosterUrl && /*#__PURE__*/React.createElement("img", { src: videoPosterUrl, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", display: "block", pointerEvents: "none", background: "var(--card-bg)" } }),
-          /*#__PURE__*/React.createElement("video", { key: activeVideoSource + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: true, loop: true, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onLoadedData: function(e){ setVideoPreviewReadySource(activeVideoSource); e.target.play().catch(function(){}); }, onCanPlay: function(e){ setVideoPreviewReadySource(activeVideoSource); e.target.play().catch(function(){}); }, onError: function(){ recoverLocalVideoPreview(); }, style: { position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: (!videoUploading && localVideoPreviewUrl) ? "pointer" : "default", transform: "translateZ(0)", opacity: videoPreviewReadySource === activeVideoSource ? 1 : 0, background: "transparent" } })
+          /*#__PURE__*/React.createElement("video", { key: activeVideoSource + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: true, loop: true, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onLoadedData: function(e){ setVideoPreviewReadySource(activeVideoSource); e.target.play().catch(function(){}); }, onCanPlay: function(e){ setVideoPreviewReadySource(activeVideoSource); e.target.play().catch(function(){}); }, onError: function(){ recoverLocalVideoPreview(); }, style: { position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: (!videoUploading && localVideoPreviewUrl) ? "pointer" : "default", transform: "translateZ(0)", opacity: videoPreviewReadySource === activeVideoSource ? 1 : 0, visibility: videoPreviewReadySource === activeVideoSource ? "visible" : "hidden", background: "transparent" } })
         ),
         videoTextOverlays.map(t => /*#__PURE__*/React.createElement("div", { key: t.id, style: { position: "absolute", left: t.x+"%", top: t.y+"%", transform: "translate(-50%,-50%)", color: t.color||"#fff", fontSize: (t.size||20)+"px", fontWeight: 800, textShadow: "0 1px 5px rgba(0,0,0,0.8)", zIndex: 3, pointerEvents: "none", whiteSpace: "nowrap" } }, t.text)),
         (!videoUploading) && /*#__PURE__*/React.createElement("div", { style: { position: "absolute", top: 12, right: 12, display: "flex", gap: 8, zIndex: 5 } },
