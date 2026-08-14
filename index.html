@@ -9232,6 +9232,8 @@ function ComposeModal({
   const [videoHeight, setVideoHeight] = useState(0); // natural px height
   const [videoUploading, setVideoUploading] = useState(false);
   const [localVideoPreviewUrl, setLocalVideoPreviewUrl] = useState(null);
+  const [videoPosterUrl, setVideoPosterUrl] = useState(null);
+  const [videoPreviewReadySource, setVideoPreviewReadySource] = useState(null);
   // Video trim: user can pick up to 1 min, but must trim to <=30s before posting
   const [pendingVideoFile, setPendingVideoFile] = useState(null);
   const [pendingVideoObjectUrl, setPendingVideoObjectUrl] = useState(null);
@@ -9258,12 +9260,15 @@ function ComposeModal({
       localVideoUrlRef.current = null;
     }
     setLocalVideoPreviewUrl(url || null);
+    setVideoPreviewReadySource(null);
     setPendingVideoObjectUrl(url || null);
     if (previous && previous !== url) deferRevokeVideoUrl(previous);
   };
   const clearLocalVideoPreview = () => {
     localVideoUrlRef.current = null;
     setLocalVideoPreviewUrl(null);
+    setVideoPreviewReadySource(null);
+    setVideoPosterUrl(null);
     setPendingVideoObjectUrl(null);
     localVideoUrlsRef.current.forEach(deferRevokeVideoUrl);
   };
@@ -9453,7 +9458,52 @@ function ComposeModal({
     if (file.size > MAX_POST_VIDEO_BYTES) { showToast('Video is too large — please choose a smaller clip.', COLORS.red); return; }
     const objectUrl = URL.createObjectURL(file);
     const probe = document.createElement('video');
-    probe.preload = 'metadata';
+    probe.preload = 'auto';
+    let selectionApplied = false;
+    let metadataReady = false;
+
+    const captureFirstFrame = () => {
+      if (!probe.videoWidth || !probe.videoHeight) return null;
+      try {
+        const maxWidth = 720;
+        const scale = Math.min(1, maxWidth / probe.videoWidth);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(probe.videoWidth * scale));
+        canvas.height = Math.max(1, Math.round(probe.videoHeight * scale));
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+        ctx.drawImage(probe, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', 0.86);
+      } catch (_) {
+        return null;
+      }
+    };
+
+    const applyVideoSelection = () => {
+      if (selectionApplied || !metadataReady) return;
+      selectionApplied = true;
+      const poster = captureFirstFrame();
+      if (poster) setVideoPosterUrl(poster);
+      setVideoPreviewReadySource(null);
+      // Photos and video are mutually exclusive on a single post.
+      setPhotoUrls([]); setPhotoAspect(null);
+      setVideoUrl(null);
+      clearLocalVideoPreview();
+      if (poster) setVideoPosterUrl(poster);
+      // Capture natural video dimensions before the first Compose render so the
+      // preview frame always has the correct aspect ratio from the start.
+      if (probe.videoWidth && probe.videoHeight) {
+        setVideoWidth(probe.videoWidth);
+        setVideoHeight(probe.videoHeight);
+      }
+      // Show the decoded first frame immediately; upload remains deferred to Share.
+      replaceLocalVideoPreview(objectUrl);
+      setPendingVideoFile(file);
+      setPendingVideoDuration(probe.duration);
+      setTrimStart(0);
+      setTrimEnd(probe.duration <= MAX_POST_VIDEO_SECONDS + 0.5 ? probe.duration : Math.min(MAX_POST_VIDEO_SECONDS, probe.duration));
+    };
+
     probe.onloadedmetadata = () => {
       const dur = probe.duration;
       if (!isFinite(dur) || dur <= 0) { URL.revokeObjectURL(objectUrl); showToast('Could not read video length. Try another file.', COLORS.red); return; }
@@ -9462,58 +9512,15 @@ function ComposeModal({
         showToast('Videos must be ' + MAX_PICK_VIDEO_SECONDS + ' seconds or less.', COLORS.red);
         return;
       }
-      // Photos and video are mutually exclusive on a single post.
-      // This metadata callback is outside React's event system on Android Chrome.
-      // Batch the selection state so Compose never paints an aspect-ratio-less
-      // video element first (that intermediate paint appears as a black band).
-      const applyVideoSelection = () => {
-        setPhotoUrls([]); setPhotoAspect(null);
-        setVideoUrl(null);
-        clearLocalVideoPreview();
-        // Capture natural video dimensions for aspect_ratio storage (layout-jump prevention in feed)
-        if (probe.videoWidth && probe.videoHeight) {
-          setVideoWidth(probe.videoWidth);
-          setVideoHeight(probe.videoHeight);
-        }
-        if (dur <= MAX_POST_VIDEO_SECONDS + 0.5) {
-          // Show local preview immediately — upload only when Share is tapped
-          replaceLocalVideoPreview(objectUrl);
-          setPendingVideoFile(file);
-          setPendingVideoDuration(dur);
-          setTrimStart(0);
-          setTrimEnd(dur);
-        } else {
-          // Longer than 30s — show in compose first, user edits manually
-          setPendingVideoFile(file);
-          replaceLocalVideoPreview(objectUrl);
-          setPendingVideoDuration(dur);
-          setTrimStart(0);
-          setTrimEnd(Math.min(MAX_POST_VIDEO_SECONDS, dur));
-        }
-      };
-      if (window.ReactDOM && ReactDOM.unstable_batchedUpdates) {
-        ReactDOM.unstable_batchedUpdates(applyVideoSelection);
-      } else {
-        applyVideoSelection();
-      }
-      // Keep the selected video visible in Compose. The exit sheet opens only when X is tapped.
+      metadataReady = true;
+      // Wait for the first decoded frame. This lets us capture and display the
+      // real poster instead of exposing the browser's black video surface.
+      if (probe.readyState >= 2) applyVideoSelection();
     };
-    probe.onerror = () => { URL.revokeObjectURL(objectUrl); showToast('Could not read video. Try another file.', COLORS.red); };
+    probe.onloadeddata = applyVideoSelection;
+    probe.oncanplay = applyVideoSelection;
+    probe.onerror = () => { if (!selectionApplied) URL.revokeObjectURL(objectUrl); showToast('Could not read video. Try another file.', COLORS.red); };
     probe.src = objectUrl;
-  };
-  
-  const confirmVideoTrim = () => {
-    if (trimEnd - trimStart > MAX_POST_VIDEO_SECONDS + 0.5) { showToast('Trim to ' + MAX_POST_VIDEO_SECONDS + ' seconds or less.', COLORS.red); return; }
-    if (trimEnd - trimStart < 1) { showToast('Clip is too short.', COLORS.red); return; }
-    // Keep pendingVideoFile + trimStart/trimEnd — upload deferred to Share tap
-    // Create a fresh blob URL so the compose video re-loads cleanly after the editor unmounts.
-    // Android Chrome does not re-render a video element reusing the same blob URL that was
-    // just playing in another (now-removed) video element — it renders black instead.
-    if (pendingVideoFile) {
-      try { replaceLocalVideoPreview(URL.createObjectURL(pendingVideoFile)); } catch (_) {}
-    }
-    setShowVideoEditor(false);
-    setShowVideoTrim(false);
   };
   const cancelVideoTrim = () => {
     setShowVideoTrim(false);
@@ -10429,7 +10436,8 @@ function ComposeModal({
     (photoUrls.length > 0 || videoUrl || localVideoPreviewUrl || videoUploading) && /*#__PURE__*/React.createElement("div", { style: { position: "relative", overflow: "hidden", background: "var(--card-bg)", flexShrink: 0 } },
       (videoUrl || localVideoPreviewUrl) && /*#__PURE__*/React.createElement("div", { style: { position: "relative", display: "block", width: "100%", maxWidth: "100%", aspectRatio: videoWidth && videoHeight ? String(videoWidth / videoHeight) : undefined, margin: "0 auto", overflow: "hidden" } },
         /*#__PURE__*/React.createElement("div", { style: { filter: (VIDEO_EFFECTS.find(e=>e.id===videoEffect)||VIDEO_EFFECTS[0]).filter, lineHeight: 0 } },
-          /*#__PURE__*/React.createElement("video", { key: activeVideoSource + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: true, loop: true, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onLoadedData: function(e){ e.target.play().catch(function(){}); }, onCanPlay: function(e){ e.target.play().catch(function(){}); }, onError: function(){ recoverLocalVideoPreview(); }, style: { width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: (!videoUploading && localVideoPreviewUrl) ? "pointer" : "default", transform: "translateZ(0)" } })
+          videoPosterUrl && /*#__PURE__*/React.createElement("img", { src: videoPosterUrl, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", display: "block", pointerEvents: "none", background: "var(--card-bg)" } }),
+          /*#__PURE__*/React.createElement("video", { key: activeVideoSource + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: true, loop: true, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onLoadedData: function(e){ setVideoPreviewReadySource(activeVideoSource); e.target.play().catch(function(){}); }, onCanPlay: function(e){ setVideoPreviewReadySource(activeVideoSource); e.target.play().catch(function(){}); }, onError: function(){ recoverLocalVideoPreview(); }, style: { position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: (!videoUploading && localVideoPreviewUrl) ? "pointer" : "default", transform: "translateZ(0)", opacity: videoPreviewReadySource === activeVideoSource ? 1 : 0, background: "transparent" } })
         ),
         videoTextOverlays.map(t => /*#__PURE__*/React.createElement("div", { key: t.id, style: { position: "absolute", left: t.x+"%", top: t.y+"%", transform: "translate(-50%,-50%)", color: t.color||"#fff", fontSize: (t.size||20)+"px", fontWeight: 800, textShadow: "0 1px 5px rgba(0,0,0,0.8)", zIndex: 3, pointerEvents: "none", whiteSpace: "nowrap" } }, t.text)),
         (!videoUploading) && /*#__PURE__*/React.createElement("div", { style: { position: "absolute", top: 12, right: 12, display: "flex", gap: 8, zIndex: 5 } },
