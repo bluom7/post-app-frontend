@@ -9343,6 +9343,18 @@ function ComposeModal({
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [pickerDraft, setPickerDraft] = useState([]);
   const [pickerLoading, setPickerLoading] = useState(false);
+  const releasePickerPreviews = draft => {
+    (draft || []).forEach(item => {
+      if (item && typeof item.src === "string" && item.src.startsWith("blob:")) {
+        try { URL.revokeObjectURL(item.src); } catch (_) {}
+      }
+    });
+  };
+  const clearPickerDraft = () => {
+    releasePickerPreviews(pickerDraft);
+    setPickerDraft([]);
+    setPickerLoading(false);
+  };
   // Tracks the native gallery opened from Discard post. A selected file returns
   // to Compose; cancelling the native picker returns to the Home feed.
   const replacementGalleryRef = React.useRef(false);
@@ -9361,7 +9373,7 @@ function ComposeModal({
       setText(""); setPhotoUrls([]); setPhotoAspect(null);
       setVideoUrl(null); setVideoDuration(0); setVideoWidth(0); setVideoHeight(0);
       setLocalVideoPreviewUrl(null); setPendingVideoFile(null); setPendingVideoObjectUrl(null);
-      setPendingVideoDuration(0); setPickerDraft([]); setPickerLoading(false);
+      setPendingVideoDuration(0); clearPickerDraft();
       setGifUrl(null); setStickerOverlays([]); setEmojiOverlays([]); setSelectedMusic(null);
       setLocation(""); setFeeling(""); setTaggedUsers([]);
       setAudience({ type: "public", users: [] }); setPhotoAudience("everyone");
@@ -9572,26 +9584,25 @@ function ComposeModal({
     }
   };
   const handlePickerFiles = e => {
-      const files = Array.from(e.target.files || []);
-      if (files.length) replacementGalleryRef.current = false;
-      e.target.value = '';
-      if (!files.length) return;
-      const firstFile = files[0];
-      if (firstFile.type.startsWith('video/')) { handleVideoFile(firstFile); return; }
-      const toProcess = files.slice(0, 5);
-      setPickerLoading(true);
-      Promise.all(toProcess.map(compressPhoto)).then(results => {
-        const valid = results.filter(Boolean);
-        if (valid.length) {
-          setVideoUrl(null); setVideoDuration(0); setPendingVideoFile(null);
-          clearLocalVideoPreview();
-          setPhotoUrls(prev => [...prev, ...valid.map(r => r.src)].slice(0, 5));
-          setPhotoAspect(prev => prev || (valid[0].w && valid[0].h ? { w: valid[0].w, h: valid[0].h } : null));
-          // Stay on Compose after selecting media; X opens the exit sheet.
-        }
-        setPickerLoading(false);
-      });
-    };
+    const files = Array.from(e.target.files || []);
+    if (files.length) replacementGalleryRef.current = false;
+    e.target.value = "";
+    if (!files.length) return;
+    const firstFile = files[0];
+    if (firstFile.type.startsWith("video/")) { handleVideoFile(firstFile); return; }
+    const remaining = Math.max(0, 5 - photoUrls.length);
+    const toProcess = files.slice(0, remaining);
+    if (!toProcess.length) { showToast("Max 5 photos!", COLORS.red); return; }
+    // Show selected photos immediately; compress only after the user taps Add.
+    setPickerDraft(toProcess.map(file => ({
+      file,
+      src: URL.createObjectURL(file),
+      selected: true,
+      w: 0,
+      h: 0,
+    })));
+    setPickerLoading(false);
+  };
   const toggleSelectedMusicPreview = () => {
     if (!selectedMusic || !selectedMusic.music_preview_url) return;
     if (postMusicAudioRef.current) {
@@ -10296,17 +10307,30 @@ function ComposeModal({
     },
       /*#__PURE__*/React.createElement("div", { style:{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"16px 20px 12px", flexShrink:0, borderBottom:"1px solid var(--border)" } },
         /*#__PURE__*/React.createElement("button", {
-          onClick: () => { setPickerDraft([]); setPickerLoading(false); },
+          onClick: clearPickerDraft,
           style:{ background:"none", border:"none", color:"var(--text)", fontSize:16, fontWeight:600, cursor:"pointer", padding:"4px 0" }
         }, "Cancel"),
         /*#__PURE__*/React.createElement("span", { style:{ color:"#111", fontSize:17, fontWeight:700 } },
           pickerLoading ? "Loading…" : (pickerSel + " / " + pickerDraft.length + " selected")
         ),
         /*#__PURE__*/React.createElement("button", {
-          onClick: () => {
+          onClick: async () => {
             const sel = pickerDraft.filter(d => d.selected);
-            if (sel.length) { setVideoUrl(null); setVideoDuration(0); setPhotoUrls(prev => [...prev, ...sel.map(d=>d.src)].slice(0, 5)); setPhotoAspect(prev => prev || (sel[0].w && sel[0].h ? { w: sel[0].w, h: sel[0].h } : null)); }
-            setPickerDraft([]);
+            if (!sel.length || pickerLoading) return;
+            setPickerLoading(true);
+            try {
+              const valid = (await Promise.all(sel.map(d => d.file ? compressPhoto(d.file) : Promise.resolve(d)))).filter(Boolean);
+              if (valid.length) {
+                setVideoUrl(null); setVideoDuration(0); setPendingVideoFile(null);
+                clearLocalVideoPreview();
+                setPhotoUrls(prev => [...prev, ...valid.map(r => r.src)].slice(0, 5));
+                setPhotoAspect(prev => prev || (valid[0].w && valid[0].h ? { w: valid[0].w, h: valid[0].h } : null));
+              }
+            } catch (_) {
+              showToast("Photo processing failed", COLORS.red);
+            } finally {
+              clearPickerDraft();
+            }
           },
           disabled: pickerSel === 0 || pickerLoading,
           style:{ background: pickerSel > 0 ? "#1976D2" : "#ccc", color: pickerSel > 0 ? "#fff" : "#888", border:"none", borderRadius:20, padding:"7px 20px", fontWeight:700, fontSize:15, cursor: pickerSel > 0 ? "pointer" : "default" }
