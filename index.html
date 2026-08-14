@@ -9701,8 +9701,8 @@ function ComposeModal({
           : null
     ),
     /* ── Bottom: textarea pinned to bottom ── */
-    /*#__PURE__*/React.createElement("div", { style: { flexShrink: 0, padding: "0 16px 8px", borderTop: "1px solid var(--border)" } },
-      /*#__PURE__*/React.createElement("textarea", { value: altText, onChange: e => setAltText(e.target.value.slice(0, 1000)), placeholder: "Describe this photo or video…", maxLength: 1000, rows: 3, style: { width: "100%", background: "transparent", border: "none", borderBottom: "1px solid var(--border)", borderRadius: 0, padding: "12px 0", fontSize: 15, color: "var(--text)", resize: "none", fontFamily: "inherit", boxSizing: "border-box", outline: "none" } }),
+    /*#__PURE__*/React.createElement("div", { style: { flexShrink: 0, padding: "0 16px 8px" } },
+      /*#__PURE__*/React.createElement("textarea", { value: altText, onChange: e => setAltText(e.target.value.slice(0, 1000)), placeholder: "Describe this photo or video…", maxLength: 1000, rows: 1, style: { width: "100%", minHeight: 38, maxHeight: 96, background: "transparent", border: "none", borderBottom: "1px solid var(--border)", borderRadius: 0, padding: "4px 0 7px", fontSize: 20, lineHeight: 1.35, color: "var(--text)", resize: "none", overflowY: "auto", fontFamily: "inherit", boxSizing: "border-box", outline: "none" } }),
       /*#__PURE__*/React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 4 } },
         /*#__PURE__*/React.createElement("span", { style: { fontSize: 12, color: "var(--muted)" } }, "What is alt text?"),
         /*#__PURE__*/React.createElement("span", { style: { fontSize: 12, color: altText.length > 950 ? COLORS.red : "var(--muted)" } }, altText.length + " / 1000")
