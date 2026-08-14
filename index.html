@@ -9214,6 +9214,16 @@ function ComposeModal({
   const [commentsEnabled, setCommentsEnabled] = useState(true);
   const [altText, setAltText] = useState("");
   const [showAltEditor, setShowAltEditor] = useState(false);
+  const altTextInputRef = useRef(null);
+  React.useEffect(() => {
+    if (!showAltEditor || !altTextInputRef.current) return;
+    const input = altTextInputRef.current;
+    const maxHeight = 96;
+    input.style.height = "0px";
+    input.style.height = Math.min(input.scrollHeight, maxHeight) + "px";
+    input.style.overflowY = input.scrollHeight > maxHeight ? "auto" : "hidden";
+    if (input.scrollHeight > maxHeight) input.scrollTop = input.scrollHeight;
+  }, [altText, showAltEditor]);
   const [showPhotoMenu, setShowPhotoMenu] = useState(false);
   const [editingPhotoIdx, setEditingPhotoIdx] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
@@ -9675,7 +9685,7 @@ function ComposeModal({
       /*#__PURE__*/React.createElement("button", { onClick: () => setShowAltEditor(false), style: { background: COLORS.blue, color: "#fff", border: "none", borderRadius: 18, padding: "6px 18px", fontWeight: 800, fontSize: 14, cursor: "pointer" } }, "Done")
     ),
     /* ── Middle: photo/video centered ── */
-    /*#__PURE__*/React.createElement("div", { style: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", background: "var(--bg)" } },
+    /*#__PURE__*/React.createElement("div", { style: { flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", background: "var(--bg)" } },
       photoUrls.length > 0
         ? /*#__PURE__*/React.createElement("img", { src: photoUrls[0], alt: "", style: { maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block" } })
         : activeVideoSource
@@ -9702,7 +9712,7 @@ function ComposeModal({
     ),
     /* ── Bottom: textarea pinned to bottom ── */
     /*#__PURE__*/React.createElement("div", { style: { flexShrink: 0, padding: "0 16px 8px" } },
-      /*#__PURE__*/React.createElement("textarea", { value: altText, onChange: e => setAltText(e.target.value.slice(0, 1000)), placeholder: "Describe this photo or video…", maxLength: 1000, rows: 1, style: { width: "100%", minHeight: 38, maxHeight: 96, background: "transparent", border: "none", borderBottom: "1px solid var(--border)", borderRadius: 0, padding: "4px 0 7px", fontSize: 20, lineHeight: 1.35, color: "var(--text)", resize: "none", overflowY: "auto", fontFamily: "inherit", boxSizing: "border-box", outline: "none" } }),
+      /*#__PURE__*/React.createElement("textarea", { ref: altTextInputRef, value: altText, onChange: e => setAltText(e.target.value.slice(0, 1000)), placeholder: "Describe this photo or video…", maxLength: 1000, rows: 1, style: { width: "100%", height: 38, minHeight: 38, maxHeight: 96, background: "transparent", border: "none", borderBottom: "1px solid var(--border)", borderRadius: 0, padding: "4px 0 7px", fontSize: 20, lineHeight: 1.35, color: "var(--text)", resize: "none", overflowY: "hidden", fontFamily: "inherit", boxSizing: "border-box", outline: "none" } }),
       /*#__PURE__*/React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 4 } },
         /*#__PURE__*/React.createElement("span", { style: { fontSize: 14, fontWeight: 700, color: "var(--muted)" } }, "What is alt text?"),
         /*#__PURE__*/React.createElement("span", { style: { fontSize: 14, fontWeight: 700, color: altText.length > 950 ? COLORS.red : "var(--muted)" } }, altText.length + " / 1000")
