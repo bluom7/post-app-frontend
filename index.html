@@ -9181,7 +9181,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
                   ),
                   React.createElement('span', { style: { position: 'relative', zIndex: 1, color: '#FFD600', fontSize: 9, fontWeight: 800, flexShrink: 0 } }, 'Change')
                 )
-              : React.createElement('button', { onClick: onAudio, style: { width: '100%', height: 36, flex: '0 0 auto', padding: '6px 8px', border: '1px dashed rgba(255,255,255,0.45)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box' } }, '+ Audio'),
+              : React.createElement('button', { onClick: onAudio, style: { width: '100%', height: 36, flex: '0 0 auto', padding: '6px 8px', border: '1.5px dashed rgba(255,255,255,0.58)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' } }, '+ Audio'),
             inlineTextOverlays.length > 0 && !inlineTextEditorOpen
               ? React.createElement(React.Fragment, null,
                   inlineTextOverlays.map(overlay => React.createElement('div', {
@@ -9205,7 +9205,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
                 )
               : !inlineTextEditorOpen && React.createElement('button', {
                   onClick: openInlineTextEditor,
-                  style: { width: '100%', height: 36, boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: 8, padding: '6px 12px', border: '1.5px dashed rgba(255,255,255,0.35)', borderRadius: 8, cursor: 'pointer', background: 'transparent', color: 'rgba(255,255,255,0.65)', fontSize: 13, fontWeight: 700 }
+                  style: { width: '100%', height: 36, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '6px 8px', border: '1.5px dashed rgba(255,255,255,0.58)', borderRadius: 8, cursor: 'pointer', background: 'transparent', color: '#aaa', fontSize: 14, fontWeight: 700, textAlign: 'center' }
                 }, '+ Text'),
             inlineTextEditorOpen && React.createElement('div', { style: { marginTop: 6, display: 'flex', gap: 6, alignItems: 'center' } },
               React.createElement('input', {
