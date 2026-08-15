@@ -20825,7 +20825,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
     var nextSongDuration=Math.max(nextDuration+5,Math.round(((selectedSong&&selectedSong.trackTimeMillis)||30000)/1000));
     setClipDuration(nextDuration);
     setSongDuration(nextSongDuration);
-    setStartSec(Math.max(0,Math.min(startSecRef.current,Math.max(0,nextSongDuration-nextDuration)));
+    setStartSec(Math.max(0,Math.min(startSecRef.current,Math.max(0,nextSongDuration-nextDuration))));
     setShowDurationPicker(false);
     stopTrimAudio();
   };
