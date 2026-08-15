@@ -22110,7 +22110,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           if (previewMusicAudioRef.current !== audio) return;
           try { audio.currentTime = start; } catch (_) {}
         };
-        if (replayFromStart || audio.paused) {
+        if (replayFromStart || audio.currentTime <= 0.05) {
           if (audio.readyState >= 1) seekAfterMetadata();
           else audio.addEventListener('loadedmetadata', seekAfterMetadata, { once: true });
         }
