@@ -9199,7 +9199,8 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
           ),
         ),
         React.createElement('div', { style: { textAlign: 'center', fontSize: 16, letterSpacing: 1.4, padding: '4px 0 12px', fontVariantNumeric: 'tabular-nums', color: '#f3f3f3' } }, formatTime(currentTime - trimStart) + ' / ' + formatTime(selectedDuration)),
-      React.createElement('div', { ref: timelineRef, onPointerDown: jumpToTimelinePoint, style: { position: 'relative', height: 48, margin: '0 auto 6px', width: timelineWidth, touchAction: 'none' } },
+      React.createElement('div', { style: { position: 'relative', width: timelineWidth, margin: '0 auto', boxSizing: 'border-box' } },
+        React.createElement('div', { ref: timelineRef, onPointerDown: jumpToTimelinePoint, style: { position: 'relative', height: 48, margin: '0 0 6px', width: '100%', touchAction: 'none' } },
         React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: selectedLeft + '%', right: selectedRight + '%', background: '#111', border: '2px solid #FFD600', borderRadius: 4, boxSizing: 'border-box', overflow: 'hidden', pointerEvents: 'none' } },
           React.createElement('div', { style: { position: 'absolute', inset: 2, display: 'flex', overflow: 'hidden', borderRadius: 2, background: '#171717' } },
             Array.from({ length: thumbnailCount }).map((_, index) => React.createElement('div', { key: index, style: { flex: 1, minWidth: 0, height: '100%', backgroundColor: '#1a1a1a', backgroundImage: thumbnailFrames[index] ? 'url(' + thumbnailFrames[index] + ')' : 'linear-gradient(90deg, #151515, #252525)', backgroundSize: 'cover', backgroundPosition: 'center', borderRight: index < thumbnailCount - 1 ? '1px solid rgba(255,255,255,0.12)' : 'none' } }))
@@ -9211,9 +9212,8 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, 'aria-label': 'Trim end', style: { position: 'absolute', top: 6, bottom: 6, right: 'calc(' + selectedRight + '% - 7px)', width: 15, background: '#FFD600', borderRadius: 4, cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
           React.createElement('span', { style: { color: '#6d5900', fontSize: 20, lineHeight: 1, fontWeight: 900, transform: 'translateY(-1px)' } }, '›')
         ),
-              React.createElement('div', { style: { position: 'absolute', top: 3, bottom: 3, left: playhead + '%', width: 2, background: '#fff', boxShadow: '0 0 2px rgba(0,0,0,0.65)', pointerEvents: 'none', zIndex: 5 } })
         ),
-        React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 8, width: timelineWidth, margin: '0 auto', boxSizing: 'border-box' } },
+        React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 8, width: '100%', margin: 0, boxSizing: 'border-box' } },
             selectedMusic
               ? React.createElement('button', { onClick: onAudio, 'aria-label': 'Change selected song', style: { position: 'relative', width: '100%', height: 40, minHeight: 40, flex: '0 0 auto', padding: '4px 6px', border: '1px solid rgba(255,214,0,0.9)', borderRadius: 6, background: '#111', color: '#fff', cursor: 'pointer', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: 6, textAlign: 'left', overflow: 'hidden' } },
                   selectedMusicArtwork ? React.createElement('img', { src: selectedMusicArtwork, alt: '', style: { width: 24, height: 24, borderRadius: 3, objectFit: 'cover', flexShrink: 0 } }) : React.createElement('div', { style: { width: 24, height: 24, borderRadius: 3, background: '#FFD600', color: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 11, flexShrink: 0 } }, '♪'),
@@ -9276,8 +9276,10 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
                 style: { background: inlineTextDraft.trim() ? '#fff' : 'rgba(255,255,255,0.3)', border: 'none', borderRadius: 10, padding: '9px 14px', color: '#111', fontWeight: 800, fontSize: 13, cursor: 'pointer', flexShrink: 0 }
               }, inlineEditingOverlayId ? 'Update' : 'Done')
             )
-          )
+          ),
+        React.createElement('div', { style: { position: 'absolute', top: 3, bottom: 0, left: playhead + '%', width: 2, background: '#fff', boxShadow: '0 0 2px rgba(0,0,0,0.65)', pointerEvents: 'none', zIndex: 20 } })
       )
+    )
   );
 }
 function ComposeModal({
