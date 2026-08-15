@@ -9428,7 +9428,8 @@ function ComposeModal({
   const videoPreviewRef = useRef(null); const videoTextGestureRef = useRef({});
   const edVideoRef = useRef(null);
   const edAudioRef = useRef(null);
-  const [edAudioOn, setEdAudioOn] = useState(false);
+  const [edAudioOn, setEdAudioOn] = useState(true);
+  const edRestartingRef = useRef(false);
   const [edCurrentTime, setEdCurrentTime] = useState(0);
   const [edDuration, setEdDuration] = useState(0);
   const altVidRef = useRef(null);
@@ -10073,21 +10074,8 @@ function ComposeModal({
       const promise = audio.play();
       if (promise && promise.then) promise.then(() => setEdAudioOn(true)).catch(() => {});
     };
-    const _edToggleAudio = () => {
-      const newOn = !edAudioOn;
-      setEdAudioOn(newOn);
-      if (selectedMusic) {
-        const v = edVideoRef.current;
-        const a = edAudioRef.current;
-        if (v) v.muted = true;
-        if (newOn) _edStartMusic(v ? v.currentTime : trimStart);
-        else if (a) a.pause();
-      } else {
-        const v = edVideoRef.current;
-        if (v) v.muted = !newOn;
-      }
-    };
-    const _videoTextFonts = [
+    const _edRestartFromStart = () => { const v = edVideoRef.current; if (!v || edRestartingRef.current) return; edRestartingRef.current = true; const audio = edAudioRef.current; if (audio) { audio.pause(); try { audio.currentTime = _edMusicStartSec; } catch (_) {} } v.muted = Boolean(selectedMusic); try { v.currentTime = trimStart; } catch (_) {} Promise.resolve(v.play()).then(() => { if (selectedMusic) _edStartMusic(trimStart); }).catch(() => { if (audio) audio.pause(); }).finally(() => { edRestartingRef.current = false; }); };
+        const _videoTextFonts = [
       { id: 'Classic', label: 'Classic', family: 'Georgia, serif', weight: 700, style: 'normal', shadow: '0 2px 8px rgba(0,0,0,0.9)' },
       { id: 'Pop', label: 'Bubble', family: 'Arial, sans-serif', weight: 900, style: 'normal', shadow: '0 2px 5px rgba(0,0,0,0.9)' },
       { id: 'Fancy', label: 'Slab Serif', family: "Georgia, 'Times New Roman', serif", weight: 600, style: 'normal', shadow: '0 2px 8px rgba(0,0,0,0.9)' },
@@ -10222,7 +10210,7 @@ function ComposeModal({
         /* Video with text overlays + playback controls */
         React.createElement('div', { ref: videoPreviewRef, style: { width: _editorFrameWidth, height: _editorFrameHeight, position: 'relative', overflow: 'hidden', borderRadius: 0, background: '#000', boxShadow: 'none', border: 'none' } },
           React.createElement('div', { style: { position: 'absolute', inset: 0, filter: _actEff, zIndex: 0 } },
-            React.createElement('video', { key: _edSrc + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), ref: edVideoRef, src: _edSrc, preload: 'auto', playsInline: true, autoPlay: true, muted: Boolean(selectedMusic) || !edAudioOn, onLoadedData: (e) => { const v = e.target; v.muted = Boolean(selectedMusic) || !edAudioOn; const videoPlay = v.play(); Promise.resolve(videoPlay).then(() => { if (selectedMusic) _edStartMusic(v.currentTime || trimStart); }).catch(() => {}); }, onError: () => { recoverLocalVideoPreview(); }, style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'translateZ(0)', background: '#000' }, onLoadedMetadata: (e) => { if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } setEdDuration(e.target.duration); setEdCurrentTime(0); }, onTimeUpdate: (e) => { const v = e.target; const next = v.currentTime; setEdCurrentTime(next); if (selectedMusic) { v.muted = true; if (trimEnd > 0 && next >= trimEnd) { v.currentTime = trimStart; const a = edAudioRef.current; if (a) { a.pause(); try { a.currentTime = _edMusicStartSec; } catch (_) {} } if (edAudioOn) _edStartMusic(trimStart); } else { _edSyncMusicToVideo(next); } } else if (trimEnd > 0 && next >= trimEnd) { v.currentTime = trimStart; } }, onEnded: () => { if (edVideoRef.current) { edVideoRef.current.currentTime = trimStart; if (selectedMusic) { const a = edAudioRef.current; if (a) { a.pause(); try { a.currentTime = _edMusicStartSec; } catch (_) {} } if (edAudioOn) _edStartMusic(trimStart); } edVideoRef.current.play().catch(()=>{}); } } })
+            React.createElement('video', { key: _edSrc + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), ref: edVideoRef, src: _edSrc, preload: 'auto', playsInline: true, autoPlay: true, muted: Boolean(selectedMusic), onLoadedData: (e) => { const v = e.target; v.muted = Boolean(selectedMusic); if (!selectedMusic) setEdAudioOn(true); const videoPlay = v.play(); Promise.resolve(videoPlay).then(() => { if (selectedMusic) _edStartMusic(v.currentTime || trimStart); }).catch(() => {}); }, onError: () => { recoverLocalVideoPreview(); }, style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'translateZ(0)', background: '#000' }, onLoadedMetadata: (e) => { if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } setEdDuration(e.target.duration); setEdCurrentTime(0); }, onTimeUpdate: (e) => { const v = e.target; const next = v.currentTime; setEdCurrentTime(next); if (trimEnd > 0 && next >= trimEnd) { _edRestartFromStart(); } else if (selectedMusic) { v.muted = true; _edSyncMusicToVideo(next); } }, onEnded: () => { _edRestartFromStart(); } })
           ),
           /* Draggable text overlays */
           videoTextOverlays.map(t => React.createElement('div', {
@@ -10360,20 +10348,7 @@ function ComposeModal({
             o.emoji,
             React.createElement('button', { onClick: (e) => { e.stopPropagation(); setEmojiOverlays(prev => prev.filter(item => item.id !== o.id)); }, style: { position: 'absolute', top: -8, right: -8, background: 'rgba(220,20,60,0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: 18, height: 18, fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, lineHeight: 1 } }, '✕')
           )),
-          /* ── Bottom controls: time LEFT, media icon RIGHT, no scrub ── */
-          React.createElement('div', { style: { position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10, background: 'linear-gradient(transparent, rgba(0,0,0,0.75))', padding: '20px 14px 12px' } },
-            React.createElement('div', { style: { display: 'flex', alignItems: 'center' } },
-              /* Time — LEFT */
-              React.createElement('span', { style: { color: '#fff', fontSize: 13, fontWeight: 600, fontVariantNumeric: 'tabular-nums' } }, _fmtTime(edCurrentTime) + ' / ' + _fmtTime(edDuration || 0)),
-              React.createElement('div', { style: { flex: 1 } }),
-              /* Media toggle — RIGHT (speaker on/off) */
-              React.createElement('button', { onClick: _edToggleAudio, style: { background: 'rgba(0,0,0,0.52)', border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 } },
-                edAudioOn
-                  ? React.createElement('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: '#fff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, React.createElement('polygon', { points: '11 5 6 9 2 9 2 15 6 15 11 19 11 5' }), React.createElement('path', { d: 'M19.07 4.93a10 10 0 0 1 0 14.14' }), React.createElement('path', { d: 'M15.54 8.46a5 5 0 0 1 0 7.07' }))
-                  : React.createElement('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: '#fff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }, React.createElement('polygon', { points: '11 5 6 9 2 9 2 15 6 15 11 19 11 5' }), React.createElement('line', { x1: 23, y1: 9, x2: 17, y2: 15 }), React.createElement('line', { x1: 17, y1: 9, x2: 23, y2: 15 }))
-              )
-            )
-          ),
+          /* Video timing and media toggle intentionally removed from the editor preview. */
           /* Hidden audio — no loop, plays only when edAudioOn */
           selectedMusic && React.createElement('audio', { key: selectedMusic.music_id || selectedMusic.music_title, ref: edAudioRef, src: selectedMusic.music_preview_url, preload: 'auto', loop: false, style: { display: 'none' }, onLoadedMetadata: (e) => { try { e.target.currentTime = _edMusicStartSec; } catch (_) {} }, onCanPlay: (e) => { try { e.target.currentTime = _edMusicStartSec; } catch (_) {} }, onEnded: () => { if (edAudioOn) _edStartMusic(trimStart); } })
         ),
