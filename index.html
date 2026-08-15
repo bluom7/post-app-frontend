@@ -8797,51 +8797,41 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const selectedMusicArtwork = selectedMusic ? (selectedMusic.music_artwork || selectedMusic.artworkUrl100 || selectedMusic.artwork_url || selectedMusic.album_artwork_url || '').replace('100x100bb', '300x300bb') : '';
   const musicStartSec = Math.max(0, Number(selectedMusic && selectedMusic.music_start_ms) || 0) / 1000;
   const musicClipDurationSec = Math.max(0.1, Math.min(30, Number(selectedMusic && selectedMusic.music_clip_duration_ms) / 1000 || 30));
-  const getMusicTargetTime = videoTime => {
-    const relativeTime = Math.max(0, (Number(videoTime) || 0) - trimStart);
-    const audio = audioRef.current;
-    const availableDuration = audio && Number.isFinite(audio.duration) && audio.duration > musicStartSec
-      ? Math.max(0.1, Math.min(musicClipDurationSec, audio.duration - musicStartSec))
-      : musicClipDurationSec;
-    return musicStartSec + (relativeTime % availableDuration);
-  };
-  const syncMusicToVideo = () => {
-    const audio = audioRef.current;
-    const video = videoRef.current;
-    if (!audio || !video || !musicUrl) return;
-    const target = getMusicTargetTime(video.currentTime || trimStart);
-    if (Number.isFinite(target) && Math.abs((audio.currentTime || 0) - target) > 0.25) {
-      try { audio.currentTime = target; } catch (_) {}
-    }
-  };
-
+  // Keep one audio owner for the selected song. Do not seek it from video timeupdate;
+  // repeated seeks are what caused Android chopping/static and stalled playback.
   React.useEffect(() => {
     const previousAudio = audioRef.current;
     if (previousAudio) {
-      previousAudio.pause();
-      previousAudio.src = '';
+      try { previousAudio.pause(); previousAudio.removeAttribute('src'); previousAudio.load(); } catch (_) {}
     }
     audioRef.current = null;
     if (!musicUrl) return () => {};
-    const audio = new Audio(musicUrl);
+
+    const audio = new Audio();
     audio.preload = 'auto';
     audio.loop = false;
     audio.volume = 1;
-    audio.addEventListener('ended', () => {
-      const video = videoRef.current;
-      if (audioRef.current === audio && video && !video.paused) {
-        try { audio.currentTime = musicStartSec; } catch (_) {}
-        audio.play().catch(() => {});
-      }
-    });
+    audio.src = musicUrl;
     audioRef.current = audio;
+    const stopTogether = () => {
+      if (audioRef.current !== audio) return;
+      const video = videoRef.current;
+      try { audio.pause(); audio.currentTime = musicStartSec; } catch (_) {}
+      if (video) {
+        try { video.pause(); video.currentTime = trimStart; } catch (_) {}
+      }
+      setPlaying(false);
+      setCurrentTime(trimStart);
+    };
+    audio.onended = stopTogether;
+    audio.onerror = stopTogether;
     return () => {
       audio.pause();
-      audio.src = '';
+      audio.removeAttribute('src');
+      audio.load();
       if (audioRef.current === audio) audioRef.current = null;
     };
-  }, [musicUrl]);
-
+  }, [musicUrl, musicStartSec, trimStart]);
   const [thumbnailFrames, setThumbnailFrames] = React.useState([]);
   const thumbnailCount = 12;
   React.useEffect(() => {
@@ -9027,7 +9017,6 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         }
       } else {
         setCurrentTime(next);
-        if (musicUrl && audioRef.current && !audioRef.current.paused) syncMusicToVideo();
       }
     };
     const onEnded = () => {
@@ -9092,13 +9081,29 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     }
     if (video.currentTime < trimStart || video.currentTime >= trimEnd) video.currentTime = trimStart;
     video.muted = Boolean(musicUrl);
-    if (musicUrl && audio) syncMusicToVideo();
-    Promise.resolve(video.play()).then(() => {
-      if (musicUrl && audio) return audio.play();
-      return undefined;
-    }).then(() => setPlaying(true)).catch(() => {
-      if (audio) audio.pause();
-    });
+    if (musicUrl && audio) {
+      // Seek once for this explicit play/resume action, never on every frame.
+      const relative = Math.max(0, video.currentTime - trimStart);
+      const available = Number.isFinite(audio.duration) && audio.duration > musicStartSec
+        ? Math.max(0.1, audio.duration - musicStartSec)
+        : musicClipDurationSec;
+      const target = musicStartSec + (relative % available);
+      const seekAudioOnce = () => {
+        try { audio.currentTime = target; } catch (_) {}
+      };
+      if (audio.readyState >= 1) seekAudioOnce();
+      else audio.addEventListener('loadedmetadata', seekAudioOnce, { once: true });
+      // Start both elements from the same user gesture.
+      const audioPlay = audio.play();
+      const videoPlay = video.play();
+      Promise.all([videoPlay, audioPlay]).then(() => setPlaying(true)).catch(() => {
+        video.pause();
+        audio.pause();
+        setPlaying(false);
+      });
+      return;
+    }
+    Promise.resolve(video.play()).then(() => setPlaying(true)).catch(() => setPlaying(false));
   };
   const seek = amount => {
     const video = videoRef.current;
