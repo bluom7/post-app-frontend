@@ -20769,6 +20769,7 @@ function InviteFriendsScreen({
 // ── Reel Camera Modal ─────────────────────────────────────────
 // ── MusicPickerModalRC ────────────────────────────────────────────────────
 function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
+  var DEFAULT_CLIP_DURATION = 15;
   var CATS = ['For You','Trending','Bollywood','Pop','Hip-Hop','Lofi','Romantic'];
   var CAT_Q = {
     'For You':'top hits 2025','Trending':'viral songs 2025','Bollywood':'bollywood hits 2025',
@@ -20786,7 +20787,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
   var timerRef=React.useRef(null);
 
   // trimmer state
-  var _cd=React.useState(15); var clipDuration=_cd[0]; var setClipDuration=_cd[1];
+  var _cd=React.useState(DEFAULT_CLIP_DURATION); var clipDuration=_cd[0]; var setClipDuration=_cd[1];
   var _sdp=React.useState(false); var showDurationPicker=_sdp[0]; var setShowDurationPicker=_sdp[1];
   var _sd=React.useState(30); var songDuration=_sd[0]; var setSongDuration=_sd[1];
   var _pl=React.useState(false); var playing=_pl[0]; var setPlaying=_pl[1];
@@ -20820,10 +20821,11 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
   function fmtSec(sec){ var s=Math.round(sec||0); return Math.floor(s/60)+':'+(s%60).toString().padStart(2,'0'); }
   function clamp(v){ return Math.max(0,Math.min(maxStart,v)); }
   var selectClipDuration=function(dur){
-    var nextSongDuration=Math.max(dur+5,Math.round(((selectedSong&&selectedSong.trackTimeMillis)||30000)/1000));
-    setClipDuration(dur);
+    var nextDuration=Number(dur)===30?30:DEFAULT_CLIP_DURATION;
+    var nextSongDuration=Math.max(nextDuration+5,Math.round(((selectedSong&&selectedSong.trackTimeMillis)||30000)/1000));
+    setClipDuration(nextDuration);
     setSongDuration(nextSongDuration);
-    setStartSec(Math.max(0,Math.min(startSecRef.current,Math.max(0,nextSongDuration-dur))));
+    setStartSec(Math.max(0,Math.min(startSecRef.current,Math.max(0,nextSongDuration-nextDuration)));
     setShowDurationPicker(false);
     stopTrimAudio();
   };
@@ -20852,7 +20854,11 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
   // when song selected → load duration + waveform
   React.useEffect(function(){
     if(!selectedSong)return;
-    var fullDur=Math.max(clipDuration+5,Math.round((selectedSong.trackTimeMillis||30000)/1000));
+    // Every newly selected song starts with the short 15-second clip.
+    // The user can explicitly switch to 30 seconds from the duration menu.
+    setClipDuration(DEFAULT_CLIP_DURATION);
+    setShowDurationPicker(false);
+    var fullDur=Math.max(DEFAULT_CLIP_DURATION+5,Math.round((selectedSong.trackTimeMillis||30000)/1000));
     setSongDuration(fullDur); setStartSec(0); setWaveData([]); setPlayedSec(0); setPlaying(false);
     if(listAudioRef.current){listAudioRef.current.pause();listAudioRef.current=null;setPlayingId(null);}
     // Pre-load a single trim audio element for the whole session — reused for all seeks
