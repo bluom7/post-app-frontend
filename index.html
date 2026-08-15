@@ -9967,7 +9967,7 @@ function ComposeModal({
     trimStart, trimEnd, setTrimStart, setTrimEnd,
     selectedMusic,
     textOverlays: videoTextOverlays, setTextOverlays: setVideoTextOverlays,
-    onDone: () => { setShowVideoTrim(false); },
+    onDone: () => { setShowVideoTrim(false); setShowVideoEditor(true); setVideoEditorTab(null); },
     onCancel: () => setShowVideoTrim(false),
     onAudio: () => {
       setReturnToVideoTrimAfterMusic(true);
