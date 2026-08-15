@@ -9277,7 +9277,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
               }, inlineEditingOverlayId ? 'Update' : 'Done')
             )
           ),
-        React.createElement('div', { style: { position: 'absolute', top: -5, bottom: 26, left: playhead + '%', width: 2, background: '#fff', boxShadow: '0 0 2px rgba(0,0,0,0.65)', pointerEvents: 'none', zIndex: 20 } })
+        React.createElement('div', { style: { position: 'absolute', top: -5, bottom: inlineTextOverlays.length > 0 && !inlineTextEditorOpen ? 26 : -5, left: playhead + '%', width: 2, background: '#fff', boxShadow: '0 0 2px rgba(0,0,0,0.65)', pointerEvents: 'none', zIndex: 20 } })
       )
     )
   );
