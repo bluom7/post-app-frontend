@@ -9675,9 +9675,10 @@ function ComposeModal({
           setVideoWidth(uploadRes.video_width);
           setVideoHeight(uploadRes.video_height);
         }
-        setVideoUrl(uploadRes.url); setVideoDuration(finalVideoDuration);
-        clearLocalVideoPreview();
-        setPendingVideoFile(null);
+        // Keep the decoded local preview mounted during upload and post creation.
+        // Swapping to the remote URL here causes a transient black video frame.
+        // finalVideoUrl is used for the API payload below; Compose cleans up
+        // the local preview when onPost closes this modal.
       } catch(uploadErr) {
         showToast(uploadErr.message || 'Video upload failed. Try again.', COLORS.red);
         setLoading(false); setVideoUploading(false); return;
