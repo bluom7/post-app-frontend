@@ -21501,6 +21501,72 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     } catch (_) {}
   }
 
+  // One playback owner for editor video + selected song. The video stays muted;
+  // the song is seeked once at startup and never reset from video timeupdate.
+  function startPreviewMusicWithVideo() {
+    const video = editVideoRef.current || trimVideoRef.current;
+    const src = getPreviewAudioSource();
+    if (!video || !src) return false;
+
+    const previous = previewMusicAudioRef.current;
+    if (previous) {
+      try { previous.pause(); previous.onended = null; previous.onerror = null; previous.ontimeupdate = null; } catch (_) {}
+    }
+
+    const audio = new Audio();
+    audio.preload = 'auto';
+    audio.src = src;
+    audio.loop = false;
+    previewMusicAudioRef.current = audio;
+    const startSec = Math.max(0, Number(audioStartTimeRef.current || 0) / 1000);
+    const clipSec = Math.max(1, Math.min(30, Number(audioClipDurationRef.current || 15)));
+    let stopped = false;
+
+    const stop = () => {
+      if (stopped || previewMusicAudioRef.current !== audio) return;
+      stopped = true;
+      try { audio.pause(); } catch (_) {}
+      if (video === editVideoRef.current || video === trimVideoRef.current) {
+        try { video.pause(); } catch (_) {}
+      }
+      setPreviewPlaying(false);
+    };
+    audio.onended = stop;
+    audio.onerror = () => {
+      if (previewMusicAudioRef.current === audio) {
+        stop();
+        showToast && showToast('Audio could not play', '#FF1744');
+      }
+    };
+    audio.ontimeupdate = () => {
+      if (audio.currentTime >= startSec + clipSec - 0.05) stop();
+    };
+
+    video.muted = true;
+    video.loop = true;
+    try { video.currentTime = trimStart || 0; } catch (_) {}
+    video.play().catch(() => {});
+
+    const seekOnce = () => {
+      if (previewMusicAudioRef.current !== audio) return;
+      try { audio.currentTime = startSec; } catch (_) {}
+    };
+    if (audio.readyState >= 1) seekOnce();
+    else audio.addEventListener('loadedmetadata', seekOnce, { once: true });
+
+    // Call play immediately while the picker tap's user gesture is still active.
+    audio.play().then(() => {
+      if (previewMusicAudioRef.current === audio && !stopped) setPreviewPlaying(true);
+    }).catch(() => {
+      if (previewMusicAudioRef.current === audio) {
+        audio.addEventListener('canplay', () => audio.play().then(() => {
+          if (previewMusicAudioRef.current === audio && !stopped) setPreviewPlaying(true);
+        }).catch(() => {}), { once: true });
+      }
+    });
+    return true;
+  }
+
   function finishPreviewPlayback(video) {
     // Keep the editor preview running continuously. This only controls the
     // on-screen preview; the selected trim still controls the exported media.
@@ -22148,9 +22214,12 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       return;
     }
 
-    // Editor preview always uses the video's natural voice. Selected music is
-    // retained for export/post data, but is not routed through a second Audio
-    // element because Android can render that stream as loud static.
+    // Selected music owns the editor audio path. Never mix it with the
+    // video's original track; that combination causes Android static/chopping.
+    if (audioUrlRef.current || audioFileRef.current) {
+      if (startPreviewMusicWithVideo()) return;
+    }
+    // No selected song: use the video's original audio only.
     if (video) video.muted = false;
     if (trimVideo) trimVideo.muted = false;
     const primary = trimVideo || video;
@@ -24245,7 +24314,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = false; editVideoRef.current.play().catch(() => {}); } if (trimVideoRef.current) trimVideoRef.current.muted = true; trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); } showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; } if (trimVideoRef.current) { trimVideoRef.current.muted = true; } trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); if (!isPhotoReel) startPreviewMusicWithVideo(); if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); } showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
 
       // Editor discard sheet must be rendered in the editor return path.
       discardDialogFromEditor && showReelDiscardDialog && React.createElement("div", {
