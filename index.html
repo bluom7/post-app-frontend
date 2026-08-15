@@ -8233,7 +8233,7 @@ function VideoStickerPickerModal({ onSelect, onClose }) {
 }
 
 function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete, onChangeSong }) {
-  const [CLIP_DUR, setClipDur] = React.useState(30);
+  const [CLIP_DUR, setClipDur] = React.useState(15);
   const [showClipDurationPicker, setShowClipDurationPicker] = React.useState(false);
   const songDur = Math.max(CLIP_DUR, Math.round((song.music_duration_ms || 30000) / 1000));
   const maxStart = Math.max(0, songDur - CLIP_DUR);
