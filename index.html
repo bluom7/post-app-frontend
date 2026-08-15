@@ -24527,13 +24527,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     // (progress bar replaced by ring on record button)
 
     // ── Top bar — hidden during recording (full-screen minimal mode) ──
-    !recording && React.createElement("div", { style: { position: "relative", zIndex: 20, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 14px 0" } },
-      // X close
-      React.createElement("button", { onClick: () => { if (!recordedBlob && !recordedURL) { onClose(); } else { setDiscardDialogFromEditor(false); setShowReelDiscardDialog(true); } }, style: { width: 40, height: 40, borderRadius: "50%", background: "rgba(20,20,20,0.6)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" } },
-        React.createElement("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2.5, strokeLinecap: "round" },
-          React.createElement("path", { d: "M18 6 6 18M6 6l12 12" })
-        )
-      ),
+    !recording && React.createElement("div", { style: { position: "relative", zIndex: 20, display: "flex", alignItems: "center", justifyContent: "center", padding: "14px 14px 0" } },
       // Center: flash + speed + timer
       React.createElement("div", { style: { display: "flex", gap: 8 } },
         React.createElement("button", { onClick: toggleFlash, style: { width: 42, height: 42, borderRadius: 12, background: (flashOn || showBrightnessPicker || brightnessVal !== 100) ? "#FFD600" : "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s" } },
@@ -24550,7 +24544,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         )
       ),
       // Next button removed from top bar — it now lives in the review bottom bar (bottom-left, white)
-      React.createElement("div", { style: { width: 56 } }) // spacer to keep layout balanced
+      React.createElement("div", { style: { width: 0 } }) // spacer removed after closing X
     ),
 
     // Add audio button
@@ -24725,7 +24719,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
     // ── Instagram-style pink time pill (top right) ──
     (recording || reviewing) && React.createElement("div", {
-      style: { position: "absolute", top: 14, right: 14, zIndex: 30, background: "#E1306C", borderRadius: 20, padding: "6px 14px", display: "flex", alignItems: "center" }
+      style: { position: "absolute", top: 14, right: 14, zIndex: 30, background: "#E1306C", borderRadius: 20, height: 42, boxSizing: "border-box", padding: "0 14px", display: "flex", alignItems: "center" }
     },
       React.createElement("span", { style: { color: "#fff", fontSize: 14, fontWeight: 800, letterSpacing: 0.3, fontVariantNumeric: "tabular-nums" } },
         (function(s){ const m=Math.floor(s/60); const sec=(s%60).toString().padStart(2,'0'); return m+':'+sec; })(recordTime)
