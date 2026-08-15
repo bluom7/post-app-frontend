@@ -8321,18 +8321,20 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
   };
   const startAudio = (sec) => {
     stopAudio();
-    if (mediaRef.current && videoSrc) {
-      try {
-        mediaRef.current.currentTime = 0;
-        mediaRef.current.muted = true;
-        mediaRef.current.play().catch(() => {});
-      } catch (_) {}
-    }
     const a = new Audio(song.music_preview_url);
+    a.preload = 'auto';
+    a.loop = false;
     audioRef.current = a;
+    const seekToSelection = () => {
+      const previewDur = isFinite(a.duration) && a.duration > 0 ? a.duration : 30;
+      const scaledTime = maxStart > 0 ? (sec / maxStart) * Math.max(0, previewDur - CLIP_DUR) : 0;
+      try { a.currentTime = Math.max(0, Math.min(scaledTime, Math.max(0, previewDur - 0.5))); } catch (_) {}
+    };
+    if (a.readyState >= 1) seekToSelection();
+    else a.addEventListener('loadedmetadata', seekToSelection, { once: true });
+
     setPlaying(true);
     setPlayedSec(0);
-    // progress ticker — updates every 80ms so bars turn blue one-by-one
     const t0 = Date.now();
     playIntervalRef.current = setInterval(() => {
       const elapsed = (Date.now() - t0) / 1000;
@@ -8351,20 +8353,11 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
       if (mediaRef.current) { try { mediaRef.current.pause(); mediaRef.current.currentTime = 0; } catch (_) {} }
       setPlaying(false); setPlayedSec(0);
     };
-    // music_preview_url is typically a ~30s clip; scale song-time to preview-time
-    // so any position in the full song maps to a valid position in the preview.
-    const onMeta = () => {
-      const previewDur = isFinite(a.duration) && a.duration > 0 ? a.duration : 30;
-      const scaledTime = maxStart > 0 ? (sec / maxStart) * Math.max(0, previewDur - CLIP_DUR) : 0;
-      const sc = Math.max(0, Math.min(scaledTime, previewDur - 0.5));
-      // Wait for seeked before playing — prevents mobile browsers ignoring seek
-      let done = false;
-      const go = () => { if (done) return; done = true; a.play().catch(()=>{}); };
-      a.addEventListener('seeked', go, { once: true });
-      a.currentTime = sc;
-      setTimeout(go, 350); // fallback if seeked never fires
-    };
-    if (a.readyState >= 1) { onMeta(); } else { a.addEventListener('loadedmetadata', onMeta, { once: true }); }
+    // Unlock audio immediately in the user's tap. Seeking is corrected once
+    // metadata is available instead of delaying the first play() call.
+    a.play().catch(() => {
+      a.addEventListener('canplay', () => a.play().catch(() => {}), { once: true });
+    });
   };
   const togglePlay = () => playing ? stopAudio() : startAudio(startSecRef.current);
   React.useEffect(() => () => stopAudio(), []);
@@ -21404,6 +21397,46 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const [showTimeline, setShowTimeline] = React.useState(false);
   const [trimPoster, setTrimPoster] = React.useState(null);
 
+  // Keep one stable audio element for the editor. Recreating Audio on every tap
+  // loses Android's user-gesture permission and can produce a broken/noisy stream.
+  const previewAudioObjectUrlRef = React.useRef(null);
+  const previewAudioFileRef = React.useRef(null);
+
+  function getPreviewAudioSource() {
+    if (audioUrlRef.current) return audioUrlRef.current;
+    const file = audioFileRef.current;
+    if (!file) return null;
+    if (!previewAudioObjectUrlRef.current || previewAudioFileRef.current !== file) {
+      if (previewAudioObjectUrlRef.current) {
+        try { URL.revokeObjectURL(previewAudioObjectUrlRef.current); } catch (_) {}
+      }
+      previewAudioObjectUrlRef.current = URL.createObjectURL(file);
+      previewAudioFileRef.current = file;
+    }
+    return previewAudioObjectUrlRef.current;
+  }
+
+  function stopPreviewAudio(resetToStart) {
+    const audio = previewMusicAudioRef.current;
+    if (!audio) return;
+    try {
+      audio.pause();
+      if (resetToStart) audio.currentTime = Math.max(0, (audioStartTimeRef.current || 0) / 1000);
+    } catch (_) {}
+  }
+
+  function finishPreviewPlayback(video) {
+    if (trimShouldBePausedRef.current) return;
+    trimShouldBePausedRef.current = true;
+    try {
+      video.pause();
+      video.currentTime = trimStart || 0;
+    } catch (_) {}
+    stopPreviewAudio(true);
+    setPreviewPlaying(false);
+    setTrimVideoEnded(true);
+  }
+
   const captureTrimPoster = () => {
     const video = editVideoRef.current;
     if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return null;
@@ -21986,99 +22019,120 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   }
 
   function togglePreviewPlay() {
-    // Photo reel: tap to play/pause the background music only (no video)
+    // Photo reels have no video clock, so the selected audio controls playback.
     if (isPhotoReel) {
-      const hasMusic = audioUrlRef.current || audioFileRef.current;
-      if (!hasMusic) return;
+      const src = getPreviewAudioSource();
+      if (!src) return;
       if (previewPlaying) {
-        if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); }
+        stopPreviewAudio(false);
         setPreviewPlaying(false);
-      } else {
-        if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; }
-        const _src = audioUrlRef.current ? audioUrlRef.current : (audioFileRef.current ? URL.createObjectURL(audioFileRef.current) : null);
-        if (!_src) return;
-        const a = new Audio();
-        // No crossOrigin — external music URLs often lack CORS headers; omitting allows playback
-        a.src = _src;
-        a.loop = false;
-        a.currentTime = (audioStartTimeRef.current || 0) / 1000;
-        a.onended = () => { previewMusicAudioRef.current = null; setPreviewPlaying(false); };
-        a.onerror = () => { previewMusicAudioRef.current = null; setPreviewPlaying(false); showToast && showToast("Audio could not play", "#FF1744"); };
-        previewMusicAudioRef.current = a;
-        a.play().then(() => setPreviewPlaying(true)).catch(err => {
-          // Retry without currentTime on seek error
-          a.currentTime = 0;
-          a.play().then(() => setPreviewPlaying(true)).catch(() => {});
-        });
+        return;
       }
+      let audio = previewMusicAudioRef.current;
+      if (!audio || audio.src !== src) {
+        stopPreviewAudio(true);
+        audio = new Audio();
+        audio.preload = 'auto';
+        audio.src = src;
+        audio.loop = false;
+        audio.onended = () => { if (previewMusicAudioRef.current === audio) { setPreviewPlaying(false); } };
+        audio.onerror = () => { if (previewMusicAudioRef.current === audio) { setPreviewPlaying(false); showToast && showToast('Audio could not play', '#FF1744'); } };
+        previewMusicAudioRef.current = audio;
+      }
+      const start = Math.max(0, (audioStartTimeRef.current || 0) / 1000);
+      const seekAfterMetadata = () => {
+        if (previewMusicAudioRef.current !== audio) return;
+        try { audio.currentTime = start; } catch (_) {}
+      };
+      if (audio.readyState >= 1) seekAfterMetadata();
+      else audio.addEventListener('loadedmetadata', seekAfterMetadata, { once: true });
+      // Start in the tap handler. Waiting for metadata before calling play() is
+      // rejected by mobile browsers because the user-gesture token is gone.
+      audio.play().then(() => setPreviewPlaying(true)).catch(() => {
+        audio.addEventListener('canplay', () => audio.play().then(() => setPreviewPlaying(true)).catch(() => {}), { once: true });
+      });
       return;
     }
-    const v = editVideoRef.current;
-    const tv = trimVideoRef.current; // Trim overlay video (visible when Trim overlay is open)
-    if (!v && !tv) return;
+
+    const video = editVideoRef.current;
+    const trimVideo = trimVideoRef.current;
+    if (!video && !trimVideo) return;
+
     if (previewPlaying) {
-      // User manually paused — clear ended state, show play icon
-      v && v.pause();
-      tv && tv.pause();
-      if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); /* keep ref alive — position preserved, no restart on next play */ }
+      video && video.pause();
+      trimVideo && trimVideo.pause();
+      stopPreviewAudio(false);
       setPreviewPlaying(false);
       setTrimVideoEnded(false);
-      trimShouldBePausedRef.current = false; // allow play again after manual pause
-    } else {
-      const hasMusic = audioUrlRef.current || audioFileRef.current;
-      // Video mute: if custom song active → always muted; else respect origAudioOn toggle
-      v && (v.muted = hasMusic ? true : !origAudioOn);
-      tv && (tv.muted = hasMusic ? true : !origAudioOn);
-      const primary = tv || v;
-      const curT = primary.currentTime;
-      const effEnd = trimEnd > 0 ? trimEnd : (videoDuration || 9999);
-      // Always seek to trimStart when replaying after ended, or if out of range
-      if (trimVideoEnded || curT < trimStart || curT >= effEnd) {
-        try { primary.currentTime = trimStart || 0; } catch(_) {}
-      }
-      // Clear ended state + pause guard early so replay always works (Bug 1 fix)
       trimShouldBePausedRef.current = false;
-      setTrimVideoEnded(false);
-      // ── Play music SYNCHRONOUSLY within the user gesture ──
-      // Mobile browsers (iOS/Android) lose the autoplay-gesture token inside Promise.then(),
-      // so a.play() called inside video.play().then() gets silently rejected/ignored.
-      // Fix: call a.play() HERE — same synchronous frame as the tap — before video.play().
-      if (hasMusic) {
-        if (previewMusicAudioRef.current) {
-          // Reset song to start position so it replays in sync with video
-          try { previewMusicAudioRef.current.currentTime = (audioStartTimeRef.current || 0) / 1000; } catch(_) {}
-          previewMusicAudioRef.current.play().catch(() => {});
-        } else {
-          const _vsrc = audioUrlRef.current ? audioUrlRef.current : (audioFileRef.current ? URL.createObjectURL(audioFileRef.current) : null);
-          if (_vsrc) {
-            const a = new Audio();
-            a.src = _vsrc;
-            a.loop = false; // Don't loop — song must stop with video
-            a.currentTime = (audioStartTimeRef.current || 0) / 1000;
-            a.onended = () => { previewMusicAudioRef.current = null; };
-            a.onerror = () => { previewMusicAudioRef.current = null; };
-            previewMusicAudioRef.current = a;
-            a.play().catch(() => { try { a.currentTime = 0; a.play().catch(() => {}); } catch(_) {} });
-          }
+      return;
+    }
+
+    const hasMusic = !!(audioUrlRef.current || audioFileRef.current);
+    if (video) video.muted = hasMusic ? true : !origAudioOn;
+    if (trimVideo) trimVideo.muted = hasMusic ? true : !origAudioOn;
+    const primary = trimVideo || video;
+    const currentTime = primary.currentTime || 0;
+    const effectiveEnd = trimEnd > 0 ? trimEnd : (videoDuration || 9999);
+    const replayFromStart = trimVideoEnded || currentTime < trimStart || currentTime >= effectiveEnd;
+    if (replayFromStart) {
+      try { primary.currentTime = trimStart || 0; } catch (_) {}
+      stopPreviewAudio(true);
+    }
+    trimShouldBePausedRef.current = false;
+    setTrimVideoEnded(false);
+
+    if (hasMusic) {
+      const src = getPreviewAudioSource();
+      if (src) {
+        let audio = previewMusicAudioRef.current;
+        if (!audio || audio.src !== src) {
+          stopPreviewAudio(true);
+          audio = new Audio();
+          audio.preload = 'auto';
+          audio.src = src;
+          // Keep the selected music available for the whole video. The editor
+          // explicitly stops and resets it when the video reaches its end.
+          audio.loop = true;
+          audio.onended = () => {
+            if (previewMusicAudioRef.current === audio && primary && !primary.paused) {
+              try { audio.currentTime = Math.max(0, (audioStartTimeRef.current || 0) / 1000); } catch (_) {}
+              audio.play().catch(() => {});
+            }
+          };
+          audio.onerror = () => {
+            if (previewMusicAudioRef.current === audio) showToast && showToast('Audio could not play', '#FF1744');
+          };
+          previewMusicAudioRef.current = audio;
         }
-      }
-      const playPrimary = () => {
-        // ANDROID CHROME BUG FIX: Clear pause-guard flag so video is allowed to play again.
-        trimShouldBePausedRef.current = false;
-        primary.play().then(() => {
-          setPreviewPlaying(true);
-          if (tv && v && v !== primary) { v.muted = true; v.play().catch(() => {}); }
-        }).catch(() => {
-          try { primary.muted = true; } catch(_) {}
-          primary.play().then(() => setPreviewPlaying(true)).catch(() => {});
+        const start = Math.max(0, (audioStartTimeRef.current || 0) / 1000);
+        const seekAfterMetadata = () => {
+          if (previewMusicAudioRef.current !== audio) return;
+          try { audio.currentTime = start; } catch (_) {}
+        };
+        if (replayFromStart || audio.paused) {
+          if (audio.readyState >= 1) seekAfterMetadata();
+          else audio.addEventListener('loadedmetadata', seekAfterMetadata, { once: true });
+        }
+        // This call must remain synchronous with the user's tap on Android/iOS.
+        audio.play().catch(() => {
+          audio.addEventListener('canplay', () => audio.play().catch(() => {}), { once: true });
         });
-      };
-      if (primary.readyState < 2) {
-        primary.addEventListener('canplay', () => playPrimary(), { once: true });
-        primary.load();
-      } else {
-        playPrimary();
       }
+    }
+
+    const playPrimary = () => {
+      trimShouldBePausedRef.current = false;
+      primary.play().then(() => setPreviewPlaying(true)).catch(() => {
+        try { primary.muted = true; } catch (_) {}
+        primary.play().then(() => setPreviewPlaying(true)).catch(() => {});
+      });
+    };
+    if (primary.readyState < 2) {
+      primary.addEventListener('canplay', playPrimary, { once: true });
+      primary.load();
+    } else {
+      playPrimary();
     }
   }
 
@@ -22087,9 +22141,9 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     if (!v || step !== "edit") return;
     function onTime() {
       setPreviewTime(v.currentTime);
-      if (trimEnd > 0 && v.currentTime >= trimEnd) { v.currentTime = trimStart; if (!v.paused) v.play().catch(() => {}); }
+      if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v);
     }
-    function onEnded() { setPreviewPlaying(false); }
+    function onEnded() { finishPreviewPlayback(v); }
     v.addEventListener("timeupdate", onTime);
     v.addEventListener("ended", onEnded);
     return () => { v.removeEventListener("timeupdate", onTime); v.removeEventListener("ended", onEnded); };
@@ -22464,6 +22518,15 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     if (isPhotoReel) return;
     const v = editVideoRef.current;
     if (!v) return;
+    const hasCustomMusic = !!(audioUrlRef.current || audioFileRef.current);
+    // A custom song must wait for the explicit tap that starts both clocks.
+    // Autoplaying only the muted video makes the first tap pause it instead of
+    // granting the audio element a user gesture.
+    if (hasCustomMusic) {
+      try { v.pause(); v.currentTime = trimStart || 0; } catch (_) {}
+      setPreviewPlaying(false);
+      return;
+    }
     // Mute only imperatively for mobile autoplay, unmute right after
     const tryPlay = () => {
       const seekTo = trimStart || 0;
@@ -23628,7 +23691,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
       // Hidden audio input
       React.createElement("input", { ref: audioInputRef, type: "file", accept: "audio/*", style: { display: "none" },
-        onChange: e => { const f = e.target.files && e.target.files[0]; if (f) { audioUrlRef.current = null; audioFileRef.current = f; audioStartTimeRef.current = 0; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; setAudioLabel(f.name.replace(/\.[^.]+$/, "")); showToast && showToast("Audio added ✓", "#22C55E"); } } }),
+        onChange: e => { const f = e.target.files && e.target.files[0]; if (f) { audioUrlRef.current = null; audioFileRef.current = f; audioStartTimeRef.current = 0; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.pause(); editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; } trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setPreviewPlaying(false); setAudioLabel(f.name.replace(/\.[^.]+$/, "")); showToast && showToast("Audio added ✓", "#22C55E"); } } }),
 
       // ── Full-screen video (tap to play/pause) ──
       // NOTE: filter is on the wrapper div, NOT on <video>/<img>.
@@ -23641,12 +23704,12 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           ? React.createElement("img", { src: recordedURL, onClick: togglePreviewPlay, style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
           : React.createElement("video", {
               key: recordedURL,
-              ref: editVideoRef, src: recordedURL, playsInline: true, autoPlay: true, muted: true, loop: true,
+              ref: editVideoRef, src: recordedURL, playsInline: true, autoPlay: !(audioUrlRef.current || audioFileRef.current), muted: true, loop: false,
               onLoadedMetadata: onEditedMeta,
-              onCanPlay: e => { const v = e.target; v.play().then(() => { try { if (!audioFileRef.current && !audioUrlRef.current) v.muted = !origAudioOn; /* respect Orig Audio toggle — don't unmute if user hasn't enabled it */ } catch(_){} setPreviewPlaying(true); }).catch(() => {}); },
+              onCanPlay: e => { const v = e.target; const hasCustomMusic = !!(audioUrlRef.current || audioFileRef.current); if (hasCustomMusic) { v.muted = true; try { v.pause(); v.currentTime = trimStart || 0; } catch(_) {} setPreviewPlaying(false); return; } v.play().then(() => { try { v.muted = !origAudioOn; /* respect Orig Audio toggle — don't unmute if user hasn't enabled it */ } catch(_){} setPreviewPlaying(true); }).catch(() => {}); },
               // FIX: If the video stalls/shows black (e.g. after export or navigation), force reload
               onError: e => { const v = e.target; if (v.src && recordedURL) { v.removeAttribute('src'); v.load(); v.src = recordedURL; v.load(); } },
-              onTimeUpdate: e => { if (editTool === "Trim") return; const t = e.target.currentTime; setPreviewTime(t); if (trimEnd > 0 && t >= trimEnd) { e.target.currentTime = trimStart; } },
+              onTimeUpdate: e => { if (editTool === "Trim") return; const v = e.target; setPreviewTime(v.currentTime); if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v); },
               onClick: togglePreviewPlay,
               style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000" }
             })
@@ -24159,7 +24222,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) trimVideoRef.current.muted = true; setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); } showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.pause(); editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; } if (trimVideoRef.current) trimVideoRef.current.muted = true; trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); } showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
 
       // Editor discard sheet must be rendered in the editor return path.
       discardDialogFromEditor && showReelDiscardDialog && React.createElement("div", {
