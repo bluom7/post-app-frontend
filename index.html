@@ -7450,7 +7450,7 @@ function PhotoEditorOverlay({ src, onClose, onSave, onDelete }) {
     ),
 
     activePanel === 'text' && React.createElement('div', {style:{position:'absolute',left:0,right:0,bottom:82,zIndex:2,padding:'10px 14px 8px',background:'transparent',borderTop:'none',pointerEvents:'none'}},
-        React.createElement('div', {className:'photo-editor-text-fonts',style:{display:'flex',gap:3,overflowX:'auto',padding:'4px 0 2px',justifyContent:'center',scrollbarWidth:'none',msOverflowStyle:'none',pointerEvents:'auto'}},
+        React.createElement('div', {className:'photo-editor-text-fonts',style:{display:'flex',gap:3,overflowX:'auto',padding:'4px 8px 2px',justifyContent:'flex-start',scrollbarWidth:'none',msOverflowStyle:'none',WebkitOverflowScrolling:'touch',pointerEvents:'auto',boxSizing:'border-box'}},
           TEXT_FONTS.map(f => React.createElement('button', {
             key:f.id,
             onClick:()=>setTextFont(f.id),
