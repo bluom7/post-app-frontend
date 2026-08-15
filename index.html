@@ -9868,7 +9868,7 @@ function ComposeModal({
     duration: pendingVideoDuration || videoDuration,
     trimStart, trimEnd, setTrimStart, setTrimEnd,
     selectedMusic,
-    onDone: () => { confirmVideoTrim(); },
+    onDone: () => { setShowVideoTrim(false); },
     onCancel: () => setShowVideoTrim(false),
     onAudio: () => {
       setReturnToVideoTrimAfterMusic(true);
