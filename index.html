@@ -8796,12 +8796,21 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const musicUrl = selectedMusic && selectedMusic.music_preview_url;
   const selectedMusicArtwork = selectedMusic ? (selectedMusic.music_artwork || selectedMusic.artworkUrl100 || selectedMusic.artwork_url || selectedMusic.album_artwork_url || '').replace('100x100bb', '300x300bb') : '';
   const musicStartSec = Math.max(0, Number(selectedMusic && selectedMusic.music_start_ms) || 0) / 1000;
+  const musicClipDurationSec = Math.max(0.1, Math.min(30, Number(selectedMusic && selectedMusic.music_clip_duration_ms) / 1000 || 30));
+  const getMusicTargetTime = videoTime => {
+    const relativeTime = Math.max(0, (Number(videoTime) || 0) - trimStart);
+    const audio = audioRef.current;
+    const availableDuration = audio && Number.isFinite(audio.duration) && audio.duration > musicStartSec
+      ? Math.max(0.1, Math.min(musicClipDurationSec, audio.duration - musicStartSec))
+      : musicClipDurationSec;
+    return musicStartSec + (relativeTime % availableDuration);
+  };
   const syncMusicToVideo = () => {
     const audio = audioRef.current;
     const video = videoRef.current;
     if (!audio || !video || !musicUrl) return;
-    const target = Math.max(0, musicStartSec + Math.max(0, (video.currentTime || 0) - trimStart));
-    if (Number.isFinite(target) && Math.abs((audio.currentTime || 0) - target) > 0.35) {
+    const target = getMusicTargetTime(video.currentTime || trimStart);
+    if (Number.isFinite(target) && Math.abs((audio.currentTime || 0) - target) > 0.25) {
       try { audio.currentTime = target; } catch (_) {}
     }
   };
@@ -8816,6 +8825,15 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     if (!musicUrl) return () => {};
     const audio = new Audio(musicUrl);
     audio.preload = 'auto';
+    audio.loop = false;
+    audio.volume = 1;
+    audio.addEventListener('ended', () => {
+      const video = videoRef.current;
+      if (audioRef.current === audio && video && !video.paused) {
+        try { audio.currentTime = musicStartSec; } catch (_) {}
+        audio.play().catch(() => {});
+      }
+    });
     audioRef.current = audio;
     return () => {
       audio.pause();
@@ -9003,7 +9021,10 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         setCurrentTime(trimStart);
         setPlaying(false);
         video.pause();
-        if (audioRef.current) audioRef.current.pause();
+        if (audioRef.current) {
+          audioRef.current.pause();
+          try { audioRef.current.currentTime = musicStartSec; } catch (_) {}
+        }
       } else {
         setCurrentTime(next);
         if (musicUrl && audioRef.current && !audioRef.current.paused) syncMusicToVideo();
@@ -9012,7 +9033,10 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     const onEnded = () => {
       setPlaying(false);
       setCurrentTime(trimStart);
-      if (audioRef.current) audioRef.current.pause();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        try { audioRef.current.currentTime = musicStartSec; } catch (_) {}
+      }
     };
     video.addEventListener('timeupdate', onTimeUpdate);
     video.addEventListener('ended', onEnded);
@@ -9068,11 +9092,11 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     }
     if (video.currentTime < trimStart || video.currentTime >= trimEnd) video.currentTime = trimStart;
     video.muted = Boolean(musicUrl);
-    if (musicUrl && audio) {
-      syncMusicToVideo();
-      audio.play().catch(() => {});
-    }
-    video.play().then(() => setPlaying(true)).catch(() => {
+    if (musicUrl && audio) syncMusicToVideo();
+    Promise.resolve(video.play()).then(() => {
+      if (musicUrl && audio) return audio.play();
+      return undefined;
+    }).then(() => setPlaying(true)).catch(() => {
       if (audio) audio.pause();
     });
   };
@@ -9429,6 +9453,7 @@ function ComposeModal({
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const postMusicAudioRef = React.useRef(null);
+  const composeVideoPreviewRef = React.useRef(null);
   const [musicPlaying, setMusicPlaying] = useState(false);
   const photoRef = useRef(null);
   const mediaRef = useRef(null);
@@ -9706,44 +9731,78 @@ function ComposeModal({
     })));
     setPickerLoading(false);
   };
+  const getComposeVideoWindow = video => {
+    const sourceDuration = Number(video && video.duration) || Number(pendingVideoDuration) || Number(videoDuration) || 0;
+    const needsTrim = Number(pendingVideoDuration) > MAX_POST_VIDEO_SECONDS + 0.5;
+    const start = needsTrim ? Math.max(0, Number(trimStart) || 0) : 0;
+    const end = needsTrim
+      ? Math.min(sourceDuration || Number(trimEnd) || start, Math.max(start + 0.1, Number(trimEnd) || start + 0.1))
+      : sourceDuration;
+    return { start, end: end > start ? end : sourceDuration };
+  };
   const toggleSelectedMusicPreview = () => {
     if (!selectedMusic || !selectedMusic.music_preview_url) return;
-    if (postMusicAudioRef.current) {
-      postMusicAudioRef.current.pause();
+    const video = composeVideoPreviewRef.current;
+    const existing = postMusicAudioRef.current;
+    if (existing) {
+      existing.pause();
+      try { existing.currentTime = Math.max(0, Number(selectedMusic.music_start_ms) || 0) / 1000; } catch (_) {}
+      if (video) {
+        video.pause();
+        const range = getComposeVideoWindow(video);
+        try { video.currentTime = range.start; } catch (_) {}
+      }
       postMusicAudioRef.current = null;
       setMusicPlaying(false);
       return;
     }
     const audio = new Audio(selectedMusic.music_preview_url);
-    const startSec = Math.max(0, Number(selectedMusic.music_start_ms) || 0) / 1000;
-    const clipDurationSec = Math.max(1, Math.min(30, (Number(selectedMusic.music_clip_duration_ms) || 30000) / 1000));
-    let clipTimer = null;
-    let actualStart = startSec;
-    const stop = () => {
-      if (clipTimer) { clearTimeout(clipTimer); clipTimer = null; }
-      audio.pause();
-      if (postMusicAudioRef.current === audio) postMusicAudioRef.current = null;
-      setMusicPlaying(false);
-    };
-    const begin = () => {
-      if (postMusicAudioRef.current !== audio) return;
-      actualStart = Math.min(startSec, Math.max(0, (audio.duration || 30) - 0.05));
-      try { audio.currentTime = actualStart; } catch (_) {}
-      audio.play().then(() => {
-        setMusicPlaying(true);
-        clipTimer = setTimeout(stop, clipDurationSec * 1000);
-      }).catch(stop);
-    };
+    const songStart = Math.max(0, Number(selectedMusic.music_start_ms) || 0) / 1000;
+    const clipDuration = Math.max(0.1, Math.min(30, Number(selectedMusic.music_clip_duration_ms) / 1000 || 30));
     audio.preload = 'auto';
-    audio.onended = stop;
-    audio.ontimeupdate = () => {
-      if (audio.currentTime >= actualStart + clipDurationSec) stop();
-    };
+    audio.loop = false;
+    audio.volume = 1;
     postMusicAudioRef.current = audio;
-    audio.addEventListener('loadedmetadata', begin, { once: true });
-    if (audio.readyState >= 1) begin();
+    const getAudioTarget = videoTime => {
+      const range = getComposeVideoWindow(video);
+      const relative = Math.max(0, (Number(videoTime) || 0) - range.start);
+      const available = Number.isFinite(audio.duration) && audio.duration > songStart
+        ? Math.max(0.1, Math.min(clipDuration, audio.duration - songStart))
+        : clipDuration;
+      return songStart + (relative % available);
+    };
+    const restartTogether = () => {
+      if (postMusicAudioRef.current !== audio) return;
+      const range = getComposeVideoWindow(video);
+      if (video) {
+        video.muted = true;
+        try { video.currentTime = range.start; } catch (_) {}
+      }
+      try { audio.currentTime = songStart; } catch (_) {}
+      const videoPlay = video ? video.play() : Promise.resolve();
+      Promise.resolve(videoPlay).then(() => audio.play()).then(() => setMusicPlaying(true)).catch(() => {
+        audio.pause();
+        setMusicPlaying(false);
+      });
+    };
+    audio.ontimeupdate = () => {
+      if (postMusicAudioRef.current !== audio || !video || video.paused) return;
+      const range = getComposeVideoWindow(video);
+      if (range.end > range.start && video.currentTime >= range.end - 0.08) {
+        try { video.currentTime = range.start; } catch (_) {}
+        try { audio.currentTime = songStart; } catch (_) {}
+        return;
+      }
+      const target = getAudioTarget(video.currentTime);
+      if (Number.isFinite(target) && Math.abs((audio.currentTime || 0) - target) > 0.3) {
+        try { audio.currentTime = target; } catch (_) {}
+      }
+    };
+    audio.onended = () => {
+      if (postMusicAudioRef.current === audio) restartTogether();
+    };
+    restartTogether();
   };
-
       const handlePost = async () => {
     if (!text.trim() && !photoUrls.length && !videoUrl && !localVideoPreviewUrl) {
       showToast("Write something!", COLORS.red);
@@ -9985,7 +10044,49 @@ function ComposeModal({
     const _actEff = (VIDEO_EFFECTS.find(e => e.id === videoEffect) || VIDEO_EFFECTS[0]).filter;
     const VID_TEXT_COLORS = ['#ffffff','#000000','#ffeb3b','#ff5722','#e91e63','#9c27b0','#2196f3','#4caf50','#ff9800','#00bcd4'];
     const _fmtTime = s => { const m = Math.floor(s/60); return m + ':' + String(Math.floor(s%60)).padStart(2,'0'); };
-    const _edToggleAudio = () => { const newOn = !edAudioOn; setEdAudioOn(newOn); if (selectedMusic) { const a = edAudioRef.current; if (a) { if (newOn) { a.currentTime = (selectedMusic.music_start_ms||0)/1000; a.play().catch(()=>{}); } else { a.pause(); } } } else { const v = edVideoRef.current; if (v) v.muted = !newOn; } };
+    const _edMusicStartSec = Math.max(0, Number(selectedMusic && selectedMusic.music_start_ms) || 0) / 1000;
+    const _edMusicClipDurationSec = Math.max(0.1, Math.min(30, Number(selectedMusic && selectedMusic.music_clip_duration_ms) / 1000 || 30));
+    const _edMusicTargetTime = videoTime => {
+      const audio = edAudioRef.current;
+      if (!selectedMusic || !audio) return null;
+      const relative = Math.max(0, (Number(videoTime) || 0) - (Number(trimStart) || 0));
+      const available = Number.isFinite(audio.duration) && audio.duration > _edMusicStartSec
+        ? Math.max(0.1, Math.min(_edMusicClipDurationSec, audio.duration - _edMusicStartSec))
+        : _edMusicClipDurationSec;
+      return _edMusicStartSec + (relative % available);
+    };
+    const _edSyncMusicToVideo = videoTime => {
+      const audio = edAudioRef.current;
+      const target = _edMusicTargetTime(videoTime);
+      if (!audio || target === null) return;
+      if (Number.isFinite(target) && Math.abs((audio.currentTime || 0) - target) > 0.25) {
+        try { audio.currentTime = target; } catch (_) {}
+      }
+    };
+    const _edStartMusic = videoTime => {
+      const audio = edAudioRef.current;
+      if (!selectedMusic || !audio) return;
+      const target = _edMusicTargetTime(videoTime === undefined ? (edVideoRef.current ? edVideoRef.current.currentTime : trimStart) : videoTime);
+      if (target !== null) {
+        try { audio.currentTime = target; } catch (_) {}
+      }
+      const promise = audio.play();
+      if (promise && promise.then) promise.then(() => setEdAudioOn(true)).catch(() => {});
+    };
+    const _edToggleAudio = () => {
+      const newOn = !edAudioOn;
+      setEdAudioOn(newOn);
+      if (selectedMusic) {
+        const v = edVideoRef.current;
+        const a = edAudioRef.current;
+        if (v) v.muted = true;
+        if (newOn) _edStartMusic(v ? v.currentTime : trimStart);
+        else if (a) a.pause();
+      } else {
+        const v = edVideoRef.current;
+        if (v) v.muted = !newOn;
+      }
+    };
     const _videoTextFonts = [
       { id: 'Classic', label: 'Classic', family: 'Georgia, serif', weight: 700, style: 'normal', shadow: '0 2px 8px rgba(0,0,0,0.9)' },
       { id: 'Pop', label: 'Bubble', family: 'Arial, sans-serif', weight: 900, style: 'normal', shadow: '0 2px 5px rgba(0,0,0,0.9)' },
@@ -10121,7 +10222,7 @@ function ComposeModal({
         /* Video with text overlays + playback controls */
         React.createElement('div', { ref: videoPreviewRef, style: { width: _editorFrameWidth, height: _editorFrameHeight, position: 'relative', overflow: 'hidden', borderRadius: 0, background: '#000', boxShadow: 'none', border: 'none' } },
           React.createElement('div', { style: { position: 'absolute', inset: 0, filter: _actEff, zIndex: 0 } },
-            React.createElement('video', { key: _edSrc + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), ref: edVideoRef, src: _edSrc, preload: 'auto', playsInline: true, autoPlay: true, muted: selectedMusic ? true : !edAudioOn, onLoadedData: (e) => { e.target.play().catch(() => {}); }, onError: () => { recoverLocalVideoPreview(); }, style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'translateZ(0)', background: '#000' }, onLoadedMetadata: (e) => { if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } setEdDuration(e.target.duration); setEdCurrentTime(0); }, onTimeUpdate: (e) => { setEdCurrentTime(e.target.currentTime); if (trimEnd > 0 && e.target.currentTime >= trimEnd) { e.target.currentTime = trimStart; } }, onEnded: () => { if (edVideoRef.current) { edVideoRef.current.currentTime = trimStart; edVideoRef.current.play().catch(()=>{}); } } })
+            React.createElement('video', { key: _edSrc + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), ref: edVideoRef, src: _edSrc, preload: 'auto', playsInline: true, autoPlay: true, muted: Boolean(selectedMusic) || !edAudioOn, onLoadedData: (e) => { const v = e.target; v.muted = Boolean(selectedMusic) || !edAudioOn; const videoPlay = v.play(); Promise.resolve(videoPlay).then(() => { if (selectedMusic) _edStartMusic(v.currentTime || trimStart); }).catch(() => {}); }, onError: () => { recoverLocalVideoPreview(); }, style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'translateZ(0)', background: '#000' }, onLoadedMetadata: (e) => { if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } setEdDuration(e.target.duration); setEdCurrentTime(0); }, onTimeUpdate: (e) => { const v = e.target; const next = v.currentTime; setEdCurrentTime(next); if (selectedMusic) { v.muted = true; if (trimEnd > 0 && next >= trimEnd) { v.currentTime = trimStart; const a = edAudioRef.current; if (a) { a.pause(); try { a.currentTime = _edMusicStartSec; } catch (_) {} } if (edAudioOn) _edStartMusic(trimStart); } else { _edSyncMusicToVideo(next); } } else if (trimEnd > 0 && next >= trimEnd) { v.currentTime = trimStart; } }, onEnded: () => { if (edVideoRef.current) { edVideoRef.current.currentTime = trimStart; if (selectedMusic) { const a = edAudioRef.current; if (a) { a.pause(); try { a.currentTime = _edMusicStartSec; } catch (_) {} } if (edAudioOn) _edStartMusic(trimStart); } edVideoRef.current.play().catch(()=>{}); } } })
           ),
           /* Draggable text overlays */
           videoTextOverlays.map(t => React.createElement('div', {
@@ -10274,7 +10375,7 @@ function ComposeModal({
             )
           ),
           /* Hidden audio — no loop, plays only when edAudioOn */
-          selectedMusic && React.createElement('audio', { key: selectedMusic.music_id || selectedMusic.music_title, ref: edAudioRef, src: selectedMusic.music_preview_url, style: { display: 'none' }, onCanPlay: (e) => { if ((selectedMusic.music_start_ms || 0) > 0) e.target.currentTime = (selectedMusic.music_start_ms || 0) / 1000; } })
+          selectedMusic && React.createElement('audio', { key: selectedMusic.music_id || selectedMusic.music_title, ref: edAudioRef, src: selectedMusic.music_preview_url, preload: 'auto', loop: false, style: { display: 'none' }, onLoadedMetadata: (e) => { try { e.target.currentTime = _edMusicStartSec; } catch (_) {} }, onCanPlay: (e) => { try { e.target.currentTime = _edMusicStartSec; } catch (_) {} }, onEnded: () => { if (edAudioOn) _edStartMusic(trimStart); } })
         ),
         /* ── Floating tool rail ── */
         React.createElement('div', { style: { position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', width: 68, maxHeight: 'calc(100% - 28px)', overflowY: 'auto', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '8px 5px', background: 'transparent', backdropFilter: 'none', WebkitBackdropFilter: 'none', border: 'none', borderRadius: 0, boxShadow: 'none' } },
@@ -10604,7 +10705,7 @@ function ComposeModal({
       hasVideoPreview && /*#__PURE__*/React.createElement("div", { style: { position: "relative", display: "block", width: "100%", maxWidth: "100%", aspectRatio: previewAspectRatio ? String(previewAspectRatio) : undefined, margin: "0 auto", overflow: "hidden" } },
         /*#__PURE__*/React.createElement("div", { style: { filter: (VIDEO_EFFECTS.find(e=>e.id===videoEffect)||VIDEO_EFFECTS[0]).filter, lineHeight: 0 } },
           previewPosterUrl && /*#__PURE__*/React.createElement("img", { src: previewPosterUrl, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, zIndex: 2, width: "100%", height: "100%", objectFit: "contain", display: "block", pointerEvents: "none", opacity: videoPreviewReadySource === activeVideoSource ? 0 : 1, background: "var(--card-bg)" } }),
-          /*#__PURE__*/React.createElement("video", { key: activeVideoSource + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: true, loop: true, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onLoadedData: function(e){ e.target.play().catch(function(){}); }, onPlaying: function(){ var reveal = function(){ setVideoPreviewReadySource(activeVideoSource); }; if (window.requestAnimationFrame) { requestAnimationFrame(function(){ requestAnimationFrame(reveal); }); } else { setTimeout(reveal, 80); } }, onError: function(){ recoverLocalVideoPreview(); }, style: { position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: (!videoUploading && localVideoPreviewUrl) ? "pointer" : "default", transform: "translateZ(0)", opacity: videoPreviewReadySource === activeVideoSource ? 1 : 0, visibility: videoPreviewReadySource === activeVideoSource ? "visible" : "hidden", background: "transparent" } })
+          /*#__PURE__*/React.createElement("video", { ref: composeVideoPreviewRef, key: activeVideoSource + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: true, loop: true, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onLoadedData: function(e){ e.target.play().catch(function(){}); }, onPlaying: function(){ var reveal = function(){ setVideoPreviewReadySource(activeVideoSource); }; if (window.requestAnimationFrame) { requestAnimationFrame(function(){ requestAnimationFrame(reveal); }); } else { setTimeout(reveal, 80); } }, onError: function(){ recoverLocalVideoPreview(); }, style: { position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: (!videoUploading && localVideoPreviewUrl) ? "pointer" : "default", transform: "translateZ(0)", opacity: videoPreviewReadySource === activeVideoSource ? 1 : 0, visibility: videoPreviewReadySource === activeVideoSource ? "visible" : "hidden", background: "transparent" } })
         ),
         videoTextOverlays.map(t => /*#__PURE__*/React.createElement("div", { key: t.id, style: { position: "absolute", left: t.x+"%", top: t.y+"%", transform: "translate(-50%,-50%)", color: t.color||"#fff", fontSize: (t.size||20)+"px", fontWeight: 800, textShadow: "0 1px 5px rgba(0,0,0,0.8)", zIndex: 3, pointerEvents: "none", whiteSpace: "nowrap" } }, t.text)),
         (!videoUploading) && /*#__PURE__*/React.createElement("div", { style: { position: "absolute", top: 12, right: 12, display: "flex", gap: 8, zIndex: 5 } },
