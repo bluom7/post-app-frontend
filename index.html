@@ -23189,7 +23189,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   }
 
   // ── Reels trim step: use the exact Compose module overlay ──
-  if (step === "trim" && recordedURL) {
+  if (step === "trim" && recordedURL && !isPhotoReel) {
     return React.createElement(ComposeVideoTrimOverlay, {
       src: recordedURL,
       duration: videoDuration || recordTime,
@@ -24241,8 +24241,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         ),
 
         // Bottom action buttons: Edit + Next →
-        !editTextEditorOpen && React.createElement("div",{style:{display:"flex",justifyContent:"space-between",gap:0,padding:"6px 16px calc(6px + env(safe-area-inset-bottom))"}},
-          React.createElement("button",{
+        !editTextEditorOpen && React.createElement("div",{style:{display:"flex",justifyContent:isPhotoReel?"flex-end":"space-between",gap:0,padding:"6px 16px calc(6px + env(safe-area-inset-bottom))"}},
+          !isPhotoReel && React.createElement("button",{
             onClick:e=>{ e.preventDefault(); e.stopPropagation(); setTrimPoster(captureTrimPoster()); setStep("trim"); },
             style:{flex:"0 0 110px",width:110,height:56,padding:0,borderRadius:8,background:"#fff",border:"none",color:"#000",fontWeight:700,fontSize:17,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.1}
           },
