@@ -21426,15 +21426,19 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   }
 
   function finishPreviewPlayback(video) {
-    if (trimShouldBePausedRef.current) return;
-    trimShouldBePausedRef.current = true;
+    // Keep the editor preview running continuously. This only controls the
+    // on-screen preview; the selected trim still controls the exported media.
     try {
-      video.pause();
       video.currentTime = trimStart || 0;
+      video.loop = true;
+      video.muted = false;
+      video.play().catch(() => {});
     } catch (_) {}
+    // Never leave a custom Audio element playing behind the natural video voice.
     stopPreviewAudio(true);
-    setPreviewPlaying(false);
-    setTrimVideoEnded(true);
+    trimShouldBePausedRef.current = false;
+    setPreviewPlaying(true);
+    setTrimVideoEnded(false);
   }
 
   const captureTrimPoster = () => {
@@ -22068,58 +22072,20 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       return;
     }
 
-    const hasMusic = !!(audioUrlRef.current || audioFileRef.current);
-    if (video) video.muted = hasMusic ? true : !origAudioOn;
-    if (trimVideo) trimVideo.muted = hasMusic ? true : !origAudioOn;
+    // Editor preview always uses the video's natural voice. Selected music is
+    // retained for export/post data, but is not routed through a second Audio
+    // element because Android can render that stream as loud static.
+    if (video) video.muted = false;
+    if (trimVideo) trimVideo.muted = false;
     const primary = trimVideo || video;
     const currentTime = primary.currentTime || 0;
     const effectiveEnd = trimEnd > 0 ? trimEnd : (videoDuration || 9999);
     const replayFromStart = trimVideoEnded || currentTime < trimStart || currentTime >= effectiveEnd;
     if (replayFromStart) {
       try { primary.currentTime = trimStart || 0; } catch (_) {}
-      stopPreviewAudio(true);
     }
     trimShouldBePausedRef.current = false;
     setTrimVideoEnded(false);
-
-    if (hasMusic) {
-      const src = getPreviewAudioSource();
-      if (src) {
-        let audio = previewMusicAudioRef.current;
-        if (!audio || audio.src !== src) {
-          stopPreviewAudio(true);
-          audio = new Audio();
-          audio.preload = 'auto';
-          audio.src = src;
-          // Keep the selected music available for the whole video. The editor
-          // explicitly stops and resets it when the video reaches its end.
-          audio.loop = true;
-          audio.onended = () => {
-            if (previewMusicAudioRef.current === audio && primary && !primary.paused) {
-              try { audio.currentTime = Math.max(0, (audioStartTimeRef.current || 0) / 1000); } catch (_) {}
-              audio.play().catch(() => {});
-            }
-          };
-          audio.onerror = () => {
-            if (previewMusicAudioRef.current === audio) showToast && showToast('Audio could not play', '#FF1744');
-          };
-          previewMusicAudioRef.current = audio;
-        }
-        const start = Math.max(0, (audioStartTimeRef.current || 0) / 1000);
-        const seekAfterMetadata = () => {
-          if (previewMusicAudioRef.current !== audio) return;
-          try { audio.currentTime = start; } catch (_) {}
-        };
-        if (replayFromStart || audio.currentTime <= 0.05) {
-          if (audio.readyState >= 1) seekAfterMetadata();
-          else audio.addEventListener('loadedmetadata', seekAfterMetadata, { once: true });
-        }
-        // This call must remain synchronous with the user's tap on Android/iOS.
-        audio.play().catch(() => {
-          audio.addEventListener('canplay', () => audio.play().catch(() => {}), { once: true });
-        });
-      }
-    }
 
     const playPrimary = () => {
       trimShouldBePausedRef.current = false;
@@ -22518,24 +22484,17 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     if (isPhotoReel) return;
     const v = editVideoRef.current;
     if (!v) return;
-    const hasCustomMusic = !!(audioUrlRef.current || audioFileRef.current);
-    // A custom song must wait for the explicit tap that starts both clocks.
-    // Autoplaying only the muted video makes the first tap pause it instead of
-    // granting the audio element a user gesture.
-    if (hasCustomMusic) {
-      try { v.pause(); v.currentTime = trimStart || 0; } catch (_) {}
-      setPreviewPlaying(false);
-      return;
-    }
+    // Always preview the video's natural audio when entering the editor.
+    // Custom music remains available to the export path only.
     // Mute only imperatively for mobile autoplay, unmute right after
     const tryPlay = () => {
       const seekTo = trimStart || 0;
       try { if (v.currentTime < seekTo || (trimEnd > 0 && v.currentTime >= trimEnd)) v.currentTime = seekTo; } catch(_) {}
-      v.muted = true;
+      v.muted = false;
       v.play().then(() => {
         setPreviewPlaying(true);
         // FIX: respect origAudioOn toggle — do NOT unmute unless user has turned it ON
-        try { if (!audioFileRef.current && !audioUrlRef.current) v.muted = !origAudioOn; } catch(_) {}
+        try { v.muted = false; } catch(_) {}
       }).catch(() => { setPreviewPlaying(false); });
     };
     // ── FIX: Force a fresh load when re-entering edit step (e.g. coming back from
@@ -23495,19 +23454,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           )
         ),
 
-        // Time display: only for video
-        // Show time RELATIVE to the trimmed window: "elapsed / trimmed-duration"
-        // so dragging handles to 8 s shows "0.0 / 8.0", not "0.0 / 18.5"
-        !isPhotoReel && React.createElement("div", { style: { textAlign: "center", color: "#fff", fontSize: 16, fontWeight: 600, letterSpacing: 0.5, padding: "2px 0 8px", flexShrink: 0 } },
-          (() => {
-            const fmt = s => Math.max(0, s).toFixed(1);
-            const total   = Math.max(0, (trimEnd || videoDuration || 0) - (trimStart || 0));
-            // Bug 1 fix: when video has ended, always show 0.0 (not stuck mid-video time)
-            const _dispPt = (!previewPlaying && trimVideoEnded) ? (trimStart || 0) : previewTime;
-            const elapsed = Math.max(0, Math.min(total, _dispPt - (trimStart || 0)));
-            return fmt(elapsed) + "  /  " + fmt(total);
-          })()
-        ),
+        // Timing display intentionally hidden in the editor preview.
 
         // Timeline section — CapCut style: clip box proportional to duration, song track + text tracks below
         React.createElement("div", { style: { padding: "0 16px 8px", flexShrink: 0 } },
@@ -23691,7 +23638,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
       // Hidden audio input
       React.createElement("input", { ref: audioInputRef, type: "file", accept: "audio/*", style: { display: "none" },
-        onChange: e => { const f = e.target.files && e.target.files[0]; if (f) { audioUrlRef.current = null; audioFileRef.current = f; audioStartTimeRef.current = 0; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.pause(); editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; } trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setPreviewPlaying(false); setAudioLabel(f.name.replace(/\.[^.]+$/, "")); showToast && showToast("Audio added ✓", "#22C55E"); } } }),
+        onChange: e => { const f = e.target.files && e.target.files[0]; if (f) { audioUrlRef.current = null; audioFileRef.current = f; audioStartTimeRef.current = 0; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = false; editVideoRef.current.play().catch(() => {}); } trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setPreviewPlaying(false); setAudioLabel(f.name.replace(/\.[^.]+$/, "")); showToast && showToast("Audio added ✓", "#22C55E"); } } }),
 
       // ── Full-screen video (tap to play/pause) ──
       // NOTE: filter is on the wrapper div, NOT on <video>/<img>.
@@ -23704,9 +23651,9 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           ? React.createElement("img", { src: recordedURL, onClick: togglePreviewPlay, style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
           : React.createElement("video", {
               key: recordedURL,
-              ref: editVideoRef, src: recordedURL, playsInline: true, autoPlay: !(audioUrlRef.current || audioFileRef.current), muted: true, loop: false,
+              ref: editVideoRef, src: recordedURL, playsInline: true, autoPlay: true, muted: false, loop: true,
               onLoadedMetadata: onEditedMeta,
-              onCanPlay: e => { const v = e.target; const hasCustomMusic = !!(audioUrlRef.current || audioFileRef.current); if (hasCustomMusic) { v.muted = true; try { v.pause(); v.currentTime = trimStart || 0; } catch(_) {} setPreviewPlaying(false); return; } v.play().then(() => { try { v.muted = !origAudioOn; /* respect Orig Audio toggle — don't unmute if user hasn't enabled it */ } catch(_){} setPreviewPlaying(true); }).catch(() => {}); },
+              onCanPlay: e => { const v = e.target; v.muted = false; v.play().then(() => setPreviewPlaying(true)).catch(() => {}); },
               // FIX: If the video stalls/shows black (e.g. after export or navigation), force reload
               onError: e => { const v = e.target; if (v.src && recordedURL) { v.removeAttribute('src'); v.load(); v.src = recordedURL; v.load(); } },
               onTimeUpdate: e => { if (editTool === "Trim") return; const v = e.target; setPreviewTime(v.currentTime); if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v); },
@@ -24025,7 +23972,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             ),
             React.createElement("span", { style: { color: "#fff", fontSize: 10, fontWeight: 700, textShadow: "none" } }, "Emoji")
           ),
-          !isPhotoReel && React.createElement("button", {
+          false && !isPhotoReel && React.createElement("button", {
             onClick: () => {
               const next = !origAudioOn;
               setOrigAudioOn(next);
@@ -24222,7 +24169,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.pause(); editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; } if (trimVideoRef.current) trimVideoRef.current.muted = true; trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); } showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = false; editVideoRef.current.play().catch(() => {}); } if (trimVideoRef.current) trimVideoRef.current.muted = true; trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); } showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
 
       // Editor discard sheet must be rendered in the editor return path.
       discardDialogFromEditor && showReelDiscardDialog && React.createElement("div", {
@@ -24284,8 +24231,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                 onClick: togglePreviewPlay,
                 onCanPlay: e => {
                   const v = e.target;
-                  const hasMusic = !!(audioUrlRef.current || audioFileRef.current);
-                  v.muted = hasMusic; // mute video when custom music is active
+                  // Review preview always uses the video's natural voice.
+                  v.muted = false;
                   v.play().catch(() => {});
                   // Do NOT touch previewMusicAudioRef here.
                   // Music started in onSelect() persists on its own across all navigation.
@@ -24964,7 +24911,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) { trimVideoRef.current.muted = true; } setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setPreviewPlaying(false); showToast && showToast("Song add hua ✓", "#22C55E"); if (recordedBlob) { const _a = new Audio(); _a.src = url; _a.loop = true; _a.currentTime = (startTime || 0) / 1000; _a.play().catch(() => {}); previewMusicAudioRef.current = _a; stopStream(); setReviewMode(true); } } }),
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) { trimVideoRef.current.muted = true; } setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setPreviewPlaying(false); showToast && showToast("Song add hua ✓", "#22C55E"); stopStream(); setReviewMode(true); } }),
     // CSS animations
     React.createElement("style", null, `
       .reel-camera-effects-scroll { scrollbar-width: none; -ms-overflow-style: none; }
