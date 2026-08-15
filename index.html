@@ -8842,105 +8842,147 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     probe.muted = true;
     probe.playsInline = true;
     probe.preload = 'auto';
-    const makeFrames = async () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 320;
+    canvas.height = 180;
+    const context = canvas.getContext('2d');
+    const emptyFrames = () => Array.from({ length: thumbnailCount }, () => null);
+    const publishFrame = (index, dataUrl) => {
+      if (cancelled || !dataUrl) return;
+      setThumbnailFrames(previous => {
+        const next = previous.length === thumbnailCount ? previous.slice() : emptyFrames();
+        next[index] = dataUrl;
+        return next;
+      });
+    };
+    const publishImmediateFrame = dataUrl => {
+      if (cancelled || !dataUrl) return;
+      setThumbnailFrames(previous => {
+        const next = previous.length === thumbnailCount ? previous.slice() : Array.from({ length: thumbnailCount }, () => dataUrl);
+        for (let index = 0; index < thumbnailCount; index += 1) {
+          if (!next[index]) next[index] = dataUrl;
+        }
+        next[0] = dataUrl;
+        return next;
+      });
+    };
+    const drawFrame = video => {
+      if (!context || !video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return null;
       try {
-        await new Promise((resolve, reject) => {
-          let hasMetadata = false;
-          let hasFrameData = false;
-          let settled = false;
-          const finish = () => {
-            if (settled || !hasMetadata || !hasFrameData) return;
-            settled = true;
-            cleanup();
-            resolve();
-          };
-          const cleanup = () => {
-            probe.removeEventListener('loadedmetadata', onMetadata);
-            probe.removeEventListener('loadeddata', onFrameData);
-            probe.removeEventListener('canplay', onFrameData);
-            probe.removeEventListener('error', onError);
-          };
-          const onMetadata = () => {
-            hasMetadata = true;
-            finish();
-          };
-          const onFrameData = () => {
-            hasFrameData = true;
-            finish();
-          };
-          const onError = () => {
-            cleanup();
-            reject(new Error('thumbnail metadata failed'));
-          };
-          probe.addEventListener('loadedmetadata', onMetadata);
-          probe.addEventListener('loadeddata', onFrameData);
-          probe.addEventListener('canplay', onFrameData);
-          probe.addEventListener('error', onError);
-          probe.src = src;
-          probe.load();
-        });
-        const canvas = document.createElement('canvas');
-        canvas.width = 320;
-        canvas.height = 180;
-        const context = canvas.getContext('2d');
-        if (!context) return;
-        const width = probe.videoWidth || 16;
-        const height = probe.videoHeight || 9;
+        const width = video.videoWidth;
+        const height = video.videoHeight;
         const scale = Math.max(canvas.width / width, canvas.height / height);
         const drawWidth = width * scale;
         const drawHeight = height * scale;
         const offsetX = (canvas.width - drawWidth) / 2;
         const offsetY = (canvas.height - drawHeight) / 2;
-        const frames = [];
-        const waitForDecodedFrame = () => new Promise(resolve => {
-          let finished = false;
-          const finish = () => {
-            if (finished) return;
-            finished = true;
-            resolve();
-          };
-          if (typeof probe.requestVideoFrameCallback === 'function') {
-            probe.requestVideoFrameCallback(finish);
-          } else {
-            window.requestAnimationFrame(() => window.requestAnimationFrame(finish));
-          }
-          window.setTimeout(finish, 1200);
-        });
-        const seekTo = time => new Promise(resolve => {
-          let finished = false;
-          const finish = async () => {
-            if (finished) return;
-            finished = true;
-            probe.removeEventListener('seeked', onSeeked);
-            await waitForDecodedFrame();
-            resolve();
-          };
-          const onSeeked = () => { finish(); };
-          probe.addEventListener('seeked', onSeeked, { once: true });
-          try {
-            probe.currentTime = time;
-            if (Math.abs((probe.currentTime || 0) - time) < 0.02 && probe.readyState >= 2) finish();
-          } catch (_) {
-            finish();
-          }
-          window.setTimeout(finish, 1800);
-        });
+        context.fillStyle = '#151515';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+        return canvas.toDataURL('image/jpeg', 0.82);
+      } catch (_) {
+        return null;
+      }
+    };
+    let removeVisibleVideoListeners = () => {};
+    const visibleVideo = videoRef.current;
+    if (visibleVideo) {
+      const publishVisibleVideoFrame = () => publishImmediateFrame(drawFrame(visibleVideo));
+      visibleVideo.addEventListener('loadeddata', publishVisibleVideoFrame);
+      visibleVideo.addEventListener('canplay', publishVisibleVideoFrame);
+      removeVisibleVideoListeners = () => {
+        visibleVideo.removeEventListener('loadeddata', publishVisibleVideoFrame);
+        visibleVideo.removeEventListener('canplay', publishVisibleVideoFrame);
+      };
+      publishVisibleVideoFrame();
+    }
+    const waitForProbeReady = () => new Promise((resolve, reject) => {
+      let hasMetadata = false;
+      let hasFrameData = false;
+      let settled = false;
+      const cleanup = () => {
+        probe.removeEventListener('loadedmetadata', onMetadata);
+        probe.removeEventListener('loadeddata', onFrameData);
+        probe.removeEventListener('canplay', onFrameData);
+        probe.removeEventListener('error', onError);
+      };
+      const finish = () => {
+        if (settled || !hasMetadata || !hasFrameData) return;
+        settled = true;
+        cleanup();
+        resolve();
+      };
+      const onMetadata = () => {
+        hasMetadata = true;
+        finish();
+      };
+      const onFrameData = () => {
+        hasFrameData = true;
+        publishImmediateFrame(drawFrame(probe));
+        finish();
+      };
+      const onError = () => {
+        cleanup();
+        reject(new Error('thumbnail metadata failed'));
+      };
+      probe.addEventListener('loadedmetadata', onMetadata);
+      probe.addEventListener('loadeddata', onFrameData);
+      probe.addEventListener('canplay', onFrameData);
+      probe.addEventListener('error', onError);
+      probe.src = src;
+      probe.load();
+      if (probe.readyState >= 1) hasMetadata = true;
+      if (probe.readyState >= 2) {
+        hasFrameData = true;
+        publishImmediateFrame(drawFrame(probe));
+      }
+      finish();
+    });
+    const waitForDecodedFrame = () => new Promise(resolve => {
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        resolve();
+      };
+      if (typeof probe.requestVideoFrameCallback === 'function') {
+        probe.requestVideoFrameCallback(finish);
+      } else {
+        window.requestAnimationFrame(() => window.requestAnimationFrame(finish));
+      }
+      window.setTimeout(finish, 1200);
+    });
+    const seekTo = time => new Promise(resolve => {
+      let finished = false;
+      const finish = async () => {
+        if (finished) return;
+        finished = true;
+        probe.removeEventListener('seeked', onSeeked);
+        await waitForDecodedFrame();
+        resolve();
+      };
+      const onSeeked = () => { finish(); };
+      probe.addEventListener('seeked', onSeeked, { once: true });
+      try {
+        probe.currentTime = time;
+        if (Math.abs((probe.currentTime || 0) - time) < 0.02 && probe.readyState >= 2) finish();
+      } catch (_) {
+        finish();
+      }
+      window.setTimeout(finish, 1800);
+    });
+    const makeFrames = async () => {
+      try {
+        await waitForProbeReady();
         for (let index = 0; index < thumbnailCount && !cancelled; index += 1) {
           const time = Math.min(Math.max(0.02, safeDuration - 0.05), (index + 0.5) * safeDuration / thumbnailCount);
           await seekTo(time);
-          try {
-            context.fillStyle = '#151515';
-            context.fillRect(0, 0, canvas.width, canvas.height);
-            context.drawImage(probe, offsetX, offsetY, drawWidth, drawHeight);
-            frames.push(canvas.toDataURL('image/jpeg', 0.82));
-          } catch (_) {
-            // Keep the other decoded frames instead of blanking the entire strip.
-            frames.push(null);
-          }
+          if (cancelled) return;
+          const frame = drawFrame(probe);
+          if (frame) publishFrame(index, frame);
         }
-        if (!cancelled && frames.some(Boolean)) setThumbnailFrames(frames);
       } catch (_) {
-        if (!cancelled) setThumbnailFrames([]);
+        // The already-published first frame remains visible if background extraction fails.
       } finally {
         probe.pause();
         probe.removeAttribute('src');
@@ -8948,7 +8990,12 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       }
     };
     makeFrames();
-    return () => { cancelled = true; probe.pause(); };
+    return () => {
+      cancelled = true;
+      removeVisibleVideoListeners();
+      probe.pause();
+      probe.removeAttribute('src');
+    };
   }, [src, safeDuration]);
 
 
