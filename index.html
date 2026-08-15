@@ -22148,9 +22148,12 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       return;
     }
 
-    // Editor preview always uses the video's natural voice. Selected music is
-    // retained for export/post data, but is not routed through a second Audio
-    // element because Android can render that stream as loud static.
+    // Selected music owns the editor audio path. Never mix it with the
+    // video's original track; that combination causes Android static/chopping.
+    if (audioUrlRef.current || audioFileRef.current) {
+      if (startPreviewMusicWithVideo()) return;
+    }
+    // No selected song: use the video's original audio only.
     if (video) video.muted = false;
     if (trimVideo) trimVideo.muted = false;
     const primary = trimVideo || video;
