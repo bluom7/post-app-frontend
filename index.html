@@ -8686,6 +8686,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const [playing, setPlaying] = React.useState(false);
   const [currentTime, setCurrentTime] = React.useState(trimStart || 0);
   const [inlineTextEditorOpen, setInlineTextEditorOpen] = React.useState(false);
+  const [inlineTextActionsOpen, setInlineTextActionsOpen] = React.useState(false);
   const [inlineTextDraft, setInlineTextDraft] = React.useState("");
   const [inlineTextColor, setInlineTextColor] = React.useState("#ffffff");
   const [inlineTextSize, setInlineTextSize] = React.useState(32);
@@ -9054,6 +9055,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       if (typeof onText === 'function') onText();
       return;
     }
+    setInlineTextActionsOpen(true);
     setInlineEditingOverlayId(null);
     setSelectedInlineOverlayId(null);
     setInlineTextDraft("");
@@ -9065,8 +9067,10 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     setInlineTextDraft("");
     setInlineTextPaletteOpen(false);
     setInlineTextEditorOpen(false);
+    setInlineTextActionsOpen(false);
   };
   const editInlineText = overlay => {
+    setInlineTextActionsOpen(true);
     setSelectedInlineOverlayId(overlay.id);
     setInlineEditingOverlayId(overlay.id);
     setInlineTextDraft(overlay.text || "");
@@ -9097,8 +9101,10 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     if (inlineTextDraft.trim()) applyInlineText();
     setInlineTextPaletteOpen(false);
     setInlineTextEditorOpen(false);
+    setInlineTextActionsOpen(false);
   };
   const removeInlineText = id => {
+    setInlineTextActionsOpen(false);
     setInlineTextOverlays(prev => prev.filter(overlay => overlay.id !== id));
     if (typeof setTextOverlays === 'function') {
       setTextOverlays(prev => (Array.isArray(prev) ? prev : []).filter(overlay => overlay.id !== id));
@@ -9182,11 +9188,11 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
                   React.createElement('span', { style: { position: 'relative', zIndex: 1, color: '#FFD600', fontSize: 9, fontWeight: 800, flexShrink: 0 } }, 'Change')
                 )
               : React.createElement('button', { onClick: onAudio, style: { width: '100%', height: 36, flex: '0 0 auto', padding: '6px 8px', border: '1.5px dashed rgba(255,255,255,0.58)', borderRadius: 8, background: 'transparent', color: '#aaa', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' } }, '+ Audio'),
-            inlineTextOverlays.length > 0 && !inlineTextEditorOpen
+            inlineTextOverlays.length > 0 && inlineTextActionsOpen
               ? React.createElement(React.Fragment, null,
                   inlineTextOverlays.map(overlay => React.createElement('div', {
                     key: 'text-track-' + overlay.id,
-                    onClick: event => { event.stopPropagation(); setSelectedInlineOverlayId(overlay.id); },
+                    onClick: event => { event.stopPropagation(); setSelectedInlineOverlayId(overlay.id); setInlineTextActionsOpen(true); },
                      onDoubleClick: event => { event.stopPropagation(); setSelectedInlineOverlayId(overlay.id); editInlineText(overlay); },
                     style: { position: 'relative', width: '100%', height: 44, minHeight: 44, maxHeight: 44, boxSizing: 'border-box', display: 'flex', alignItems: 'center', overflow: 'hidden', border: '2px solid #FFD600', borderRadius: 8, background: '#6257e8', color: '#fff', cursor: 'pointer', touchAction: 'manipulation' }
                   },
@@ -9216,6 +9222,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
                   if (event.key === 'Enter' && inlineTextDraft.trim()) {
                     applyInlineText();
                     setInlineTextEditorOpen(false);
+                    setInlineTextActionsOpen(false);
                     setInlineTextPaletteOpen(false);
                   }
                 }
@@ -9224,6 +9231,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
                 onClick: () => {
                   if (inlineTextDraft.trim()) applyInlineText();
                   setInlineTextEditorOpen(false);
+                  setInlineTextActionsOpen(false);
                   setInlineTextPaletteOpen(false);
                 },
                 style: { background: inlineTextDraft.trim() ? '#fff' : 'rgba(255,255,255,0.3)', border: 'none', borderRadius: 10, padding: '9px 14px', color: '#111', fontWeight: 800, fontSize: 13, cursor: 'pointer', flexShrink: 0 }
