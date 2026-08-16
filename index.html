@@ -6130,6 +6130,7 @@ function BentoPostCard({
   const [repostedBannerFriend, setRepostedBannerFriend] = React.useState(null);
   const [mentionReposted, setMentionReposted] = React.useState(false);
   const [altExpanded, setAltExpanded] = React.useState(false);
+  const [reelCaptionExpanded, setReelCaptionExpanded] = React.useState(false);
   const [commentLoading, setCommentLoading] = React.useState(false);
   const [localComments, setLocalComments] = React.useState(null);
   const [commentGifUrl, setCommentGifUrl] = React.useState(null);
@@ -6220,6 +6221,27 @@ function BentoPostCard({
     openCommentSheet();
     setCommentText("@" + (post.user_handle || "").replace(/^@/, "") + " ");
     onMention && onMention(post.id, post.user_handle);
+  };
+
+  const renderHomeReelCaption = () => {
+    if (!post.is_reel || !post.content) return null;
+    const canExpand = post.content.length > 70;
+    const captionContent = renderContent(post.content, null, null);
+    const collapsedCaption = canExpand
+      ? React.createElement("div", { style: { display: "flex", alignItems: "baseline", minWidth: 0, maxWidth: "100%", whiteSpace: "nowrap" } },
+          React.createElement("span", { style: { flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, captionContent),
+          React.createElement("span", { onClick: function(e) { e.stopPropagation(); setReelCaptionExpanded(true); }, style: { color: COLORS.blue, fontSize: 12, fontWeight: 700, cursor: "pointer", flex: "0 0 auto", marginLeft: 4 } }, "more"))
+      : React.createElement("div", { style: { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, captionContent);
+    return React.createElement("div", { style: { padding: "0 14px 10px", fontSize: 14, lineHeight: 1.65, color: "var(--text)", wordBreak: "break-word" } },
+      reelCaptionExpanded
+        ? React.createElement(React.Fragment, null,
+            React.createElement("div", { style: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, captionContent),
+            canExpand && React.createElement("span", { onClick: function(e) { e.stopPropagation(); setReelCaptionExpanded(false); }, style: { color: COLORS.blue, fontSize: 12, fontWeight: 700, cursor: "pointer", display: "inline-block", marginTop: 1 } }, "less"))
+        : collapsedCaption,
+      React.createElement("div", { style: { marginTop: 3, color: "var(--muted)", fontSize: 13, fontWeight: 700, lineHeight: 1.4 } },
+        captionTimeAgo(post.created_at),
+        captionTimeAgo(post.created_at) ? " • See translation" : "See translation")
+    );
   };
 
   const openCommentSheet = () => {
@@ -6414,7 +6436,7 @@ function BentoPostCard({
       "Reposted from ", post.repost_user_name || "someone"
     ),
     // ── Content ────────────────────────────────────────────────
-    post.content && React.createElement("div", { style: { padding: "0 14px 10px", fontSize: isLarge ? 16 : 14, lineHeight: 1.65, color: "var(--text)", wordBreak: "break-word", whiteSpace: "pre-wrap" } },
+    !post.is_reel && post.content && React.createElement("div", { style: { padding: "0 14px 10px", fontSize: isLarge ? 16 : 14, lineHeight: 1.65, color: "var(--text)", wordBreak: "break-word", whiteSpace: "pre-wrap" } },
       renderContent(post.content,
         handle => onTagInPost && onTagInPost(handle),
         tag => {}
@@ -6433,6 +6455,7 @@ function BentoPostCard({
 
             )
           : React.createElement(PostMedia,{post,maxHeight:466,borderRadius:0,user,onLike,onComment,onSave,onRepost,onFollow,followingIds,pendingFollowIds,onViewProfile}),
+    renderHomeReelCaption(),
     // ── Action bar ─────────────────────────────────────────────
     React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "8px 10px 6px", gap: 0 } },
       // Like
