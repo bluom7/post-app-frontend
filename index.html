@@ -21576,6 +21576,9 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const [frameStrip, setFrameStrip] = React.useState([]);
   const [showTimeline, setShowTimeline] = React.useState(false);
   const [trimPoster, setTrimPoster] = React.useState(null);
+  const [editorVideoPoster, setEditorVideoPoster] = React.useState(null);
+  const editorVideoRecoveryTimerRef = React.useRef(null);
+  const editorVideoMetaURLRef = React.useRef(null);
 
   // Keep one stable audio element for the editor. Recreating Audio on every tap
   // loses Android's user-gesture permission and can produce a broken/noisy stream.
@@ -21703,6 +21706,79 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       return null;
     }
   };
+
+  // Android Chrome can lose the hardware-decoded frame when the text editor
+  // opens (the hidden input changes focus) or closes. Keep the last decoded
+  // frame as a poster, then give the editor video one dedicated reload/play
+  // path so it never remains on the black fallback surface.
+  function restoreEditorVideoPlayback(forceReload) {
+    const video = editVideoRef.current;
+    if (!video || !recordedURL || isPhotoReel) return;
+    if (editorVideoRecoveryTimerRef.current) {
+      clearTimeout(editorVideoRecoveryTimerRef.current);
+      editorVideoRecoveryTimerRef.current = null;
+    }
+
+    const desiredTime = Number.isFinite(video.currentTime)
+      ? Math.max(trimStart || 0, video.currentTime)
+      : (trimStart || 0);
+    const needsReload = !!forceReload || video.readyState < 2 || !video.videoWidth;
+    let started = false;
+
+    const playVideo = () => {
+      if (started || editVideoRef.current !== video) return;
+      started = true;
+      try {
+        if (video.readyState >= 1 && Number.isFinite(desiredTime)) {
+          video.currentTime = desiredTime;
+        }
+        // A muted first play is accepted by Android autoplay policy. Restore
+        // original audio only when the user explicitly enabled that control.
+        video.muted = true;
+        video.loop = true;
+        const promise = video.play();
+        if (promise && promise.then) {
+          promise.then(() => {
+            setPreviewPlaying(true);
+            if (origAudioOn && !audioUrlRef.current && !audioFileRef.current) {
+              try { video.muted = false; } catch (_) {}
+            }
+          }).catch(() => { setPreviewPlaying(false); });
+        } else {
+          setPreviewPlaying(true);
+        }
+      } catch (_) {
+        setPreviewPlaying(false);
+      }
+    };
+
+    if (!needsReload) {
+      playVideo();
+      return;
+    }
+
+    try {
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+      video.src = recordedURL;
+      video.load();
+    } catch (_) {}
+
+    const onReady = () => {
+      video.removeEventListener("loadeddata", onReady);
+      video.removeEventListener("canplay", onReady);
+      playVideo();
+    };
+    video.addEventListener("loadeddata", onReady, { once: true });
+    video.addEventListener("canplay", onReady, { once: true });
+    editorVideoRecoveryTimerRef.current = setTimeout(() => {
+      video.removeEventListener("loadeddata", onReady);
+      video.removeEventListener("canplay", onReady);
+      playVideo();
+      editorVideoRecoveryTimerRef.current = null;
+    }, 1800);
+  }
 
   React.useEffect(() => {
     // During recording + camera flip: flipCamera() already swapped the track directly.
@@ -22259,12 +22335,19 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
   function onEditedMeta(e) {
     const d = e.target.duration || 0;
+    const isNewSource = editorVideoMetaURLRef.current !== recordedURL;
+    editorVideoMetaURLRef.current = recordedURL;
     setVideoDuration(d);
-    setTrimStart(0);
-    // Clips can be recorded/picked up to 60s, but a reel can only be
-    // posted at up to MAX_REEL_SECONDS — clamp the default trim window
-    // so "Done" always produces a postable clip without an extra tap.
-    setTrimEnd(Math.min(d, MAX_REEL_SECONDS));
+    // Reloads used to recover Android's decoder must not erase the user's
+    // trim selection. Only initialize the trim window for a genuinely new
+    // source; preserve it when Aa or another overlay is opened/closed.
+    if (isNewSource) {
+      setTrimStart(0);
+      // Clips can be recorded/picked up to 60s, but a reel can only be
+      // posted at up to MAX_REEL_SECONDS — clamp the default trim window
+      // so "Done" always produces a postable clip without an extra tap.
+      setTrimEnd(Math.min(d, MAX_REEL_SECONDS));
+    }
   }
 
   function togglePreviewPlay() {
@@ -22726,60 +22809,22 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     if (trimVideoRef.current) { try { trimVideoRef.current.playbackRate = speed; } catch(_) {} }
   }, [speed, step]);
 
-  // Re-play edit video whenever user enters/re-enters edit step (review→edit, share→edit)
+  // Re-play the edit video whenever the editor, the Aa text editor, or the
+  // music picker is entered/re-entered. The text editor intentionally stays
+  // above this video, so a focus/keyboard transition must never leave the
+  // underlying decoder on its black fallback frame.
   React.useEffect(() => {
-    if (step !== "edit") return;
-    if (isPhotoReel) return;
-    const v = editVideoRef.current;
-    if (!v) return;
-    // Always preview the video's natural audio when entering the editor.
-    // Custom music remains available to the export path only.
-    // Mute only imperatively for mobile autoplay, unmute right after
-    const tryPlay = () => {
-      const seekTo = trimStart || 0;
-      try { if (v.currentTime < seekTo || (trimEnd > 0 && v.currentTime >= trimEnd)) v.currentTime = seekTo; } catch(_) {}
-      v.muted = false;
-      v.play().then(() => {
-        setPreviewPlaying(true);
-        // FIX: respect origAudioOn toggle — do NOT unmute unless user has turned it ON
-        try { v.muted = false; } catch(_) {}
-      }).catch(() => { setPreviewPlaying(false); });
+    if (step !== "edit" || isPhotoReel || !editVideoRef.current) return;
+    const poster = captureTrimPoster();
+    if (poster) setEditorVideoPoster(poster);
+    restoreEditorVideoPlayback(true);
+    return () => {
+      if (editorVideoRecoveryTimerRef.current) {
+        clearTimeout(editorVideoRecoveryTimerRef.current);
+        editorVideoRecoveryTimerRef.current = null;
+      }
     };
-    // ── FIX: Force a fresh load when re-entering edit step (e.g. coming back from
-    // share).  If readyState is 0 the browser hasn't started loading — calling
-    // load() kicks it off.  If readyState is > 0 but the src was previously held
-    // by the export's detached element, reassigning src + load() flushes any stale
-    // buffer and ensures this element gets a clean decode context.
-    // FIX: Always ensure src is set correctly (export or navigation may have changed it).
-    // Re-load when readyState < 2 (no usable frame data) so the video never shows black
-    // when re-entering edit from share or review.  readyState 0 = nothing loaded,
-    // readyState 1 = metadata only — both need a load() call to get playable frames.
-    // FIX: Always reassign src + force load on edit-step entry.
-    // readyState can be 2 (HAVE_CURRENT_DATA) with a stale/black frame if the export
-    // or trim operations previously held the decode context.  Re-loading guarantees
-    // a fresh decode start, at the cost of a brief rebuffer (< 500 ms on blob URLs).
-    try { v.src = recordedURL; } catch(_) {}
-    v.load();
-    if (false) {
-      tryPlay(); // unreachable — kept so the else branch below compiles
-    } else {
-      const onData = () => { tryPlay(); };
-      v.addEventListener('loadeddata', onData, { once: true });
-      // Also try canplay as fallback — fires before loadeddata on some mobile browsers
-      v.addEventListener('canplay', onData, { once: true });
-      // Safety net: if neither event fires within 3s, try play anyway (handles some
-      // mobile browsers that stall without firing canplay on blob URL re-load)
-      const safetyTimer = setTimeout(() => {
-        v.removeEventListener('loadeddata', onData);
-        v.removeEventListener('canplay', onData);
-        tryPlay();
-      }, 3000);
-      // Cancel safety timer if events fire normally
-      const cleanup = () => clearTimeout(safetyTimer);
-      v.addEventListener('loadeddata', cleanup, { once: true });
-      v.addEventListener('canplay', cleanup, { once: true });
-    }
-  }, [step, recordedURL, showMusicPicker]);
+  }, [step, recordedURL, showMusicPicker, editTextEditorOpen]);
 
   function startDragOverlay(id, e) { e.stopPropagation(); setDragOverlayId(id); }
 
@@ -23899,11 +23944,12 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           ? React.createElement("img", { src: recordedURL, onClick: togglePreviewPlay, style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
           : React.createElement("video", {
               key: recordedURL,
-              ref: editVideoRef, src: recordedURL, playsInline: true, autoPlay: true, muted: false, loop: true,
+               ref: editVideoRef, src: recordedURL, poster: editorVideoPoster || undefined, playsInline: true, autoPlay: true, muted: true, loop: true,
               onLoadedMetadata: onEditedMeta,
-              onCanPlay: e => { const v = e.target; v.muted = false; v.play().then(() => setPreviewPlaying(true)).catch(() => {}); },
-              // FIX: If the video stalls/shows black (e.g. after export or navigation), force reload
-              onError: e => { const v = e.target; if (v.src && recordedURL) { v.removeAttribute('src'); v.load(); v.src = recordedURL; v.load(); } },
+               onCanPlay: e => { const v = e.target; v.muted = true; v.play().then(() => setPreviewPlaying(true)).catch(() => {}); },
+               // If Android loses the hardware-decoded frame, use the same
+               // guarded recovery path used when the Aa editor opens/closes.
+               onError: () => { restoreEditorVideoPlayback(true); },
               onTimeUpdate: e => { if (editTool === "Trim") return; const v = e.target; setPreviewTime(v.currentTime); if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v); },
               onClick: togglePreviewPlay,
               style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000" }
@@ -24150,10 +24196,11 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           setEditTextOverlayIdFull(null);
           setEditTextScaleFull(1);
           setEditTextPositionFull({ xPct: 50, yPct: 45 });
+           window.setTimeout(() => restoreEditorVideoPlayback(true), 0);
         };
         const palette = [...DARK_COLORS, ...VIVID_COLORS];
         return React.createElement("div", {
-          style: { position: "absolute", inset: 0, zIndex: 30, display: "flex", flexDirection: "column", touchAction: "none" },
+          style: { position: "absolute", inset: 0, zIndex: 30, display: "flex", flexDirection: "column", touchAction: "none", background: "transparent" },
           onPointerDown: e => e.stopPropagation(), onPointerMove: e => e.stopPropagation(), onPointerUp: e => e.stopPropagation()
         },
           React.createElement("div", { style: { flexShrink: 0, padding: "12px 16px 0", position: "relative", zIndex: 3 } },
@@ -24197,7 +24244,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         ),
         !editTextEditorOpen && React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 10, transform: "translateY(7px)" } },
           React.createElement("button", {
-            onClick: () => { setEditTextEditorOpen(true); setEditTextOverlayIdFull(null); setEditTextDraftFull(""); setEditTextScaleFull(1); setEditTextPositionFull({ xPct: 50, yPct: 45 }); setEditTextPaletteOpen(false); },
+            onClick: () => { const poster = captureTrimPoster(); if (poster) setEditorVideoPoster(poster); setEditTextEditorOpen(true); setEditTextOverlayIdFull(null); setEditTextDraftFull(""); setEditTextScaleFull(1); setEditTextPositionFull({ xPct: 50, yPct: 45 }); setEditTextPaletteOpen(false); },
             style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 0, background: "none", border: "none", cursor: "pointer", WebkitTapHighlightColor: "transparent", padding: 0 }
           },
             React.createElement("div", { style: { width: 42, height: 36, borderRadius: 12, background: editTextEditorOpen ? "rgba(53,57,70,0.98)" : "rgba(29,32,40,0.96)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s", boxShadow: "0 2px 8px rgba(0,0,0,0.38)" } },
