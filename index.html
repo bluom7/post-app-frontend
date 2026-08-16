@@ -9509,6 +9509,7 @@ function ComposeModal({
   const postMusicAudioRef = React.useRef(null);
   const composeVideoPreviewRef = React.useRef(null);
   const [musicPlaying, setMusicPlaying] = useState(false);
+  const [composeVideoPlaying, setComposeVideoPlaying] = useState(false);
 
   // Stop every media element owned by Compose before media is removed or replaced.
   // A detached HTMLMediaElement can otherwise keep playing on Android Chrome.
@@ -9535,6 +9536,7 @@ function ComposeModal({
     });
     edRestartingRef.current = false;
     setMusicPlaying(false);
+    setComposeVideoPlaying(false);
     setEdAudioOn(false);
     setAltAudioOn(false);
     if (clearMusic) {
@@ -9544,27 +9546,41 @@ function ComposeModal({
   };
 
   // The music picker/trimmer temporarily unmounts the Compose video. On return,
-  // clear the old reveal state and explicitly restart the same local video so
-  // Android Chrome cannot leave a stale black media surface behind.
+  // keep the preview paused; only the explicit center control may start it.
   React.useEffect(() => {
     if (!activeVideoSource || showMusicPicker || showMusicTrimmer) return;
     const video = composeVideoPreviewRef.current;
     if (!video) return;
     let cancelled = false;
     setVideoPreviewReadySource(null);
-    const playVideo = () => {
+    const pauseVideo = () => {
       if (cancelled || composeVideoPreviewRef.current !== video) return;
       video.muted = true;
-      const promise = video.play();
-      if (promise && promise.catch) promise.catch(() => {});
+      try { video.pause(); } catch (_) {}
+      setComposeVideoPlaying(false);
     };
-    if (video.readyState >= 2) playVideo();
-    else video.addEventListener('loadeddata', playVideo, { once: true });
+    if (video.readyState >= 2) pauseVideo();
+    else video.addEventListener('loadeddata', pauseVideo, { once: true });
     return () => {
       cancelled = true;
-      video.removeEventListener('loadeddata', playVideo);
+      video.removeEventListener('loadeddata', pauseVideo);
     };
   }, [activeVideoSource, showMusicPicker, showMusicTrimmer]);
+
+  const toggleComposeVideoPlayback = event => {
+    if (event) event.stopPropagation();
+    const video = composeVideoPreviewRef.current;
+    if (!video) return;
+    video.muted = true;
+    if (video.paused || video.ended) {
+      if (video.ended) { try { video.currentTime = 0; } catch (_) {} }
+      const promise = video.play();
+      if (promise && promise.catch) promise.catch(() => {});
+    } else {
+      video.pause();
+      setComposeVideoPlaying(false);
+    }
+  };
 
   const photoRef = useRef(null);
   const mediaRef = useRef(null);
@@ -10288,7 +10304,7 @@ function ComposeModal({
     if (videoEditorTab === 'text') {
       return React.createElement('div', { style: { position: 'fixed', inset: 0, zIndex: 2400, background: '#050505', color: '#fff', overflow: 'hidden', userSelect: 'none' } },
         React.createElement('div', { style: { position: 'absolute', inset: 0, background: '#000' } },
-          React.createElement('video', { ref: edVideoRef, src: _edSrc, muted: true, autoPlay: true, loop: true, playsInline: true, style: { width: '100%', height: '100%', objectFit: 'contain', filter: _actEff, display: 'block' } }),
+          React.createElement('video', { ref: edVideoRef, src: _edSrc, muted: true, autoPlay: true, loop: true, playsInline: true, onLoadedMetadata: event => { try { event.currentTarget.currentTime = Math.max(0, Number(trimStart) || 0); } catch (_) {} }, onLoadedData: event => { const video = event.currentTarget; try { video.currentTime = Math.max(0, Number(trimStart) || 0); } catch (_) {} const promise = video.play(); if (promise && promise.catch) promise.catch(() => {}); }, style: { width: '100%', height: '100%', objectFit: 'contain', filter: _actEff, display: 'block' } }),
           React.createElement('div', { ref: videoTextEditSurfaceRef, style: { position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.16)', pointerEvents: 'none', touchAction: 'none' } }),
           React.createElement('div', { style: { position: 'absolute', left: videoTextEditPosition.x + '%', top: videoTextEditPosition.y + '%', transform: 'translate(-50%,-50%)', width: newVideoTextBg === 'transparent' ? '92%' : Math.min(135, Math.max(55, 92 * videoTextEditBgScale)) + '%', textAlign: 'center', zIndex: 4, pointerEvents: 'auto', touchAction: 'none' } },
             React.createElement('textarea', { autoFocus: true, onPointerDown: _startVideoTextGesture, onPointerMove: _updateVideoTextGesture, onPointerUp: _endVideoTextGesture, onPointerCancel: _endVideoTextGesture, value: newVideoText, onChange: event => setNewVideoText(event.target.value), placeholder: 'Type or @tag', 'aria-label': 'Type text for video', rows: 1, maxLength: 180, spellCheck: false, style: { display: 'block', width: '100%', minHeight: newVideoTextBg === 'transparent' ? 58 : Math.max(34, 58 * videoTextEditBgScale), resize: 'none', overflow: 'hidden', boxSizing: 'border-box', border: 'none', outline: 'none', textAlign: 'center', color: _newVideoTextInkColor, background: newVideoTextBg === 'transparent' ? 'transparent' : newVideoTextBg, padding: newVideoTextBg === 'transparent' ? '4px 8px' : (Math.max(6, 10 * videoTextEditBgScale) + 'px ' + Math.max(8, 14 * videoTextEditBgScale) + 'px'), borderRadius: newVideoTextBg === 'transparent' ? 0 : Math.max(6, 10 * videoTextEditBgScale), fontFamily: _activeVideoTextFont.family, fontSize: videoTextEditSize, lineHeight: 1.15, fontWeight: _activeVideoTextFont.weight, fontStyle: _activeVideoTextFont.style, textTransform: _activeVideoTextFont.textTransform || 'none', textShadow: _activeVideoTextFont.shadow, pointerEvents: 'auto', userSelect: 'text' } })
@@ -10347,7 +10363,7 @@ function ComposeModal({
         /* Video with text overlays + playback controls */
         React.createElement('div', { ref: videoPreviewRef, style: { width: _editorFrameWidth, height: _editorFrameHeight, position: 'relative', overflow: 'hidden', borderRadius: 0, background: '#000', boxShadow: 'none', border: 'none' } },
           React.createElement('div', { style: { position: 'absolute', inset: 0, filter: _actEff, zIndex: 0 } },
-            React.createElement('video', { key: _edSrc + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), ref: edVideoRef, src: _edSrc, preload: 'auto', playsInline: true, autoPlay: true, muted: Boolean(selectedMusic), onLoadedData: (e) => { const v = e.target; v.muted = Boolean(selectedMusic); if (!selectedMusic) setEdAudioOn(true); const videoPlay = v.play(); Promise.resolve(videoPlay).then(() => { if (selectedMusic) _edStartMusic(v.currentTime || trimStart); }).catch(() => {}); }, onError: () => { recoverLocalVideoPreview(); }, style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'translateZ(0)', background: '#000' }, onLoadedMetadata: (e) => { if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } setEdDuration(e.target.duration); setEdCurrentTime(0); }, onTimeUpdate: (e) => { const v = e.target; const next = v.currentTime; setEdCurrentTime(next); if (trimEnd > 0 && next >= trimEnd) { _edRestartFromStart(); } else if (selectedMusic) { v.muted = true; _edSyncMusicToVideo(next); } }, onEnded: () => { _edRestartFromStart(); } })
+            React.createElement('video', { key: _edSrc + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), ref: edVideoRef, src: _edSrc, preload: 'auto', playsInline: true, autoPlay: true, muted: Boolean(selectedMusic), onLoadedData: (e) => { const v = e.target; v.muted = Boolean(selectedMusic); if (!selectedMusic) setEdAudioOn(true); const videoPlay = v.play(); Promise.resolve(videoPlay).then(() => { if (selectedMusic) _edStartMusic(v.currentTime || trimStart); }).catch(() => {}); }, onError: () => { recoverLocalVideoPreview(); }, style: { width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'translateZ(0)', background: '#000' }, onLoadedMetadata: (e) => { const v = e.target; if ((!videoWidth || !videoHeight) && v.videoWidth && v.videoHeight) { setVideoWidth(v.videoWidth); setVideoHeight(v.videoHeight); } setEdDuration(v.duration); try { v.currentTime = Math.max(0, Number(trimStart) || 0); } catch (_) {} setEdCurrentTime(Math.max(0, Number(trimStart) || 0)); }, onTimeUpdate: (e) => { const v = e.target; const next = v.currentTime; setEdCurrentTime(next); if (trimEnd > 0 && next >= trimEnd) { _edRestartFromStart(); } else if (selectedMusic) { v.muted = true; _edSyncMusicToVideo(next); } }, onEnded: () => { _edRestartFromStart(); } })
           ),
           /* Draggable text overlays */
           videoTextOverlays.map(t => React.createElement('div', {
@@ -10828,7 +10844,14 @@ function ComposeModal({
       hasVideoPreview && /*#__PURE__*/React.createElement("div", { style: { position: "relative", display: "block", width: "100%", maxWidth: "100%", aspectRatio: previewAspectRatio ? String(previewAspectRatio) : undefined, margin: "0 auto", overflow: "hidden" } },
         /*#__PURE__*/React.createElement("div", { style: { filter: (VIDEO_EFFECTS.find(e=>e.id===videoEffect)||VIDEO_EFFECTS[0]).filter, lineHeight: 0, background: 'var(--card-bg)' } },
           previewPosterUrl && /*#__PURE__*/React.createElement("img", { src: previewPosterUrl, alt: "", "aria-hidden": true, onLoad: function(){ setVideoPreviewPosterReadySource(activeVideoSource); }, style: { position: "absolute", inset: 0, zIndex: 2, width: "100%", height: "100%", objectFit: "contain", display: "block", pointerEvents: "none", opacity: videoPreviewReadySource === activeVideoSource ? 0 : 1, background: "var(--card-bg)" } }),
-          videoPreviewPosterReadySource === activeVideoSource && /*#__PURE__*/React.createElement("video", { ref: composeVideoPreviewRef, key: activeVideoSource, src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: true, loop: true, poster: previewPosterUrl || undefined, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onLoadedData: function(e){ e.target.play().catch(function(){}); }, onPlaying: function(e){ var reveal = function(){ setVideoPreviewReadySource(activeVideoSource); }; var v = e.target; if (typeof v.requestVideoFrameCallback === 'function') { try { v.requestVideoFrameCallback(reveal); return; } catch (_) {} } if (window.requestAnimationFrame) { requestAnimationFrame(function(){ requestAnimationFrame(reveal); }); } else { setTimeout(reveal, 100); } }, onError: function(){ recoverLocalVideoPreview(); }, style: { position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: (!videoUploading && localVideoPreviewUrl) ? "pointer" : "default", transform: "translateZ(0)", opacity: videoPreviewReadySource === activeVideoSource ? 1 : 0, visibility: "visible", background: "transparent", transition: "opacity 0.12s ease" } })
+          videoPreviewPosterReadySource === activeVideoSource && /*#__PURE__*/React.createElement(React.Fragment, null,
+            /*#__PURE__*/React.createElement("video", { ref: composeVideoPreviewRef, key: activeVideoSource, src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: false, loop: true, poster: previewPosterUrl || undefined, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onPlaying: function(e){ setComposeVideoPlaying(true); var reveal = function(){ setVideoPreviewReadySource(activeVideoSource); }; var v = e.target; if (typeof v.requestVideoFrameCallback === 'function') { try { v.requestVideoFrameCallback(reveal); return; } catch (_) {} } if (window.requestAnimationFrame) { requestAnimationFrame(function(){ requestAnimationFrame(reveal); }); } else { setTimeout(function(){ setVideoPreviewReadySource(activeVideoSource); }, 100); } }, onPause: function(){ setComposeVideoPlaying(false); }, onError: function(){ recoverLocalVideoPreview(); }, onClick: toggleComposeVideoPlayback, style: { position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: "pointer", transform: "translateZ(0)", opacity: videoPreviewReadySource === activeVideoSource ? 1 : 0, visibility: "visible", background: "transparent", transition: "opacity 0.12s ease" } }),
+            /*#__PURE__*/React.createElement("button", { type: "button", onClick: toggleComposeVideoPlayback, "aria-label": composeVideoPlaying ? "Pause video" : "Play video", style: { position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: 58, height: 58, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.92)", background: "rgba(0,0,0,0.48)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 6, cursor: "pointer", padding: 0, boxShadow: "0 2px 10px rgba(0,0,0,0.35)" } },
+              composeVideoPlaying
+                ? /*#__PURE__*/React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "#fff", "aria-hidden": "true" }, /*#__PURE__*/React.createElement("rect", { x: 6, y: 5, width: 4, height: 14, rx: 1 }), /*#__PURE__*/React.createElement("rect", { x: 14, y: 5, width: 4, height: 14, rx: 1 }))
+                : /*#__PURE__*/React.createElement("svg", { width: 24, height: 24, viewBox: "0 0 24 24", fill: "#fff", "aria-hidden": "true" }, /*#__PURE__*/React.createElement("polygon", { points: "8,5 19,12 8,19" }))
+            )
+          )
         ),
         videoTextOverlays.map(t => /*#__PURE__*/React.createElement("div", { key: t.id, style: { position: "absolute", left: t.x+"%", top: t.y+"%", transform: "translate(-50%,-50%)", color: t.color||"#fff", fontSize: (t.size||20)+"px", fontWeight: 800, textShadow: "0 1px 5px rgba(0,0,0,0.8)", zIndex: 3, pointerEvents: "none", whiteSpace: "nowrap" } }, t.text)),
         (!videoUploading) && /*#__PURE__*/React.createElement("div", { style: { position: "absolute", top: 12, right: 12, display: "flex", gap: 8, zIndex: 5 } },
