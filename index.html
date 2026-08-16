@@ -5952,6 +5952,7 @@ function ReelFeedVideo({ post, onOpenReel }) {
 //   • Click → opens full-screen reel viewer via onOpenReel
 function ReelPhotoMusicButton({ post }) {
   const pid = String(post.id);
+  const musicUrl = post.music_preview_url || post.music_url;
   const [playing, setPlaying] = React.useState(function(){
     const a = _postMusicAudio[pid];
     return !!(a && !a.paused);
@@ -5984,12 +5985,16 @@ function ReelPhotoMusicButton({ post }) {
       stop();
       return;
     }
-    if (!post.music_preview_url) return;
+    if (!musicUrl) return;
 
     _stopAllPostMusic(pid);
-    const a = new Audio(post.music_preview_url);
-    const startSec = Math.max(0, Number(post.music_start_ms) || 0) / 1000;
-    const clipDurationSec = Math.max(1, Math.min(30, (Number(post.music_clip_duration_ms) || 30000) / 1000));
+    const a = new Audio(musicUrl);
+    const startSec = post.music_start_ms != null
+      ? Math.max(0, Number(post.music_start_ms) || 0) / 1000
+      : Math.max(0, Number(post.music_start_time) || 0);
+    const clipDurationSec = post.music_clip_duration_ms != null
+      ? Math.max(1, Math.min(30, (Number(post.music_clip_duration_ms) || 30000) / 1000))
+      : Math.max(1, Math.min(30, Number(post.music_clip_duration) || 15));
     let clipTimer = null;
     let actualStart = startSec;
     const finish = function(){
@@ -6095,7 +6100,7 @@ function ReelFeedPhoto({ post, onOpenReel }) {
     // All editing overlays: stickers, emoji, text (same as full-screen ReelItem)
     _renderReelOverlays(post),
     // Bottom-right song control; photo tap still opens the reel viewer.
-    post.music_preview_url && React.createElement(ReelPhotoMusicButton, { post })
+    (post.music_preview_url || post.music_url) && React.createElement(ReelPhotoMusicButton, { post })
   );
 }
 
