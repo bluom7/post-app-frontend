@@ -8319,8 +8319,35 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
     setPlaying(false);
     setPlayedSec(0);
   };
+  // Keep the selected video playing while the user chooses the song clip.
+  // Muted video playback is allowed by mobile browsers even when audio is gated.
+  React.useEffect(() => {
+    const video = mediaRef.current;
+    if (!video || !videoSrc) return;
+    let cancelled = false;
+    const playVideo = () => {
+      if (cancelled || mediaRef.current !== video) return;
+      video.muted = true;
+      const promise = video.play();
+      if (promise && promise.catch) promise.catch(() => {});
+    };
+    if (video.readyState >= 2) playVideo();
+    else video.addEventListener('loadeddata', playVideo, { once: true });
+    return () => {
+      cancelled = true;
+      video.removeEventListener('loadeddata', playVideo);
+    };
+  }, [videoSrc]);
+
   const startAudio = (sec) => {
     stopAudio();
+    const video = mediaRef.current;
+    if (video) {
+      video.muted = true;
+      try { video.currentTime = 0; } catch (_) {}
+      const videoPlay = video.play();
+      if (videoPlay && videoPlay.catch) videoPlay.catch(() => {});
+    }
     const a = new Audio(song.music_preview_url);
     a.preload = 'auto';
     a.loop = false;
@@ -8460,7 +8487,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
     React.createElement('div', { style: { flex:1, position:'relative', overflow:'hidden', cursor:'pointer', background:'#000', minHeight:0, WebkitTapHighlightColor:'transparent', WebkitUserSelect:'none', userSelect:'none', touchAction:'manipulation', outline:'none' }, onClick: togglePlay, onPointerDown: e => { e.currentTarget.style.backgroundColor = '#000'; } },
       videoSrc
         ? React.createElement('video', { key: videoSrc, ref: mediaRef, src: videoSrc, playsInline:true, muted:true, loop:true,
-            preload:'auto', onLoadedData: e => { try { e.currentTarget.currentTime = 0; } catch (_) {} },
+            preload:'auto', autoPlay:true, onLoadedData: e => { try { e.currentTarget.currentTime = 0; } catch (_) {} const p = e.currentTarget.play(); if (p && p.catch) p.catch(() => {}); },
             style: { position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'contain', display:'block', background:'#000', transform:'translateZ(0)' } })
         : (photos && photos[0])
           ? React.createElement('img', { src: photos[0], style: { width:'100%', height:'100%', objectFit:'contain', display:'block', background:'#000' } })
@@ -9461,6 +9488,30 @@ function ComposeModal({
   const postMusicAudioRef = React.useRef(null);
   const composeVideoPreviewRef = React.useRef(null);
   const [musicPlaying, setMusicPlaying] = useState(false);
+
+  // The music picker/trimmer temporarily unmounts the Compose video. On return,
+  // clear the old reveal state and explicitly restart the same local video so
+  // Android Chrome cannot leave a stale black media surface behind.
+  React.useEffect(() => {
+    if (!activeVideoSource || showMusicPicker || showMusicTrimmer) return;
+    const video = composeVideoPreviewRef.current;
+    if (!video) return;
+    let cancelled = false;
+    setVideoPreviewReadySource(null);
+    const playVideo = () => {
+      if (cancelled || composeVideoPreviewRef.current !== video) return;
+      video.muted = true;
+      const promise = video.play();
+      if (promise && promise.catch) promise.catch(() => {});
+    };
+    if (video.readyState >= 2) playVideo();
+    else video.addEventListener('loadeddata', playVideo, { once: true });
+    return () => {
+      cancelled = true;
+      video.removeEventListener('loadeddata', playVideo);
+    };
+  }, [activeVideoSource, showMusicPicker, showMusicTrimmer]);
+
   const photoRef = useRef(null);
   const mediaRef = useRef(null);
   const pickerInputRef = useRef(null);
@@ -10201,7 +10252,7 @@ function ComposeModal({
       }),
       showMusicTrimmer && pendingTrimSong && React.createElement(MusicTrimmerModal, {
         song: pendingTrimSong, photos: photoUrls,
-        onConfirm: (startMs, clipDurationSec) => { setSelectedMusic({ ...pendingTrimSong, music_artwork: pendingTrimSong.music_artwork || pendingTrimSong.artworkUrl100 || pendingTrimSong.artwork_url || pendingTrimSong.album_artwork_url || '', music_start_ms: startMs, music_clip_duration_ms: Math.max(1, Math.min(30, Number(clipDurationSec) || 30)) * 1000 }); setShowMusicTrimmer(false); setPendingTrimSong(null); if (returnToVideoTrimAfterMusic) { setShowVideoEditor(false); setVideoEditorTab(null); setShowVideoTrim(true); setReturnToVideoTrimAfterMusic(false); } },
+        onConfirm: (startMs, clipDurationSec) => { setVideoPreviewReadySource(null); setSelectedMusic({ ...pendingTrimSong, music_artwork: pendingTrimSong.music_artwork || pendingTrimSong.artworkUrl100 || pendingTrimSong.artwork_url || pendingTrimSong.album_artwork_url || '', music_start_ms: startMs, music_clip_duration_ms: Math.max(1, Math.min(30, Number(clipDurationSec) || 30)) * 1000 }); setShowMusicTrimmer(false); setPendingTrimSong(null); if (returnToVideoTrimAfterMusic) { setShowVideoEditor(false); setVideoEditorTab(null); setShowVideoTrim(true); setReturnToVideoTrimAfterMusic(false); } },
         onBack: () => { setShowMusicTrimmer(false); setShowMusicPicker(true); },
         onChangeSong: () => { setShowMusicTrimmer(false); setShowMusicPicker(true); },
         onDelete: () => { setShowMusicTrimmer(false); setPendingTrimSong(null); setSelectedMusic(null); setShowMusicPicker(true); }
@@ -10685,7 +10736,7 @@ function ComposeModal({
       hasVideoPreview && /*#__PURE__*/React.createElement("div", { style: { position: "relative", display: "block", width: "100%", maxWidth: "100%", aspectRatio: previewAspectRatio ? String(previewAspectRatio) : undefined, margin: "0 auto", overflow: "hidden" } },
         /*#__PURE__*/React.createElement("div", { style: { filter: (VIDEO_EFFECTS.find(e=>e.id===videoEffect)||VIDEO_EFFECTS[0]).filter, lineHeight: 0 } },
           previewPosterUrl && /*#__PURE__*/React.createElement("img", { src: previewPosterUrl, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, zIndex: 2, width: "100%", height: "100%", objectFit: "contain", display: "block", pointerEvents: "none", opacity: videoPreviewReadySource === activeVideoSource ? 0 : 1, background: "var(--card-bg)" } }),
-          /*#__PURE__*/React.createElement("video", { ref: composeVideoPreviewRef, key: activeVideoSource + "|" + (selectedMusic ? selectedMusic.music_preview_url : "original"), src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: true, loop: true, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onLoadedData: function(e){ e.target.play().catch(function(){}); }, onPlaying: function(){ var reveal = function(){ setVideoPreviewReadySource(activeVideoSource); }; if (window.requestAnimationFrame) { requestAnimationFrame(function(){ requestAnimationFrame(reveal); }); } else { setTimeout(reveal, 80); } }, onError: function(){ recoverLocalVideoPreview(); }, style: { position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: (!videoUploading && localVideoPreviewUrl) ? "pointer" : "default", transform: "translateZ(0)", opacity: videoPreviewReadySource === activeVideoSource ? 1 : 0, visibility: videoPreviewReadySource === activeVideoSource ? "visible" : "hidden", background: "transparent" } })
+          /*#__PURE__*/React.createElement("video", { ref: composeVideoPreviewRef, key: activeVideoSource, src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: true, loop: true, poster: previewPosterUrl || undefined, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onLoadedData: function(e){ e.target.play().catch(function(){}); }, onPlaying: function(){ var reveal = function(){ setVideoPreviewReadySource(activeVideoSource); }; if (window.requestAnimationFrame) { requestAnimationFrame(function(){ requestAnimationFrame(reveal); }); } else { setTimeout(reveal, 80); } }, onError: function(){ recoverLocalVideoPreview(); }, style: { position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: (!videoUploading && localVideoPreviewUrl) ? "pointer" : "default", transform: "translateZ(0)", opacity: 1, visibility: "visible", background: "transparent" } })
         ),
         videoTextOverlays.map(t => /*#__PURE__*/React.createElement("div", { key: t.id, style: { position: "absolute", left: t.x+"%", top: t.y+"%", transform: "translate(-50%,-50%)", color: t.color||"#fff", fontSize: (t.size||20)+"px", fontWeight: 800, textShadow: "0 1px 5px rgba(0,0,0,0.8)", zIndex: 3, pointerEvents: "none", whiteSpace: "nowrap" } }, t.text)),
         (!videoUploading) && /*#__PURE__*/React.createElement("div", { style: { position: "absolute", top: 12, right: 12, display: "flex", gap: 8, zIndex: 5 } },
