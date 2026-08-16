@@ -5638,6 +5638,8 @@ function FeedVideo({ post }) {
   const videoRef = React.useRef(null);
   const [loaded, setLoaded] = React.useState(false);
   const [paused, setPaused] = React.useState(true);
+  const [soundOn, setSoundOn] = React.useState(false);
+  const soundOnRef = React.useRef(false);
 
   // Muted autoplay via IntersectionObserver — play when ≥50% in viewport
   React.useEffect(() => {
@@ -5645,6 +5647,7 @@ function FeedVideo({ post }) {
     if (!el) return;
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
+        el.muted = !soundOnRef.current;
         el.play().then(() => setPaused(false)).catch(() => {});
       } else {
         el.pause();
@@ -5655,6 +5658,26 @@ function FeedVideo({ post }) {
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
+
+  const togglePlayback = (e) => {
+    if (e) e.stopPropagation();
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      soundOnRef.current = true;
+      setSoundOn(true);
+      v.muted = false;
+      v.volume = 1;
+      v.play().then(() => setPaused(false)).catch(() => {
+        soundOnRef.current = false;
+        setSoundOn(false);
+        v.muted = true;
+      });
+    } else {
+      v.pause();
+      setPaused(true);
+    }
+  };
 
   const ar = post.aspect_ratio; // width/height ratio stored in MongoDB
 
@@ -5682,16 +5705,7 @@ function FeedVideo({ post }) {
 
   return React.createElement('div', {
     style: containerStyle,
-    onClick: () => {
-      const v = videoRef.current;
-      if (!v) return;
-      if (v.paused) {
-        v.play().then(() => setPaused(false)).catch(() => {});
-      } else {
-        v.pause();
-        setPaused(true);
-      }
-    }
+    onClick: togglePlayback
   },
     // ── Loading skeleton ─────────────────────────────────────────────
     // Shown while video bytes haven't arrived yet; fills the reserved container.
@@ -5714,7 +5728,7 @@ function FeedVideo({ post }) {
     React.createElement('video', {
       ref: videoRef,
       src: post.video_url,
-      muted: true,
+      muted: !soundOn,
       loop: true,
       playsInline: true,
       onLoadedData: () => setLoaded(true),
@@ -5769,25 +5783,26 @@ function FeedVideo({ post }) {
       }
     }, t.text)),
 
-    // ── Muted indicator (always visible) ─────────────────────────────
-    React.createElement('div', {
+    // ── Playback control: bottom-right, interactive, audible on play ──
+    React.createElement('button', {
+      type: 'button',
+      onClick: togglePlayback,
+      'aria-label': paused ? 'Play video with sound' : 'Pause video',
       style: {
-        position: 'absolute', top: 8, right: 8, zIndex: 3,
-        background: 'rgba(0,0,0,0.52)',
-        borderRadius: '50%',
-        width: 28, height: 28,
+        position: 'absolute', bottom: 10, right: 10, zIndex: 4,
+        width: 34, height: 34, padding: 0,
+        background: 'rgba(0,0,0,0.58)', border: 'none', borderRadius: '50%',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        pointerEvents: 'none',
+        color: '#fff', cursor: 'pointer', pointerEvents: 'auto',
+        touchAction: 'manipulation'
       }
     },
-      React.createElement('svg', {
-        width: 13, height: 13, viewBox: '0 0 24 24',
-        fill: 'none', stroke: '#fff', strokeWidth: 2, strokeLinecap: 'round'
-      },
-        React.createElement('polygon', { points: '11 5 6 9 2 9 2 15 6 15 11 19 11 5' }),
-        React.createElement('line', { x1: 23, y1: 9, x2: 17, y2: 15 }),
-        React.createElement('line', { x1: 17, y1: 9, x2: 23, y2: 15 })
-      )
+      paused
+        ? React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: '#fff' },
+            React.createElement('polygon', { points: '7 4 19 12 7 20 7 4' }))
+        : React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: '#fff' },
+            React.createElement('rect', { x: 6, y: 4, width: 4, height: 16, rx: 1 }),
+            React.createElement('rect', { x: 14, y: 4, width: 4, height: 16, rx: 1 }))
     ),
 
     // ── Play overlay (shown when video loaded but paused) ─────────────
@@ -5819,6 +5834,8 @@ function ReelFeedVideo({ post, onOpenReel }) {
   const videoRef = React.useRef(null);
   const containerRef = React.useRef(null);
   const [playing, setPlaying] = React.useState(false);
+  const [soundOn, setSoundOn] = React.useState(false);
+  const soundOnRef = React.useRef(false);
   const [reelNatW, setReelNatW] = React.useState(0);
   const [reelNatH, setReelNatH] = React.useState(0);
 
@@ -5827,6 +5844,7 @@ function ReelFeedVideo({ post, onOpenReel }) {
     if (!el) return;
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
+        el.muted = !soundOnRef.current;
         el.play().then(() => setPlaying(true)).catch(() => {});
       } else {
         el.pause();
@@ -5838,16 +5856,32 @@ function ReelFeedVideo({ post, onOpenReel }) {
     return () => obs.disconnect();
   }, []);
 
+  const togglePlayback = (e) => {
+    if (e) e.stopPropagation();
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      soundOnRef.current = true;
+      setSoundOn(true);
+      v.muted = false;
+      v.volume = 1;
+      v.play().then(() => setPlaying(true)).catch(() => {
+        soundOnRef.current = false;
+        setSoundOn(false);
+        v.muted = true;
+      });
+    } else {
+      v.pause();
+      setPlaying(false);
+    }
+  };
+
   // Aspect ratio: prefer stored value (no layout jump), fall back to dynamic after metadata loads
   const ar = post.aspect_ratio || (reelNatW && reelNatH ? reelNatW / reelNatH : null);
 
   return React.createElement("div", {
     ref: containerRef,
-    onClick: () => {
-      const v = videoRef.current;
-      if (!v) return;
-      if (v.paused) v.play().catch(() => {}); else v.pause();
-    },
+    onClick: togglePlayback,
     style: {
       position: "relative",
       cursor: "pointer",
@@ -5866,7 +5900,7 @@ function ReelFeedVideo({ post, onOpenReel }) {
     React.createElement("video", {
       ref: videoRef,
       src: post.video_url,
-      muted: true,
+      muted: !soundOn,
       loop: true,
       playsInline: true,
       onLoadedMetadata: function(e){setReelNatW(e.target.videoWidth);setReelNatH(e.target.videoHeight);},
@@ -5885,21 +5919,27 @@ function ReelFeedVideo({ post, onOpenReel }) {
     }),
     _renderReelOverlays(post),
 
-    // Sound icon — top right (muted indicator)
-    React.createElement("div", {
+    // Playback control: bottom-right, interactive, audible on play
+    React.createElement("button", {
+      type: "button",
+      onClick: togglePlayback,
+      "aria-label": playing ? "Pause video" : "Play video with sound",
       style: {
-        position: "absolute", top: 10, right: 10,
-        background: "rgba(0,0,0,0.45)", borderRadius: "50%",
-        width: 30, height: 30,
+        position: "absolute", bottom: 10, right: 10, zIndex: 4,
+        width: 34, height: 34, padding: 0,
+        background: "rgba(0,0,0,0.58)", border: "none", borderRadius: "50%",
         display: "flex", alignItems: "center", justifyContent: "center",
-        pointerEvents: "none"
+        color: "#fff", cursor: "pointer", pointerEvents: "auto",
+        touchAction: "manipulation"
       }
     },
-      React.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none",
-        stroke: "#fff", strokeWidth: 2, strokeLinecap: "round" },
-        React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }),
-        React.createElement("line", { x1: 23, y1: 9, x2: 17, y2: 15 }),
-        React.createElement("line", { x1: 17, y1: 9, x2: 23, y2: 15 })))
+      playing
+        ? React.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "#fff" },
+            React.createElement("rect", { x: 6, y: 4, width: 4, height: 16, rx: 1 }),
+            React.createElement("rect", { x: 14, y: 4, width: 4, height: 16, rx: 1 }))
+        : React.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "#fff" },
+            React.createElement("polygon", { points: "7 4 19 12 7 20 7 4" }))
+    )
   );
 }
 
