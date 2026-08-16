@@ -5919,27 +5919,12 @@ function ReelFeedVideo({ post, onOpenReel }) {
     }),
     _renderReelOverlays(post),
 
-    // Playback control: bottom-right, interactive, audible on play
-    React.createElement("button", {
-      type: "button",
+    // Compose-style media control: same bottom-right speaker treatment.
+    React.createElement(ReelMediaControl, {
+      active: playing && soundOn,
       onClick: togglePlayback,
-      "aria-label": playing ? "Pause video" : "Play video with sound",
-      style: {
-        position: "absolute", bottom: 10, right: 10, zIndex: 4,
-        width: 34, height: 34, padding: 0,
-        background: "rgba(0,0,0,0.58)", border: "none", borderRadius: "50%",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        color: "#fff", cursor: "pointer", pointerEvents: "auto",
-        touchAction: "manipulation"
-      }
-    },
-      playing
-        ? React.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "#fff" },
-            React.createElement("rect", { x: 6, y: 4, width: 4, height: 16, rx: 1 }),
-            React.createElement("rect", { x: 14, y: 4, width: 4, height: 16, rx: 1 }))
-        : React.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "#fff" },
-            React.createElement("polygon", { points: "7 4 19 12 7 20 7 4" }))
-    )
+      ariaLabel: playing ? 'Pause video' : 'Play video with sound'
+    })
   );
 }
 
@@ -5950,6 +5935,33 @@ function ReelFeedVideo({ post, onOpenReel }) {
 //   • All overlays: sticker_overlays, text_overlays, emoji_overlays (via _renderReelOverlays)
 //   • video_effect filter (same as reel viewer)
 //   • Click → opens full-screen reel viewer via onOpenReel
+function ReelMediaControl({ active, onClick, ariaLabel }) {
+  return React.createElement("button", {
+    type: "button",
+    onClick,
+    "aria-label": ariaLabel,
+    style: {
+      position: "absolute", bottom: 10, right: 10, zIndex: 10,
+      width: 30, height: 30, borderRadius: "50%",
+      background: "rgba(0,0,0,0.55)", border: "none",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      cursor: "pointer", color: "#fff", padding: 0,
+      backdropFilter: "blur(4px)", pointerEvents: "auto",
+      touchAction: "manipulation"
+    }
+  },
+    active
+      ? React.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+          React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }),
+          React.createElement("path", { d: "M19.07 4.93a10 10 0 0 1 0 14.14" }),
+          React.createElement("path", { d: "M15.54 8.46a5 5 0 0 1 0 7.07" }))
+      : React.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+          React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }),
+          React.createElement("line", { x1: 23, y1: 9, x2: 17, y2: 15 }),
+          React.createElement("line", { x1: 17, y1: 9, x2: 23, y2: 15 }))
+  );
+}
+
 function ReelPhotoMusicButton({ post }) {
   const pid = String(post.id);
   const musicUrl = post.music_preview_url || post.music_url;
@@ -6037,26 +6049,11 @@ function ReelPhotoMusicButton({ post }) {
     };
   }, [pid]);
 
-  return React.createElement('button', {
-    type: 'button',
+  return React.createElement(ReelMediaControl, {
+    active: playing,
     onClick: toggle,
-    'aria-label': playing ? 'Pause song' : 'Play song',
-    style: {
-      position: 'absolute', bottom: 10, right: 10, zIndex: 4,
-      width: 34, height: 34, padding: 0,
-      background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: '#fff', cursor: 'pointer', pointerEvents: 'auto',
-      touchAction: 'manipulation'
-    }
-  },
-    playing
-      ? React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: '#fff' },
-          React.createElement('rect', { x: 6, y: 4, width: 4, height: 16, rx: 1 }),
-          React.createElement('rect', { x: 14, y: 4, width: 4, height: 16, rx: 1 }))
-      : React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: '#fff' },
-          React.createElement('polygon', { points: '7 4 19 12 7 20 7 4' }))
-  );
+    ariaLabel: playing ? 'Pause song' : 'Play song'
+  });
 }
 
 function ReelFeedPhoto({ post, onOpenReel }) {
