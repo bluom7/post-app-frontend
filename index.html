@@ -6011,6 +6011,7 @@ function BentoPostCard({
   const canViewProfile = !isOwn && onViewProfile;
   const isFollowing = followingIds ? followingIds.has(post.user_id) : false;
   const isPending = pendingFollowIds ? pendingFollowIds.has(post.user_id) : false;
+  const postAvatarPhoto = post.avatar_photo || post.avatar_url;
 
   const timeAgo = ts => {
     if (!ts) return "";
@@ -6221,8 +6222,8 @@ function BentoPostCard({
     React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "10px 14px 8px", gap: 10 } },
       React.createElement("div", {
         onClick: () => canViewProfile && onViewProfile(post.user_id),
-        style: { width: 40, height: 40, borderRadius: "50%", background: post.avatar_bg || COLORS.yellow, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 17, flexShrink: 0, overflow: "hidden", cursor: canViewProfile ? "pointer" : "default", border: "2px solid var(--border)" }
-      }, post.avatar_photo ? React.createElement("img", { src: post.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" } }) : post.avatar_letter),
+        style: { width: 40, height: 40, borderRadius: "50%", background: postAvatarPhoto ? "transparent" : (post.avatar_bg || COLORS.yellow), display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 17, flexShrink: 0, overflow: "hidden", cursor: canViewProfile ? "pointer" : "default" }
+      }, postAvatarPhoto ? React.createElement("img", { src: postAvatarPhoto, alt: "", style: { width: "100%", height: "100%", objectFit: "cover", display: "block" } }) : post.avatar_letter),
             React.createElement("div", { style: { flex: 1, minWidth: 0, overflow: "hidden", transform: "translateY(2px)" } },
         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", lineHeight: 1.2 } },
           React.createElement("span", { onClick: () => canViewProfile && onViewProfile(post.user_id), style: { fontWeight: 700, fontSize: 15, color: "var(--text)", cursor: canViewProfile ? "pointer" : "default", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: "0 1 auto" } }, post.user_name),
