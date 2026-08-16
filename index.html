@@ -25815,6 +25815,19 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   var followTargetId = followTargetIdRef.current;
   var isOwn = reel.is_own || (user && followTargetId != null && String(followTargetId) === String(user.id));
   var songMarqueeText = (reel.music_title || reel.audio_label || "") + (reel.music_artist ? " · " + reel.music_artist : "");
+  var reelCaptionTimeAgo = function(ts) {
+    if (!ts) return "";
+    var parsed = new Date(ts).getTime();
+    if (!Number.isFinite(parsed)) return "";
+    var diff = Math.max(0, Math.floor((Date.now() - parsed) / 1000));
+    if (diff < 60) return "just now";
+    var minutes = Math.floor(diff / 60);
+    if (minutes < 60) return minutes + " " + (minutes === 1 ? "minute" : "minutes") + " ago";
+    var hours = Math.floor(diff / 3600);
+    if (hours < 24) return hours + " " + (hours === 1 ? "hour" : "hours") + " ago";
+    var days = Math.floor(diff / 86400);
+    return days + " " + (days === 1 ? "day" : "days") + " ago";
+  };
   var songMarqueeRef = React.useRef(null);
   var [songMarqueeDuration, setSongMarqueeDuration] = React.useState(8);
   React.useEffect(function() {
@@ -26045,16 +26058,20 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
               React.createElement("path", { d: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" })),
             React.createElement("span", { style: { color: "rgba(255,255,255,0.85)", fontSize: 11, fontWeight: 600, marginTop: 3, textShadow: "0 1px 4px rgba(0,0,0,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, reel.location))),
         followTargetId != null && String(followTargetId) !== "" && !isOwn && React.createElement("button", { onClick: handleFollowClick, "aria-label": localFollowing ? "Following" : "Follow", style: { background: "rgba(0,0,0,0.18)", border: "2px solid #fff", color: "#fff", borderRadius: 8, width: localFollowing ? 86 : 66, minWidth: localFollowing ? 86 : 66, height: 34, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", fontSize: 15, lineHeight: 1, fontWeight: 700, cursor: "pointer", opacity: 1, flexShrink: 0, visibility: "visible", position: "relative", zIndex: 6, boxShadow: "0 0 0 1px rgba(0,0,0,0.35), 0 1px 5px rgba(0,0,0,0.45)", textShadow: "0 1px 3px rgba(0,0,0,0.45)" } }, localFollowing ? "Following" : "Follow")),
-      reel.caption ? React.createElement("div", { style: { marginBottom: 6 } },
+      reel.caption ? React.createElement("div", { style: { marginBottom: 6, maxWidth: "100%" } },
         captionExpanded
           ? React.createElement(React.Fragment, null,
-              React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: 1.5, textShadow: "0 1px 6px rgba(0,0,0,0.7)", display: "block" } }, reel.caption),
-              React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(false); }, style: { color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-block", marginTop: 2 } }, "less"))
+              React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: 1.5, textShadow: "0 1px 6px rgba(0,0,0,0.7)", display: "block", whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, reel.caption),
+              reel.caption.length > 70 && React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(false); }, style: { color: "rgba(255,255,255,0.72)", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-block", marginTop: 2 } }, "less"))
           : reel.caption.length > 70
             ? React.createElement("div", { style: { display: "flex", alignItems: "baseline", minWidth: 0, maxWidth: "100%", whiteSpace: "nowrap" } },
                 React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: "21px", textShadow: "0 1px 6px rgba(0,0,0,0.7)", flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, reel.caption),
-                React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(true); }, style: { color: "rgba(255,255,255,0.65)", fontSize: 13, fontWeight: 700, cursor: "pointer", flex: "0 0 auto", marginLeft: 4 } }, "more"))
-            : React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: 1.5, textShadow: "0 1px 6px rgba(0,0,0,0.7)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" } }, reel.caption)) : null)),
+                React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(true); }, style: { color: "rgba(255,255,255,0.72)", fontSize: 13, fontWeight: 700, cursor: "pointer", flex: "0 0 auto", marginLeft: 4 } }, "more"))
+            : React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: 1.5, textShadow: "0 1px 6px rgba(0,0,0,0.7)", display: "block", whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, reel.caption),
+        React.createElement("div", { style: { marginTop: 3, color: "rgba(255,255,255,0.78)", fontSize: 12, lineHeight: 1.35, fontWeight: 600, textShadow: "0 1px 4px rgba(0,0,0,0.65)" } },
+          reelCaptionTimeAgo(reel.created_at),
+          reelCaptionTimeAgo(reel.created_at) ? " • See translation" : "See translation")
+      ) : null)),
   showMenu && React.createElement("div", { onClick: function() { setShowMenu(false); }, style: { position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-end" } },
       React.createElement("style", null, "@keyframes _bsUp{from{transform:translateY(100%)}to{transform:translateY(0)}}"),
       React.createElement("div", { onClick: function(e) { e.stopPropagation(); }, style: { width: "100%", maxWidth: 540, margin: "0 auto", background: "var(--card-bg)", borderRadius: "22px 22px 0 0", paddingBottom: 32, animation: "_bsUp 0.26s cubic-bezier(0.32,0.72,0,1)", overflowY: "auto", maxHeight: "70vh" } },
