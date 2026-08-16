@@ -9455,6 +9455,7 @@ function ComposeModal({
     return () => { cancelled = true; };
   }, [activeVideoSource, previewPosterSource]);
   React.useEffect(() => () => {
+    stopComposeMediaPlayback();
     localVideoUrlsRef.current.forEach(url => { try { URL.revokeObjectURL(url); } catch (_) {} });
     localVideoUrlsRef.current.clear();
     localVideoUrlRef.current = null;
@@ -9508,6 +9509,39 @@ function ComposeModal({
   const postMusicAudioRef = React.useRef(null);
   const composeVideoPreviewRef = React.useRef(null);
   const [musicPlaying, setMusicPlaying] = useState(false);
+
+  // Stop every media element owned by Compose before media is removed or replaced.
+  // A detached HTMLMediaElement can otherwise keep playing on Android Chrome.
+  const removePhotoAt = index => {
+    const removingLastPhoto = photoUrls.length <= 1;
+    if (removingLastPhoto) stopComposeMediaPlayback({ clearMusic: true });
+    setPhotoUrls(prev => prev.filter((_, photoIndex) => photoIndex !== index));
+    if (removingLastPhoto) setPhotoAspect(null);
+  };
+
+  const stopComposeMediaPlayback = ({ clearMusic = false } = {}) => {
+    [postMusicAudioRef, edAudioRef, altAudioRef].forEach(ref => {
+      const audio = ref.current;
+      if (!audio) return;
+      try { audio.pause(); audio.currentTime = 0; } catch (_) {}
+      audio.onended = null;
+      audio.ontimeupdate = null;
+      ref.current = null;
+    });
+    [composeVideoPreviewRef, edVideoRef, altVidRef].forEach(ref => {
+      const video = ref.current;
+      if (!video) return;
+      try { video.pause(); video.currentTime = 0; } catch (_) {}
+    });
+    edRestartingRef.current = false;
+    setMusicPlaying(false);
+    setEdAudioOn(false);
+    setAltAudioOn(false);
+    if (clearMusic) {
+      setSelectedMusic(null);
+      setPendingTrimSong(null);
+    }
+  };
 
   // The music picker/trimmer temporarily unmounts the Compose video. On return,
   // clear the old reveal state and explicitly restart the same local video so
@@ -9568,10 +9602,7 @@ function ComposeModal({
       gifUrl || stickerOverlays.length || emojiOverlays.length || selectedMusic || location || feeling || taggedUsers.length
     );
     const clearComposeState = () => {
-      if (postMusicAudioRef.current) {
-        postMusicAudioRef.current.pause();
-        postMusicAudioRef.current = null;
-      }
+      stopComposeMediaPlayback();
       clearLocalVideoPreview();
       setShowDiscardDialog(false);
       clearPhotoFileMap();
@@ -9644,6 +9675,9 @@ function ComposeModal({
     const toAdd = files.slice(0, remaining);
     if (!toAdd.length) { showToast('Max 5 photos!', COLORS.red); return; }
     // Photos and video are mutually exclusive on a single post
+    if (videoUrl || localVideoPreviewUrl || pendingVideoFile) {
+      stopComposeMediaPlayback({ clearMusic: true });
+    }
     setVideoPreparing(false);
     setVideoUrl(null); setVideoDuration(0); setPhotoAspect(null);
     setPendingVideoFile(null);
@@ -9678,6 +9712,8 @@ function ComposeModal({
   const handleVideoFile = file => {
     if (!file.type.startsWith('video/')) { showToast('Please choose a valid video file.', COLORS.red); return; }
     if (file.size > MAX_POST_VIDEO_BYTES) { showToast('Video is too large — please choose a smaller clip.', COLORS.red); return; }
+    // Selecting a new video replaces the previous media and its audio.
+    stopComposeMediaPlayback({ clearMusic: true });
     setVideoPreparing(true);
     const objectUrl = URL.createObjectURL(file);
     const probe = document.createElement('video');
@@ -9910,8 +9946,8 @@ function ComposeModal({
       return;
     }
     setLoading(true);
-    // Stop any playing music immediately when posting starts
-    if (postMusicAudioRef.current) { postMusicAudioRef.current.pause(); postMusicAudioRef.current = null; setMusicPlaying(false); }
+    // Stop every Compose audio/video element immediately when posting starts.
+    stopComposeMediaPlayback();
     // If video not uploaded yet, upload now (on Share tap)
     let finalVideoUrl = videoUrl;
     let finalVideoDuration = videoDuration;
@@ -10618,6 +10654,9 @@ function ComposeModal({
             sel.forEach(item => {
               if (item.file && item.src) photoFileMapRef.current.set(item.src, item.file);
             });
+            if (videoUrl || localVideoPreviewUrl || pendingVideoFile) {
+              stopComposeMediaPlayback({ clearMusic: true });
+            }
             setVideoUrl(null); setVideoDuration(0); setPendingVideoFile(null);
             clearLocalVideoPreview();
             // Keep object URLs for an immediate Compose render; convert them only on Share.
@@ -10663,7 +10702,7 @@ function ComposeModal({
     onDelete: () => { setShowMusicTrimmer(false); setPendingTrimSong(null); setSelectedMusic(null); setShowMusicPicker(true); }
   });
   if (showGifPicker) return React.createElement(GifPickerModal, {
-    onSelect: (url) => { setGifUrl(url); setPhotoUrls([]); setVideoUrl(null); setPendingVideoFile(null); clearLocalVideoPreview(); setShowGifPicker(false); },
+    onSelect: (url) => { stopComposeMediaPlayback({ clearMusic: true }); setGifUrl(url); setPhotoUrls([]); setVideoUrl(null); setPendingVideoFile(null); clearLocalVideoPreview(); setShowGifPicker(false); },
     onClose: () => setShowGifPicker(false)
   });
   if (showStickerPicker) return React.createElement(StickerPickerModal, {
@@ -10683,7 +10722,12 @@ function ComposeModal({
     src: photoUrls[editingPhotoIdx],
     onClose: () => setEditingPhotoIdx(null),
     onSave: function(newSrc) { setPhotoUrls(function(prev){ return prev.map(function(u,i){ return i===editingPhotoIdx ? newSrc : u; }); }); setEditingPhotoIdx(null); },
-    onDelete: function() { setPhotoUrls(function(prev){ return prev.filter(function(_,i){ return i!==editingPhotoIdx; }); }); setEditingPhotoIdx(null); }
+    onDelete: function() {
+      if (photoUrls.length <= 1) stopComposeMediaPlayback({ clearMusic: true });
+      setPhotoUrls(function(prev){ return prev.filter(function(_,i){ return i!==editingPhotoIdx; }); });
+      if (photoUrls.length <= 1) setPhotoAspect(null);
+      setEditingPhotoIdx(null);
+    }
   });
 
   const hasVideoPreview = Boolean(videoPreviewLayout && videoPreviewLayout.source && videoPreviewLayout.width > 0 && videoPreviewLayout.height > 0 && (videoUrl || localVideoPreviewUrl));
@@ -10804,10 +10848,10 @@ function ComposeModal({
         )
       ),
       (!videoUrl && photoUrls.length === 1) && /*#__PURE__*/React.createElement("img", { src: photoUrls[0], onClick: () => setEditingPhotoIdx(0), alt: "", style: { width: "100%", height: "auto", objectFit: "contain", display: "block", cursor: "pointer" } }),
-      (!videoUrl && photoUrls.length === 2) && /*#__PURE__*/React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 } }, photoUrls.map((src, i) => /*#__PURE__*/React.createElement("div", { key: i, style: { position: "relative", overflow: "hidden", minHeight: 200 } }, /*#__PURE__*/React.createElement("img", { src, onClick: () => setEditingPhotoIdx(i), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); setPhotoUrls(prev => prev.filter((_, j) => j !== i)); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕")))),
-      (!videoUrl && photoUrls.length === 3) && /*#__PURE__*/React.createElement("div", { style: { display: "grid", gridTemplateColumns: "2fr 1fr", gridTemplateRows: "1fr 1fr", gap: 2, minHeight: 260 } }, /*#__PURE__*/React.createElement("div", { style: { position: "relative", overflow: "hidden", gridRow: "1/3" } }, /*#__PURE__*/React.createElement("img", { src: photoUrls[0], onClick: () => setEditingPhotoIdx(0), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); setPhotoUrls(prev => prev.filter((_, j) => j !== 0)); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕")), /*#__PURE__*/React.createElement("div", { style: { position: "relative", overflow: "hidden" } }, /*#__PURE__*/React.createElement("img", { src: photoUrls[1], onClick: () => setEditingPhotoIdx(1), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); setPhotoUrls(prev => prev.filter((_, j) => j !== 1)); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕")), /*#__PURE__*/React.createElement("div", { style: { position: "relative", overflow: "hidden" } }, /*#__PURE__*/React.createElement("img", { src: photoUrls[2], onClick: () => setEditingPhotoIdx(2), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); setPhotoUrls(prev => prev.filter((_, j) => j !== 2)); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕"))),
-      (!videoUrl && photoUrls.length === 4) && /*#__PURE__*/React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr", gap: 2, minHeight: 300 } }, photoUrls.map((src, i) => /*#__PURE__*/React.createElement("div", { key: i, style: { position: "relative", overflow: "hidden" } }, /*#__PURE__*/React.createElement("img", { src, onClick: () => setEditingPhotoIdx(i), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); setPhotoUrls(prev => prev.filter((_, j) => j !== i)); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕")))),
-      (!videoUrl && photoUrls.length === 5) && /*#__PURE__*/React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: 2, minHeight: 360 } }, /*#__PURE__*/React.createElement("div", { style: { position: "relative", overflow: "hidden", gridColumn: "1/3" } }, /*#__PURE__*/React.createElement("img", { src: photoUrls[0], onClick: () => setEditingPhotoIdx(0), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); setPhotoUrls(prev => prev.filter((_, j) => j !== 0)); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕")), photoUrls.slice(1).map((src, i) => /*#__PURE__*/React.createElement("div", { key: i + 1, style: { position: "relative", overflow: "hidden" } }, /*#__PURE__*/React.createElement("img", { src, onClick: () => setEditingPhotoIdx(i + 1), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); setPhotoUrls(prev => prev.filter((_, j) => j !== i + 1)); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕")))),
+      (!videoUrl && photoUrls.length === 2) && /*#__PURE__*/React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 } }, photoUrls.map((src, i) => /*#__PURE__*/React.createElement("div", { key: i, style: { position: "relative", overflow: "hidden", minHeight: 200 } }, /*#__PURE__*/React.createElement("img", { src, onClick: () => setEditingPhotoIdx(i), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); removePhotoAt(i); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕")))),
+      (!videoUrl && photoUrls.length === 3) && /*#__PURE__*/React.createElement("div", { style: { display: "grid", gridTemplateColumns: "2fr 1fr", gridTemplateRows: "1fr 1fr", gap: 2, minHeight: 260 } }, /*#__PURE__*/React.createElement("div", { style: { position: "relative", overflow: "hidden", gridRow: "1/3" } }, /*#__PURE__*/React.createElement("img", { src: photoUrls[0], onClick: () => setEditingPhotoIdx(0), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); removePhotoAt(0); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕")), /*#__PURE__*/React.createElement("div", { style: { position: "relative", overflow: "hidden" } }, /*#__PURE__*/React.createElement("img", { src: photoUrls[1], onClick: () => setEditingPhotoIdx(1), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); removePhotoAt(1); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕")), /*#__PURE__*/React.createElement("div", { style: { position: "relative", overflow: "hidden" } }, /*#__PURE__*/React.createElement("img", { src: photoUrls[2], onClick: () => setEditingPhotoIdx(2), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); removePhotoAt(2); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕"))),
+      (!videoUrl && photoUrls.length === 4) && /*#__PURE__*/React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr", gap: 2, minHeight: 300 } }, photoUrls.map((src, i) => /*#__PURE__*/React.createElement("div", { key: i, style: { position: "relative", overflow: "hidden" } }, /*#__PURE__*/React.createElement("img", { src, onClick: () => setEditingPhotoIdx(i), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); removePhotoAt(i); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕")))),
+      (!videoUrl && photoUrls.length === 5) && /*#__PURE__*/React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: 2, minHeight: 360 } }, /*#__PURE__*/React.createElement("div", { style: { position: "relative", overflow: "hidden", gridColumn: "1/3" } }, /*#__PURE__*/React.createElement("img", { src: photoUrls[0], onClick: () => setEditingPhotoIdx(0), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); removePhotoAt(0); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕")), photoUrls.slice(1).map((src, i) => /*#__PURE__*/React.createElement("div", { key: i + 1, style: { position: "relative", overflow: "hidden" } }, /*#__PURE__*/React.createElement("img", { src, onClick: () => setEditingPhotoIdx(i + 1), alt: "", style: { width: "100%", height: "100%", objectFit: "cover", cursor: "pointer", display: "block" } }), /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); removePhotoAt(i + 1); }, style: { position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 5 } }, "✕")))),
 
       ((videoUrl && videoDuration > 0) || (videoUploading && pendingVideoDuration > 0)) && /*#__PURE__*/React.createElement("div", { style: { position: "absolute", bottom: 12, left: 12, zIndex: 3, background: "rgba(0,0,0,0.62)", color: "#fff", borderRadius: 12, padding: "3px 10px", fontSize: 12, fontWeight: 700 } }, (videoDuration > 0 ? videoDuration : Math.round(pendingVideoDuration)) + "s"),
       (videoUploading && !loading) && /*#__PURE__*/React.createElement("div", { style: { position: "absolute", inset: 0, zIndex: 3, background: "rgba(0,0,0,0.55)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: "#fff" } },
@@ -10816,7 +10860,27 @@ function ComposeModal({
       ),
       (videoUrl || localVideoPreviewUrl || photoUrls.length > 0) && /*#__PURE__*/React.createElement(React.Fragment, null,
       (!videoUrl && !localVideoPreviewUrl && photoUrls.length > 0) && /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); setShowAltEditor(true); }, style: { position: "absolute", bottom: 12, right: 10, zIndex: 4, background: altText.trim() ? "rgba(24,119,242,0.9)" : "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: 16, padding: "4px 11px", fontSize: 12, fontWeight: 800, cursor: "pointer", letterSpacing: 0.3, backdropFilter: "blur(4px)" } }, "+ALT"),
-      (!videoUrl && !localVideoPreviewUrl) && /*#__PURE__*/React.createElement("button", { onClick: () => { clearLocalVideoPreview(); clearPhotoFileMap(); setPendingVideoFile(null); setVideoUrl(null); setVideoDuration(0); setPhotoUrls([]); setPhotoAspect(null); setAltText(""); setStickerOverlays([]); setVideoTextOverlays([]); setVideoEffect('none'); setVideoEditorTab(null); }, title: "Remove media", style: { position: "absolute", top: 10, right: 10, zIndex: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 } }, "✕")
+      /*#__PURE__*/React.createElement("button", { onClick: e => {
+        e.stopPropagation();
+        stopComposeMediaPlayback({ clearMusic: true });
+        clearLocalVideoPreview();
+        clearPhotoFileMap();
+        setPendingVideoFile(null);
+        setPendingVideoDuration(0);
+        setVideoUrl(null);
+        setVideoDuration(0);
+        setVideoWidth(0);
+        setVideoHeight(0);
+        setPhotoUrls([]);
+        setPhotoAspect(null);
+        setAltText("");
+        setStickerOverlays([]);
+        setVideoTextOverlays([]);
+        setVideoEffect('none');
+        setShowVideoTrim(false);
+        setShowVideoEditor(false);
+        setVideoEditorTab(null);
+      }, title: "Remove media", style: { position: "absolute", top: 10, right: 10, zIndex: 4, background: "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 } }, "✕")
     ),
     // ── Sticker overlays (draggable) ──
     stickerOverlays.length > 0 && React.createElement(React.Fragment, null,
