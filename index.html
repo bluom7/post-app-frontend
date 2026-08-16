@@ -9681,6 +9681,7 @@ function ComposeModal({
     probe.preload = 'auto';
     let selectionApplied = false;
     let metadataReady = false;
+    let frameCapturePending = false;
 
     const captureFirstFrame = () => {
       if (!probe.videoWidth || !probe.videoHeight) return null;
@@ -9700,49 +9701,58 @@ function ComposeModal({
     };
 
     const applyVideoSelection = () => {
-      if (selectionApplied || !metadataReady) return;
-      // Do not expose the live video element until a real decoded first frame
-      // has been captured. Android Chrome can otherwise paint its black
-      // decoder surface during the selection -> Compose state transition.
-      const poster = captureFirstFrame();
-      if (!poster) return;
-      selectionApplied = true;
-      const commitVideoSelection = () => {
-        setVideoPreviewReadySource(null);
-        // Photos and video are mutually exclusive on a single post.
-        setPhotoUrls([]); setPhotoAspect(null);
-        setVideoUrl(null);
-        clearLocalVideoPreview();
-        if (poster) setVideoPosterUrl(poster);
-        // Publish one complete preview layout before Compose is allowed to render
-        // the media frame. This prevents a default square container from flashing.
-        setVideoPreviewLayout({
-          source: objectUrl,
-          width: probe.videoWidth || 16,
-          height: probe.videoHeight || 9,
-          poster: poster || null
-        });
-        // Capture natural video dimensions before the first Compose render so the
-        // preview frame always has the correct aspect ratio from the start.
-        if (probe.videoWidth && probe.videoHeight) {
-          setVideoWidth(probe.videoWidth);
-          setVideoHeight(probe.videoHeight);
+      if (selectionApplied || !metadataReady || probe.readyState < 2 || frameCapturePending) return;
+      frameCapturePending = true;
+      let finished = false;
+      const finishAfterDecodedFrame = () => {
+        if (finished) return;
+        finished = true;
+        frameCapturePending = false;
+        if (selectionApplied) return;
+        const poster = captureFirstFrame();
+        if (!poster) {
+          // A loadeddata event can precede Android's first compositor frame.
+          // Retry after another decode tick instead of publishing a black poster.
+          window.setTimeout(applyVideoSelection, 80);
+          return;
         }
-        // Show the decoded first frame immediately; upload remains deferred to Share.
-        replaceLocalVideoPreview(objectUrl);
-        setPendingVideoFile(file);
-        setPendingVideoDuration(probe.duration);
-        setTrimStart(0);
-        setTrimEnd(probe.duration <= MAX_POST_VIDEO_SECONDS + 0.5 ? probe.duration : Math.min(MAX_POST_VIDEO_SECONDS, probe.duration));
+        selectionApplied = true;
+        const commitVideoSelection = () => {
+          setVideoPreviewReadySource(null);
+          // Photos and video are mutually exclusive on a single post.
+          setPhotoUrls([]); setPhotoAspect(null);
+          setVideoUrl(null);
+          clearLocalVideoPreview();
+          setVideoPosterUrl(poster);
+          setVideoPreviewLayout({
+            source: objectUrl,
+            width: probe.videoWidth || 16,
+            height: probe.videoHeight || 9,
+            poster
+          });
+          if (probe.videoWidth && probe.videoHeight) {
+            setVideoWidth(probe.videoWidth);
+            setVideoHeight(probe.videoHeight);
+          }
+          replaceLocalVideoPreview(objectUrl);
+          setPendingVideoFile(file);
+          setPendingVideoDuration(probe.duration);
+          setTrimStart(0);
+          setTrimEnd(probe.duration <= MAX_POST_VIDEO_SECONDS + 0.5 ? probe.duration : Math.min(MAX_POST_VIDEO_SECONDS, probe.duration));
+        };
+        if (window.ReactDOM && ReactDOM.unstable_batchedUpdates) {
+          ReactDOM.unstable_batchedUpdates(commitVideoSelection);
+        } else {
+          commitVideoSelection();
+        }
       };
-      // Metadata/frame callbacks can run outside React's event system. Commit
-      // the media source, poster, dimensions, and ready flag in one paint so a
-      // transient black video surface can never appear between those updates.
-      if (window.ReactDOM && ReactDOM.unstable_batchedUpdates) {
-        ReactDOM.unstable_batchedUpdates(commitVideoSelection);
-      } else {
-        commitVideoSelection();
+      if (typeof probe.requestVideoFrameCallback === 'function') {
+        try {
+          probe.requestVideoFrameCallback(finishAfterDecodedFrame);
+          return;
+        } catch (_) {}
       }
+      window.setTimeout(finishAfterDecodedFrame, 100);
     };
 
     probe.onloadedmetadata = () => {
@@ -9763,6 +9773,10 @@ function ComposeModal({
     probe.onplaying = applyVideoSelection;
     probe.onerror = () => { if (!selectionApplied) URL.revokeObjectURL(objectUrl); showToast('Could not read video. Try another file.', COLORS.red); };
     probe.src = objectUrl;
+    try {
+      const playback = probe.play();
+      if (playback && playback.catch) playback.catch(() => {});
+    } catch (_) {}
   };
   const cancelVideoTrim = () => {
     setShowVideoTrim(false);
@@ -10760,7 +10774,7 @@ function ComposeModal({
       hasVideoPreview && /*#__PURE__*/React.createElement("div", { style: { position: "relative", display: "block", width: "100%", maxWidth: "100%", aspectRatio: previewAspectRatio ? String(previewAspectRatio) : undefined, margin: "0 auto", overflow: "hidden" } },
         /*#__PURE__*/React.createElement("div", { style: { filter: (VIDEO_EFFECTS.find(e=>e.id===videoEffect)||VIDEO_EFFECTS[0]).filter, lineHeight: 0, background: 'var(--card-bg)' } },
           previewPosterUrl && /*#__PURE__*/React.createElement("img", { src: previewPosterUrl, alt: "", "aria-hidden": true, onLoad: function(){ setVideoPreviewPosterReadySource(activeVideoSource); }, style: { position: "absolute", inset: 0, zIndex: 2, width: "100%", height: "100%", objectFit: "contain", display: "block", pointerEvents: "none", opacity: videoPreviewReadySource === activeVideoSource ? 0 : 1, background: "var(--card-bg)" } }),
-          videoPreviewPosterReadySource === activeVideoSource && /*#__PURE__*/React.createElement("video", { ref: composeVideoPreviewRef, key: activeVideoSource, src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: true, loop: true, poster: previewPosterUrl || undefined, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onLoadedData: function(e){ e.target.play().catch(function(){}); }, onPlaying: function(){ var reveal = function(){ setVideoPreviewReadySource(activeVideoSource); }; if (window.requestAnimationFrame) { requestAnimationFrame(function(){ requestAnimationFrame(reveal); }); } else { setTimeout(reveal, 80); } }, onError: function(){ recoverLocalVideoPreview(); }, style: { position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: (!videoUploading && localVideoPreviewUrl) ? "pointer" : "default", transform: "translateZ(0)", opacity: videoPreviewReadySource === activeVideoSource ? 1 : 0, visibility: "visible", background: "transparent", transition: "opacity 0.12s ease" } })
+          videoPreviewPosterReadySource === activeVideoSource && /*#__PURE__*/React.createElement("video", { ref: composeVideoPreviewRef, key: activeVideoSource, src: activeVideoSource, preload: "auto", playsInline: true, muted: true, autoPlay: true, loop: true, poster: previewPosterUrl || undefined, onLoadedMetadata: function(e){ if ((!videoWidth || !videoHeight) && e.target.videoWidth && e.target.videoHeight) { setVideoWidth(e.target.videoWidth); setVideoHeight(e.target.videoHeight); } }, onLoadedData: function(e){ e.target.play().catch(function(){}); }, onPlaying: function(e){ var reveal = function(){ setVideoPreviewReadySource(activeVideoSource); }; var v = e.target; if (typeof v.requestVideoFrameCallback === 'function') { try { v.requestVideoFrameCallback(reveal); return; } catch (_) {} } if (window.requestAnimationFrame) { requestAnimationFrame(function(){ requestAnimationFrame(reveal); }); } else { setTimeout(reveal, 100); } }, onError: function(){ recoverLocalVideoPreview(); }, style: { position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block", cursor: (!videoUploading && localVideoPreviewUrl) ? "pointer" : "default", transform: "translateZ(0)", opacity: videoPreviewReadySource === activeVideoSource ? 1 : 0, visibility: "visible", background: "transparent", transition: "opacity 0.12s ease" } })
         ),
         videoTextOverlays.map(t => /*#__PURE__*/React.createElement("div", { key: t.id, style: { position: "absolute", left: t.x+"%", top: t.y+"%", transform: "translate(-50%,-50%)", color: t.color||"#fff", fontSize: (t.size||20)+"px", fontWeight: 800, textShadow: "0 1px 5px rgba(0,0,0,0.8)", zIndex: 3, pointerEvents: "none", whiteSpace: "nowrap" } }, t.text)),
         (!videoUploading) && /*#__PURE__*/React.createElement("div", { style: { position: "absolute", top: 12, right: 12, display: "flex", gap: 8, zIndex: 5 } },
