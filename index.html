@@ -6249,8 +6249,8 @@ function BentoPostCard({
         )
       )
       ),
-      // Follow button (only for other users not yet followed)
-      !isOwn && onFollow && !isFollowing && React.createElement("button", {
+      // Follow state button for every other user
+      !isOwn && onFollow && React.createElement("button", {
         onClick: (e) => { e.stopPropagation(); onFollow(post.user_id); },
         style: {
           background: "#EFF0F2",
@@ -6268,7 +6268,7 @@ function BentoPostCard({
           flexShrink: 0,
           transition: "all .15s"
         }
-      }, isPending ? "Requested" : "Follow"),
+      }, isFollowing ? "Following" : isPending ? "Requested" : "Follow"),
       // 3-dot menu — bottom sheet opens via Fragment-level showMenu
       React.createElement("button", { onClick: () => setShowMenu(s => !s), "aria-label": "More options", style: { background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: "4px 10px", display:"flex",alignItems:"center" } }, React.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"currentColor"},React.createElement("circle",{cx:"12",cy:"5",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"12",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"19",r:"1.5"})))
     ),
