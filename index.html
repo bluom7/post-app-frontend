@@ -6021,6 +6021,20 @@ function BentoPostCard({
     return Math.floor(diff / 86400) + "d";
   };
 
+  const captionTimeAgo = ts => {
+    if (!ts) return "";
+    const parsed = new Date(ts).getTime();
+    if (!Number.isFinite(parsed)) return "";
+    const diff = Math.max(0, Math.floor((Date.now() - parsed) / 1000));
+    if (diff < 60) return "just now";
+    const minutes = Math.floor(diff / 60);
+    if (minutes < 60) return minutes + " " + (minutes === 1 ? "minute" : "minutes") + " ago";
+    const hours = Math.floor(diff / 3600);
+    if (hours < 24) return hours + " " + (hours === 1 ? "hour" : "hours") + " ago";
+    const days = Math.floor(diff / 86400);
+    return days + " " + (days === 1 ? "day" : "days") + " ago";
+  };
+
   const handleHeartClick = () => {
     setHeartPop(true); setTimeout(() => setHeartPop(false), 300);
     onLike(post.id, likeColor ? null : "#FF3B5C");
@@ -6315,12 +6329,13 @@ function BentoPostCard({
     ),
     // ── MEDIA ALT DESCRIPTION ───────────────────────────────
     post.alt_text && /*#__PURE__*/React.createElement("div", { style: { padding: "0 14px 12px", color: "#111", fontSize: 14, lineHeight: 1.45 } },
-      /*#__PURE__*/React.createElement("div", { style: altExpanded ? { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } : { position: "relative", maxHeight: "2.9em", overflow: "hidden", paddingRight: 36, whiteSpace: "pre-wrap", overflowWrap: "anywhere" } },
+      /*#__PURE__*/React.createElement("div", { style: altExpanded ? { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } : { position: "relative", maxHeight: "1.45em", overflow: "hidden", paddingRight: 36, whiteSpace: "pre-wrap", overflowWrap: "anywhere" } },
         /*#__PURE__*/React.createElement("span", { style: { fontWeight: 800, color: "#111" } }, post.user_name || ""),
         /*#__PURE__*/React.createElement("span", null, post.user_name ? " " : "", post.alt_text),
         !altExpanded && post.alt_text.length > 80 && /*#__PURE__*/React.createElement("button", { onClick: () => setAltExpanded(true), style: { position: "absolute", right: 0, bottom: 0, background: "var(--card-bg)", border: "none", color: COLORS.blue, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "0 0 0 4px", lineHeight: 1.45 } }, "more")
       ),
-      altExpanded && post.alt_text.length > 80 && /*#__PURE__*/React.createElement("button", { onClick: () => setAltExpanded(false), style: { background: "none", border: "none", color: COLORS.blue, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "2px 0 0" } }, "less")
+      altExpanded && post.alt_text.length > 80 && /*#__PURE__*/React.createElement("button", { onClick: () => setAltExpanded(false), style: { background: "none", border: "none", color: COLORS.blue, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "2px 0 0" } }, "less"),
+      /*#__PURE__*/React.createElement("div", { style: { marginTop: 4, color: "var(--muted)", fontSize: 12, lineHeight: 1.4 } }, captionTimeAgo(post.created_at), " • See translation")
     ),
   ),
     showMenu && React.createElement("div", { onClick: () => setShowMenu(false), style: { position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "flex-end" } },
