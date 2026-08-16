@@ -10179,7 +10179,11 @@ function ComposeModal({
       { id: 'Classic', label: 'Classic', family: 'Georgia, serif', weight: 700, style: 'normal', textTransform: 'none', shadow: '0 2px 8px rgba(0,0,0,0.9)' },
       { id: 'Bubble', label: 'Bubble', family: "'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif", weight: 900, style: 'normal', textTransform: 'none', shadow: '0 3px 0 rgba(0,0,0,0.65)' },
       { id: 'Slab Serif', label: 'Slab Serif', family: "'Roboto Slab', Rockwell, 'Courier New', serif", weight: 800, style: 'normal', textTransform: 'none', shadow: '0 2px 6px rgba(0,0,0,0.9)' },
-      { id: 'Geometric', label: 'Geometric', family: "'Avenir Next', 'Century Gothic', 'Arial Black', sans-serif", weight: 800, style: 'normal', textTransform: 'none', shadow: '0 2px 5px rgba(0,0,0,0.9)' }
+      { id: 'Geometric', label: 'Geometric', family: "'Avenir Next', 'Century Gothic', 'Arial Black', sans-serif", weight: 800, style: 'normal', textTransform: 'none', shadow: '0 2px 5px rgba(0,0,0,0.9)' },
+      { id: 'Headline', label: 'Headline', family: "'Arial Black', Impact, sans-serif", weight: 900, style: 'normal', textTransform: 'uppercase', shadow: '0 2px 6px rgba(0,0,0,0.9)' },
+      { id: 'Fancy', label: 'Fancy', family: "Georgia, 'Times New Roman', serif", weight: 600, style: 'italic', textTransform: 'none', shadow: '0 2px 8px rgba(0,0,0,0.9)' },
+      { id: 'Pop', label: 'Pop', family: "'Arial Rounded MT Bold', Arial, sans-serif", weight: 900, style: 'normal', textTransform: 'uppercase', shadow: '2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000' },
+      { id: 'Glow', label: 'Glow', family: 'Arial, sans-serif', weight: 700, style: 'normal', textTransform: 'none', shadow: '0 0 20px currentColor, 0 0 40px currentColor, 0 2px 6px rgba(0,0,0,0.75)' }
     ];
     const _activeVideoTextFont = _videoTextFonts.find(font => font.id === newVideoTextFont) || _videoTextFonts[0];
     const _videoTextContrast = color => { const hex = (color || '#ffffff').replace('#', ''); const r = parseInt(hex.slice(0, 2), 16) || 255; const g = parseInt(hex.slice(2, 4), 16) || 255; const b = parseInt(hex.slice(4, 6), 16) || 255; return (0.299 * r + 0.587 * g + 0.114 * b) > 170 ? '#111' : '#fff'; };
