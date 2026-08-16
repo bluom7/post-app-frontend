@@ -10177,6 +10177,10 @@ function ComposeModal({
     const _edRestartFromStart = () => { const v = edVideoRef.current; if (!v || edRestartingRef.current) return; edRestartingRef.current = true; const audio = edAudioRef.current; if (audio) { audio.pause(); try { audio.currentTime = _edMusicStartSec; } catch (_) {} } v.muted = Boolean(selectedMusic); try { v.currentTime = trimStart; } catch (_) {} Promise.resolve(v.play()).then(() => { if (selectedMusic) _edStartMusic(trimStart); }).catch(() => { if (audio) audio.pause(); }).finally(() => { edRestartingRef.current = false; }); };
         const _videoTextFonts = [
       { id: 'Classic', label: 'Classic', family: 'Georgia, serif', weight: 700, style: 'normal', textTransform: 'none', shadow: '0 2px 8px rgba(0,0,0,0.9)' },
+      { id: 'Headline', label: 'Headline', family: "'Arial Black', Impact, sans-serif", weight: 900, style: 'normal', textTransform: 'uppercase', shadow: '0 2px 6px rgba(0,0,0,0.9)' },
+      { id: 'Glow', label: 'Glow', family: 'Arial, sans-serif', weight: 700, style: 'normal', textTransform: 'none', shadow: '0 0 20px currentColor, 0 0 40px currentColor, 0 2px 6px rgba(0,0,0,0.75)' },
+      { id: 'Fancy', label: 'Fancy', family: "Georgia, 'Times New Roman', serif", weight: 600, style: 'italic', textTransform: 'none', shadow: '0 2px 8px rgba(0,0,0,0.9)' },
+      { id: 'Pop', label: 'Pop', family: 'Arial Rounded MT Bold, Arial, sans-serif', weight: 900, style: 'normal', textTransform: 'uppercase', shadow: '2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000' },
       { id: 'Bubble', label: 'Bubble', family: "'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif", weight: 900, style: 'normal', textTransform: 'none', shadow: '0 3px 0 rgba(0,0,0,0.65)' },
       { id: 'Slab Serif', label: 'Slab Serif', family: "'Roboto Slab', Rockwell, 'Courier New', serif", weight: 800, style: 'normal', textTransform: 'none', shadow: '0 2px 6px rgba(0,0,0,0.9)' },
       { id: 'Geometric', label: 'Geometric', family: "'Avenir Next', 'Century Gothic', 'Arial Black', sans-serif", weight: 800, style: 'normal', textTransform: 'none', shadow: '0 2px 5px rgba(0,0,0,0.9)' }
