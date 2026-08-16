@@ -5666,7 +5666,7 @@ function FeedVideo({ post }) {
     position: 'relative',
     width: '100%',
     background: '#000',
-    borderRadius: 12,
+    borderRadius: 0,
     overflow: 'hidden',
     cursor: 'pointer',
     WebkitTapHighlightColor: 'transparent',
@@ -5852,7 +5852,7 @@ function ReelFeedVideo({ post, onOpenReel }) {
       position: "relative",
       cursor: "pointer",
       background: "#000",
-      borderRadius: 12,
+      borderRadius: 0,
       overflow: "hidden",
       WebkitTapHighlightColor: "transparent",
       width: "100%",
@@ -5924,7 +5924,7 @@ function ReelFeedPhoto({ post, onOpenReel }) {
       position: "relative",
       cursor: "pointer",
       background: "#000",
-      borderRadius: 12,
+      borderRadius: 0,
       overflow: "hidden",
       WebkitTapHighlightColor: "transparent",
       width: "100%",
@@ -6269,7 +6269,7 @@ function BentoPostCard({
         ? React.createElement(FeedVideo, { post })
         : post.music_title
           ? /*#__PURE__*/React.createElement("div", { style:{ position:"relative" } },
-              React.createElement(PostMedia,{post,maxHeight:466,user,onLike,onComment,onSave,onRepost,onShare,onFollow,followingIds,pendingFollowIds,onViewProfile}),
+              React.createElement(PostMedia,{post,maxHeight:466,borderRadius:0,user,onLike,onComment,onSave,onRepost,onFollow,followingIds,pendingFollowIds,onViewProfile}),
               /*#__PURE__*/React.createElement(PostSpeakerButton, { post }),
               /*#__PURE__*/React.createElement("div", { style:{ position:"absolute", bottom:10, left:10, zIndex:10,
                 width:24, height:24, borderRadius:6,
@@ -6286,7 +6286,7 @@ function BentoPostCard({
                 )
               )
             )
-          : React.createElement(PostMedia,{post,maxHeight:466,user,onLike,onComment,onSave,onRepost,onShare,onFollow,followingIds,pendingFollowIds,onViewProfile}),
+          : React.createElement(PostMedia,{post,maxHeight:466,borderRadius:0,user,onLike,onComment,onSave,onRepost,onFollow,followingIds,pendingFollowIds,onViewProfile}),
     // ── Action bar ─────────────────────────────────────────────
     React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "8px 10px 6px", gap: 0 } },
       // Like
