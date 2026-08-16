@@ -5950,6 +5950,110 @@ function ReelFeedVideo({ post, onOpenReel }) {
 //   • All overlays: sticker_overlays, text_overlays, emoji_overlays (via _renderReelOverlays)
 //   • video_effect filter (same as reel viewer)
 //   • Click → opens full-screen reel viewer via onOpenReel
+function ReelPhotoMusicButton({ post }) {
+  const pid = String(post.id);
+  const [playing, setPlaying] = React.useState(function(){
+    const a = _postMusicAudio[pid];
+    return !!(a && !a.paused);
+  });
+  const audioRef = React.useRef(null);
+
+  React.useEffect(function(){
+    function handler(e){
+      if (e.detail && String(e.detail.id) === pid) setPlaying(!!e.detail.playing);
+    }
+    window.addEventListener('postmusic', handler);
+    return function(){ window.removeEventListener('postmusic', handler); };
+  }, [pid]);
+
+  const stop = function(){
+    const a = audioRef.current || _postMusicAudio[pid];
+    if (a) {
+      a.pause();
+      try { a.currentTime = 0; } catch (_) {}
+      if (_postMusicAudio[pid] === a) delete _postMusicAudio[pid];
+    }
+    audioRef.current = null;
+    setPlaying(false);
+    window.dispatchEvent(new CustomEvent('postmusic', { detail: { id: pid, playing: false } }));
+  };
+
+  const toggle = function(e){
+    e.stopPropagation();
+    if (playing) {
+      stop();
+      return;
+    }
+    if (!post.music_preview_url) return;
+
+    _stopAllPostMusic(pid);
+    const a = new Audio(post.music_preview_url);
+    const startSec = Math.max(0, Number(post.music_start_ms) || 0) / 1000;
+    const clipDurationSec = Math.max(1, Math.min(30, (Number(post.music_clip_duration_ms) || 30000) / 1000));
+    let clipTimer = null;
+    let actualStart = startSec;
+    const finish = function(){
+      if (clipTimer) { clearTimeout(clipTimer); clipTimer = null; }
+      a.pause();
+      if (_postMusicAudio[pid] === a) delete _postMusicAudio[pid];
+      if (audioRef.current === a) audioRef.current = null;
+      setPlaying(false);
+      window.dispatchEvent(new CustomEvent('postmusic', { detail: { id: pid, playing: false } }));
+    };
+    const begin = function(){
+      if (audioRef.current !== a) return;
+      actualStart = Math.min(startSec, Math.max(0, (a.duration || 30) - 0.05));
+      try { a.currentTime = actualStart; } catch (_) {}
+      a.play().then(function(){
+        setPlaying(true);
+        clipTimer = setTimeout(finish, clipDurationSec * 1000);
+        window.dispatchEvent(new CustomEvent('postmusic', { detail: { id: pid, playing: true } }));
+      }).catch(finish);
+    };
+
+    audioRef.current = a;
+    _postMusicAudio[pid] = a;
+    a.preload = 'auto';
+    a.onended = finish;
+    a.ontimeupdate = function(){
+      if (a.currentTime >= actualStart + clipDurationSec) finish();
+    };
+    a.addEventListener('loadedmetadata', begin, { once: true });
+    if (a.readyState >= 1) begin();
+  };
+
+  React.useEffect(function(){
+    return function(){
+      const a = audioRef.current;
+      if (a) {
+        a.pause();
+        if (_postMusicAudio[pid] === a) delete _postMusicAudio[pid];
+      }
+    };
+  }, [pid]);
+
+  return React.createElement('button', {
+    type: 'button',
+    onClick: toggle,
+    'aria-label': playing ? 'Pause song' : 'Play song',
+    style: {
+      position: 'absolute', bottom: 10, right: 10, zIndex: 4,
+      width: 34, height: 34, padding: 0,
+      background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      color: '#fff', cursor: 'pointer', pointerEvents: 'auto',
+      touchAction: 'manipulation'
+    }
+  },
+    playing
+      ? React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: '#fff' },
+          React.createElement('rect', { x: 6, y: 4, width: 4, height: 16, rx: 1 }),
+          React.createElement('rect', { x: 14, y: 4, width: 4, height: 16, rx: 1 }))
+      : React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: '#fff' },
+          React.createElement('polygon', { points: '7 4 19 12 7 20 7 4' }))
+  );
+}
+
 function ReelFeedPhoto({ post, onOpenReel }) {
   const [natW, setNatW] = React.useState(0);
   const [natH, setNatH] = React.useState(0);
@@ -5990,19 +6094,8 @@ function ReelFeedPhoto({ post, onOpenReel }) {
     }),
     // All editing overlays: stickers, emoji, text (same as full-screen ReelItem)
     _renderReelOverlays(post),
-    // Play icon hint — tapping opens full-screen reel
-    React.createElement("div", {
-      style: {
-        position: "absolute", top: 10, right: 10,
-        background: "rgba(0,0,0,0.45)", borderRadius: "50%",
-        width: 28, height: 28,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        pointerEvents: "none"
-      }
-    },
-      React.createElement("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "#fff", stroke: "none" },
-        React.createElement("polygon", { points: "5 3 19 12 5 21 5 3" }))
-    )
+    // Bottom-right song control; photo tap still opens the reel viewer.
+    post.music_preview_url && React.createElement(ReelPhotoMusicButton, { post })
   );
 }
 
