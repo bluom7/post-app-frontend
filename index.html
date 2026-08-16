@@ -6234,9 +6234,9 @@ function BentoPostCard({
       : React.createElement("div", { style: { display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, captionContent);
     return React.createElement("div", { style: { padding: "0 14px 10px", fontSize: 14, lineHeight: 1.65, color: "var(--text)", wordBreak: "break-word" } },
       reelCaptionExpanded
-        ? React.createElement(React.Fragment, null,
-            React.createElement("div", { style: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, captionContent),
-            canExpand && React.createElement("span", { onClick: function(e) { e.stopPropagation(); setReelCaptionExpanded(false); }, style: { color: COLORS.blue, fontSize: 12, fontWeight: 700, cursor: "pointer", display: "inline-block", marginTop: 1 } }, "less"))
+        ? React.createElement("div", { style: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } },
+            captionContent,
+            canExpand && React.createElement("span", { onClick: function(e) { e.stopPropagation(); setReelCaptionExpanded(false); }, style: { color: COLORS.blue, fontSize: 12, fontWeight: 700, cursor: "pointer", marginLeft: 4 } }, "less"))
         : collapsedCaption,
       React.createElement("div", { style: { marginTop: 3, color: "var(--muted)", fontSize: 13, fontWeight: 700, lineHeight: 1.4 } },
         captionTimeAgo(post.created_at),
