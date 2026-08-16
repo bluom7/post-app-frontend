@@ -6313,13 +6313,14 @@ function BentoPostCard({
         React.createElement("svg", { width: 23, height: 23, viewBox: "0 0 24 24", fill: isSaved ? "currentColor" : "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" }))
       )
     ),
-    // ── ALT text ─────────────────────────────────────────────
-    post.alt_text && /*#__PURE__*/React.createElement("div", { style: { padding: "0 14px 10px" } },
-      /*#__PURE__*/React.createElement("div", { style: { background: "var(--input-bg)", borderRadius: 10, padding: "8px 12px" } },
-        /*#__PURE__*/React.createElement("span", { style: { fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 0.5, display: "block", marginBottom: 3 } }, "ALT"),
-        /*#__PURE__*/React.createElement("span", { style: { fontSize: 13, color: "var(--text)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: altExpanded ? "unset" : 2, WebkitBoxOrient: "vertical", overflow: altExpanded ? "visible" : "hidden" } }, post.alt_text),
-        post.alt_text.length > 80 && /*#__PURE__*/React.createElement("button", { onClick: () => setAltExpanded(v => !v), style: { background: "none", border: "none", color: COLORS.blue, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "2px 0", display: "block", marginTop: 2 } }, altExpanded ? "Show less" : "Read more")
-      )
+    // ── MEDIA ALT DESCRIPTION ───────────────────────────────
+    post.alt_text && /*#__PURE__*/React.createElement("div", { style: { padding: "0 14px 12px", color: "#111", fontSize: 14, lineHeight: 1.45 } },
+      /*#__PURE__*/React.createElement("div", { style: altExpanded ? { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } : { position: "relative", maxHeight: "2.9em", overflow: "hidden", paddingRight: 36, whiteSpace: "pre-wrap", overflowWrap: "anywhere" } },
+        /*#__PURE__*/React.createElement("span", { style: { fontWeight: 800, color: "#111" } }, post.user_name || ""),
+        /*#__PURE__*/React.createElement("span", null, post.user_name ? " " : "", post.alt_text),
+        !altExpanded && post.alt_text.length > 80 && /*#__PURE__*/React.createElement("button", { onClick: () => setAltExpanded(true), style: { position: "absolute", right: 0, bottom: 0, background: "var(--card-bg)", border: "none", color: COLORS.blue, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "0 0 0 4px", lineHeight: 1.45 } }, "more")
+      ),
+      altExpanded && post.alt_text.length > 80 && /*#__PURE__*/React.createElement("button", { onClick: () => setAltExpanded(false), style: { background: "none", border: "none", color: COLORS.blue, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: "2px 0 0" } }, "less")
     ),
   ),
     showMenu && React.createElement("div", { onClick: () => setShowMenu(false), style: { position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "flex-end" } },
@@ -10022,7 +10023,7 @@ function ComposeModal({
           ? Math.max(1000, Math.min(30000, Number(selectedMusic.music_clip_duration_ms) || 30000))
           : undefined,
         gif_url: gifUrl || undefined,
-        alt_text: altText.trim() || undefined,
+        alt_text: altText || undefined,
         sticker_overlays: stickerOverlays.length ? stickerOverlays : undefined,
         emoji_overlays: (finalVideoUrl && emojiOverlays.length) ? emojiOverlays : undefined,
         video_text_overlays: (finalVideoUrl && videoTextOverlays.length) ? videoTextOverlays : undefined,
@@ -10869,7 +10870,7 @@ function ComposeModal({
         /*#__PURE__*/React.createElement("span", { style: { fontSize: 13, fontWeight: 700 } }, "Uploading video…")
       ),
       (videoUrl || localVideoPreviewUrl || photoUrls.length > 0) && /*#__PURE__*/React.createElement(React.Fragment, null,
-      (!videoUrl && !localVideoPreviewUrl && photoUrls.length > 0) && /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); setShowAltEditor(true); }, style: { position: "absolute", bottom: 12, right: 10, zIndex: 4, background: altText.trim() ? "rgba(24,119,242,0.9)" : "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: 16, padding: "4px 11px", fontSize: 12, fontWeight: 800, cursor: "pointer", letterSpacing: 0.3, backdropFilter: "blur(4px)" } }, "+ALT"),
+      /*#__PURE__*/React.createElement("button", { onClick: e => { e.stopPropagation(); setShowAltEditor(true); }, style: { position: "absolute", bottom: 12, right: 10, zIndex: 4, background: altText.trim() ? "rgba(24,119,242,0.9)" : "rgba(0,0,0,0.65)", color: "#fff", border: "none", borderRadius: 16, padding: "4px 11px", fontSize: 12, fontWeight: 800, cursor: "pointer", letterSpacing: 0.3, backdropFilter: "blur(4px)" } }, "+ALT"),
       /*#__PURE__*/React.createElement("button", { onClick: e => {
         e.stopPropagation();
         stopComposeMediaPlayback({ clearMusic: true });
