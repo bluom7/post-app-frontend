@@ -9380,6 +9380,7 @@ function ComposeModal({
   const [videoWidth, setVideoWidth] = useState(0);   // natural px width — captured at pick time, stored in MongoDB for layout-jump-free feed
   const [videoHeight, setVideoHeight] = useState(0); // natural px height
   const [videoUploading, setVideoUploading] = useState(false);
+  const [videoPreparing, setVideoPreparing] = useState(false);
   const [localVideoPreviewUrl, setLocalVideoPreviewUrl] = useState(null);
   const [videoPosterUrl, setVideoPosterUrl] = useState(null);
   const [videoPreviewReadySource, setVideoPreviewReadySource] = useState(null);
@@ -9643,6 +9644,7 @@ function ComposeModal({
     const toAdd = files.slice(0, remaining);
     if (!toAdd.length) { showToast('Max 5 photos!', COLORS.red); return; }
     // Photos and video are mutually exclusive on a single post
+    setVideoPreparing(false);
     setVideoUrl(null); setVideoDuration(0); setPhotoAspect(null);
     setPendingVideoFile(null);
     clearLocalVideoPreview();
@@ -9676,6 +9678,7 @@ function ComposeModal({
   const handleVideoFile = file => {
     if (!file.type.startsWith('video/')) { showToast('Please choose a valid video file.', COLORS.red); return; }
     if (file.size > MAX_POST_VIDEO_BYTES) { showToast('Video is too large — please choose a smaller clip.', COLORS.red); return; }
+    setVideoPreparing(true);
     const objectUrl = URL.createObjectURL(file);
     const probe = document.createElement('video');
     probe.preload = 'auto';
@@ -9718,6 +9721,7 @@ function ComposeModal({
         }
         selectionApplied = true;
         const commitVideoSelection = () => {
+          setVideoPreparing(false);
           setVideoPreviewReadySource(null);
           // Photos and video are mutually exclusive on a single post.
           setPhotoUrls([]); setPhotoAspect(null);
@@ -9757,8 +9761,9 @@ function ComposeModal({
 
     probe.onloadedmetadata = () => {
       const dur = probe.duration;
-      if (!isFinite(dur) || dur <= 0) { URL.revokeObjectURL(objectUrl); showToast('Could not read video length. Try another file.', COLORS.red); return; }
+      if (!isFinite(dur) || dur <= 0) { setVideoPreparing(false); URL.revokeObjectURL(objectUrl); showToast('Could not read video length. Try another file.', COLORS.red); return; }
       if (dur > MAX_PICK_VIDEO_SECONDS + 0.5) {
+        setVideoPreparing(false);
         URL.revokeObjectURL(objectUrl);
         showToast('Videos must be ' + MAX_PICK_VIDEO_SECONDS + ' seconds or less.', COLORS.red);
         return;
@@ -9771,7 +9776,7 @@ function ComposeModal({
     probe.onloadeddata = applyVideoSelection;
     probe.oncanplay = applyVideoSelection;
     probe.onplaying = applyVideoSelection;
-    probe.onerror = () => { if (!selectionApplied) URL.revokeObjectURL(objectUrl); showToast('Could not read video. Try another file.', COLORS.red); };
+    probe.onerror = () => { if (!selectionApplied) { setVideoPreparing(false); URL.revokeObjectURL(objectUrl); } showToast('Could not read video. Try another file.', COLORS.red); };
     probe.src = objectUrl;
     try {
       const playback = probe.play();
@@ -9796,6 +9801,7 @@ function ComposeModal({
       handleVideoFile(file);
     } else {
       // Treat as photo
+      setVideoPreparing(false);
       setVideoUrl(null); setVideoDuration(0); setPendingVideoFile(null);
       clearLocalVideoPreview();
       compressPhoto(file).then(result => {
@@ -10768,6 +10774,9 @@ function ComposeModal({
           : /*#__PURE__*/React.createElement("svg",{width:14,height:14,viewBox:"0 0 24 24",fill:"var(--text)"},/*#__PURE__*/React.createElement("polygon",{points:"5 3 19 12 5 21 5 3"}))
       ),
       /*#__PURE__*/React.createElement("button", { onClick:()=>{ if(postMusicAudioRef.current){postMusicAudioRef.current.pause();postMusicAudioRef.current=null;setMusicPlaying(false);} setSelectedMusic(null); }, style:{ background:"none", border:"none", cursor:"pointer", color:"var(--muted)", fontSize:18, lineHeight:1, padding:"4px", flexShrink:0 } }, "✕")
+    ),
+    videoPreparing && /*#__PURE__*/React.createElement("div", { style: { minHeight: 120, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
+      /*#__PURE__*/React.createElement("div", { style: { width: 34, height: 34, border: "3px solid rgba(24,119,242,0.2)", borderTopColor: COLORS.blue, borderRadius: "50%", animation: "spin 0.8s linear infinite" } })
     ),
     /* Photo / Video area — keep selected video at its natural aspect ratio */
     (photoUrls.length > 0 || hasVideoPreview || (videoUploading && videoPreviewLayout && videoPreviewLayout.width > 0 && videoPreviewLayout.height > 0)) && /*#__PURE__*/React.createElement("div", { style: { position: "relative", overflow: "hidden", background: "var(--card-bg)", flexShrink: 0 } },
