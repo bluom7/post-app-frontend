@@ -6143,9 +6143,6 @@ function BentoPostCard({
   const isFollowing = followingIds ? followingIds.has(post.user_id) : false;
   const isPending = pendingFollowIds ? pendingFollowIds.has(post.user_id) : false;
   const postAvatarPhoto = post.avatar_photo || post.avatar_url;
-  const headerHandle = post.user_handle
-    ? (String(post.user_name || "").trim().length > 12 ? "@..." : "@" + post.user_handle.replace(/^@/, ""))
-    : "";
 
   const timeAgo = ts => {
     if (!ts) return "";
@@ -6379,15 +6376,15 @@ function BentoPostCard({
         onClick: () => canViewProfile && onViewProfile(post.user_id),
         style: { width: 40, height: 40, borderRadius: "50%", background: postAvatarPhoto ? "transparent" : (post.avatar_bg || COLORS.yellow), display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 17, flexShrink: 0, overflow: "hidden", cursor: canViewProfile ? "pointer" : "default" }
       }, postAvatarPhoto ? React.createElement("img", { src: postAvatarPhoto, alt: "", style: { width: "100%", height: "100%", objectFit: "cover", display: "block" } }) : post.avatar_letter),
-            React.createElement("div", { style: { flex: 1, minWidth: 0, overflow: "visible", transform: "translateY(2px)" } },
-        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, minWidth: 0, flexWrap: "wrap", overflow: "visible", lineHeight: 1.2 } },
-          React.createElement("span", { onClick: () => canViewProfile && onViewProfile(post.user_id), style: { fontWeight: 700, fontSize: 15, color: "var(--text)", cursor: canViewProfile ? "pointer" : "default", flex: "0 0 auto", whiteSpace: "normal", overflow: "visible", textOverflow: "clip", maxWidth: "100%", overflowWrap: "anywhere" } }, post.user_name),
+            React.createElement("div", { style: { flex: 1, minWidth: 0, overflow: "hidden", transform: "translateY(2px)" } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, minWidth: 0, whiteSpace: "nowrap", overflow: "hidden", lineHeight: 1.2 } },
+          React.createElement("span", { onClick: () => canViewProfile && onViewProfile(post.user_id), style: { fontWeight: 700, fontSize: 15, color: "var(--text)", cursor: canViewProfile ? "pointer" : "default", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: "0 1 auto" } }, post.user_name),
           post.is_badge_verified && React.createElement("span", {
             title: "Verified " + (post.verified_category || ""),
             onClick: (e) => { e.stopPropagation(); setShowVerifiedInfo(true); },
             style: { cursor: "pointer", display: "inline-flex", alignItems: "center", flexShrink: 0 }
           }, React.createElement(VerifiedBadge,{size:14})),
-          post.user_handle && React.createElement("span", { style: { fontSize: 15, color: "var(--muted)", flex: "0 0 auto", whiteSpace: "nowrap" } }, headerHandle),
+          post.user_handle && React.createElement("span", { style: { fontSize: 15, color: "var(--muted)", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: "0 1 auto" } }, "@" + post.user_handle.replace(/^@/, "")),
           !post.alt_text && timeAgo(post.created_at) && React.createElement("span", { style: { fontSize: 15, color: "var(--muted)", flexShrink: 0 } }, "· " + timeAgo(post.created_at))
         ),
         (post.location || post.feeling || (post.tagged_users && post.tagged_users.length > 0)) && React.createElement("div", { style: { fontSize: 12, color: "var(--muted)", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
