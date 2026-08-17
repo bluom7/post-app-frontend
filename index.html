@@ -5679,6 +5679,16 @@ function FeedVideo({ post }) {
     }
   };
 
+  const toggleSound = (e) => {
+    if (e) e.stopPropagation();
+    const v = videoRef.current;
+    if (!v) return;
+    const nextSoundOn = !soundOnRef.current;
+    soundOnRef.current = nextSoundOn;
+    setSoundOn(nextSoundOn);
+    v.muted = !nextSoundOn;
+  };
+
   const ar = post.aspect_ratio; // width/height ratio stored in MongoDB
 
   // ── Container sizing ──────────────────────────────────────────────
@@ -5783,27 +5793,12 @@ function FeedVideo({ post }) {
       }
     }, t.text)),
 
-    // ── Playback control: bottom-right, interactive, audible on play ──
-    React.createElement('button', {
-      type: 'button',
-      onClick: togglePlayback,
-      'aria-label': paused ? 'Play video with sound' : 'Pause video',
-      style: {
-        position: 'absolute', bottom: 10, right: 10, zIndex: 4,
-        width: 34, height: 34, padding: 0,
-        background: 'rgba(0,0,0,0.58)', border: 'none', borderRadius: '50%',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#fff', cursor: 'pointer', pointerEvents: 'auto',
-        touchAction: 'manipulation'
-      }
-    },
-      paused
-        ? React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: '#fff' },
-            React.createElement('polygon', { points: '7 4 19 12 7 20 7 4' }))
-        : React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: '#fff' },
-            React.createElement('rect', { x: 6, y: 4, width: 4, height: 16, rx: 1 }),
-            React.createElement('rect', { x: 14, y: 4, width: 4, height: 16, rx: 1 }))
-    ),
+    // ── Speaker control: bottom-right, matching reel media control ──
+    React.createElement(ReelMediaControl, {
+      active: soundOn,
+      onClick: toggleSound,
+      ariaLabel: soundOn ? 'Mute video' : 'Unmute video'
+    }),
 
     // ── Play overlay (shown when video loaded but paused) ─────────────
     loaded && paused && React.createElement('div', {
