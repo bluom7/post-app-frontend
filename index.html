@@ -3424,6 +3424,7 @@ function PostApp() {
           setUser(u);
           if (u.theme) applyTheme(u.theme);
           setTab("home");
+          setDrawerOpen(false);
           setScreen("app");
         } catch (e) {
           if (retries > 0) {
@@ -3550,6 +3551,7 @@ function PostApp() {
     setToken(d.token);
     if (d.user) { setUser(d.user); if (d.user.theme) applyTheme(d.user.theme); }
     setTab("home");
+    setDrawerOpen(false);
     setScreen("app"); // switch immediately — don't wait for /auth/me round-trip
     // Push a history entry so back button can't return to login screen
     history.pushState({ loggedIn: true }, "");
@@ -3567,6 +3569,7 @@ function PostApp() {
     setToken(newToken);
     if (updatedUser) setUser(updatedUser);
     setTab("home");
+    setDrawerOpen(false);
     setScreen("app");
     history.pushState({ loggedIn: true }, "");
   };
@@ -3575,6 +3578,9 @@ function PostApp() {
     _notifCache = null;
     setToken(null);
     setUser(null);
+    setDrawerOpen(false);
+    setAccountSwitcherOpen(false);
+    setShowDrawerFollowList(null);
     setTab("home");
     setScreen("login");
     setLoginKey(k => k + 1);
@@ -3610,6 +3616,7 @@ function PostApp() {
       localStorage.setItem("token", tok);
       setToken(tok);
       setTab("home");
+      setDrawerOpen(false);
       setScreen("app");
       history.pushState({ loggedIn: true }, "");
     },
@@ -4044,6 +4051,8 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
     },
     onAddAccount: () => {
       setAccountSwitcherOpen(false);
+      setDrawerOpen(false);
+      setShowDrawerFollowList(null);
       setLoginKey(k => k + 1);
       setScreen("login");
     }
