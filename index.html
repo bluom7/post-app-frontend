@@ -5648,6 +5648,8 @@ function FeedVideo({ post }) {
   const [paused, setPaused] = React.useState(true);
   const [soundOn, setSoundOn] = React.useState(false);
   const soundOnRef = React.useRef(false);
+  const [natW, setNatW] = React.useState(0);
+  const [natH, setNatH] = React.useState(0);
 
   // Muted autoplay via IntersectionObserver — play when ≥50% in viewport
   React.useEffect(() => {
@@ -5697,7 +5699,7 @@ function FeedVideo({ post }) {
     v.muted = !nextSoundOn;
   };
 
-  const ar = post.aspect_ratio; // width/height ratio stored in MongoDB
+  const ar = (natW && natH) ? natW / natH : (post.aspect_ratio || null);
 
   // ── Container sizing ──────────────────────────────────────────────
   // When aspect_ratio is available: use CSS aspect-ratio + max-height so the
@@ -5706,7 +5708,7 @@ function FeedVideo({ post }) {
   const containerStyle = {
     position: 'relative',
     width: '100%',
-    background: '#000',
+    background: 'transparent',
     borderRadius: 0,
     overflow: 'hidden',
     cursor: 'pointer',
@@ -5749,14 +5751,19 @@ function FeedVideo({ post }) {
       muted: !soundOn,
       loop: true,
       playsInline: true,
+      onLoadedMetadata: (e) => {
+        const v = e.currentTarget;
+        if (v.videoWidth && v.videoHeight) { setNatW(v.videoWidth); setNatH(v.videoHeight); }
+      },
       onLoadedData: () => setLoaded(true),
       style: {
         display: 'block',
         width: '100%',
         height: ar ? '100%' : 'auto',
-        maxHeight: ar ? undefined : '80vh',
-        objectFit: 'contain',
-        background: '#000',
+        maxHeight: undefined,
+        objectFit: 'cover',
+        objectPosition: 'center center',
+        background: 'transparent',
         WebkitTapHighlightColor: 'transparent',
         opacity: loaded ? 1 : 0,
         transition: 'opacity 0.25s ease',
