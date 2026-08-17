@@ -932,7 +932,7 @@ const TRANSLATIONS = {
     privateAccount: "এই অ্যাকাউন্ট প্রাইভেট",
     reels: "রিলস",
     alerts: "সতর্কতা",
-    reply: "উত্তর দিন",
+    reply: "উত্��র দিন",
     share: "শেয়���������র করুন",
     delete: "মুছুন",
     report: "রিপোর্ট করুন",
@@ -5880,7 +5880,7 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay }) {
   };
 
   // Aspect ratio: prefer stored value (no layout jump), fall back to dynamic after metadata loads
-  const ar = post.aspect_ratio || (reelNatW && reelNatH ? reelNatW / reelNatH : null);
+  const ar = (reelNatW && reelNatH) ? reelNatW / reelNatH : (post.aspect_ratio || null);
 
   return React.createElement("div", {
     ref: containerRef,
@@ -5888,14 +5888,14 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay }) {
     style: {
       position: "relative",
       cursor: "pointer",
-      background: "#000",
+      background: "transparent",
       borderRadius: 0,
       overflow: "hidden",
       WebkitTapHighlightColor: "transparent",
       width: "100%",
       // aspectRatio sizes container to EXACTLY the video's natural dimensions.
       // Never add maxHeight alongside aspectRatio+width:100% — it clips height
-      // while keeping full width, causing objectFit:contain to add black bars.
+      // while keeping full width, causing objectFit:cover to add black bars.
       aspectRatio: ar ? String(ar) : undefined,
       minHeight: !ar ? 200 : undefined,
     }
@@ -5915,8 +5915,9 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay }) {
         // NO maxHeight — that's what caused the black bars.
         height: ar ? "100%" : "auto",
         display: "block",
-        objectFit: "contain",
-        background: "#000",
+        objectFit: "cover",
+        objectPosition: "center center",
+        background: "transparent",
         WebkitTapHighlightColor: "transparent",
         filter: (post.video_effect && post.video_effect !== 'none') ? ((VIDEO_EFFECTS.find(function(e){return e.id===post.video_effect;})||VIDEO_EFFECTS[0]).filter) : 'none'
       }
@@ -6379,7 +6380,7 @@ function BentoPostCard({
     style: {
       position:"absolute", top:0, left:0, right:0, zIndex:8, pointerEvents:"none",
       padding:"12px 12px 24px", boxSizing:"border-box", color:"#fff",
-      background:"linear-gradient(180deg, rgba(0,0,0,.80) 0%, rgba(0,0,0,.38) 58%, rgba(0,0,0,0) 100%)"
+      background:"transparent"
     }
   },
     React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:9, minWidth:0 } },
@@ -6404,12 +6405,12 @@ function BentoPostCard({
       ),
       !isOwn && onFollow && React.createElement("button", {
         onClick:e=>{e.stopPropagation();onFollow(post.user_id);},
-        style:{ background:"rgba(0,0,0,.42)", color:"#fff", border:"1px solid rgba(255,255,255,.78)", borderRadius:8, padding:"6px 11px", minWidth:74, fontSize:13, fontWeight:800, lineHeight:"18px", cursor:"pointer", pointerEvents:"auto", flexShrink:0, whiteSpace:"nowrap", backdropFilter:"blur(5px)" }
+        style:{ background:"rgba(255,255,255,.18)", color:"#fff", border:"1px solid rgba(255,255,255,.78)", borderRadius:8, padding:"6px 11px", minWidth:74, fontSize:13, fontWeight:800, lineHeight:"18px", cursor:"pointer", pointerEvents:"auto", flexShrink:0, whiteSpace:"nowrap", backdropFilter:"blur(5px)" }
       }, isFollowing ? "Following" : isPending ? "Requested" : "Follow"),
       React.createElement("button", {
         onClick:e=>{e.stopPropagation();setShowMenu(s=>!s);},
         "aria-label":"More options",
-        style:{ background:"rgba(0,0,0,.32)", border:"none", color:"#fff", borderRadius:"50%", width:30, height:30, padding:0, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", pointerEvents:"auto", flexShrink:0 }
+        style:{ background:"rgba(255,255,255,.18)", border:"none", color:"#fff", borderRadius:"50%", width:30, height:30, padding:0, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", pointerEvents:"auto", flexShrink:0 }
       }, React.createElement("svg",{width:19,height:19,viewBox:"0 0 24 24",fill:"currentColor"},React.createElement("circle",{cx:"12",cy:"5",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"12",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"19",r:"1.5"})))
     )
   ) : null;
@@ -6517,7 +6518,7 @@ function BentoPostCard({
 
             )
           : React.createElement(PostMedia,{post,maxHeight:466,borderRadius:0,user,onLike,onComment,onSave,onRepost,onFollow,followingIds,pendingFollowIds,onViewProfile}),
-    // ── Action bar ─────────────────────────────────────────────
+    // ── Action bar ───────────────────���─────────────────────────
     React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "8px 10px 6px", gap: 0 } },
       // Like
       React.createElement("button", { onClick: handleHeartClick, style: { ...S.btn, color: likeColor || "var(--muted)", transform: heartPop ? "scale(1.3)" : "scale(1)" } },
@@ -14372,7 +14373,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
     };
   }, []); // run once on mount
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────────────��──────────
   const fmtConvTime = ts => {
     if (!ts) return '';
     try {
