@@ -9,7 +9,10 @@ self.addEventListener('push', function(event) {
     body: data.body || '',
     icon: data.icon || '/icon-192.png',
     badge: data.badge_url || '/badge-72.png',
-    data: { url: data.url || self.registration.scope },
+    data: {
+      url: data.url || self.registration.scope,
+      type: data.type || data.notification_type || '',
+    },
     vibrate: [100, 50, 100],
     tag: data.tag || 'post-app',
     requireInteraction: false,
@@ -24,7 +27,7 @@ self.addEventListener('notificationclick', function(event) {
   var notifType = notifData.type || '';
   var isChat = notifType === 'message' || notifType === 'group_message' || notifType === 'chat';
   var targetMsg = isChat ? 'OPEN_FRIENDS' : 'OPEN_NOTIFICATIONS';
-  var targetUrl = scopeUrl + (scopeUrl.endsWith('/') ? '' : '/') + (isChat ? '?open=friends' : '?open=notifications');
+  var targetUrl = notifData.url || (scopeUrl + (scopeUrl.endsWith('/') ? '' : '/') + (isChat ? '?open=friends' : '?open=notifications'));
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
