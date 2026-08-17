@@ -6499,7 +6499,7 @@ function BentoPostCard({
           React.createElement("rect", { x: 13, y: 14, width: 3, height: 7 }),
           React.createElement("rect", { x: 18.5, y: 4, width: 3, height: 17 })
         ),
-        React.createElement("span", { style: { fontSize: 13 } }, fmtCount(post.views?.length) || "")
+        React.createElement("span", { style: { fontSize: 13 } }, fmtCount(post.views?.length || post.views_count || post.view_count) || "0")
       ),
       React.createElement("div", { style: { flex: 1 } }),
       // Save/Bookmark
@@ -7006,7 +7006,7 @@ function PhotoLightbox({ photos, startIdx, onClose, post, user, onLike, onCommen
           React.createElement('rect',{x:2,y:14,width:3,height:7}), React.createElement('rect',{x:7.5,y:4,width:3,height:17}),
           React.createElement('rect',{x:13,y:14,width:3,height:7}), React.createElement('rect',{x:18.5,y:4,width:3,height:17})
         ),
-        React.createElement('span', null, fmtC(post.views?.length)||'')
+        React.createElement('span', null, fmtC(post.views?.length || post.views_count || post.view_count)||'0')
       ),
       React.createElement('div', { style:{ flex:1 } }),
       // Bookmark
@@ -11453,7 +11453,7 @@ function DiscoverTab({ token, user, showToast, onViewProfile, onBack }) {
     const likes    = (post.likes||[]).length||post.likes_count||0;
     const cmtCount = (post.comments||[]).length||post.comments_count||0;
     const reposts  = (post.reposts||[]).length||0;
-    const views    = (post.views||[]).length||post.views_count||0;
+    const views    = (post.views||[]).length||post.views_count||post.view_count||0;
     const verified = post.is_badge_verified;
     const isMenu   = openMenuId===post.id;
     const isCmtOpen= commentState.postId===post.id;
@@ -11514,7 +11514,7 @@ function DiscoverTab({ token, user, showToast, onViewProfile, onBack }) {
               // Views
               React.createElement('div',{style:{display:'flex',alignItems:'center',gap:5,color:'var(--muted)',fontSize:13}},
                 React.createElement('svg',{width:17,height:17,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.8,strokeLinecap:'round'},React.createElement('line',{x1:18,y1:20,x2:18,y2:10}),React.createElement('line',{x1:12,y1:20,x2:12,y2:4}),React.createElement('line',{x1:6,y1:20,x2:6,y2:14})),
-                views>0?fmtNum(views):''),
+                fmtNum(views)),
               // Save
               React.createElement('button',{onClick:()=>handleSave(post.id),style:btnStyle(isSaved?COLORS.yellow:null)},
                 React.createElement('svg',{width:17,height:17,viewBox:'0 0 24 24',fill:isSaved?COLORS.yellow:'none',stroke:isSaved?COLORS.yellow:'currentColor',strokeWidth:1.8,strokeLinecap:'round',strokeLinejoin:'round'},React.createElement('path',{d:'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z'}))),
