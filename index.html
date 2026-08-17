@@ -6101,9 +6101,11 @@ function BentoPostCard({
   const [commentText, setCommentText] = React.useState("");
   const [heartPop, setHeartPop] = React.useState(false);
   const [showMenu, setShowMenu] = React.useState(false);
-  const postSongMarqueeText = post.music_title || post.audio_label
-    ? (post.music_title || post.audio_label) + (post.music_artist ? " · " + post.music_artist : "")
-    : "";
+  const postSongMarqueeText = post.music_title
+    ? post.music_title + (post.music_artist ? " · " + post.music_artist : "")
+    : post.audio_label
+      ? (post.user_name ? post.user_name + " · " : "") + post.audio_label
+      : "";
   const postSongMarqueeRef = React.useRef(null);
   const [postSongMarqueeDuration, setPostSongMarqueeDuration] = React.useState(8);
   React.useEffect(() => {
