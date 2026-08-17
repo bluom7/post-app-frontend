@@ -27113,6 +27113,8 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
   const musicClipDuration = Math.max(1, Math.min(30, Number(reel.music_clip_duration) || 30));
   const musicClipTimerRef = React.useRef(null);
   const progressBarRef = React.useRef(null);
+  // Keep the audio button tap from reaching the video playback handler.
+  const audioControlClickSuppressedRef = React.useRef(false);
 
   const clearMusicClipTimer = () => {
     if (musicClipTimerRef.current) { clearTimeout(musicClipTimerRef.current); musicClipTimerRef.current = null; }
@@ -27200,7 +27202,10 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
         // Original video audio: try unmuted, fallback muted
         v.muted = false;
         v.play().catch(() => {
+          // Android may reject unmuted autoplay; sync the control state with the fallback.
           v.muted = true;
+          audioEnabledRef.current = false;
+          setAudioEnabled(false);
           v.play().catch(() => {});
         });
       }
@@ -27324,15 +27329,44 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
     }
   }
 
-  // Media icon: toggle audio ON/OFF, apply immediately
+  // Media icon: toggle audio without toggling video playback.
+  function stopAudioControlEvent(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
+    const nativeEvent = e && e.nativeEvent;
+    if (nativeEvent && nativeEvent.stopImmediatePropagation) nativeEvent.stopImmediatePropagation();
+  }
+
   function toggleAudio(e) {
-    e.stopPropagation();
+    stopAudioControlEvent(e);
     const newEnabled = !audioEnabledRef.current;
     audioEnabledRef.current = newEnabled;
     setAudioEnabled(newEnabled);
     const v = videoRef.current;
-    const isPlaying = isPhotoReel ? !paused : (v && !v.paused);
-    if (isPlaying) applyAudioState(newEnabled);
+    if (isPhotoReel) {
+      applyAudioState(newEnabled);
+    } else if (v) {
+      const wasPlaying = !v.paused;
+      applyAudioState(newEnabled);
+      if (wasPlaying && v.paused) v.play().catch(() => {});
+    }
+  }
+
+  function handleAudioPointerDown(e) {
+    stopAudioControlEvent(e);
+    audioControlClickSuppressedRef.current = true;
+    toggleAudio(e);
+    e.currentTarget.style.transform = "scale(0.9)";
+    e.currentTarget.style.background = "rgba(0,0,0,0.82)";
+  }
+
+  function handleAudioClick(e) {
+    stopAudioControlEvent(e);
+    if (audioControlClickSuppressedRef.current) {
+      audioControlClickSuppressedRef.current = false;
+      return;
+    }
+    toggleAudio(e);
   }
 
   const _reelEffFilter = (reel.video_effect && reel.video_effect !== 'none') ? ((VIDEO_EFFECTS.find(function(e){return e.id===reel.video_effect;})||VIDEO_EFFECTS[0]).filter) : 'none';
@@ -27367,7 +27401,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
           /*#__PURE__*/React.createElement("polygon", { points: "5 3 19 12 5 21 5 3" })))),
     // Instagram-style media audio control — always available on photos and videos
     /*#__PURE__*/React.createElement("button", {
-      onClick: toggleAudio,
+      onClick: handleAudioClick,
       type: "button",
       "aria-label": audioEnabled ? "Mute audio" : "Unmute audio",
       "aria-pressed": audioEnabled,
@@ -27382,11 +27416,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
         transition: "transform 150ms ease, background 150ms ease, box-shadow 150ms ease",
         WebkitTapHighlightColor: "transparent"
       },
-      onPointerDown: e => {
-        e.stopPropagation();
-        e.currentTarget.style.transform = "scale(0.9)";
-        e.currentTarget.style.background = "rgba(0,0,0,0.82)";
-      },
+      onPointerDown: handleAudioPointerDown,
       onPointerUp: e => {
         e.stopPropagation();
         e.currentTarget.style.transform = "scale(1)";
