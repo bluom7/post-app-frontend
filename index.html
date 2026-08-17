@@ -5603,7 +5603,7 @@ function PostSpeakerButton({ post }) {
           /*#__PURE__*/React.createElement("path",{d:"M19.07 4.93a10 10 0 0 1 0 14.14"}),
           /*#__PURE__*/React.createElement("path",{d:"M15.54 8.46a5 5 0 0 1 0 7.07"}))
       : /*#__PURE__*/React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#fff",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round"},
-          /*#__PURE__*/React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }), React.createElement("path", { d: "M19.07 4.93a10 10 0 0 1 0 14.14" }), React.createElement("path", { d: "M15.54 8.46a5 5 0 0 1 0 7.07" }), React.createElement("line", { x1: 4, y1: 4, x2: 20, y2: 20 }), React.createElement("line", { x1: 20, y1: 4, x2: 4, y2: 20 }))
+          /*#__PURE__*/React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }), React.createElement("line", { x1: 7, y1: 7, x2: 17, y2: 17 }), React.createElement("line", { x1: 17, y1: 7, x2: 7, y2: 17 }))
   );
 }
 const VIDEO_EFFECTS = [
@@ -5949,7 +5949,7 @@ function ReelMediaControl({ active, onClick, ariaLabel }) {
           React.createElement("path", { d: "M19.07 4.93a10 10 0 0 1 0 14.14" }),
           React.createElement("path", { d: "M15.54 8.46a5 5 0 0 1 0 7.07" }))
       : React.createElement("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round" },
-          React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }), React.createElement("path", { d: "M19.07 4.93a10 10 0 0 1 0 14.14" }), React.createElement("path", { d: "M15.54 8.46a5 5 0 0 1 0 7.07" }), React.createElement("line", { x1: 4, y1: 4, x2: 20, y2: 20 }), React.createElement("line", { x1: 20, y1: 4, x2: 4, y2: 20 }))
+          React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }), React.createElement("line", { x1: 7, y1: 7, x2: 17, y2: 17 }), React.createElement("line", { x1: 17, y1: 7, x2: 7, y2: 17 }))
   );
 }
 
@@ -10233,7 +10233,7 @@ function ComposeModal({
                     /*#__PURE__*/React.createElement("button", { onClick: () => { const newOn = !altAudioOn; setAltAudioOn(newOn); if (selectedMusic) { const a = altAudioRef.current; if (a) { if (newOn) { a.currentTime = (selectedMusic.music_start_ms||0)/1000; a.play().catch(()=>{}); } else { a.pause(); } } } else { const v = altVidRef.current; if (v) v.muted = !newOn; } }, style: { background: "rgba(0,0,0,0.52)", border: "none", borderRadius: "50%", width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 } },
                       altAudioOn
                         ? /*#__PURE__*/React.createElement("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, /*#__PURE__*/React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }), /*#__PURE__*/React.createElement("path", { d: "M19.07 4.93a10 10 0 0 1 0 14.14" }), /*#__PURE__*/React.createElement("path", { d: "M15.54 8.46a5 5 0 0 1 0 7.07" }))
-                        : /*#__PURE__*/React.createElement("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, /*#__PURE__*/React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }), React.createElement("path", { d: "M19.07 4.93a10 10 0 0 1 0 14.14" }), React.createElement("path", { d: "M15.54 8.46a5 5 0 0 1 0 7.07" }), React.createElement("line", { x1: 4, y1: 4, x2: 20, y2: 20 }), React.createElement("line", { x1: 20, y1: 4, x2: 4, y2: 20 }))
+                        : /*#__PURE__*/React.createElement("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, /*#__PURE__*/React.createElement("polygon", { points: "11 5 6 9 2 9 2 15 6 15 11 19 11 5" }), React.createElement("line", { x1: 7, y1: 7, x2: 17, y2: 17 }), React.createElement("line", { x1: 17, y1: 7, x2: 7, y2: 17 }))
                     )
                   )
                 ),
