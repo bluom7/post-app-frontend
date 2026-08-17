@@ -932,7 +932,7 @@ const TRANSLATIONS = {
     privateAccount: "এই অ্যাকাউন্ট প্রাইভেট",
     reels: "রিলস",
     alerts: "সতর্কতা",
-    reply: "উত্��র দিন",
+    reply: "উত্���র দিন",
     share: "শেয়���������র করুন",
     delete: "মুছুন",
     report: "রিপোর্ট করুন",
@@ -5119,14 +5119,20 @@ function HomeTab({
           if (cachedPosts && cachedPosts.length) {
             setPosts(cachedPosts);
             setLoading(false); // show cached instantly
+            setLoadError(null);
             hasCached = true;
           }
         }
       } catch(_) {}
     }
     try {
-      const d = await api("/posts?feed=true&limit=15", "GET", null, token, 60000);
-      const fresh = d.posts || d;
+      // Do not leave the home screen on an indefinite spinner when the
+      // backend is slow or returns a partial response. Cached posts remain
+      // visible while the request is retried by the shared API helper.
+      const d = await api("/posts?feed=true&limit=15", "GET", null, token, 20000);
+      const fresh = Array.isArray(d?.posts) ? d.posts : (Array.isArray(d) ? d : null);
+      if (!fresh) throw new Error("Feed response was invalid. Tap Retry.");
+      setLoadError(null);
       setPosts(fresh);
       setNewPostsQueue([]);
       try { localStorage.setItem(FEED_CACHE_KEY, JSON.stringify({ posts: fresh, ts: Date.now() })); } catch(_) {}
