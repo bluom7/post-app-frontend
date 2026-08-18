@@ -6402,7 +6402,7 @@ function BentoPostCard({
     React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:10, minWidth:0 } },
       React.createElement("div", {
         onClick: e => { e.stopPropagation(); canViewProfile && onViewProfile(post.user_id); },
-        style:{ width:42, height:42, borderRadius:"50%", overflow:"hidden", flexShrink:0, cursor:canViewProfile?"pointer":"default", pointerEvents:"auto", background:postAvatarPhoto?"transparent":(post.avatar_bg||COLORS.yellow), display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:18, border:"2px solid rgba(255,255,255,.96)", boxShadow:"0 1px 5px rgba(0,0,0,.72)" }
+        style:{ width:42, height:42, borderRadius:"50%", overflow:"hidden", flexShrink:0, cursor:canViewProfile?"pointer":"default", pointerEvents:"auto", background:postAvatarPhoto?"transparent":(post.avatar_bg||COLORS.yellow), display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:18 }
       }, postAvatarPhoto ? React.createElement("img", { src:postAvatarPhoto, alt:"", style:{ width:"100%", height:"100%", objectFit:"cover", display:"block" } }) : (post.avatar_letter || (post.user_name||"?")[0])),
       React.createElement("div", { style:{ flex:"1 1 auto", minWidth:0, overflow:"hidden" } },
         React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:5, minWidth:0, whiteSpace:"nowrap", overflow:"hidden", lineHeight:1.15 } },
@@ -6421,12 +6421,12 @@ function BentoPostCard({
       ),
       !isOwn && onFollow && React.createElement("button", {
         onClick:e=>{e.stopPropagation();onFollow(post.user_id);},
-        style:{ background:"transparent", color:"#fff", border:"1px solid rgba(255,255,255,.96)", boxShadow:"0 1px 4px rgba(0,0,0,.62)", borderRadius:8, padding:"7px 13px", minWidth:82, fontSize:14, fontWeight:800, lineHeight:"18px", cursor:"pointer", pointerEvents:"auto", flexShrink:0, whiteSpace:"nowrap", backdropFilter:"none" }
+        style:{ background:"transparent", color:"#fff", border:"1px solid rgba(255,255,255,.96)", borderRadius:8, padding:"7px 13px", minWidth:82, fontSize:14, fontWeight:800, lineHeight:"18px", cursor:"pointer", pointerEvents:"auto", flexShrink:0, whiteSpace:"nowrap", backdropFilter:"none", textShadow:"none" }
       }, isFollowing ? "Following" : isPending ? "Requested" : "Follow"),
       React.createElement("button", {
         onClick:e=>{e.stopPropagation();setShowMenu(s=>!s);},
         "aria-label":"More options",
-        style:{ background:"transparent", border:"none", color:"#fff", borderRadius:"50%", width:34, height:34, filter:"drop-shadow(0 1px 3px rgba(0,0,0,.9))", padding:0, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", pointerEvents:"auto", flexShrink:0 }
+        style:{ background:"transparent", border:"none", color:"#fff", borderRadius:"50%", width:34, height:34, padding:0, textShadow:"none", display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", pointerEvents:"auto", flexShrink:0 }
       }, React.createElement("svg",{width:21,height:21,viewBox:"0 0 24 24",fill:"currentColor"},React.createElement("circle",{cx:"12",cy:"5",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"12",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"19",r:"1.5"})))
     )
   ) : null;
