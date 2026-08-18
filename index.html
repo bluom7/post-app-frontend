@@ -6394,25 +6394,25 @@ function BentoPostCard({
   const reelVideoTopOverlay = post.video_url ? React.createElement("div", {
     style: {
       position:"absolute", top:0, left:0, right:0, zIndex:8, pointerEvents:"none",
-      padding:"12px 12px 24px", boxSizing:"border-box", color:"#fff",
+      padding:"14px 14px 28px", boxSizing:"border-box", color:"#fff",
       background:"transparent"
     }
   },
-    React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:9, minWidth:0 } },
+    React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:10, minWidth:0 } },
       React.createElement("div", {
         onClick: e => { e.stopPropagation(); canViewProfile && onViewProfile(post.user_id); },
-        style:{ width:38, height:38, borderRadius:"50%", overflow:"hidden", flexShrink:0, cursor:canViewProfile?"pointer":"default", pointerEvents:"auto", background:postAvatarPhoto?"transparent":(post.avatar_bg||COLORS.yellow), display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:16 }
+        style:{ width:42, height:42, borderRadius:"50%", overflow:"hidden", flexShrink:0, cursor:canViewProfile?"pointer":"default", pointerEvents:"auto", background:postAvatarPhoto?"transparent":(post.avatar_bg||COLORS.yellow), display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:18 }
       }, postAvatarPhoto ? React.createElement("img", { src:postAvatarPhoto, alt:"", style:{ width:"100%", height:"100%", objectFit:"cover", display:"block" } }) : (post.avatar_letter || (post.user_name||"?")[0])),
       React.createElement("div", { style:{ flex:"1 1 auto", minWidth:0, overflow:"hidden" } },
         React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:5, minWidth:0, whiteSpace:"nowrap", overflow:"hidden", lineHeight:1.15 } },
-          React.createElement("span", { onClick:e=>{e.stopPropagation();canViewProfile&&onViewProfile(post.user_id);}, style:{ fontWeight:800, fontSize:14, color:"#fff", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", cursor:canViewProfile?"pointer":"default", pointerEvents:"auto" } }, post.user_name || ""),
+          React.createElement("span", { onClick:e=>{e.stopPropagation();canViewProfile&&onViewProfile(post.user_id);}, style:{ fontWeight:800, fontSize:15, color:"#fff", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", cursor:canViewProfile?"pointer":"default", pointerEvents:"auto" } }, post.user_name || ""),
           post.is_badge_verified && React.createElement("span", { onClick:e=>{e.stopPropagation();setShowVerifiedInfo(true);}, style:{ display:"inline-flex", alignItems:"center", flexShrink:0, pointerEvents:"auto", cursor:"pointer" } }, React.createElement(VerifiedBadge,{size:13})),
-          post.user_handle && React.createElement("span", { style:{ fontSize:13, color:"rgba(255,255,255,.84)", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" } }, "@" + post.user_handle.replace(/^@/, ""))
+          post.user_handle && React.createElement("span", { style:{ fontSize:14, color:"rgba(255,255,255,.84)", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" } }, "@" + post.user_handle.replace(/^@/, ""))
         ),
         React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:4, marginTop:4, minWidth:0, overflow:"hidden", maxWidth:"100%" } },
-          React.createElement("svg", { width:12, height:12, viewBox:"0 0 24 24", fill:"#fff", style:{ flexShrink:0, opacity:.92 } }, React.createElement("path", { d:"M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" })),
+          React.createElement("svg", { width:13, height:13, viewBox:"0 0 24 24", fill:"#fff", style:{ flexShrink:0, opacity:.92 } }, React.createElement("path", { d:"M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" })),
           React.createElement("div", { style:{ flex:1, minWidth:0, overflow:"hidden" } },
-            React.createElement("span", { ref:postSongMarqueeRef, style:{ display:"inline-block", whiteSpace:"nowrap", fontSize:12, color:"rgba(255,255,255,.88)", animation:"songHeaderTicker " + postSongMarqueeDuration + "s linear infinite" } },
+            React.createElement("span", { ref:postSongMarqueeRef, style:{ display:"inline-block", whiteSpace:"nowrap", fontSize:13, color:"rgba(255,255,255,.88)", animation:"songHeaderTicker " + postSongMarqueeDuration + "s linear infinite" } },
               (postSongMarqueeText || "Original audio") + "  " + (postSongMarqueeText || "Original audio")
             )
           )
@@ -6420,13 +6420,13 @@ function BentoPostCard({
       ),
       !isOwn && onFollow && React.createElement("button", {
         onClick:e=>{e.stopPropagation();onFollow(post.user_id);},
-        style:{ background:"transparent", color:"#fff", border:"1px solid rgba(255,255,255,.78)", borderRadius:8, padding:"6px 11px", minWidth:74, fontSize:13, fontWeight:800, lineHeight:"18px", cursor:"pointer", pointerEvents:"auto", flexShrink:0, whiteSpace:"nowrap", backdropFilter:"none" }
+        style:{ background:"transparent", color:"#fff", border:"1px solid rgba(255,255,255,.78)", borderRadius:8, padding:"7px 13px", minWidth:82, fontSize:14, fontWeight:800, lineHeight:"18px", cursor:"pointer", pointerEvents:"auto", flexShrink:0, whiteSpace:"nowrap", backdropFilter:"none" }
       }, isFollowing ? "Following" : isPending ? "Requested" : "Follow"),
       React.createElement("button", {
         onClick:e=>{e.stopPropagation();setShowMenu(s=>!s);},
         "aria-label":"More options",
-        style:{ background:"transparent", border:"none", color:"#fff", borderRadius:"50%", width:30, height:30, padding:0, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", pointerEvents:"auto", flexShrink:0 }
-      }, React.createElement("svg",{width:19,height:19,viewBox:"0 0 24 24",fill:"currentColor"},React.createElement("circle",{cx:"12",cy:"5",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"12",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"19",r:"1.5"})))
+        style:{ background:"transparent", border:"none", color:"#fff", borderRadius:"50%", width:34, height:34, padding:0, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", pointerEvents:"auto", flexShrink:0 }
+      }, React.createElement("svg",{width:21,height:21,viewBox:"0 0 24 24",fill:"currentColor"},React.createElement("circle",{cx:"12",cy:"5",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"12",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"19",r:"1.5"})))
     )
   ) : null;
 
