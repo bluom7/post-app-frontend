@@ -6186,6 +6186,7 @@ function BentoPostCard({
   const canViewProfile = !isOwn && onViewProfile;
   const isFollowing = followingIds ? followingIds.has(post.user_id) : false;
   const isPending = pendingFollowIds ? pendingFollowIds.has(post.user_id) : false;
+  const showSuggestedForYou = !isOwn && !isFollowing && !isPending;
   const postAvatarPhoto = post.avatar_photo || post.avatar_url;
 
   const timeAgo = ts => {
@@ -6411,10 +6412,10 @@ function BentoPostCard({
           post.user_handle && React.createElement("span", { style:{ fontSize:14, color:"rgba(255,255,255,.98)", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" } }, "@" + post.user_handle.replace(/^@/, ""))
         ),
         React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:4, marginTop:4, minWidth:0, overflow:"hidden", maxWidth:"100%" } },
-          React.createElement("svg", { width:13, height:13, viewBox:"0 0 24 24", fill:"#fff", style:{ flexShrink:0, opacity:1, filter:"drop-shadow(0 1px 2px rgba(0,0,0,.78))" } }, React.createElement("path", { d:"M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" })),
+          !showSuggestedForYou &&         React.createElement("svg", { width:13, height:13, viewBox:"0 0 24 24", fill:"#fff", style:{ flexShrink:0, opacity:1, filter:"drop-shadow(0 1px 2px rgba(0,0,0,.78))" } }, React.createElement("path", { d:"M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" })),
           React.createElement("div", { style:{ flex:1, minWidth:0, overflow:"hidden" } },
-            React.createElement("span", { ref:postSongMarqueeRef, style:{ display:"inline-block", whiteSpace:"nowrap", fontSize:13, color:"rgba(255,255,255,.96)", animation:"songHeaderTicker " + postSongMarqueeDuration + "s linear infinite" } },
-              (postSongMarqueeText || "Original audio") + "  " + (postSongMarqueeText || "Original audio")
+            React.createElement("span", { ref:postSongMarqueeRef, style:{ display:"inline-block", whiteSpace:"nowrap", fontSize:13, color:"rgba(255,255,255,.96)", animation:showSuggestedForYou ? "none" : "songHeaderTicker " + postSongMarqueeDuration + "s linear infinite" } },
+              showSuggestedForYou ? "Suggested for you" : ((postSongMarqueeText || "Original audio") + "  " + (postSongMarqueeText || "Original audio"))
             )
           )
         )
@@ -6476,12 +6477,12 @@ function BentoPostCard({
           post.feeling ? " · " + post.feeling : "",
           post.tagged_users && post.tagged_users.length ? " · with @" + post.tagged_users.join(", @") : ""
         ),
-      postSongMarqueeText && /*#__PURE__*/React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:4, marginTop:2, overflow:"hidden", maxWidth:"100%" } },
-        /*#__PURE__*/React.createElement("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"var(--muted)",style:{flexShrink:0}},
+      (showSuggestedForYou || postSongMarqueeText) && /*#__PURE__*/React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:4, marginTop:2, overflow:"hidden", maxWidth:"100%" } },
+        !showSuggestedForYou &&         /*#__PURE__*/React.createElement("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"var(--muted)",style:{flexShrink:0}},
           /*#__PURE__*/React.createElement("path",{d:"M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"})),
         /*#__PURE__*/React.createElement("div", { style:{ flex:1, overflow:"hidden", minWidth:0 } },
-          /*#__PURE__*/React.createElement("span",{ ref:postSongMarqueeRef, style:{ fontSize:12, color:"var(--muted)", whiteSpace:"nowrap", display:"inline-block", animation:"songHeaderTicker " + postSongMarqueeDuration + "s linear infinite" } },
-            postSongMarqueeText + "\u2003\u2003" + postSongMarqueeText
+          /*#__PURE__*/React.createElement("span",{ ref:postSongMarqueeRef, style:{ fontSize:12, color:"var(--muted)", whiteSpace:"nowrap", display:"inline-block", animation:showSuggestedForYou ? "none" : "songHeaderTicker " + postSongMarqueeDuration + "s linear infinite" } },
+            showSuggestedForYou ? "Suggested for you" : postSongMarqueeText + "\u2003\u2003" + postSongMarqueeText
           )
         )
       )
