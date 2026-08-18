@@ -5648,7 +5648,7 @@ const VIDEO_EFFECTS = [
 //   • Muted autoplay on scroll — plays when ≥50% visible, pauses when leaving
 //   • aspect_ratio stored in MongoDB → used for layout-jump-free placeholder
 //   • Click to pause / click again to resume
-function FeedVideo({ post }) {
+function FeedVideo({ post, topOverlay }) {
   const videoRef = React.useRef(null);
   const [loaded, setLoaded] = React.useState(false);
   const [paused, setPaused] = React.useState(true);
@@ -5733,6 +5733,8 @@ function FeedVideo({ post }) {
     style: containerStyle,
     onClick: togglePlayback
   },
+    topOverlay,
+
     // ── Loading skeleton ─────────────────────────────────────────────
     // Shown while video bytes haven't arrived yet; fills the reserved container.
     !loaded && React.createElement('div', {
@@ -6389,7 +6391,7 @@ function BentoPostCard({
 
   const S = { btn: { background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 10, transition: "opacity .15s", fontSize: 13 } };
 
-  const reelVideoTopOverlay = post.is_reel && post.video_url ? React.createElement("div", {
+  const reelVideoTopOverlay = post.video_url ? React.createElement("div", {
     style: {
       position:"absolute", top:0, left:0, right:0, zIndex:8, pointerEvents:"none",
       padding:"12px 12px 24px", boxSizing:"border-box", color:"#fff",
@@ -6452,7 +6454,7 @@ function BentoPostCard({
 
   return React.createElement(React.Fragment, null, React.createElement("div", { style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", position: "relative" } },
     // ── Header ──────────────────────────────────────────────────
-    !(post.is_reel && post.video_url) &&     React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "10px 14px 8px", gap: 10 } },
+    !post.video_url &&     React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "10px 14px 8px", gap: 10 } },
       React.createElement("div", {
         onClick: () => canViewProfile && onViewProfile(post.user_id),
         style: { width: 40, height: 40, borderRadius: "50%", background: postAvatarPhoto ? "transparent" : (post.avatar_bg || COLORS.yellow), display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 17, flexShrink: 0, overflow: "hidden", cursor: canViewProfile ? "pointer" : "default" }
@@ -6523,7 +6525,7 @@ function BentoPostCard({
       : post.is_reel && post.photo_url
         ? React.createElement(ReelFeedPhoto, { post, onOpenReel })
       : (!post.is_reel && post.video_url)
-        ? React.createElement(FeedVideo, { post })
+        ? React.createElement(FeedVideo, { post, topOverlay: reelVideoTopOverlay })
         : post.music_title
           ? /*#__PURE__*/React.createElement("div", { style:{ position:"relative" } },
               React.createElement(PostMedia,{post,maxHeight:466,borderRadius:0,user,onLike,onComment,onSave,onRepost,onFollow,followingIds,pendingFollowIds,onViewProfile}),
