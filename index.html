@@ -5272,7 +5272,14 @@ function HomeTab({
   const handleFollow = async (uid) => {
     const isFollowing = followingIds.has(uid);
     const isPending = pendingFollowIds.has(uid);
-    if (isFollowing) return;
+    if (isFollowing) {
+      try {
+        await api('/users/' + uid + '/unfollow', 'POST', null, token);
+        setFollowingIds(s => { const n = new Set(s); n.delete(uid); return n; });
+        showToast('Unfollowed', COLORS.muted);
+      } catch(e) { showToast(e.message, COLORS.red); }
+      return;
+    }
     if (isPending) {
       try {
         await api('/users/' + uid + '/follow-request/cancel', 'POST', null, token);
@@ -26385,10 +26392,31 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
     api("/reels/" + rid + "/save", "POST", {}, token).catch(function() {});
   }
   function gvFollowUser(userId) {
-    var _wasF = false;
-    var upd = function(prev) { return prev.map(function(r) { if (r.user_id === userId) { _wasF = r.is_following; return Object.assign({}, r, { is_following: !r.is_following }); } return r; }); };
-    if (gridViewerSource === "discover") setDiscoverReels(upd); else setSearchReels(upd);
-    setTimeout(function() { if (_wasF) { api("/users/" + userId + "/unfollow","POST",{},token).catch(function(){}); } else { api("/users/" + userId + "/follow","POST",{},token).catch(function(){}); } }, 0);
+    var source = gridViewerSource === "discover" ? discoverReels : searchReels;
+    var current = source.find(function(r) { return r.user_id === userId; });
+    if (!current) return;
+    var wasFollowing = !!current.is_following;
+    var wasPending = !!current.is_follow_pending;
+    var nextFollowing = !wasFollowing && !wasPending;
+    var updateState = function(prev) { return prev.map(function(r) {
+      return r.user_id === userId ? Object.assign({}, r, { is_following: nextFollowing, is_follow_pending: false }) : r;
+    }); };
+    if (gridViewerSource === "discover") setDiscoverReels(updateState); else setSearchReels(updateState);
+    var endpoint = wasPending ? "/users/" + userId + "/follow-request/cancel" : wasFollowing ? "/users/" + userId + "/unfollow" : "/users/" + userId + "/follow";
+    api(endpoint, "POST", {}, token).then(function(result) {
+      var pending = !!(result && result.pending);
+      var confirmedFollowing = wasPending || wasFollowing ? false : !pending;
+      var confirmedPending = wasPending ? false : pending;
+      var confirmState = function(prev) { return prev.map(function(r) {
+        return r.user_id === userId ? Object.assign({}, r, { is_following: confirmedFollowing, is_follow_pending: confirmedPending }) : r;
+      }); };
+      if (gridViewerSource === "discover") setDiscoverReels(confirmState); else setSearchReels(confirmState);
+    }).catch(function() {
+      var rollback = function(prev) { return prev.map(function(r) {
+        return r.user_id === userId ? Object.assign({}, r, { is_following: wasFollowing, is_follow_pending: wasPending }) : r;
+      }); };
+      if (gridViewerSource === "discover") setDiscoverReels(rollback); else setSearchReels(rollback);
+    });
   }
   function searchFollowUser(uid) {
     var wasFollowing = !!searchUserFollow[uid];
@@ -26545,19 +26573,21 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
     var currentReel = reels.find(function(r) { return r.user_id === userId; });
     if (!currentReel) return;
     var previousFollowing = !!currentReel.is_following;
+    var previousPending = !!currentReel.is_follow_pending;
     var seq = nextReelAction("follow:" + userId);
     setReels(function(prev) { return prev.map(function(r) {
       return r.user_id === userId
-        ? Object.assign({}, r, { is_following: !previousFollowing })
+        ? Object.assign({}, r, { is_following: !previousFollowing && !previousPending, is_follow_pending: false })
         : r;
     }); });
-    var endpoint = previousFollowing ? "/users/" + userId + "/unfollow" : "/users/" + userId + "/follow";
+    var endpoint = previousPending ? "/users/" + userId + "/follow-request/cancel" : previousFollowing ? "/users/" + userId + "/unfollow" : "/users/" + userId + "/follow";
     api(endpoint, "POST", {}, token)
       .then(function(result) {
         if (!isLatestReelAction("follow:" + userId, seq)) return;
         var isPending = !!(result && result.pending);
-        var confirmedFollowing = previousFollowing ? false : !isPending;
-        setReels(function(prev) { return prev.map(function(r) { return r.user_id === userId ? Object.assign({}, r, { is_following: confirmedFollowing, is_follow_pending: isPending }) : r; }); });
+        var confirmedFollowing = previousFollowing || previousPending ? false : !isPending;
+        var confirmedPending = previousPending ? false : isPending;
+        setReels(function(prev) { return prev.map(function(r) { return r.user_id === userId ? Object.assign({}, r, { is_following: confirmedFollowing, is_follow_pending: confirmedPending }) : r; }); });
       })
       .catch(function() {
         if (!isLatestReelAction("follow:" + userId, seq)) return;
