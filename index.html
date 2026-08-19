@@ -6568,7 +6568,7 @@ function BentoPostCard({
         }
       }, isFollowing ? "Following" : isPending ? "Requested" : "Follow"),
       // 3-dot menu — bottom sheet opens via Fragment-level showMenu
-      React.createElement("button", { onClick: () => setShowMenu(s => !s), "aria-label": "More options", style: { background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: "4px 10px", display:"flex",alignItems:"center" } }, React.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"currentColor"},React.createElement("circle",{cx:"12",cy:"5",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"12",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"19",r:"1.5"})))
+      React.createElement("button", { onClick: () => setShowMenu(s => !s), "aria-label": "More options", style: { background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: "4px 10px", display:"flex",alignItems:"center", flexShrink:0, marginRight:"-6px" } }, React.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"currentColor"},React.createElement("circle",{cx:"12",cy:"5",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"12",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"19",r:"1.5"})))
     ),
     // ── Repost banner ──────────────────────────────────────────
     post.repost_of && React.createElement("div", { style: { padding: "0 14px 6px", fontSize: 12, color: "var(--muted)", display: "flex", alignItems: "center", gap: 4 } },
