@@ -6566,7 +6566,7 @@ function BentoPostCard({
 
   return React.createElement(React.Fragment, null, React.createElement("div", { style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", position: "relative" } },
     // ── Header ──────────────────────────────────────────────────
-    !post.video_url &&     React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "10px 14px 8px", gap: 10 } },
+    !post.video_url &&     React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "10px 6px 8px 14px", gap: 10 } },
       React.createElement("div", {
         onClick: () => canViewProfile && onViewProfile(post.user_id),
         style: { width: 40, height: 40, borderRadius: "50%", background: postAvatarPhoto ? "transparent" : (post.avatar_bg || COLORS.yellow), display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 17, flexShrink: 0, overflow: "hidden", cursor: canViewProfile ? "pointer" : "default" }
