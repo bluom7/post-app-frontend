@@ -11820,11 +11820,15 @@ function FollowListModal({
   const [actionLoading, setActionLoading] = useState({});
   const [search, setSearch] = useState('');
   useEffect(() => {
-    const h = e => { const d = e.detail || {}; if (!d.userId) return; setMyFollowing(s => { const n = new Set(s); d.following ? n.add(d.userId) : n.delete(d.userId); return n; });
+    const h = e => {
+      const d = e.detail || {};
+      if (!d.userId) return;
+      setMyFollowing(s => { const n = new Set(s); d.following ? n.add(d.userId) : n.delete(d.userId); return n; });
       if (String(userId) === String(currentUser && currentUser.id) && String(d.actorId) === String(currentUser && currentUser.id) && d.targetUser) setFollowing(s => d.following ? (s.some(u => u.id === d.userId) ? s : [...s, d.targetUser]) : s.filter(u => u.id !== d.userId));
-      if (String(userId) === String(d.userId) && String(d.actorId) === String(currentUser && currentUser.id) && d.actorUser) setFollowers(s => d.following ? (s.some(u => u.id === d.actorId) ? s : [...s, d.actorUser]) : s.filter(u => u.id !== d.actorId));
+      if (String(userId) === String(d.userId) && d.actorUser) setFollowers(s => d.following ? (s.some(u => u.id === d.actorId) ? s : [...s, d.actorUser]) : s.filter(u => u.id !== d.actorId));
     };
-    window.addEventListener('__followSync', h); return () => window.removeEventListener('__followSync', h);
+    window.addEventListener("__followSync", h);
+    return () => window.removeEventListener("__followSync", h);
   }, [userId, currentUser && currentUser.id]);
   const load = async () => {
     setLoading(true);
@@ -12030,9 +12034,9 @@ function UserProfileScreen({
   const _postSwipeY = React.useRef(null);
   const [showVerifiedInfo, setShowVerifiedInfo] = useState(false);
   useEffect(() => {
-    const h = e => { const d = e.detail || {}; if (String(d.userId) === String(userId) && d.followersDelta) setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) + d.followersDelta)})); if (String(userId) === String(currentUser && currentUser.id) && String(d.actorId) === String(currentUser && currentUser.id) && d.followingDelta) setStats(s => ({...s, following: Math.max(0, (s.following || 0) + d.followingDelta)})); };
+    const h = e => { const d = e.detail || {}; if (String(d.userId) === String(userId)) { setFollowStatus(d.pending ? "pending" : d.following ? "following" : "none"); if (d.followersDelta) setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) + d.followersDelta)})); } if (String(userId) === String(currentUser && currentUser.id) && String(d.actorId) === String(currentUser && currentUser.id) && d.followingDelta) setStats(s => ({...s, following: Math.max(0, (s.following || 0) + d.followingDelta)})); };
     window.addEventListener("__followSync", h); return () => window.removeEventListener("__followSync", h);
-  }, [userId, currentUser && currentUser.id]);  const [showVerifiedInfo, setShowVerifiedInfo] = useState(false);
+  }, [userId, currentUser && currentUser.id]);
 
   useEffect(() => {
     setLoading(true);
@@ -12059,21 +12063,15 @@ function UserProfileScreen({
     const optimisticFollowing = !wasFollowing && !wasPending, delta = optimisticFollowing ? 1 : wasFollowing ? -1 : 0;
     const targetUser = getFollowUser(profile, userId);
     setFollowLoading(true);
-    setFollowStatus(optimisticFollowing ? "following" : "none");
-    if (delta) setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) + delta)}));
     dispatchFollowUpdate(userId, optimisticFollowing, false, { actorId:currentUser&&currentUser.id, actorUser:currentUser, targetUser, followersDelta:delta });
     const endpoint = wasFollowing ? "/users/"+userId+"/unfollow" : wasPending ? "/users/"+userId+"/follow-request/cancel" : "/users/"+userId+"/follow";
     try {
       const res = await api(endpoint, "POST", null, token);
       const pending = !wasFollowing && !wasPending && !!(res && res.pending), following = optimisticFollowing && !pending;
-      setFollowStatus(pending ? "pending" : following ? "following" : "none");
-      if (pending && delta) setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) - delta)}));
       dispatchFollowUpdate(userId, following, pending, { actorId:currentUser&&currentUser.id, actorUser:currentUser, targetUser, followersDelta:pending ? -delta : 0 });
       invalidateCache("/friends"); invalidateCache("/auth/me");
       showToast(pending ? "Follow request sent ✉️" : following ? "Following! ✓" : wasPending ? "Request cancelled" : "Unfollowed", pending ? COLORS.yellow : following ? COLORS.green : COLORS.muted);
     } catch (e) {
-      setFollowStatus(wasPending ? "pending" : wasFollowing ? "following" : "none");
-      if (delta) setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) - delta)}));
       dispatchFollowUpdate(userId, wasFollowing, wasPending, { actorId:currentUser&&currentUser.id, actorUser:currentUser, targetUser, followersDelta:-delta });
       showToast(e.message, COLORS.red);
     }
