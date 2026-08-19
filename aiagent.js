@@ -133,7 +133,7 @@ const Icon = {
     </svg>
   ),
   ArrowLeft: (p) => (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" {...p}>
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" {...p}>
       <path d="M19 12H5M11 6l-6 6 6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
@@ -312,7 +312,7 @@ function toSpeechText(text) {
     .trim();
 }
 
-export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvatarUrl }) {
+export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvatarUrl, onBack }) {
   const [messages, setMessages] = useState([
     { role: "assistant", content: WELCOME, time: timeNow() },
   ]);
@@ -1302,7 +1302,7 @@ export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = 
   );
 }
 
-function UserAvatar({ name, avatarUrl }) {
+function UserAvatar({ name, avatarUrl, size }) {
   const initial = (name || "?").trim().charAt(0).toUpperCase();
   // Deterministic brand color per name so initials avatars aren't all the same color
   const palette = [BRAND.yellow, BRAND.green, BRAND.red, BRAND.blue];
@@ -1310,10 +1310,10 @@ function UserAvatar({ name, avatarUrl }) {
   const bg = palette[colorIndex];
 
   if (avatarUrl) {
-    return <img src={avatarUrl} alt={name} style={styles.avatarImg} />;
+    return <img src={avatarUrl} alt={name} style={{ ...styles.avatarImg, ...(size ? { width: size, height: size } : {}) }} />;
   }
   return (
-    <div style={{ ...styles.avatarFallback, background: bg }}>
+    <div style={{ ...styles.avatarFallback, ...(size ? { width: size, height: size } : {}), background: bg }}>
       <span style={styles.avatarInitial}>{initial}</span>
     </div>
   );
