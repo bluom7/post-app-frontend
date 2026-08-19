@@ -238,6 +238,13 @@ function dispatchPostUpdate(postId, fields) {
 function dispatchReelUpdate(reelId, fields) {
   window.dispatchEvent(new CustomEvent('__reelSync', { detail: { id: reelId, fields } }));
 }
+function dispatchFollowUpdate(userId, following, pending, meta) {
+  window.dispatchEvent(new CustomEvent('__followSync', { detail: Object.assign({ userId, following: !!following, pending: !!pending }, meta || {}) }));
+}
+function getFollowUser(source, id) {
+  source = source || {};
+  return { id, name: source.name || source.display_name || source.user_name || source.username || "User", username: source.username || (source.handle || "").replace(/^@/, "") || id, handle: source.handle || (source.username ? "@" + source.username : "@" + id), avatar_photo: source.avatar_photo || source.avatar_url || null, avatar_bg: source.avatar_bg || null, avatar_letter: source.avatar_letter || null };
+}
 // Hook: call inside any component that holds a posts/reels array in state.
 // setter = the React setState function for that array.
 function usePostSync(setter) {
@@ -5063,6 +5070,7 @@ function HomeTab({
 
   // Sync count updates from other sections (profile, reels, etc.)
   usePostSync(setPosts);
+  useEffect(() => { const h = e => { const d = e.detail || {}; if (!d.userId) return; setFollowingIds(s => { const n = new Set(s); d.following ? n.add(d.userId) : n.delete(d.userId); return n; }); setPendingFollowIds(s => { const n = new Set(s); d.pending ? n.add(d.userId) : n.delete(d.userId); return n; }); }; window.addEventListener('__followSync', h); return () => window.removeEventListener('__followSync', h); }, []);
 
   useEffect(() => {
     if (token) {
@@ -5269,35 +5277,16 @@ function HomeTab({
     )
   );
 
+  const followActionRef = React.useRef(new Set());
   const handleFollow = async (uid) => {
-    const isFollowing = followingIds.has(uid);
-    const isPending = pendingFollowIds.has(uid);
-    if (isFollowing) {
-      try {
-        await api('/users/' + uid + '/unfollow', 'POST', null, token);
-        setFollowingIds(s => { const n = new Set(s); n.delete(uid); return n; });
-        showToast('Unfollowed', COLORS.muted);
-      } catch(e) { showToast(e.message, COLORS.red); }
-      return;
-    }
-    if (isPending) {
-      try {
-        await api('/users/' + uid + '/follow-request/cancel', 'POST', null, token);
-        setPendingFollowIds(s => { const n = new Set(s); n.delete(uid); return n; });
-        showToast('Request cancelled', COLORS.muted);
-      } catch(e) { showToast(e.message, COLORS.red); }
-      return;
-    }
-    try {
-      const res = await api('/users/' + uid + '/follow', 'POST', null, token);
-      if (res && res.pending) {
-        setPendingFollowIds(s => new Set([...s, uid]));
-        showToast('Follow request sent 📬', COLORS.yellow);
-      } else {
-        setFollowingIds(s => new Set([...s, uid]));
-        showToast('Following! 👍', COLORS.blue);
-      }
-    } catch(e) { showToast(e.message, COLORS.red); }
+    const wasFollowing = followingIds.has(uid), wasPending = pendingFollowIds.has(uid);
+    if (followActionRef.current.has(uid)) return;
+    followActionRef.current.add(uid);
+    const targetUser = getFollowUser(postsRef.current.find(p => p.user_id === uid), uid), optimisticFollowing = !wasFollowing && !wasPending, delta = optimisticFollowing ? 1 : wasFollowing ? -1 : 0;
+    const apply = (following, pending) => { setFollowingIds(s => { const n = new Set(s); following ? n.add(uid) : n.delete(uid); return n; }); setPendingFollowIds(s => { const n = new Set(s); pending ? n.add(uid) : n.delete(uid); return n; }); };
+    apply(optimisticFollowing, false); dispatchFollowUpdate(uid, optimisticFollowing, false, { actorId:user && user.id, actorUser:user, targetUser, followersDelta:delta });
+    const endpoint = wasFollowing ? '/users/'+uid+'/unfollow' : wasPending ? '/users/'+uid+'/follow-request/cancel' : '/users/'+uid+'/follow';
+    try { const res = await api(endpoint, 'POST', null, token), pending = !wasFollowing && !wasPending && !!(res && res.pending), following = optimisticFollowing && !pending; apply(following, pending); dispatchFollowUpdate(uid, following, pending, { actorId:user && user.id, actorUser:user, targetUser, followersDelta:pending ? -delta : 0 }); invalidateCache('/friends'); invalidateCache('/auth/me'); showToast(pending ? 'Follow request sent 📬' : following ? 'Following! 👍' : wasPending ? 'Request cancelled' : 'Unfollowed', pending ? COLORS.yellow : following ? COLORS.blue : COLORS.muted); } catch(e) { apply(wasFollowing, wasPending); dispatchFollowUpdate(uid, wasFollowing, wasPending, { actorId:user && user.id, actorUser:user, targetUser, followersDelta:-delta }); showToast(e.message, COLORS.red); } finally { followActionRef.current.delete(uid); }
   };
 
   // ── Pull-to-refresh ─────────────────────────────────────────
@@ -26287,6 +26276,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
   var [hasMore, setHasMore] = React.useState(true);
   // Sync reel count updates from home feed (when reels appear there)
   useReelSync(setReels);
+  React.useEffect(function(){ var h=function(e){ var d=e.detail||{}; if(!d.userId)return; var u=function(prev){return prev.map(function(x){return String(x.user_id)===String(d.userId)?Object.assign({},x,{is_following:!!d.following,is_follow_pending:!!d.pending}):x;});}; setReels(u); setDiscoverReels(u); setSearchReels(u); setSearchUserFollow(function(s){return Object.assign({},s,{[d.userId]:!!d.following});}); }; window.addEventListener('__followSync',h); return function(){window.removeEventListener('__followSync',h);}; }, []);
   var [activeIdx, setActiveIdx] = React.useState(0);
   var [showUpload, setShowUpload] = React.useState(false);
   var [showCamera, setShowCamera] = React.useState(false);
@@ -26516,6 +26506,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
   // Mutating reel actions use optimistic UI, but always reconcile with the
   // server and roll back the visible state when the request fails.
   var reelActionSeqRef = React.useRef({});
+  var reelFollowBusyRef = React.useRef(new Set());
   function nextReelAction(rid) {
     var next = (reelActionSeqRef.current[rid] || 0) + 1;
     reelActionSeqRef.current[rid] = next;
@@ -26577,32 +26568,12 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
       });
   }
   function followUser(userId) {
-    // Read the current value before scheduling setState. Reading it from
-    // inside the updater made the endpoint choice race with React's update.
-    var currentReel = reels.find(function(r) { return r.user_id === userId; });
-    if (!currentReel) return;
-    var previousFollowing = !!currentReel.is_following;
-    var previousPending = !!currentReel.is_follow_pending;
-    var seq = nextReelAction("follow:" + userId);
-    setReels(function(prev) { return prev.map(function(r) {
-      return r.user_id === userId
-        ? Object.assign({}, r, { is_following: !previousFollowing && !previousPending, is_follow_pending: false })
-        : r;
-    }); });
-    var endpoint = previousPending ? "/users/" + userId + "/follow-request/cancel" : previousFollowing ? "/users/" + userId + "/unfollow" : "/users/" + userId + "/follow";
-    api(endpoint, "POST", {}, token)
-      .then(function(result) {
-        if (!isLatestReelAction("follow:" + userId, seq)) return;
-        var isPending = !!(result && result.pending);
-        var confirmedFollowing = previousFollowing || previousPending ? false : !isPending;
-        var confirmedPending = previousPending ? false : isPending;
-        setReels(function(prev) { return prev.map(function(r) { return r.user_id === userId ? Object.assign({}, r, { is_following: confirmedFollowing, is_follow_pending: confirmedPending }) : r; }); });
-      })
-      .catch(function() {
-        if (!isLatestReelAction("follow:" + userId, seq)) return;
-        setReels(function(prev) { return prev.map(function(r) { return r.user_id === userId ? Object.assign({}, r, { is_following: previousFollowing }) : r; }); });
-        showToast && showToast("Couldn't update follow", "#FF3B5C");
-      });
+    if (reelFollowBusyRef.current.has(userId)) return;
+    var r = reels.find(function(x){return x.user_id===userId;}); if(!r)return; reelFollowBusyRef.current.add(userId);
+    var wasFollowing=!!r.is_following, wasPending=!!r.is_follow_pending, following=!wasFollowing&&!wasPending, delta=following?1:wasFollowing?-1:0, targetUser=getFollowUser(r,userId), seq=nextReelAction("follow:"+userId);
+    setReels(function(p){return p.map(function(x){return x.user_id===userId?Object.assign({},x,{is_following:following,is_follow_pending:false}):x;});}); dispatchFollowUpdate(userId,following,false,{actorId:user&&user.id,actorUser:user,targetUser,followersDelta:delta});
+    var ep=wasPending?"/users/"+userId+"/follow-request/cancel":wasFollowing?"/users/"+userId+"/unfollow":"/users/"+userId+"/follow";
+    api(ep,"POST",{},token).then(function(res){if(!isLatestReelAction("follow:"+userId,seq))return;var pending=!!(res&&res.pending),confirmed=following&&!pending;setReels(function(p){return p.map(function(x){return x.user_id===userId?Object.assign({},x,{is_following:confirmed,is_follow_pending:pending}):x;});});dispatchFollowUpdate(userId,confirmed,pending,{actorId:user&&user.id,actorUser:user,targetUser,followersDelta:pending?-delta:0});}).catch(function(){if(!isLatestReelAction("follow:"+userId,seq))return;setReels(function(p){return p.map(function(x){return x.user_id===userId?Object.assign({},x,{is_following:wasFollowing,is_follow_pending:wasPending}):x;});});dispatchFollowUpdate(userId,wasFollowing,wasPending,{actorId:user&&user.id,actorUser:user,targetUser,followersDelta:-delta});showToast&&showToast("Couldn't update follow","#FF3B5C");}).finally(function(){reelFollowBusyRef.current.delete(userId);});
   }
   function openComments(rid) {
     if (commentPollRef.current) { clearInterval(commentPollRef.current); commentPollRef.current = null; }
