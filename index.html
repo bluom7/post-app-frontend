@@ -11820,6 +11820,13 @@ function FollowListModal({
   const [friendStatuses, setFriendStatuses] = useState({});
   const [actionLoading, setActionLoading] = useState({});
   const [search, setSearch] = useState('');
+  useEffect(() => {
+    const h = e => { const d = e.detail || {}; if (!d.userId) return; setMyFollowing(s => { const n = new Set(s); d.following ? n.add(d.userId) : n.delete(d.userId); return n; });
+      if (String(userId) === String(currentUser && currentUser.id) && String(d.actorId) === String(currentUser && currentUser.id) && d.targetUser) setFollowing(s => d.following ? (s.some(u => u.id === d.userId) ? s : [...s, d.targetUser]) : s.filter(u => u.id !== d.userId));
+      if (String(userId) === String(d.userId) && String(d.actorId) === String(currentUser && currentUser.id) && d.actorUser) setFollowers(s => d.following ? (s.some(u => u.id === d.actorId) ? s : [...s, d.actorUser]) : s.filter(u => u.id !== d.actorId));
+    };
+    window.addEventListener('__followSync', h); return () => window.removeEventListener('__followSync', h);
+  }, [userId, currentUser && currentUser.id]);
   const load = async () => {
     setLoading(true);
     try {
@@ -11864,23 +11871,25 @@ function FollowListModal({
     }
   };
   const toggleFollow = async uid => {
-    const isFollowingUser = myFollowing.has(uid);
-    setActionLoading(l => ({...l, [`f_${uid}`]: true}));
+    const wasFollowing = myFollowing.has(uid);
+    const targetUser = getFollowUser([...followers, ...following].find(u => u.id === uid), uid);
+    const optimisticFollowing = !wasFollowing, delta = optimisticFollowing ? 1 : -1;
+    setActionLoading(l => ({...l, ["f_"+uid]: true}));
+    setMyFollowing(s => { const n = new Set(s); optimisticFollowing ? n.add(uid) : n.delete(uid); return n; });
+    dispatchFollowUpdate(uid, optimisticFollowing, false, { actorId:currentUser&&currentUser.id, actorUser:currentUser, targetUser, followersDelta:delta });
     try {
-      if (isFollowingUser) {
-        await api(`/users/${uid}/unfollow`, "POST", null, token);
-        setMyFollowing(s => { const n = new Set(s); n.delete(uid); return n; });
-        invalidateCache("/friends"); invalidateCache("/auth/me");
-        showToast("Unfollowed", COLORS.muted);
-      } else {
-        const res = await api(`/users/${uid}/follow`, "POST", null, token);
-        setMyFollowing(s => { const n = new Set(s); n.add(uid); return n; });
-        showToast(res && res.pending ? "Follow request sent \u2709\ufe0f" : "Following! \u2713", COLORS.green);
-      }
+      const res = await api(wasFollowing ? "/users/"+uid+"/unfollow" : "/users/"+uid+"/follow", "POST", null, token);
+      const pending = !wasFollowing && !!(res && res.pending), following = optimisticFollowing && !pending;
+      setMyFollowing(s => { const n = new Set(s); following ? n.add(uid) : n.delete(uid); return n; });
+      dispatchFollowUpdate(uid, following, pending, { actorId:currentUser&&currentUser.id, actorUser:currentUser, targetUser, followersDelta:pending ? -delta : 0 });
+      invalidateCache("/friends"); invalidateCache("/auth/me");
+      showToast(pending ? "Follow request sent ✉️" : following ? "Following! ✓" : "Unfollowed", pending ? COLORS.yellow : following ? COLORS.green : COLORS.muted);
     } catch (e) {
+      setMyFollowing(s => { const n = new Set(s); wasFollowing ? n.add(uid) : n.delete(uid); return n; });
+      dispatchFollowUpdate(uid, wasFollowing, false, { actorId:currentUser&&currentUser.id, actorUser:currentUser, targetUser, followersDelta:-delta });
       showToast(e.message, COLORS.red);
     }
-    setActionLoading(l => ({...l, [`f_${uid}`]: false}));
+    setActionLoading(l => ({...l, ["f_"+uid]: false}));
   };
   const sendConnect = async uid => {
     setActionLoading(l => ({...l, [`c_${uid}`]: true}));
@@ -12042,27 +12051,28 @@ function UserProfileScreen({
   }, [userId]);
   const fmtNum = n => n >= 1000 ? (n / 1000).toFixed(1) + "K" : n || 0;
   const toggleFollow = async () => {
-    if (followLoading) return;
-    const wasFollowing = followStatus === "following", wasPending = followStatus === "pending";
-    const optimisticFollowing = !wasFollowing && !wasPending, delta = optimisticFollowing ? 1 : wasFollowing ? -1 : 0;
-    const targetUser = getFollowUser(profile, userId);
     setFollowLoading(true);
-    setFollowStatus(optimisticFollowing ? "following" : "none");
-    if (delta) setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) + delta)}));
-    dispatchFollowUpdate(userId, optimisticFollowing, false, { actorId:currentUser&&currentUser.id, actorUser:currentUser, targetUser, followersDelta:delta });
-    const endpoint = wasFollowing ? "/users/"+userId+"/unfollow" : wasPending ? "/users/"+userId+"/follow-request/cancel" : "/users/"+userId+"/follow";
     try {
-      const res = await api(endpoint, "POST", null, token);
-      const pending = !wasFollowing && !wasPending && !!(res && res.pending), following = optimisticFollowing && !pending;
-      setFollowStatus(pending ? "pending" : following ? "following" : "none");
-      if (pending && delta) setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) - delta)}));
-      dispatchFollowUpdate(userId, following, pending, { actorId:currentUser&&currentUser.id, actorUser:currentUser, targetUser, followersDelta:pending ? -delta : 0 });
-      invalidateCache("/friends"); invalidateCache("/auth/me");
-      showToast(pending ? "Follow request sent ✉️" : following ? "Following! ✓" : wasPending ? "Request cancelled" : "Unfollowed", pending ? COLORS.yellow : following ? COLORS.green : COLORS.muted);
+      if (followStatus === "following") {
+        await api(`/users/${userId}/unfollow`, "POST", null, token);
+        setFollowStatus("none");
+        setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) - 1)}));
+        invalidateCache("/friends"); invalidateCache("/auth/me");
+        showToast("Unfollowed", COLORS.muted);
+      } else if (followStatus === "pending") {
+        await api(`/users/${userId}/follow-request/cancel`, "POST", null, token);
+        setFollowStatus("none");
+        showToast("Request cancelled", COLORS.muted);
+      } else {
+        const res = await api(`/users/${userId}/follow`, "POST", null, token);
+        if (res && !res.pending) {
+          setStats(s => ({...s, followers: (s.followers || 0) + 1}));
+        }
+        setFollowStatus(res && res.pending ? "pending" : "following");
+        invalidateCache("/friends"); invalidateCache("/auth/me");
+        showToast(res && res.pending ? "Follow request sent ✉️" : "Following! ✓", COLORS.green);
+      }
     } catch (e) {
-      setFollowStatus(wasPending ? "pending" : wasFollowing ? "following" : "none");
-      if (delta) setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) - delta)}));
-      dispatchFollowUpdate(userId, wasFollowing, wasPending, { actorId:currentUser&&currentUser.id, actorUser:currentUser, targetUser, followersDelta:-delta });
       showToast(e.message, COLORS.red);
     }
     setFollowLoading(false);
