@@ -492,11 +492,14 @@ export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = 
           return next;
         });
       } catch (err2) {
+        const providerMessage = err2?.message && !/^(request failed|fetch failed|failed to fetch)$/i.test(err2.message)
+          ? err2.message
+          : "Couldn't get a reply — check your connection and try again.";
         setMessages((prev) => {
           const next = [...prev];
           next[next.length - 1] = {
             role: "assistant",
-            content: "Couldn't get a reply — check your connection and try again.",
+            content: providerMessage,
             time: timeNow(),
             error: true,
           };
