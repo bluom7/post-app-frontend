@@ -240,7 +240,19 @@ function dispatchReelUpdate(reelId, fields) {
 }
 function dispatchFollowUpdate(userId, following, pending, meta) {
   const detail = Object.assign({ userId, following: !!following, pending: !!pending }, meta || {});
-  if (typeof detail.followingDelta !== "number") detail.followingDelta = typeof detail.followersDelta === "number" ? detail.followersDelta : 0;
+  // Keep the two sides of a follow action explicit.  A single delta was
+  // previously reused for both the target's followers and the actor's
+  // following list, which made one of the mounted views miss updates.
+  const targetFollowersDelta = typeof detail.targetFollowersDelta === "number"
+    ? detail.targetFollowersDelta
+    : typeof detail.followersDelta === "number" ? detail.followersDelta : 0;
+  const actorFollowingDelta = typeof detail.actorFollowingDelta === "number"
+    ? detail.actorFollowingDelta
+    : typeof detail.followingDelta === "number" ? detail.followingDelta : targetFollowersDelta;
+  detail.targetFollowersDelta = targetFollowersDelta;
+  detail.actorFollowingDelta = actorFollowingDelta;
+  detail.followersDelta = targetFollowersDelta;
+  detail.followingDelta = actorFollowingDelta;
   window.dispatchEvent(new CustomEvent('__followSync', { detail }));
 }
 function getFollowUser(source, id) {
@@ -3287,7 +3299,25 @@ function PostApp() {
       if (Array.isArray(value)) { const next = value.filter(x => String(x) !== String(id)); if (add && delta > 0) next.push(id); return next; }
       return Math.max(0, Number(value || 0) + delta);
     };
-    const h = e => { const d = e.detail || {}; if (!d.userId) return; setUser(prev => { if (!prev) return prev; let next = prev; if (String(d.actorId) === String(prev.id) && d.followingDelta) next = {...next, following: adjust(prev.following, d.userId, d.followingDelta, d.following)}; if (String(d.userId) === String(prev.id) && d.actorId && d.followersDelta) next = {...next, followers: adjust(next.followers, d.actorId, d.followersDelta, d.following)}; return next; }); };
+    const h = e => {
+      const d = e.detail || {};
+      if (!d.userId) return;
+      const targetId = String(d.userId);
+      const actorId = d.actorId == null ? "" : String(d.actorId);
+      const actorDelta = Number(d.actorFollowingDelta ?? d.followingDelta ?? 0);
+      const targetDelta = Number(d.targetFollowersDelta ?? d.followersDelta ?? 0);
+      setUser(prev => {
+        if (!prev) return prev;
+        let next = prev;
+        if (actorId && actorId === String(prev.id) && actorDelta !== 0) {
+          next = { ...next, following: adjust(prev.following, targetId, actorDelta, !!d.following) };
+        }
+        if (targetId === String(prev.id) && actorId && targetDelta !== 0) {
+          next = { ...next, followers: adjust(next.followers, actorId, targetDelta, !!d.following) };
+        }
+        return next;
+      });
+    };
     window.addEventListener("__followSync", h); return () => window.removeEventListener("__followSync", h);
   }, []);
   const [tab, setTab] = useState("home");
@@ -5080,7 +5110,16 @@ function HomeTab({
 
   // Sync count updates from other sections (profile, reels, etc.)
   usePostSync(setPosts);
-  useEffect(() => { const h = e => { const d = e.detail || {}; if (!d.userId) return; setFollowingIds(s => { const n = new Set(s); d.following ? n.add(d.userId) : n.delete(d.userId); return n; }); setPendingFollowIds(s => { const n = new Set(s); d.pending ? n.add(d.userId) : n.delete(d.userId); return n; }); }; window.addEventListener('__followSync', h); return () => window.removeEventListener('__followSync', h); }, []);
+  useEffect(() => {
+    const h = e => {
+      const d = e.detail || {};
+      if (!d.userId || (d.actorId && String(d.actorId) !== String(user && user.id))) return;
+      setFollowingIds(s => { const n = new Set(s); d.following ? n.add(d.userId) : n.delete(d.userId); return n; });
+      setPendingFollowIds(s => { const n = new Set(s); d.pending ? n.add(d.userId) : n.delete(d.userId); return n; });
+    };
+    window.addEventListener('__followSync', h);
+    return () => window.removeEventListener('__followSync', h);
+  }, [user && user.id]);
 
   useEffect(() => {
     if (token) {
@@ -11823,9 +11862,16 @@ function FollowListModal({
     const h = e => {
       const d = e.detail || {};
       if (!d.userId) return;
-      setMyFollowing(s => { const n = new Set(s); d.following ? n.add(d.userId) : n.delete(d.userId); return n; });
-      if (String(userId) === String(currentUser && currentUser.id) && String(d.actorId) === String(currentUser && currentUser.id) && d.targetUser) setFollowing(s => d.following ? (s.some(u => u.id === d.userId) ? s : [...s, d.targetUser]) : s.filter(u => u.id !== d.userId));
-      if (String(userId) === String(d.userId) && d.actorUser) setFollowers(s => d.following ? (s.some(u => u.id === d.actorId) ? s : [...s, d.actorUser]) : s.filter(u => u.id !== d.actorId));
+      const isMeActor = String(d.actorId || "") === String(currentUser && currentUser.id);
+      // Only the current viewer's following set changes here.  Another user's
+      // follow action may still change this profile's followers list below.
+      if (isMeActor) setMyFollowing(s => { const n = new Set(s); d.following ? n.add(d.userId) : n.delete(d.userId); return n; });
+      if (String(userId) === String(currentUser && currentUser.id) && isMeActor && d.targetUser) {
+        setFollowing(s => d.following ? (s.some(u => u.id === d.userId) ? s : [...s, d.targetUser]) : s.filter(u => u.id !== d.userId));
+      }
+      if (String(userId) === String(d.userId) && d.actorUser) {
+        setFollowers(s => d.following ? (s.some(u => u.id === d.actorId) ? s : [...s, d.actorUser]) : s.filter(u => u.id !== d.actorId));
+      }
     };
     window.addEventListener("__followSync", h);
     return () => window.removeEventListener("__followSync", h);
@@ -11916,11 +11962,11 @@ function FollowListModal({
     }
     setActionLoading(l => ({...l, [`c_${uid}`]: false}));
   };
-  // Mutuals = common followers: people who follow BOTH UserA AND current user (me)
+  // Mutuals are people followed by both the profile owner and the viewer.
+  // Derive this directly from the live following list so follow/unfollow
+  // immediately changes the mutuals tab without reopening the modal.
   const myId = currentUser && currentUser.id;
-  const mutualsMap = new Map();
-  followers.forEach(u => { if (myFollowersSet.has(u.id) && u.id !== myId && u.id !== userId && !mutualsMap.has(u.id)) mutualsMap.set(u.id, u); });
-  const mutuals = [...mutualsMap.values()];
+  const mutuals = following.filter(u => myFollowing.has(u.id) && u.id !== myId && u.id !== userId);
   const list = activeTab === "followers" ? followers : activeTab === "following" ? following : mutuals;
   return React.createElement("div", {
     style: {position:"fixed",inset:0,background:"rgba(0,0,0,0.7)",zIndex:500,display:"flex",alignItems:"stretch",justifyContent:"center"},
@@ -12034,7 +12080,18 @@ function UserProfileScreen({
   const _postSwipeY = React.useRef(null);
   const [showVerifiedInfo, setShowVerifiedInfo] = useState(false);
   useEffect(() => {
-    const h = e => { const d = e.detail || {}; if (String(d.userId) === String(userId)) { setFollowStatus(d.pending ? "pending" : d.following ? "following" : "none"); if (d.followersDelta) setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) + d.followersDelta)})); } if (String(userId) === String(currentUser && currentUser.id) && String(d.actorId) === String(currentUser && currentUser.id) && d.followingDelta) setStats(s => ({...s, following: Math.max(0, (s.following || 0) + d.followingDelta)})); };
+    const h = e => {
+      const d = e.detail || {};
+      const targetDelta = Number(d.targetFollowersDelta ?? d.followersDelta ?? 0);
+      const actorDelta = Number(d.actorFollowingDelta ?? d.followingDelta ?? 0);
+      if (String(d.userId) === String(userId)) {
+        setFollowStatus(d.pending ? "pending" : d.following ? "following" : "none");
+        if (targetDelta) setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) + targetDelta)}));
+      }
+      if (String(userId) === String(currentUser && currentUser.id) && String(d.actorId) === String(currentUser && currentUser.id) && actorDelta) {
+        setStats(s => ({...s, following: Math.max(0, (s.following || 0) + actorDelta)}));
+      }
+    };
     window.addEventListener("__followSync", h); return () => window.removeEventListener("__followSync", h);
   }, [userId, currentUser && currentUser.id]);
 
@@ -15528,7 +15585,13 @@ function ProfileTab({
     following: Array.isArray(user.following) ? user.following.length : Number(user.following || 0)
   });
   useEffect(() => {
-    const h = e => { const d = e.detail || {}; if (String(d.userId) === String(user.id) && d.followersDelta) setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) + d.followersDelta)})); if (String(d.actorId) === String(user.id) && d.followingDelta) setStats(s => ({...s, following: Math.max(0, (s.following || 0) + d.followingDelta)})); };
+    const h = e => {
+      const d = e.detail || {};
+      const targetDelta = Number(d.targetFollowersDelta ?? d.followersDelta ?? 0);
+      const actorDelta = Number(d.actorFollowingDelta ?? d.followingDelta ?? 0);
+      if (String(d.userId) === String(user.id) && targetDelta) setStats(s => ({...s, followers: Math.max(0, (s.followers || 0) + targetDelta)}));
+      if (String(d.actorId) === String(user.id) && actorDelta) setStats(s => ({...s, following: Math.max(0, (s.following || 0) + actorDelta)}));
+    };
     window.addEventListener("__followSync", h); return () => window.removeEventListener("__followSync", h);
   }, [user.id]);  const [name, setName] = useState(user.name || "");
   const [username, setUsername] = useState((user.username || user.handle || "").replace("@", ""));
@@ -26290,7 +26353,17 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
   var [hasMore, setHasMore] = React.useState(true);
   // Sync reel count updates from home feed (when reels appear there)
   useReelSync(setReels);
-  React.useEffect(function(){ var h=function(e){ var d=e.detail||{}; if(!d.userId)return; var u=function(prev){return prev.map(function(x){return String(x.user_id)===String(d.userId)?Object.assign({},x,{is_following:!!d.following,is_follow_pending:!!d.pending}):x;});}; setReels(u); setDiscoverReels(u); setSearchReels(u); setSearchUserFollow(function(s){return Object.assign({},s,{[d.userId]:!!d.following});}); }; window.addEventListener('__followSync',h); return function(){window.removeEventListener('__followSync',h);}; }, []);
+  React.useEffect(function(){
+    var h=function(e){
+      var d=e.detail||{};
+      if(!d.userId || (d.actorId && String(d.actorId)!==String(user&&user.id))) return;
+      var u=function(prev){return prev.map(function(x){return String(x.user_id)===String(d.userId)?Object.assign({},x,{is_following:!!d.following,is_follow_pending:!!d.pending}):x;});};
+      setReels(u); setDiscoverReels(u); setSearchReels(u);
+      setSearchUserFollow(function(s){return Object.assign({},s,{[d.userId]:!!d.following});});
+    };
+    window.addEventListener('__followSync',h);
+    return function(){window.removeEventListener('__followSync',h);};
+  }, [user&&user.id]);
   var [activeIdx, setActiveIdx] = React.useState(0);
   var [showUpload, setShowUpload] = React.useState(false);
   var [showCamera, setShowCamera] = React.useState(false);
