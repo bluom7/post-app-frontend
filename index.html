@@ -6284,9 +6284,10 @@ function BentoPostCard({
   const isFollowing = followingIds ? followingIds.has(post.user_id) : false;
   const isPending = pendingFollowIds ? pendingFollowIds.has(post.user_id) : false;
   const showSuggestedForYou = !isOwn && !isFollowing && !isPending;
+  const shouldRotateSuggestedMeta = showSuggestedForYou && (!!postSongMarqueeText || !!post.location);
   const [showSuggestedForYouMessage, setShowSuggestedForYouMessage] = React.useState(showSuggestedForYou);
   React.useEffect(() => {
-    if (!showSuggestedForYou || !postSongMarqueeText) {
+    if (!shouldRotateSuggestedMeta) {
       setShowSuggestedForYouMessage(showSuggestedForYou);
       return;
     }
@@ -6295,7 +6296,7 @@ function BentoPostCard({
       setShowSuggestedForYouMessage(current => !current);
     }, 4000);
     return () => window.clearInterval(ticker);
-  }, [showSuggestedForYou, postSongMarqueeText]);
+  }, [shouldRotateSuggestedMeta]);
   const postAvatarPhoto = post.avatar_photo || post.avatar_url;
 
   const timeAgo = ts => {
@@ -6594,17 +6595,17 @@ function BentoPostCard({
           post.user_handle && React.createElement("span", { style: { fontSize: 15, color: "var(--muted)", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: "0 1 auto" } }, "@" + post.user_handle.replace(/^@/, "")),
           !post.alt_text && timeAgo(post.created_at) && React.createElement("span", { style: { fontSize: 15, color: "var(--muted)", flexShrink: 0 } }, "· " + timeAgo(post.created_at))
         ),
-        (post.location || post.feeling || (post.tagged_users && post.tagged_users.length > 0)) && React.createElement("div", { style: { fontSize: 12, color: "var(--muted)", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
+        (post.location || post.feeling || (post.tagged_users && post.tagged_users.length > 0)) && !(showSuggestedForYou && !postSongMarqueeText && post.location) && React.createElement("div", { style: { fontSize: 12, color: "var(--muted)", marginTop: 3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
           post.location ? React.createElement(React.Fragment, null, React.createElement("svg", { width:10, height:10, viewBox:"0 0 24 24", fill:"currentColor", stroke:"none", style:{display:"inline",verticalAlign:"middle",marginRight:3} }, React.createElement("path", {d:"M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"})), post.location) : "",
           post.feeling ? " · " + post.feeling : "",
           post.tagged_users && post.tagged_users.length ? " · with @" + post.tagged_users.join(", @") : ""
         ),
-      (showSuggestedForYouMessage || postSongMarqueeText) && /*#__PURE__*/React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:4, marginTop:2, overflow:"hidden", maxWidth:"100%" } },
-        !showSuggestedForYouMessage &&         /*#__PURE__*/React.createElement("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"var(--muted)",style:{flexShrink:0}},
+      (showSuggestedForYouMessage || postSongMarqueeText || (showSuggestedForYou && post.location && !postSongMarqueeText)) && /*#__PURE__*/React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:4, marginTop:2, overflow:"hidden", maxWidth:"100%" } },
+        !showSuggestedForYouMessage && postSongMarqueeText &&         /*#__PURE__*/React.createElement("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"var(--muted)",style:{flexShrink:0}},
           /*#__PURE__*/React.createElement("path",{d:"M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"})),
         /*#__PURE__*/React.createElement("div", { style:{ flex:1, overflow:"hidden", minWidth:0 } },
           /*#__PURE__*/React.createElement("span",{ key:showSuggestedForYouMessage ? "suggested-for-you" : "post-audio", ref:postSongMarqueeRef, style:{ fontSize:13, color:"var(--muted)", whiteSpace:"nowrap", display:"inline-block", animation:showSuggestedForYou ? "feedMetaTickerSwap .34s ease both" : (showSuggestedForYouMessage ? "feedMetaTickerSwap .34s ease both" : "songHeaderTicker " + postSongMarqueeDuration + "s linear infinite") } },
-            showSuggestedForYouMessage ? "Suggested for you" : showSuggestedForYou ? (postSongMarqueeText || "Original audio") : postSongMarqueeText + "\u2003\u2003" + postSongMarqueeText
+            showSuggestedForYouMessage ? "Suggested for you" : (postSongMarqueeText ? (showSuggestedForYou ? (postSongMarqueeText || "Original audio") : postSongMarqueeText + "\u2003\u2003" + postSongMarqueeText) : (post.location || ""))
           )
         )
       )
