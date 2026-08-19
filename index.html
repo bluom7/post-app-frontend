@@ -1463,7 +1463,7 @@ function CategoryPicker({value, onChange, inputStyle}) {
     )
   );
 }
-// ── GET response cache (stale-while-revalidate, 45s TTL) ────────────────────
+// ── GET response cache (stale-while-revalidate, 45s TTL) ─────────────────��──
 const _apiCache = new Map(); // key → { data, ts, inflight }
 const CACHE_TTL = 45000; // 45 seconds
 function _cacheKey(path, token) { return (token || "") + "|" + path; }
