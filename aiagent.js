@@ -871,20 +871,33 @@ export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = 
   return (
     <div style={styles.container}>
       {/* Header */}
-      <div style={styles.header}>
-        <button style={styles.menuButton} onClick={() => setSidebarOpen(true)} title="Menu">
-          <Icon.Menu />
-        </button>
-        <UserAvatar name={userName} avatarUrl={userAvatarUrl} />
-        <div>
-          <div style={styles.headerTitle}>{userName}</div>
-          <div style={styles.headerSub}>
-            {loading ? statusMsg || "AI Agent is typing…" : "AI Agent · Chat or send a photo"}
+        <div style={styles.header}>
+          <button
+            style={styles.menuButton}
+            onClick={() => (onBack ? onBack() : window.history.back())}
+            title="Back"
+            aria-label="Back"
+          >
+            <Icon.ArrowLeft />
+          </button>
+          <UserAvatar name={userName} avatarUrl={userAvatarUrl} size={30} />
+          <div>
+            <div style={styles.headerTitle}>{userName}</div>
+            <div style={styles.headerSub}>
+              {loading ? statusMsg || "AI Agent is typing…" : "AI Agent · Chat or send a photo"}
+            </div>
           </div>
+          <div style={{ flex: 1 }} />
+          <button
+            style={styles.menuButton}
+            onClick={() => setSidebarOpen(true)}
+            title="Menu"
+            aria-label="Menu"
+          >
+            <Icon.Menu />
+          </button>
         </div>
-      </div>
-
-      {/* Messages */}
+          {/* Messages */}
       <div style={styles.chatArea} ref={scrollRef}>
         {messages.map((m, i) => (
           <div key={i} style={{ ...styles.bubbleRow, justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
