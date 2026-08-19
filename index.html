@@ -75,7 +75,7 @@ video::-webkit-media-controls { display: none !important; }
 } = React;
 const API = "https://post-app-backend-nl35.onrender.com/api";
 const GIPHY_KEY = "ZTJgQEFaRLeskUxqpKe3YGDegmshaPE6";
-const SONG_MARQUEE_DURATION_SEC = 4;
+const SONG_MARQUEE_SPEED_PX_PER_SEC = 28;
 function PostAiIcon(props) {
     var size = props && (props.size || props.width) || 24;
     return React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", xmlns: "http://www.w3.org/2000/svg", "aria-hidden": "true" },
@@ -6230,13 +6230,13 @@ function BentoPostCard({
       ? (post.user_name ? post.user_name + " · " : "") + post.audio_label
       : "";
   const postSongMarqueeRef = React.useRef(null);
-  const [postSongMarqueeDuration, setPostSongMarqueeDuration] = React.useState(SONG_MARQUEE_DURATION_SEC);
+  const [postSongMarqueeDuration, setPostSongMarqueeDuration] = React.useState(4);
   React.useEffect(() => {
     const marquee = postSongMarqueeRef.current;
     if (!marquee || !postSongMarqueeText) return;
     const measure = () => {
       const travelDistance = Math.max(40, marquee.scrollWidth / 2);
-      setPostSongMarqueeDuration(SONG_MARQUEE_DURATION_SEC);
+      setPostSongMarqueeDuration(Math.max(1.5, travelDistance / SONG_MARQUEE_SPEED_PX_PER_SEC));
     };
     measure();
     if (typeof ResizeObserver === "undefined") return;
@@ -26080,12 +26080,12 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
     return days + " " + (days === 1 ? "day" : "days") + " ago";
   };
   var songMarqueeRef = React.useRef(null);
-  var [songMarqueeDuration, setSongMarqueeDuration] = React.useState(SONG_MARQUEE_DURATION_SEC);
+  var [songMarqueeDuration, setSongMarqueeDuration] = React.useState(4);
   React.useEffect(function() {
     var marquee = songMarqueeRef.current;
     if (!marquee || !songMarqueeText) return;
     var travelDistance = Math.max(40, marquee.scrollWidth / 2);
-    setSongMarqueeDuration(SONG_MARQUEE_DURATION_SEC);
+    setSongMarqueeDuration(Math.max(1.5, travelDistance / SONG_MARQUEE_SPEED_PX_PER_SEC));
   }, [songMarqueeText]);
   // Keep the follow control mounted and visible while the parent reconciles
   // the async follow request. The server flag may briefly lag behind the tap.
