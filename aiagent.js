@@ -25,7 +25,7 @@ const WELCOME = "Hi! Ask me anything, or send a photo — I'll identify and expl
 
 // Key used across the POST app to store the JWT in localStorage.
 // Change this if your login flow saves it under a different key.
-const TOKEN_KEY = "post_app_token";
+const TOKEN_KEY = "token";
 
 // ---- SVG icon set (stroke-based, matches X/Facebook style) ----
 const Icon = {
