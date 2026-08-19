@@ -103,6 +103,8 @@ function PostAIAgent(props) {
   var conversationId = conversationState[0], setConversationId = conversationState[1];
   var endRef = useRef(null);
   var textareaRef = useRef(null);
+  var menuState = useState(false);
+  var menuOpen = menuState[0], setMenuOpen = menuState[1];
 
   useEffect(function() {
     if (endRef.current) endRef.current.scrollIntoView({ behavior: "smooth" });
@@ -194,19 +196,18 @@ function PostAIAgent(props) {
     }
   }
 
-  return React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "stretch", justifyContent: "center", background: "#F7F8FA" }, role: "presentation" },
-    React.createElement("div", { onClick: onClose, style: { position: "absolute", inset: 0, background: "rgba(0,0,0,0.18)" }, "aria-hidden": "true" }),
-    React.createElement("section", { role: "dialog", "aria-modal": "true", "aria-label": "POST AI Agent", style: { position: "relative", width: "min(100%, 760px)", height: "100%", background: "#F7F8FA", color: "#111827", borderRadius: 0, boxShadow: "none", display: "flex", flexDirection: "column", overflow: "hidden" } },
-      React.createElement("header", { style: { display: "flex", alignItems: "center", gap: 18, padding: "22px 28px", borderBottom: "1px solid #E7E9EE", background: "#fff", minHeight: 116 } },
-        React.createElement("button", { onClick: function(){}, "aria-label": "Menu", style: { border: "none", background: "transparent", color: "#111827", fontSize: 30, lineHeight: 1, padding: 0, cursor: "pointer" } }, "☰"),
-        React.createElement("div", { style: { width: 58, height: 58, borderRadius: "50%", background: "#09C763", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 30 } }, "Y"),
+  return React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }, role: "presentation" },
+    React.createElement("div", { onClick: onClose, style: { position: "absolute", inset: 0, background: "rgba(0,0,0,0.46)" }, "aria-hidden": "true" }),
+    React.createElement("section", { role: "dialog", "aria-modal": "true", "aria-label": "POST AI Agent", style: { position: "relative", width: "min(100%, 620px)", height: "min(760px, calc(100vh - 24px))", background: "var(--bg)", color: "var(--text)", borderRadius: "24px 24px 0 0", boxShadow: "0 -8px 34px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column", overflow: "hidden" } },
+      React.createElement("header", { style: { display: "flex", alignItems: "center", gap: 12, padding: "16px 18px", borderBottom: "1px solid var(--border)", background: "var(--nav-bg)" } },
+        React.createElement("div", { style: { width: 38, height: 38, borderRadius: 13, background: "#FFD600", color: "#000", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } }, React.createElement(BlackHoleIcon, { size: 28, color: "#000" })),
         React.createElement("div", { style: { flex: 1, minWidth: 0 } },
-          React.createElement("div", { style: { fontWeight: 700, fontSize: 28, lineHeight: 1 } }, "You"),
-          React.createElement("div", { style: { color: "#687080", fontSize: 17, marginTop: 8 } }, "AI Agent · Chat or send a photo")
+          React.createElement("div", { style: { fontWeight: 800, fontSize: 17 } }, "POST AI Agent"),
+          React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 2 } }, "Ask anything about your POST experience")
         ),
-        React.createElement("button", { onClick: onClose, "aria-label": "Close AI Agent", style: { width: 42, height: 42, border: "none", borderRadius: "50%", background: "#F1F2F4", color: "#687080", cursor: "pointer", fontSize: 25, lineHeight: 1 } }, "×")
+        React.createElement("button", { onClick: onClose, "aria-label": "Close AI Agent", style: { width: 36, height: 36, border: "none", borderRadius: "50%", background: "var(--input-bg)", color: "var(--text)", cursor: "pointer", fontSize: 22, lineHeight: 1 } }, "×")
       ),
-      React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "28px 22px 190px", display: "flex", flexDirection: "column", gap: 16 } },
+      React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "18px 16px 26px", display: "flex", flexDirection: "column", gap: 12 } },
         messages.map(function(m, index) {
           var assistant = m.role === "assistant";
           return React.createElement("div", { key: index, style: { display: "flex", justifyContent: assistant ? "flex-start" : "flex-end" } },
@@ -216,14 +217,26 @@ function PostAIAgent(props) {
         error && React.createElement("div", { style: { color: "#D32F2F", fontSize: 12, textAlign: "center", padding: "4px 12px" } }, error),
         React.createElement("div", { ref: endRef })
       ),
-      React.createElement("div", { style: { padding: "16px 18px calc(16px + env(safe-area-inset-bottom))", borderTop: "1px solid #E1E4E8", background: "#F7F8FA" } },
-        React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 8, padding: "16px 16px 16px 22px", minHeight: 118, background: "#fff", border: "1px solid #DCE0E5", borderRadius: 26 } },
-          React.createElement("textarea", { ref: textareaRef, rows: 1, value: input, disabled: loading, placeholder: "Reply to BluOm…", onChange: function(e) { setInput(e.target.value); }, onKeyDown: function(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }, style: { flex: 1, resize: "none", border: "none", outline: "none", background: "transparent", color: "var(--text)", fontSize: 18, lineHeight: 1.45, maxHeight: 120, padding: "8px 0" } }),
-          React.createElement("button", { onClick: sendMessage, disabled: loading || !input.trim(), "aria-label": "Send message", style: { width: 46, height: 46, border: "none", borderRadius: "50%", background: loading || !input.trim() ? "#B8B8B8" : "#111", color: "#fff", cursor: loading || !input.trim() ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
+      React.createElement("div", { style: { padding: "10px 14px calc(10px + env(safe-area-inset-bottom))", borderTop: "1px solid var(--border)", background: "var(--nav-bg)" } },
+        React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 8, padding: "8px 8px 8px 13px", background: "var(--input-bg)", borderRadius: 20 } },
+          React.createElement("textarea", { ref: textareaRef, rows: 1, value: input, disabled: loading, placeholder: "Message POST AI…", onChange: function(e) { setInput(e.target.value); }, onKeyDown: function(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }, style: { flex: 1, resize: "none", border: "none", outline: "none", background: "transparent", color: "var(--text)", fontSize: 15, lineHeight: 1.4, maxHeight: 120, padding: "5px 0" } }),
+          React.createElement("button", { onClick: sendMessage, disabled: loading || !input.trim(), "aria-label": "Send message", style: { width: 36, height: 36, border: "none", borderRadius: "50%", background: loading || !input.trim() ? "#B8B8B8" : "#111", color: "#fff", cursor: loading || !input.trim() ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
             React.createElement("svg", { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.3", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M12 19V5" }), React.createElement("path", { d: "m6 11 6-6 6 6" }))
           )
         ),
         React.createElement("div", { style: { color: "var(--muted)", fontSize: 10.5, textAlign: "center", marginTop: 7 } }, "POST AI can make mistakes. Check important information.")
+      ),
+      menuOpen && React.createElement("div", { onClick: function(){ setMenuOpen(false); }, style: { position: "absolute", inset: 0, zIndex: 20, background: "rgba(0,0,0,.28)" } },
+        React.createElement("aside", { onClick: function(e){ e.stopPropagation(); }, style: { position: "absolute", left: 0, top: 0, bottom: 0, width: "min(78%, 360px)", background: "#fff", padding: "28px 26px", display: "flex", flexDirection: "column", boxShadow: "8px 0 24px rgba(0,0,0,.16)" } },
+          React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 24, fontWeight: 700, marginBottom: 28 } }, "BluOm Agent", React.createElement("button", { onClick: function(){ setMenuOpen(false); }, "aria-label": "Close menu", style: { border: 0, background: "transparent", color: "#687080", fontSize: 28, cursor: "pointer" } }, "×")),
+          React.createElement("button", { onClick: function(){ setMessages([{ role: "assistant", content: "Hi! I’m your POST AI Agent. What would you like to know?" }]); setConversationId(null); setError(""); setMenuOpen(false); }, style: { border: 0, background: "transparent", textAlign: "left", padding: "16px 0", fontSize: 21, color: "#111827" } }, "＋  New chat"),
+          React.createElement("button", { onClick: function(){ setMenuOpen(false); }, style: { border: 0, background: "transparent", textAlign: "left", padding: "16px 0", fontSize: 21, color: "#111827" } }, "▣  Album"),
+          React.createElement("button", { onClick: function(){ setMenuOpen(false); }, style: { border: 0, background: "transparent", textAlign: "left", padding: "16px 0", fontSize: 21, color: "#111827" } }, "◫  Library"),
+          React.createElement("div", { style: { color: "#687080", fontSize: 16, textTransform: "uppercase", letterSpacing: 1, marginTop: 24 } }, "Recents"),
+          React.createElement("div", { style: { color: "#687080", fontSize: 19, paddingTop: 20 } }, "No recent chats"),
+          React.createElement("div", { style: { flex: 1 } }),
+          React.createElement("button", { onClick: function(){ setMessages([{ role: "assistant", content: "Hi! I’m your POST AI Agent. What would you like to know?" }]); setConversationId(null); setMenuOpen(false); }, style: { alignSelf: "flex-start", border: 0, borderRadius: 28, padding: "13px 22px", background: "#2687ED", color: "#fff", fontSize: 19 } }, "＋ Chat")
+        )
       )
     )
   );
@@ -1464,7 +1477,7 @@ function CategoryPicker({value, onChange, inputStyle}) {
     )
   );
 }
-// ── GET response cache (stale-while-revalidate, 45s TTL) ─────────────────��──
+// ── GET response cache (stale-while-revalidate, 45s TTL) ─────────────────���──
 const _apiCache = new Map(); // key → { data, ts, inflight }
 const CACHE_TTL = 45000; // 45 seconds
 function _cacheKey(path, token) { return (token || "") + "|" + path; }
