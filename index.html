@@ -104,6 +104,10 @@ function PostAIAgent(props) {
   var endRef = useRef(null);
   var textareaRef = useRef(null);
   var menuState = useState(false);
+  var attachState = useState(false);
+  var attachOpen = attachState[0], setAttachOpen = attachState[1];
+  var photoInputRef = useRef(null);
+  var cameraInputRef = useRef(null);
   var menuOpen = menuState[0], setMenuOpen = menuState[1];
 
   useEffect(function() {
@@ -219,7 +223,9 @@ function PostAIAgent(props) {
       ),
       React.createElement("div", { style: { padding: "10px 14px calc(10px + env(safe-area-inset-bottom))", borderTop: "1px solid var(--border)", background: "var(--nav-bg)" } },
         React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 8, padding: "8px 8px 8px 13px", background: "var(--input-bg)", borderRadius: 20 } },
-          React.createElement("textarea", { ref: textareaRef, rows: 1, value: input, disabled: loading, placeholder: "Message POST AI…", onChange: function(e) { setInput(e.target.value); }, onKeyDown: function(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }, style: { flex: 1, resize: "none", border: "none", outline: "none", background: "transparent", color: "var(--text)", fontSize: 15, lineHeight: 1.4, maxHeight: 120, padding: "5px 0" } }),
+                    React.createElement("button", { onClick: function(){ setAttachOpen(true); }, "aria-label": "Attach photo", style: { border: "none", background: "transparent", color: "#687080", fontSize: 34, lineHeight: 1, cursor: "pointer", position: "absolute", left: 20, bottom: 18, zIndex: 2 } }, "+"),
+          React.createElement("div", { style: { position: "absolute", left: 70, bottom: 18, padding: "8px 16px", borderRadius: 24, background: "#F7F8FA", fontSize: 20, letterSpacing: 4, zIndex: 2 } }, React.createElement("span", { style: {color:"#F4C12B"}}, "P"), React.createElement("span", { style: {color:"#08C764"}}, "O"), React.createElement("span", { style: {color:"#F04B54"}}, "S"), React.createElement("span", { style: {color:"#3F86F4"}}, "T")),
+React.createElement("textarea", { ref: textareaRef, rows: 1, value: input, disabled: loading, placeholder: "Message POST AI…", onChange: function(e) { setInput(e.target.value); }, onKeyDown: function(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }, style: { flex: 1, resize: "none", border: "none", outline: "none", background: "transparent", color: "var(--text)", fontSize: 15, lineHeight: 1.4, maxHeight: 120, padding: "5px 0" } }),
           React.createElement("button", { onClick: sendMessage, disabled: loading || !input.trim(), "aria-label": "Send message", style: { width: 36, height: 36, border: "none", borderRadius: "50%", background: loading || !input.trim() ? "#B8B8B8" : "#111", color: "#fff", cursor: loading || !input.trim() ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
             React.createElement("svg", { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.3", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M12 19V5" }), React.createElement("path", { d: "m6 11 6-6 6 6" }))
           )
@@ -237,7 +243,17 @@ function PostAIAgent(props) {
           React.createElement("div", { style: { flex: 1 } }),
           React.createElement("button", { onClick: function(){ setMessages([{ role: "assistant", content: "Hi! I’m your POST AI Agent. What would you like to know?" }]); setConversationId(null); setMenuOpen(false); }, style: { alignSelf: "flex-start", border: 0, borderRadius: 28, padding: "13px 22px", background: "#2687ED", color: "#fff", fontSize: 19 } }, "＋ Chat")
         )
-      )
+      ),
+      attachOpen && React.createElement("div", { onClick: function(){ setAttachOpen(false); }, style: { position: "absolute", inset: 0, zIndex: 25, background: "rgba(0,0,0,.25)", display: "flex", alignItems: "flex-end" } },
+        React.createElement("div", { onClick: function(e){ e.stopPropagation(); }, style: { width: "100%", background: "#fff", borderRadius: "24px 24px 0 0", padding: "22px 20px calc(22px + env(safe-area-inset-bottom))", boxShadow: "0 -8px 24px rgba(0,0,0,.16)" } },
+          React.createElement("button", { onClick: function(){ setAttachOpen(false); cameraInputRef.current && cameraInputRef.current.click(); }, style: { display: "block", width: "100%", border: 0, background: "transparent", textAlign: "left", padding: "16px 8px", fontSize: 20 } }, "Camera"),
+          React.createElement("button", { onClick: function(){ setAttachOpen(false); photoInputRef.current && photoInputRef.current.click(); }, style: { display: "block", width: "100%", border: 0, background: "transparent", textAlign: "left", padding: "16px 8px", fontSize: 20 } }, "Album"),
+          React.createElement("button", { onClick: function(){ setAttachOpen(false); photoInputRef.current && photoInputRef.current.click(); }, style: { display: "block", width: "100%", border: 0, background: "transparent", textAlign: "left", padding: "16px 8px", fontSize: 20 } }, "File"),
+          React.createElement("button", { onClick: function(){ setAttachOpen(false); }, style: { display: "block", width: "100%", border: 0, background: "#F1F2F4", borderRadius: 18, padding: "14px", fontSize: 18, marginTop: 8 } }, "Cancel")
+        )
+      ),
+      React.createElement("input", { ref: cameraInputRef, type: "file", accept: "image/*", capture: "environment", style: { display: "none" }, onChange: function(e){ sendAttachment(e.target.files && e.target.files[0]); e.target.value = ""; } }),
+      React.createElement("input", { ref: photoInputRef, type: "file", accept: "image/*", style: { display: "none" }, onChange: function(e){ sendAttachment(e.target.files && e.target.files[0]); e.target.value = ""; } })
     )
   );
 }
@@ -8676,7 +8692,7 @@ function VideoStickerPickerModal({ onSelect, onClose }) {
     return () => clearTimeout(timer);
   }, [tab, query, loadGifs]);
   const EMOJI_GROUPS = {
-    popular: ["😂","❤️","😍","🔥","👏","🎉","😎","💯","😊","🥰","😭","💪","✨","🙏","👍","😘","🤣","💀","🫶","⭐","🌟","💥","😜","🤩","🎊","🫠","🥳","🤯","😱","💫","😁","😇","🤗","🙌","🤝","👋","🤟","😴","🤔","😤","😮‍💨","😈","🤍","💖","💘","💯","✅","❌","⚡","🌈","☀️","🌙","🎂","🎁","🎈","🎵","🏆","🚀","💎","🌸","🍀","🍕","☕"],
+    popular: ["😂","❤️","😍","🔥","👏","🎉","😎","💯","😊","🥰","😭","💪","✨","🙏","👍","😘","🤣","💀","🫶","���","🌟","💥","😜","🤩","🎊","🫠","🥳","🤯","😱","💫","😁","😇","🤗","🙌","🤝","👋","🤟","😴","🤔","😤","😮‍💨","😈","🤍","💖","💘","💯","✅","❌","⚡","🌈","☀️","🌙","🎂","🎁","🎈","🎵","🏆","🚀","💎","🌸","🍀","🍕","☕"],
     love: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💖","💗","💓","💞","💕","💘","💝","💟","❣️","💔","❤️‍🔥","😘","🥰","😍","🫶","💋","💌","🌹","🌷","💐","🫂"],
     reaction: ["😂","🤣","😭","😅","😆","😇","🙂","🙃","😉","😊","😎","🤩","🥳","😜","🤪","🤯","😱","😮","😴","🤔","😤","😡","🤬","😈","💀","🤡","👏","🙌","👍","👎","👌","🤝","🙏","💪","✌️","🤟","👋","💯","🔥"],
     symbols: ["🔥","✨","⭐","🌟","💥","⚡","💫","💯","✅","❌","❗","❓","‼️","⁉️","➕","➖","🎉","🎊","🎁","🎂","🎈","🏆","🚀","💎","👑","🌈","☀️","🌙","☁️","🌸","🍀","🎵","🎶","📸","💡","🔒","🔔","🆕","🆒"]
@@ -14510,7 +14526,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
   const [dmReactions, setDmReactions]   = useState({});
   const DM_EMOJIS = ["👍","❤️","😂","😮","😢","😡"];
   const [search, setSearch]             = useState('');
-  // ── Voice message state ────────────────────────────────────────────────────
+  // ���─ Voice message state ────────────────────────────────────────────────────
   const [dmVoicePhase, setDmVoicePhase] = useState(null); // null | 'recording' | 'recorded'
   const [dmVoiceSecs, setDmVoiceSecs]   = useState(0);
   const [dmVoiceBlob, setDmVoiceBlob]   = useState(null);
