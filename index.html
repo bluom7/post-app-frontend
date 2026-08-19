@@ -91,14 +91,12 @@ function PostAIAgent(props) {
   var onClose = props.onClose;
   var token = props.token;
   var user = props.user;
-  var state = useState([{ role: "assistant", content: "Hi! Ask me anything, or send a photo — I’ll identify and explain it.", time: "01:29 PM" }]);
-  var messages = state[0], setMessages = state[1];
+  var messageState = useState([{ role: "assistant", content: "Hi! I’m your POST AI Agent. What would you like to know?" }]);
+  var messages = messageState[0], setMessages = messageState[1];
   var inputState = useState("");
   var input = inputState[0], setInput = inputState[1];
-  var loadState = useState(false);
-  var loading = loadState[0], setLoading = loadState[1];
-  var drawerState = useState(false);
-  var drawerOpen = drawerState[0], setDrawerOpen = drawerState[1];
+  var loadingState = useState(false);
+  var loading = loadingState[0], setLoading = loadingState[1];
   var errorState = useState("");
   var error = errorState[0], setError = errorState[1];
   var conversationState = useState(null);
@@ -106,76 +104,180 @@ function PostAIAgent(props) {
   var endRef = useRef(null);
   var textareaRef = useRef(null);
 
-  function now() { return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
-  useEffect(function() { if (endRef.current) endRef.current.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
-  useEffect(function() { if (textareaRef.current) textareaRef.current.focus(); }, []);
+  useEffect(function() {
+    if (endRef.current) endRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
+  useEffect(function() {
+    if (textareaRef.current) textareaRef.current.focus();
+  }, []);
 
-  function startNewChat() {
-    setMessages([{ role: "assistant", content: "Hi! Ask me anything, or send a photo — I’ll identify and explain it.", time: now() }]);
-    setConversationId(null); setError(""); setDrawerOpen(false);
+  function updateAssistant(patch) {
+    setMessages(function(prev) {
+      var next = prev.slice();
+      var index = next.length - 1;
+      if (index < 0 || next[index].role !== "assistant") return next;
+      next[index] = Object.assign({}, next[index], patch);
+      return next;
+    });
   }
 
   async function sendMessage() {
     var text = input.trim();
     if (!text || loading) return;
-    var history = messages.map(function(m) { return { role: m.role, content: m.content }; }).slice(-20);
-    setMessages(function(prev) { return prev.concat([{ role: "user", content: text, time: now() }, { role: "assistant", content: "", time: now() }]); });
-    setInput(""); setError(""); setLoading(true);
+    var history = messages.filter(function(m) { return m.role === "user" || m.role === "assistant"; }).slice(-20).map(function(m) {
+      return { role: m.role, content: m.content };
+    });
+    setMessages(function(prev) { return prev.concat([{ role: "user", content: text }, { role: "assistant", content: "" }]); });
+    setInput("");
+    setError("");
+    setLoading(true);
     var request = { message: text, history: history, user_id: user && user.id ? String(user.id) : "anon", conversation_id: conversationId };
+    var gotReply = false;
     try {
-      var response = await fetch(API + "/ai/chat/stream", { method: "POST", headers: Object.assign({ "Content-Type": "application/json", Accept: "text/event-stream" }, token ? { Authorization: "Bearer " + token } : {}), body: JSON.stringify(request) });
+      var response = await fetch(API + "/ai/chat/stream", {
+        method: "POST",
+        headers: Object.assign({ "Content-Type": "application/json", Accept: "text/event-stream" }, token ? { Authorization: "Bearer " + token } : {}),
+        body: JSON.stringify(request)
+      });
       if (!response.ok || !response.body) throw new Error("stream unavailable");
-      var reader = response.body.getReader(), decoder = new TextDecoder(), buffer = "";
+      var reader = response.body.getReader();
+      var decoder = new TextDecoder();
+      var buffer = "";
       while (true) {
-        var chunk = await reader.read(); if (chunk.done) break;
+        var chunk = await reader.read();
+        if (chunk.done) break;
         buffer += decoder.decode(chunk.value, { stream: true });
-        var blocks = buffer.split("\n\n"); buffer = blocks.pop() || "";
+        var blocks = buffer.split("\n\n");
+        buffer = blocks.pop() || "";
         for (var i = 0; i < blocks.length; i++) {
-          var eventName = "message", dataText = "";
-          blocks[i].split("\n").forEach(function(line) { if (line.indexOf("event:") === 0) eventName = line.slice(6).trim(); if (line.indexOf("data:") === 0) dataText += line.slice(5).trim(); });
+          var eventName = "message";
+          var dataText = "";
+          blocks[i].split("\n").forEach(function(line) {
+            if (line.indexOf("event:") === 0) eventName = line.slice(6).trim();
+            if (line.indexOf("data:") === 0) dataText += line.slice(5).trim();
+          });
           if (!dataText) continue;
           var data = JSON.parse(dataText);
-          if (eventName === "delta") setMessages(function(prev) { var next=prev.slice(), last=next.length-1; next[last]=Object.assign({}, next[last], {content:(next[last].content||"")+String(data.text||data.delta||"")}); return next; });
-          if (eventName === "meta" && data.conversation_id) setConversationId(data.conversation_id);
-          if (eventName === "error") throw new Error(data.message || "AI request failed");
+          if (eventName === "delta") {
+            gotReply = true;
+            setMessages(function(prev) {
+              var next = prev.slice();
+              var last = next.length - 1;
+              if (last >= 0 && next[last].role === "assistant") next[last] = Object.assign({}, next[last], { content: (next[last].content || "") + (data.text || "") });
+              return next;
+            });
+          } else if (eventName === "done") {
+            if (data.conversation_id) setConversationId(data.conversation_id);
+          } else if (eventName === "error") {
+            throw new Error(data.message || "AI reply failed");
+          }
         }
       }
+      if (!gotReply) throw new Error("empty stream");
     } catch (streamError) {
       try {
-        var fallback = await fetch(API + "/ai/chat", { method: "POST", headers: Object.assign({ "Content-Type": "application/json" }, token ? { Authorization: "Bearer " + token } : {}), body: JSON.stringify(request) });
-        var data = await fallback.json(); if (!fallback.ok) throw new Error(data.detail || "AI request failed");
-        if (data.conversation_id) setConversationId(data.conversation_id);
-        setMessages(function(prev) { var next=prev.slice(), last=next.length-1; next[last]=Object.assign({}, next[last], {content:data.reply||""}); return next; });
+        var fallback = await fetch(API + "/ai/chat", {
+          method: "POST",
+          headers: Object.assign({ "Content-Type": "application/json" }, token ? { Authorization: "Bearer " + token } : {}),
+          body: JSON.stringify(request)
+        });
+        var fallbackData = await fallback.json().catch(function() { return {}; });
+        if (!fallback.ok) throw new Error(fallbackData.detail || "AI reply failed");
+        updateAssistant({ content: fallbackData.reply || "I couldn’t get a reply. Please try again." });
+        if (fallbackData.conversation_id) setConversationId(fallbackData.conversation_id);
       } catch (fallbackError) {
-        setMessages(function(prev) { return prev.slice(0, -1); });
+        updateAssistant({ content: "" });
         setError(fallbackError.message || "AI is unavailable right now.");
       }
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
 
-  var sendDisabled = !input.trim() || loading;
-  var rootStyle = { position: "fixed", inset: 0, zIndex: 1000, background: "#F7F8FA", color: "#111827", display: "flex", flexDirection: "column", fontFamily: "'Trebuchet MS', 'Segoe UI', sans-serif" };
-  return React.createElement("div", { style: rootStyle },
-    React.createElement("header", { style: { height: 146, flexShrink: 0, display: "flex", alignItems: "center", gap: 28, padding: "28px 42px 22px", background: "#fff", borderBottom: "1px solid #E7E9EE" } },
-      React.createElement("button", { onClick: function(){setDrawerOpen(true);}, "aria-label": "Open menu", style: { border: 0, background: "transparent", fontSize: 38, lineHeight: 1, color: "#111827", cursor: "pointer" } }, "☰"),
-      React.createElement("div", { style: { width: 80, height: 80, borderRadius: "50%", background: "#09C763", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42 } }, (user && (user.name || user.username || "Y")[0]) || "Y"),
-      React.createElement("div", null, React.createElement("div", { style: { fontSize: 40, lineHeight: 1, fontWeight: 700 } }, "You"), React.createElement("div", { style: { marginTop: 10, color: "#687080", fontSize: 24 } }, "AI Agent · Chat or send a photo"))
-    ),
-    React.createElement("main", { style: { flex: 1, overflowY: "auto", padding: "34px 22px 210px" } },
-      messages.map(function(m, i) { var assistant=m.role === "assistant"; return React.createElement("div", { key: i, style: { display: "flex", justifyContent: assistant ? "flex-start" : "flex-end", marginBottom: 16 } }, React.createElement("div", { style: { maxWidth: "86%", padding: "22px 26px 18px", border: assistant ? "1px solid #DEE2E7" : "none", borderRadius: assistant ? "28px 28px 28px 7px" : "28px 7px 28px 28px", background: assistant ? "#fff" : "#111", color: assistant ? "#111827" : "#fff", fontSize: 25, lineHeight: 1.45, whiteSpace: "pre-wrap", overflowWrap: "anywhere", boxShadow: assistant ? "0 1px 2px rgba(0,0,0,.04)" : "none" } }, m.content || (loading && i === messages.length - 1 ? "Thinking…" : ""), m.content && React.createElement("div", { style: { textAlign: "right", color: assistant ? "#7C8490" : "#D9DDE4", fontSize: 17, marginTop: 10 } }, m.time || now()))); }),
-      loading && React.createElement("div", { style: { width: 34, height: 24, borderRadius: 14, background: "#F0F1F3" } }),
-      error && React.createElement("div", { style: { color: "#B52B43", textAlign: "center", fontSize: 17, padding: "20px 12px" } }, error),
-      React.createElement("div", { ref: endRef })
-    ),
-    React.createElement("footer", { style: { position: "absolute", bottom: 0, left: 0, right: 0, padding: "18px 18px calc(16px + env(safe-area-inset-bottom))", background: "rgba(247,248,250,.96)", borderTop: "1px solid #E1E4E8" } },
-      React.createElement("div", { style: { minHeight: 154, border: "1px solid #DCE0E5", borderRadius: 28, background: "#fff", padding: "18px 24px", display: "flex", flexDirection: "column" } },
-        React.createElement("textarea", { ref: textareaRef, rows: 1, value: input, disabled: loading, placeholder: "Reply to BluOm…", onChange: function(e){setInput(e.target.value);}, onKeyDown: function(e){if(e.key === "Enter" && !e.shiftKey){e.preventDefault();sendMessage();}}, style: { flex: 1, resize: "none", border: 0, outline: 0, color: "#66707E", fontSize: 25, fontFamily: "inherit", minHeight: 54 } }),
-        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 20 } }, React.createElement("button", { onClick: function(){}, "aria-label": "Attach photo", style: { border: 0, background: "transparent", fontSize: 42, color: "#687080", cursor: "pointer" } }, "+"), React.createElement("div", { style: { padding: "10px 20px", borderRadius: 28, background: "#F7F8FA", fontSize: 25, letterSpacing: 5 } }, React.createElement("span", { style: {color:"#F4C12B"}}, "P"), React.createElement("span", { style: {color:"#08C764"}}, "O"), React.createElement("span", { style: {color:"#F04B54"}}, "S"), React.createElement("span", { style: {color:"#3F86F4"}}, "T")), React.createElement("div", { style: { flex: 1 } }), React.createElement("button", { onClick: sendMessage, disabled: sendDisabled, style: { width: 60, height: 60, borderRadius: "50%", border: 0, background: sendDisabled ? "#C9CED7" : "#111", color: "#fff", fontSize: 28, cursor: sendDisabled ? "default" : "pointer" } }, "↑"))
+  return React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }, role: "presentation" },
+    React.createElement("div", { onClick: onClose, style: { position: "absolute", inset: 0, background: "rgba(0,0,0,0.46)" }, "aria-hidden": "true" }),
+    React.createElement("section", { role: "dialog", "aria-modal": "true", "aria-label": "POST AI Agent", style: { position: "relative", width: "min(100%, 620px)", height: "min(760px, calc(100vh - 24px))", background: "var(--bg)", color: "var(--text)", borderRadius: "24px 24px 0 0", boxShadow: "0 -8px 34px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column", overflow: "hidden" } },
+      React.createElement("header", { style: { display: "flex", alignItems: "center", gap: 12, padding: "16px 18px", borderBottom: "1px solid var(--border)", background: "var(--nav-bg)" } },
+        React.createElement("div", { style: { width: 38, height: 38, borderRadius: 13, background: "#FFD600", color: "#000", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } }, React.createElement(BlackHoleIcon, { size: 28, color: "#000" })),
+        React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+          React.createElement("div", { style: { fontWeight: 800, fontSize: 17 } }, "POST AI Agent"),
+          React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 2 } }, "Ask anything about your POST experience")
+        ),
+        React.createElement("button", { onClick: onClose, "aria-label": "Close AI Agent", style: { width: 36, height: 36, border: "none", borderRadius: "50%", background: "var(--input-bg)", color: "var(--text)", cursor: "pointer", fontSize: 22, lineHeight: 1 } }, "×")
+      ),
+      React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "18px 16px 26px", display: "flex", flexDirection: "column", gap: 12 } },
+        messages.map(function(m, index) {
+          var assistant = m.role === "assistant";
+          return React.createElement("div", { key: index, style: { display: "flex", justifyContent: assistant ? "flex-start" : "flex-end" } },
+            React.createElement("div", { style: { maxWidth: "84%", padding: "11px 14px", borderRadius: assistant ? "16px 16px 16px 5px" : "16px 16px 5px 16px", background: assistant ? "var(--input-bg)" : "#111", color: assistant ? "var(--text)" : "#fff", fontSize: 14.5, lineHeight: 1.45, whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, m.content || (loading && index === messages.length - 1 ? "Thinking…" : ""))
+          );
+        }),
+        error && React.createElement("div", { style: { color: "#D32F2F", fontSize: 12, textAlign: "center", padding: "4px 12px" } }, error),
+        React.createElement("div", { ref: endRef })
+      ),
+      React.createElement("div", { style: { padding: "10px 14px calc(10px + env(safe-area-inset-bottom))", borderTop: "1px solid var(--border)", background: "var(--nav-bg)" } },
+        React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 8, padding: "8px 8px 8px 13px", background: "var(--input-bg)", borderRadius: 20 } },
+          React.createElement("textarea", { ref: textareaRef, rows: 1, value: input, disabled: loading, placeholder: "Message POST AI…", onChange: function(e) { setInput(e.target.value); }, onKeyDown: function(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }, style: { flex: 1, resize: "none", border: "none", outline: "none", background: "transparent", color: "var(--text)", fontSize: 15, lineHeight: 1.4, maxHeight: 120, padding: "5px 0" } }),
+          React.createElement("button", { onClick: sendMessage, disabled: loading || !input.trim(), "aria-label": "Send message", style: { width: 36, height: 36, border: "none", borderRadius: "50%", background: loading || !input.trim() ? "#B8B8B8" : "#111", color: "#fff", cursor: loading || !input.trim() ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
+            React.createElement("svg", { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.3", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M12 19V5" }), React.createElement("path", { d: "m6 11 6-6 6 6" }))
+          )
+        ),
+        React.createElement("div", { style: { color: "var(--muted)", fontSize: 10.5, textAlign: "center", marginTop: 7 } }, "POST AI can make mistakes. Check important information.")
       )
-    ),
-    drawerOpen && React.createElement("div", { onClick: function(){setDrawerOpen(false);}, style: { position: "absolute", inset: 0, zIndex: 5, background: "rgba(0,0,0,.35)" } }, React.createElement("aside", { onClick: function(e){e.stopPropagation();}, style: { width: "76%", maxWidth: 540, height: "100%", background: "#fff", padding: "30px 32px", display: "flex", flexDirection: "column", boxShadow: "8px 0 24px rgba(0,0,0,.12)" } }, React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 28, fontWeight: 700, marginBottom: 38 } }, "BluOm Agent", React.createElement("button", { onClick: function(){setDrawerOpen(false);}, style: { border:0, background:"transparent", fontSize:30, color:"#687080" } }, "×")), ["＋  New chat", "▣  Album", "◫  Library"].map(function(label, i){ return React.createElement("button", { key: label, onClick: i===0 ? startNewChat : function(){}, style: { border:0, background:"transparent", textAlign:"left", padding:"18px 0", fontSize:25, color:"#111827" } }, label); }), React.createElement("div", { style: { color:"#687080", fontSize:19, textTransform:"uppercase", letterSpacing:1, marginTop:20 } }, "Recents"), React.createElement("div", { style: { color:"#687080", fontSize:22, paddingTop:24 } }, error ? "Failed to fetch" : "No recent chats"), React.createElement("div", { style: { flex:1 } }), React.createElement("button", { onClick:startNewChat, style: { alignSelf:"flex-start", border:0, borderRadius:30, padding:"14px 24px", background:"#2687ED", color:"#fff", fontSize:21 } }, "＋ Chat"), React.createElement("div", { style: { alignSelf:"flex-end", marginTop:-50, width:64, height:64, borderRadius:"50%", background:"#09C763", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontSize:32 } }, "Y"))));
+    )
+  );
 }
 
+
+// === Service Worker + Web Push ===
+function urlBase64ToUint8Array(b64) {
+  var pad = '='.repeat((4 - b64.length % 4) % 4);
+  var raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  var out = new Uint8Array(raw.length);
+  for (var i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+async function setupPushNotifications(tok) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    var existing = await reg.pushManager.getSubscription();
+    if (existing) return;
+    var perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+    var vr = await fetch(API + '/notifications/vapid-key', { headers: { Authorization: 'Bearer ' + tok } });
+    if (!vr.ok) return;
+    var vd = await vr.json();
+    if (!vd.public_key) return;
+    var sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(vd.public_key) });
+    var sr = await fetch(API + '/notifications/push-subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+      body: JSON.stringify(sub.toJSON())
+    });
+    if (!sr.ok) { console.log('[Push] Subscribe rejected by server:', sr.status); return; }
+    console.log('[Push] Subscribed');
+  } catch(e) { console.log('[Push] Failed:', e.message); }
+}
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(r){ console.log('[SW] OK:', r.scope); })
+      .catch(function(e){ console.log('[SW] Fail:', e.message); });
+  });
+}
+// === End SW ===
+const COLORS = {
+  yellow: "#FFD600",
+  green: "#00C853",
+  red: "#FF1744",
+  blue: "#1877F2",
+  dark: "var(--bg)",
+  card: "var(--card-bg)",
+  text: "var(--text)",
+  muted: "var(--muted)"
+};
+const REPORT_REASONS = ["Spam", "Hate, Abuse and Harassment", "Child Safety", "Violent Speech", "Graphic or Violent Media", "Illegal and Regulated Behaviors", "Impersonation", "Adult Sexual Content", "Private or Non-Consensual Content", "Suicide or Self-Harm", "Terrorism or Violent Extremism", "Civic Integrity"];
 const COUNTRY_MAP = {
   'nigeria': 'NG',
   'india': 'IN',
@@ -847,7 +949,7 @@ const TRANSLATIONS = {
   },
   ja: {
     home: "ホーム",
-    search: "���索",
+    search: "検索",
     friends: "友達",
     messages: "メッセージ",
     profile: "プロフィール",
@@ -1361,7 +1463,7 @@ function CategoryPicker({value, onChange, inputStyle}) {
     )
   );
 }
-// ── GET response cache (stale-while-revalidate, 45s TTL) ─────────────────��──
+// ── GET response cache (stale-while-revalidate, 45s TTL) ────────────────────
 const _apiCache = new Map(); // key → { data, ts, inflight }
 const CACHE_TTL = 45000; // 45 seconds
 function _cacheKey(path, token) { return (token || "") + "|" + path; }
