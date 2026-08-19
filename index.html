@@ -76,6 +76,158 @@ video::-webkit-media-controls { display: none !important; }
 const API = "https://post-app-backend-nl35.onrender.com/api";
 const GIPHY_KEY = "ZTJgQEFaRLeskUxqpKe3YGDegmshaPE6";
 const SONG_MARQUEE_SPEED_PX_PER_SEC = 28;
+function BlackHoleIcon(props) {
+  var size = props && props.size || 23;
+  var color = props && props.color || "currentColor";
+  return React.createElement("svg", { width: size, height: size, viewBox: "0 0 32 32", fill: "none", xmlns: "http://www.w3.org/2000/svg", "aria-hidden": "true" },
+    React.createElement("circle", { cx: "16", cy: "16", r: "10", fill: "#050505" }),
+    React.createElement("ellipse", { cx: "16", cy: "16", rx: "14", ry: "7", transform: "rotate(-25 16 16)", stroke: color, strokeWidth: "2.2", opacity: "0.9" }),
+    React.createElement("ellipse", { cx: "16", cy: "16", rx: "12", ry: "5.5", transform: "rotate(25 16 16)", stroke: color, strokeWidth: "1.25", opacity: "0.5" }),
+    React.createElement("circle", { cx: "16", cy: "16", r: "4.8", fill: "#000" })
+  );
+}
+
+function PostAIAgent(props) {
+  var onClose = props.onClose;
+  var token = props.token;
+  var user = props.user;
+  var messageState = useState([{ role: "assistant", content: "Hi! I’m your POST AI Agent. What would you like to know?" }]);
+  var messages = messageState[0], setMessages = messageState[1];
+  var inputState = useState("");
+  var input = inputState[0], setInput = inputState[1];
+  var loadingState = useState(false);
+  var loading = loadingState[0], setLoading = loadingState[1];
+  var errorState = useState("");
+  var error = errorState[0], setError = errorState[1];
+  var conversationState = useState(null);
+  var conversationId = conversationState[0], setConversationId = conversationState[1];
+  var endRef = useRef(null);
+  var textareaRef = useRef(null);
+
+  useEffect(function() {
+    if (endRef.current) endRef.current.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
+  useEffect(function() {
+    if (textareaRef.current) textareaRef.current.focus();
+  }, []);
+
+  function updateAssistant(patch) {
+    setMessages(function(prev) {
+      var next = prev.slice();
+      var index = next.length - 1;
+      if (index < 0 || next[index].role !== "assistant") return next;
+      next[index] = Object.assign({}, next[index], patch);
+      return next;
+    });
+  }
+
+  async function sendMessage() {
+    var text = input.trim();
+    if (!text || loading) return;
+    var history = messages.filter(function(m) { return m.role === "user" || m.role === "assistant"; }).slice(-20).map(function(m) {
+      return { role: m.role, content: m.content };
+    });
+    setMessages(function(prev) { return prev.concat([{ role: "user", content: text }, { role: "assistant", content: "" }]); });
+    setInput("");
+    setError("");
+    setLoading(true);
+    var request = { message: text, history: history, user_id: user && user.id ? String(user.id) : "anon", conversation_id: conversationId };
+    var gotReply = false;
+    try {
+      var response = await fetch(API + "/ai/chat/stream", {
+        method: "POST",
+        headers: Object.assign({ "Content-Type": "application/json", Accept: "text/event-stream" }, token ? { Authorization: "Bearer " + token } : {}),
+        body: JSON.stringify(request)
+      });
+      if (!response.ok || !response.body) throw new Error("stream unavailable");
+      var reader = response.body.getReader();
+      var decoder = new TextDecoder();
+      var buffer = "";
+      while (true) {
+        var chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, { stream: true });
+        var blocks = buffer.split("\n\n");
+        buffer = blocks.pop() || "";
+        for (var i = 0; i < blocks.length; i++) {
+          var eventName = "message";
+          var dataText = "";
+          blocks[i].split("\n").forEach(function(line) {
+            if (line.indexOf("event:") === 0) eventName = line.slice(6).trim();
+            if (line.indexOf("data:") === 0) dataText += line.slice(5).trim();
+          });
+          if (!dataText) continue;
+          var data = JSON.parse(dataText);
+          if (eventName === "delta") {
+            gotReply = true;
+            setMessages(function(prev) {
+              var next = prev.slice();
+              var last = next.length - 1;
+              if (last >= 0 && next[last].role === "assistant") next[last] = Object.assign({}, next[last], { content: (next[last].content || "") + (data.text || "") });
+              return next;
+            });
+          } else if (eventName === "done") {
+            if (data.conversation_id) setConversationId(data.conversation_id);
+          } else if (eventName === "error") {
+            throw new Error(data.message || "AI reply failed");
+          }
+        }
+      }
+      if (!gotReply) throw new Error("empty stream");
+    } catch (streamError) {
+      try {
+        var fallback = await fetch(API + "/ai/chat", {
+          method: "POST",
+          headers: Object.assign({ "Content-Type": "application/json" }, token ? { Authorization: "Bearer " + token } : {}),
+          body: JSON.stringify(request)
+        });
+        var fallbackData = await fallback.json().catch(function() { return {}; });
+        if (!fallback.ok) throw new Error(fallbackData.detail || "AI reply failed");
+        updateAssistant({ content: fallbackData.reply || "I couldn’t get a reply. Please try again." });
+        if (fallbackData.conversation_id) setConversationId(fallbackData.conversation_id);
+      } catch (fallbackError) {
+        updateAssistant({ content: "" });
+        setError(fallbackError.message || "AI is unavailable right now.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "flex-end", justifyContent: "center" }, role: "presentation" },
+    React.createElement("div", { onClick: onClose, style: { position: "absolute", inset: 0, background: "rgba(0,0,0,0.46)" }, "aria-hidden": "true" }),
+    React.createElement("section", { role: "dialog", "aria-modal": "true", "aria-label": "POST AI Agent", style: { position: "relative", width: "min(100%, 620px)", height: "min(760px, calc(100vh - 24px))", background: "var(--bg)", color: "var(--text)", borderRadius: "24px 24px 0 0", boxShadow: "0 -8px 34px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column", overflow: "hidden" } },
+      React.createElement("header", { style: { display: "flex", alignItems: "center", gap: 12, padding: "16px 18px", borderBottom: "1px solid var(--border)", background: "var(--nav-bg)" } },
+        React.createElement("div", { style: { width: 38, height: 38, borderRadius: 13, background: "#FFD600", color: "#000", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } }, React.createElement(BlackHoleIcon, { size: 28, color: "#000" })),
+        React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+          React.createElement("div", { style: { fontWeight: 800, fontSize: 17 } }, "POST AI Agent"),
+          React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 2 } }, "Ask anything about your POST experience")
+        ),
+        React.createElement("button", { onClick: onClose, "aria-label": "Close AI Agent", style: { width: 36, height: 36, border: "none", borderRadius: "50%", background: "var(--input-bg)", color: "var(--text)", cursor: "pointer", fontSize: 22, lineHeight: 1 } }, "×")
+      ),
+      React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "18px 16px 26px", display: "flex", flexDirection: "column", gap: 12 } },
+        messages.map(function(m, index) {
+          var assistant = m.role === "assistant";
+          return React.createElement("div", { key: index, style: { display: "flex", justifyContent: assistant ? "flex-start" : "flex-end" } },
+            React.createElement("div", { style: { maxWidth: "84%", padding: "11px 14px", borderRadius: assistant ? "16px 16px 16px 5px" : "16px 16px 5px 16px", background: assistant ? "var(--input-bg)" : "#111", color: assistant ? "var(--text)" : "#fff", fontSize: 14.5, lineHeight: 1.45, whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, m.content || (loading && index === messages.length - 1 ? "Thinking…" : ""))
+          );
+        }),
+        error && React.createElement("div", { style: { color: "#D32F2F", fontSize: 12, textAlign: "center", padding: "4px 12px" } }, error),
+        React.createElement("div", { ref: endRef })
+      ),
+      React.createElement("div", { style: { padding: "10px 14px calc(10px + env(safe-area-inset-bottom))", borderTop: "1px solid var(--border)", background: "var(--nav-bg)" } },
+        React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 8, padding: "8px 8px 8px 13px", background: "var(--input-bg)", borderRadius: 20 } },
+          React.createElement("textarea", { ref: textareaRef, rows: 1, value: input, disabled: loading, placeholder: "Message POST AI…", onChange: function(e) { setInput(e.target.value); }, onKeyDown: function(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }, style: { flex: 1, resize: "none", border: "none", outline: "none", background: "transparent", color: "var(--text)", fontSize: 15, lineHeight: 1.4, maxHeight: 120, padding: "5px 0" } }),
+          React.createElement("button", { onClick: sendMessage, disabled: loading || !input.trim(), "aria-label": "Send message", style: { width: 36, height: 36, border: "none", borderRadius: "50%", background: loading || !input.trim() ? "#B8B8B8" : "#111", color: "#fff", cursor: loading || !input.trim() ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
+            React.createElement("svg", { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.3", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M12 19V5" }), React.createElement("path", { d: "m6 11 6-6 6 6" }))
+          )
+        ),
+        React.createElement("div", { style: { color: "var(--muted)", fontSize: 10.5, textAlign: "center", marginTop: 7 } }, "POST AI can make mistakes. Check important information.")
+      )
+    )
+  );
+}
+
 
 // === Service Worker + Web Push ===
 function urlBase64ToUint8Array(b64) {
@@ -3345,6 +3497,7 @@ function PostApp() {
   const [msgUnreadCount, setMsgUnreadCount] = useState(0);
   const [bellShake, setBellShake] = useState(false);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const [, _setLangVer] = useState(0);
   const [loginStatus, setLoginStatus] = useState("");
   const [loginKey, setLoginKey] = useState(0);
@@ -3691,7 +3844,7 @@ function PostApp() {
     }
   }, /*#__PURE__*/React.createElement(Toast, {
     toast: toast
-  }), /*#__PURE__*/React.createElement("div", {
+  }), aiOpen && /*#__PURE__*/React.createElement(PostAIAgent, { token: token, user: user, onClose: () => setAiOpen(false) }), /*#__PURE__*/React.createElement("div", {
     style: {
       position: "sticky",
       top: 0,
@@ -3815,6 +3968,11 @@ function PostApp() {
       position: "relative"
     }
   }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setAiOpen(true),
+    title: "POST AI Agent",
+    "aria-label": "Open POST AI Agent",
+    style: { background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", color: "var(--text)", padding: "4px 2px" }
+  }, React.createElement(BlackHoleIcon, { size: 22, color: "currentColor" })), /*#__PURE__*/React.createElement("button", {
     onClick: () => setDrawerOpen(true),
     title: "Menu",
     style: {
