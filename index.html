@@ -75,7 +75,7 @@ video::-webkit-media-controls { display: none !important; }
 } = React;
 const API = "https://post-app-backend-nl35.onrender.com/api";
 const GIPHY_KEY = "ZTJgQEFaRLeskUxqpKe3YGDegmshaPE6";
-const SONG_MARQUEE_SPEED_PX_PER_SEC = 28;
+const SONG_MARQUEE_DURATION_SEC = 4;
 function PostAiIcon(props) {
     var size = props && (props.size || props.width) || 24;
     return React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", xmlns: "http://www.w3.org/2000/svg", "aria-hidden": "true" },
@@ -6230,13 +6230,13 @@ function BentoPostCard({
       ? (post.user_name ? post.user_name + " · " : "") + post.audio_label
       : "";
   const postSongMarqueeRef = React.useRef(null);
-  const [postSongMarqueeDuration, setPostSongMarqueeDuration] = React.useState(8);
+  const [postSongMarqueeDuration, setPostSongMarqueeDuration] = React.useState(SONG_MARQUEE_DURATION_SEC);
   React.useEffect(() => {
     const marquee = postSongMarqueeRef.current;
     if (!marquee || !postSongMarqueeText) return;
     const measure = () => {
       const travelDistance = Math.max(40, marquee.scrollWidth / 2);
-      setPostSongMarqueeDuration(Math.max(4, travelDistance / SONG_MARQUEE_SPEED_PX_PER_SEC));
+      setPostSongMarqueeDuration(SONG_MARQUEE_DURATION_SEC);
     };
     measure();
     if (typeof ResizeObserver === "undefined") return;
@@ -6591,7 +6591,7 @@ function BentoPostCard({
         !showSuggestedForYouMessage &&         /*#__PURE__*/React.createElement("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"var(--muted)",style:{flexShrink:0}},
           /*#__PURE__*/React.createElement("path",{d:"M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"})),
         /*#__PURE__*/React.createElement("div", { style:{ flex:1, overflow:"hidden", minWidth:0 } },
-          /*#__PURE__*/React.createElement("span",{ key:showSuggestedForYouMessage ? "suggested-for-you" : "post-audio", ref:postSongMarqueeRef, style:{ fontSize:showSuggestedForYouMessage ? 13 : 12, color:"var(--muted)", whiteSpace:"nowrap", display:"inline-block", animation:showSuggestedForYou ? "feedMetaTickerSwap .34s ease both" : (showSuggestedForYouMessage ? "feedMetaTickerSwap .34s ease both" : "songHeaderTicker " + postSongMarqueeDuration + "s linear infinite") } },
+          /*#__PURE__*/React.createElement("span",{ key:showSuggestedForYouMessage ? "suggested-for-you" : "post-audio", ref:postSongMarqueeRef, style:{ fontSize:13, color:"var(--muted)", whiteSpace:"nowrap", display:"inline-block", animation:showSuggestedForYou ? "feedMetaTickerSwap .34s ease both" : (showSuggestedForYouMessage ? "feedMetaTickerSwap .34s ease both" : "songHeaderTicker " + postSongMarqueeDuration + "s linear infinite") } },
             showSuggestedForYouMessage ? "Suggested for you" : showSuggestedForYou ? (postSongMarqueeText || "Original audio") : postSongMarqueeText + "\u2003\u2003" + postSongMarqueeText
           )
         )
@@ -26080,12 +26080,12 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
     return days + " " + (days === 1 ? "day" : "days") + " ago";
   };
   var songMarqueeRef = React.useRef(null);
-  var [songMarqueeDuration, setSongMarqueeDuration] = React.useState(8);
+  var [songMarqueeDuration, setSongMarqueeDuration] = React.useState(SONG_MARQUEE_DURATION_SEC);
   React.useEffect(function() {
     var marquee = songMarqueeRef.current;
     if (!marquee || !songMarqueeText) return;
     var travelDistance = Math.max(40, marquee.scrollWidth / 2);
-    setSongMarqueeDuration(Math.max(4, travelDistance / SONG_MARQUEE_SPEED_PX_PER_SEC));
+    setSongMarqueeDuration(SONG_MARQUEE_DURATION_SEC);
   }, [songMarqueeText]);
   // Keep the follow control mounted and visible while the parent reconciles
   // the async follow request. The server flag may briefly lag behind the tap.
@@ -26302,7 +26302,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
             React.createElement("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "#fff", style: { flexShrink: 0 } },
               React.createElement("path", { d: "M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" })),
             React.createElement("div", { style: { flex: 1, overflow: "hidden" } },
-              React.createElement("span", { ref: songMarqueeRef, style: { color: "rgba(255,255,255,0.92)", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap", display: "inline-block", animation: "songHeaderTicker " + songMarqueeDuration + "s linear infinite", textShadow: "0 1px 4px rgba(0,0,0,0.6)" } },
+              React.createElement("span", { ref: songMarqueeRef, style: { color: "rgba(255,255,255,0.92)", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", display: "inline-block", animation: "songHeaderTicker " + songMarqueeDuration + "s linear infinite", textShadow: "0 1px 4px rgba(0,0,0,0.6)" } },
                 songMarqueeText + "  " + songMarqueeText))),
           reel.location && React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } },
             React.createElement("svg", { width: 10, height: 10, viewBox: "0 0 24 24", fill: "#fff", style: { flexShrink: 0 } },
