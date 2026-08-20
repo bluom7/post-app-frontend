@@ -313,6 +313,7 @@ function toSpeechText(text) {
 }
 
 function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvatarUrl, onBack }) {
+  const baseUrl = String(apiBaseUrl || (typeof window !== "undefined" && window.__POST_API_BASE__) || (typeof window !== "undefined" ? window.location.origin : "")).replace(/\/+$/, "");
   const [messages, setMessages] = useState([
     { role: "assistant", content: WELCOME, time: timeNow() },
   ]);
@@ -383,7 +384,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
   // ---- plain speak helper (used by auto-speak and manual toggle) -----
   const speak = useCallback(
     (text) => {
-      if (!speechSupported || !text) return;
+      if (!speechSupported || typeof SpeechSynthesisUtterance === "undefined" || !text) return;
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(toSpeechText(text));
       utterance.rate = 1;
@@ -411,18 +412,18 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     // placeholder assistant bubble we fill as chunks arrive
     setMessages((prev) => [...prev, { role: "assistant", content: "", time: timeNow(), streaming: true }]);
 
-    const controller = new AbortController();
+    const controller = typeof AbortController === "function" ? new AbortController() : { abort: () => {} };
     abortRef.current = controller;
 
     try {
-      const res = await fetch(`${apiBaseUrl}/api/ai/chat/stream`, {
+      const res = await fetch(`${baseUrl}/api/ai/chat/stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, history, user_id: userId, conversation_id: conversationId }),
         signal: controller.signal,
       });
 
-      if (!res.ok || !res.body) throw new Error("stream unavailable");
+      if (!res.ok || !res.body || typeof res.body.getReader !== "function") throw new Error("stream unavailable");
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -472,7 +473,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     } catch (err) {
       // fall back to non-streaming endpoint once
       try {
-        const res = await fetch(`${apiBaseUrl}/api/ai/chat`, {
+        const res = await fetch(`${baseUrl}/api/ai/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: text, history, user_id: userId, conversation_id: conversationId }),
@@ -534,7 +535,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
       form.append("user_id", userId);
       if (conversationId) form.append("conversation_id", conversationId);
 
-      const res = await fetch(`${apiBaseUrl}/api/ai/chat-with-image`, { method: "POST", body: form });
+      const res = await fetch(`${baseUrl}/api/ai/chat-with-image`, { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "request failed");
 
@@ -564,9 +565,16 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     else sendText();
   };
 
+  useEffect(() => () => {
+    if (previewImage?.url && typeof URL !== "undefined" && URL.revokeObjectURL) URL.revokeObjectURL(previewImage.url);
+  }, [previewImage?.url]);
+
   const handleFilePick = (e) => {
     const file = e.target.files?.[0];
-    if (file) setPreviewImage({ file, url: URL.createObjectURL(file) });
+    if (file) {
+      const url = typeof URL !== "undefined" && URL.createObjectURL ? URL.createObjectURL(file) : "";
+      setPreviewImage({ file, url });
+    }
     e.target.value = "";
     setShowAttach(false);
   };
@@ -577,7 +585,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     setConversationsError(null);
     try {
       const res = await fetch(
-        `${apiBaseUrl}/api/ai/conversations?user_id=${encodeURIComponent(userId)}`
+        `${baseUrl}/api/ai/conversations?user_id=${encodeURIComponent(userId)}`
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Couldn't load chat history.");
@@ -606,7 +614,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     setLoading(true);
     try {
       const res = await fetch(
-        `${apiBaseUrl}/api/ai/conversations/${id}?user_id=${encodeURIComponent(userId)}`
+        `${baseUrl}/api/ai/conversations/${id}?user_id=${encodeURIComponent(userId)}`
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Couldn't open that chat.");
@@ -636,7 +644,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     setConversations((prev) => prev.filter((c) => c.id !== id));
     try {
       const res = await fetch(
-        `${apiBaseUrl}/api/ai/conversations/${id}?user_id=${encodeURIComponent(userId)}`,
+        `${baseUrl}/api/ai/conversations/${id}?user_id=${encodeURIComponent(userId)}`,
         { method: "DELETE" }
       );
       if (!res.ok) throw new Error("delete failed");
@@ -1383,7 +1391,8 @@ const styles = {
   container: {
     display: "flex",
     flexDirection: "column",
-    height: "100vh",
+    height: "100dvh",
+    minHeight: "100vh",
     background: BRAND.bg,
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   },
