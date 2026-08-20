@@ -909,7 +909,7 @@ export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = 
               }}
             >
               {m.image && <img src={m.image} alt="sent" style={styles.imagePreview} />}
-              {m.content ? renderRich(m.content) : m.streaming ? <TypingDots /> : null}
+              {m.content ? renderRich(m.content) : m.streaming ? <ThinkingIndicator /> : null}
               <div style={{ ...styles.msgFooter, color: m.role === "user" ? "rgba(255,255,255,0.75)" : BRAND.sub }}>
                 {m.usedSearch && (
                   <span style={styles.searchTag}>
@@ -1395,16 +1395,20 @@ function AccountRow({ icon, label, value, note }) {
   );
 }
 
-function TypingDots() {
+function ThinkingIndicator() {
   return (
-    <span style={styles.typingWrap}>
-      <span style={{ ...styles.typingDot, animationDelay: "0s" }} />
-      <span style={{ ...styles.typingDot, animationDelay: "0.15s" }} />
-      <span style={{ ...styles.typingDot, animationDelay: "0.3s" }} />
+    <span style={styles.thinkingIndicator} aria-label="POST AI is thinking">
+      <span style={styles.thinkingAiBox}>
+        <span style={{ ...styles.pillLetter, color: BRAND.yellow }}>P</span>
+        <span style={{ ...styles.pillLetter, color: BRAND.green }}>O</span>
+        <span style={{ ...styles.pillLetter, color: BRAND.red }}>S</span>
+        <span style={{ ...styles.pillLetter, color: BRAND.blue }}>T</span>
+        <span style={styles.thinkingAiText}>AI</span>
+      </span>
+      <span style={styles.thinkingSpinner} />
       <style>{`
-        @keyframes postai-bounce {
-          0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-          30% { transform: translateY(-4px); opacity: 1; }
+        @keyframes postai-spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </span>
@@ -1675,8 +1679,10 @@ const styles = {
   attachIcon: { width: 32, display: "flex", justifyContent: "center", color: BRAND.ink },
   attachLabel: { fontSize: 16, color: BRAND.ink },
   sheetCancel: { width: "100%", marginTop: 6, padding: "12px 0", border: "none", background: BRAND.bg, borderRadius: 12, fontSize: 15, color: BRAND.sub, cursor: "pointer" },
-  typingWrap: { display: "inline-flex", gap: 4, padding: "4px 2px" },
-  typingDot: { width: 6, height: 6, borderRadius: "50%", background: BRAND.sub, animation: "postai-bounce 1.1s infinite" },
+  thinkingIndicator: { display: "inline-flex", alignItems: "center", gap: 9, padding: "2px 0" },
+  thinkingAiBox: { display: "inline-flex", alignItems: "center", gap: 1, padding: "5px 8px", borderRadius: 8, background: "linear-gradient(135deg, #fff 0%, #f8f8ff 42%, #f1eaff 100%)", boxShadow: "0 2px 8px rgba(102, 78, 190, 0.12)", border: "1px solid rgba(102, 78, 190, 0.10)" },
+  thinkingAiText: { marginLeft: 4, padding: "2px 4px", borderRadius: 4, background: "linear-gradient(135deg, #13a7d8, #9c35cc)", color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: 0.2 },
+  thinkingSpinner: { width: 16, height: 16, borderRadius: "50%", border: "2px solid transparent", borderTopColor: BRAND.yellow, borderRightColor: BRAND.green, borderBottomColor: BRAND.red, borderLeftColor: BRAND.blue, animation: "postai-spin 0.85s linear infinite" },
 
   avatarButton: { border: "none", background: "transparent", padding: 0, cursor: "pointer", display: "flex" },
 
