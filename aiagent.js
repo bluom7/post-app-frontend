@@ -909,7 +909,8 @@ export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = 
               }}
             >
               {m.image && <img src={m.image} alt="sent" style={styles.imagePreview} />}
-              {m.content ? renderRich(m.content) : m.streaming ? <ThinkingIndicator /> : null}
+              {m.streaming && <ThinkingIndicator />}
+              {m.content ? renderRich(m.content) : null}
               <div style={{ ...styles.msgFooter, color: m.role === "user" ? "rgba(255,255,255,0.75)" : BRAND.sub }}>
                 {m.usedSearch && (
                   <span style={styles.searchTag}>
