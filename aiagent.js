@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+const { useState, useRef, useEffect, useCallback } = React;
 
 /**
  * AI Agent screen for POST app — v2
@@ -312,7 +312,7 @@ function toSpeechText(text) {
     .trim();
 }
 
-export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvatarUrl, onBack }) {
+function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvatarUrl, onBack }) {
   const [messages, setMessages] = useState([
     { role: "assistant", content: WELCOME, time: timeNow() },
   ]);
@@ -1837,3 +1837,7 @@ const styles = {
   },
   libraryMenuDivider: { height: 1, background: BRAND.line, margin: "6px 8px" },
 };
+
+
+window.AIAgentScreen = AIAgentScreen;
+window.dispatchEvent(new Event("post-ai-agent-ready"));
