@@ -1399,13 +1399,7 @@ function AccountRow({ icon, label, value, note }) {
 function ThinkingIndicator() {
   return (
     <span style={styles.thinkingIndicator} aria-label="POST AI is preparing a reply">
-      <span style={styles.thinkingBrand}>
-        <span style={{ ...styles.pillLetter, color: BRAND.yellow }}>P</span>
-        <span style={{ ...styles.pillLetter, color: BRAND.green }}>O</span>
-        <span style={{ ...styles.pillLetter, color: BRAND.red }}>S</span>
-        <span style={{ ...styles.pillLetter, color: BRAND.blue }}>T</span>
-        <span style={styles.thinkingAiText}>AI</span>
-      </span>
+      <span style={styles.thinkingAiText}>AI</span>
       <svg
         style={styles.thinkingSpinner}
         width="22"
