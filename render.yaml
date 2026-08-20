@@ -14,3 +14,6 @@ services:
       - path: /index.html
         name: Cache-Control
         value: no-cache
+      - path: /aiagent.js
+        name: Cache-Control
+        value: no-cache
