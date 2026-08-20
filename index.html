@@ -92,15 +92,28 @@ function PostAiIcon(props) {
       );
       }
 function PostAIAgent(props) {
-      var user = props.user || {};
-      return React.createElement(window.AIAgentScreen, {
-        apiBaseUrl: API,
-        userId: user.id || user._id || "anon",
-        userName: user.name || user.username || "You",
-        userAvatarUrl: user.avatar_photo || user.avatar || null,
-        onBack: props.onClose
-      });
-    }// === Service Worker + Web Push ===
+        var user = props.user || {};
+        var readyState = useState(typeof window !== "undefined" && typeof window.AIAgentScreen === "function");
+        var ready = readyState[0], setReady = readyState[1];
+        useEffect(function() {
+          if (ready) return;
+          function handleReady() { setReady(true); }
+          window.addEventListener("post-ai-agent-ready", handleReady);
+          if (typeof window.AIAgentScreen === "function") setReady(true);
+          return function() { window.removeEventListener("post-ai-agent-ready", handleReady); };
+        }, [ready]);
+        if (!ready) {
+          return React.createElement("div", { style: { minHeight: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#687080", fontSize: 16 } }, "Loading POST AI...");
+        }
+        return React.createElement(window.AIAgentScreen, {
+          apiBaseUrl: API,
+          userId: user.id || user._id || "anon",
+          userName: user.name || user.username || "You",
+          userAvatarUrl: user.avatar_photo || user.avatar || null,
+          onBack: props.onClose
+        });
+      }
+    // === Service Worker + Web Push ===
 function urlBase64ToUint8Array(b64) {
   var pad = '='.repeat((4 - b64.length % 4) % 4);
   var raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
