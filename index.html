@@ -113,7 +113,7 @@ function PostAiIcon(props) {
           React.createElement("textarea",{ref:textareaRef,rows:1,value:input,disabled:loading,placeholder:"Reply to BluOm…",onChange:function(e){setInput(e.target.value);},onKeyDown:function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendText();}},style:{width:"100%",border:0,outline:0,resize:"none",fontFamily:"inherit",fontSize:16,color:"#687080",background:"transparent",minHeight:34}}),
           React.createElement("button",{onClick:function(){setAttachOpen(true);},"aria-label":"Attach",style:{position:"absolute",left:16,bottom:8,border:0,background:"transparent",fontSize:36,color:"#687080",cursor:"pointer"}},"+"),
           React.createElement("div",{style:{position:"absolute",left:64,bottom:12,padding:"5px 12px",borderRadius:18,background:"#F7F8FA",fontSize:13,letterSpacing:2}},colors.map(function(c,i){return React.createElement("span",{key:i,style:{color:c}},"POST"[i]);})),
-          React.createElement("button",{onClick:sendText,disabled:sendDisabled,"aria-label":"Send",style:{position:"absolute",right:10,bottom:8,width:40,height:40,border:0,borderRadius:7,background:"#1877F2",color:"#fff",fontSize:23,cursor:"pointer"}},"↑")
+          React.createElement("button",{onClick:sendText,disabled:sendDisabled,"aria-label":"Send",style:{position:"absolute",right:10,bottom:8,width:35,height:35,border:0,borderRadius:7,background:"#1877F2",color:"#fff",fontSize:23,cursor:"pointer"}},React.createElement("span",{style:{display:"inline-block",fontWeight:700,transform:"scaleX(1.18)"}},"↑"))
         ),
         React.createElement("div",{style:{textAlign:"center",fontSize:10,color:"#687080",marginTop:5}},"POST AI can make mistakes. Check important information.")
       ),
