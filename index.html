@@ -6536,8 +6536,8 @@ function BentoPostCard({
         React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:4, marginTop:4, minWidth:0, overflow:"hidden", maxWidth:"100%" } },
           !showSuggestedForYouMessage &&         React.createElement("svg", { width:13, height:13, viewBox:"0 0 24 24", fill:"#fff", style:{ flexShrink:0, opacity:1, filter:"drop-shadow(0 1px 2px rgba(0,0,0,.78))" } }, React.createElement("path", { d:"M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" })),
           React.createElement("div", { style:{ flex:1, minWidth:0, overflow:"hidden" } },
-            React.createElement("span", { ref:postSongMarqueeRef, style:{ display:"inline-block", whiteSpace:"nowrap", fontSize:showSuggestedForYouMessage ? 14 : 13, color:"rgba(255,255,255,.96)", animation:showSuggestedForYouMessage ? "feedMetaTickerSwap .34s ease both" : (postSongMarqueeText ? "songHeaderTicker " + postSongMarqueeDuration + "s linear infinite" : "feedMetaTickerSwap .34s ease both") } },
-              showSuggestedForYouMessage ? "Suggested for you" : ((postSongMarqueeText || "Original audio") + "  " + (postSongMarqueeText || "Original audio"))
+            React.createElement("span", { ref:postSongMarqueeRef, style:{ display:"inline-block", whiteSpace:"nowrap", fontSize:showSuggestedForYouMessage ? 14 : 13, color:"rgba(255,255,255,.96)", animation:showSuggestedForYou ? "feedMetaTickerSwap .34s ease both" : (postSongMarqueeText ? "songHeaderTicker " + postSongMarqueeDuration + "s linear infinite" : "feedMetaTickerSwap .34s ease both") } },
+              showSuggestedForYouMessage ? "Suggested for you" : (showSuggestedForYou ? (postSongMarqueeText || "Original audio") : ((postSongMarqueeText || "Original audio") + "  " + (postSongMarqueeText || "Original audio")))
             )
           )
         )
@@ -6604,8 +6604,8 @@ function BentoPostCard({
         !showSuggestedForYouMessage && postSongMarqueeText &&         /*#__PURE__*/React.createElement("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"var(--muted)",style:{flexShrink:0}},
           /*#__PURE__*/React.createElement("path",{d:"M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"})),
         /*#__PURE__*/React.createElement("div", { style:{ flex:1, overflow:"hidden", minWidth:0 } },
-          /*#__PURE__*/React.createElement("span",{ ref:postSongMarqueeRef, style:{ fontSize:13, color:"var(--muted)", whiteSpace:"nowrap", display:"inline-block", animation:showSuggestedForYouMessage ? "feedMetaTickerSwap .34s ease both" : (postSongMarqueeText ? "songHeaderTicker " + postSongMarqueeDuration + "s linear infinite" : "feedMetaTickerSwap .34s ease both") } },
-            showSuggestedForYouMessage ? "Suggested for you" : (postSongMarqueeText ? (postSongMarqueeText + "\u2003\u2003" + postSongMarqueeText) : (post.location || ""))
+          /*#__PURE__*/React.createElement("span",{ ref:postSongMarqueeRef, style:{ fontSize:13, color:"var(--muted)", whiteSpace:"nowrap", display:"inline-block", animation:showSuggestedForYou ? "feedMetaTickerSwap .34s ease both" : (postSongMarqueeText ? "songHeaderTicker " + postSongMarqueeDuration + "s linear infinite" : "feedMetaTickerSwap .34s ease both") } },
+            showSuggestedForYouMessage ? "Suggested for you" : (postSongMarqueeText ? (showSuggestedForYou ? postSongMarqueeText : postSongMarqueeText + "\u2003\u2003" + postSongMarqueeText) : (post.location || ""))
           )
         )
       )
