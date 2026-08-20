@@ -1134,76 +1134,9 @@ export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = 
             {!libraryLoading && libraryError && (
               <div style={styles.accountErrorBox}>
                 {libraryError}
-                <button style={styles.retryBtn} onClick={() => fetchLibrary()}>
-                  Retry
-                </button>
-              </div>
-            )}
-
-            {!libraryLoading && !libraryError && libraryItems.length === 0 && (
-              <div style={styles.accountLoading}>{showDeleted ? "Nothing deleted" : "Nothing here yet"}</div>
-            )}
-
-            {!libraryLoading && !libraryError && libraryItems.length > 0 && (
-              <div style={libraryView === "grid" ? styles.libraryGrid : styles.libraryList}>
-                {libraryItems.map((item) => (
-                  <LibraryCard
-                    key={item.id}
-                    item={item}
-                    view={libraryView}
-                    apiBaseUrl={apiBaseUrl}
-                    selectMode={selectMode}
-                    selected={selectedIds.includes(item.id)}
-                    onToggleSelect={() => toggleSelectItem(item.id)}
-                    showDeleted={showDeleted}
-                    onRestore={() => restoreItem(item.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {!showDeleted && (
-            <div style={styles.librarySearchBar}>
-              <span style={styles.librarySearchIcon}>
-                <Icon.Search style={{ width: 16, height: 16 }} />
-              </span>
-              <input
-                style={styles.librarySearchInput}
-                placeholder="Search library"
-                value={librarySearch}
-                onChange={(e) => handleLibrarySearch(e.target.value)}
-              />
-            </div>
-          )}
-
-          <input
-            ref={libraryFileInputRef}
-            type="file"
-            multiple
-            style={{ display: "none" }}
-            onChange={(e) => {
-              if (e.target.files?.length) handleUploadFiles(e.target.files);
-              e.target.value = "";
-            }}
-          />
-        </div>
-      )}
-
-      {/* Library 3-dot menu — real Select / Upload / New folder / Grid / List / Deleted */}
-      {libraryMenuOpen && (
-        <div style={styles.sheetOverlay} onClick={() => setLibraryMenuOpen(false)}>
-          <div style={styles.libraryMenuSheet} onClick={(e) => e.stopPropagation()}>
-            <button
-              style={styles.libraryMenuRow}
-              onClick={() => {
-                setSelectMode((v) => !v);
-                setSelectedIds([]);
-                setLibraryMenuOpen(false);
-              }}
-            >
+               <button style={styles.libraryMenuRow} onClick={handleSelectAll}>
               <Icon.CheckCircle />
-              <span>Select</span>
+              <span>{selectMode && selectedIds.length === libraryItems.length && libraryItems.length > 0 ? "Clear selection" : "Select all"}</span>
             </button>
             <button style={styles.libraryMenuRow} onClick={() => libraryFileInputRef.current?.click()}>
               <Icon.Upload />
@@ -1236,6 +1169,16 @@ export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = 
               <span style={{ flex: 1 }}>List</span>
               {libraryView === "list" && <Icon.Check />}
             </button>
+            <div style={styles.libraryMenuDivider} />
+            {selectMode && selectedIds.length > 0 && (
+              <>
+                <div style={styles.libraryMenuDivider} />
+                <button style={styles.libraryMenuRow} onClick={handleDeleteSelected}>
+                  <Icon.Trash />
+                  <span>Delete selected ({selectedIds.length})</span>
+                </button>
+              </>
+            )}
             <div style={styles.libraryMenuDivider} />
             <button style={styles.libraryMenuRow} onClick={openDeleted}>
               <Icon.Trash />
