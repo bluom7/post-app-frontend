@@ -1398,15 +1398,24 @@ function AccountRow({ icon, label, value, note }) {
 
 function ThinkingIndicator() {
   return (
-    <span style={styles.thinkingIndicator} aria-label="POST AI is thinking">
-      <span style={styles.thinkingAiBox}>
-        <span style={{ ...styles.pillLetter, color: BRAND.yellow }}>P</span>
-        <span style={{ ...styles.pillLetter, color: BRAND.green }}>O</span>
-        <span style={{ ...styles.pillLetter, color: BRAND.red }}>S</span>
-        <span style={{ ...styles.pillLetter, color: BRAND.blue }}>T</span>
-        <span style={styles.thinkingAiText}>AI</span>
-      </span>
-      <span style={styles.thinkingSpinner} />
+    <span style={styles.thinkingIndicator} aria-label="POST AI is preparing a reply">
+      <svg
+        style={styles.thinkingSpinner}
+        width="22"
+        height="22"
+        viewBox="0 0 22 22"
+        fill="none"
+        role="status"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="8.5" stroke={BRAND.line} strokeWidth="2.5" />
+        <path
+          d="M11 2.5a8.5 8.5 0 0 1 8.5 8.5"
+          stroke={BRAND.blue}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+        />
+      </svg>
       <style>{`
         @keyframes postai-spin {
           to { transform: rotate(360deg); }
@@ -1680,10 +1689,8 @@ const styles = {
   attachIcon: { width: 32, display: "flex", justifyContent: "center", color: BRAND.ink },
   attachLabel: { fontSize: 16, color: BRAND.ink },
   sheetCancel: { width: "100%", marginTop: 6, padding: "12px 0", border: "none", background: BRAND.bg, borderRadius: 12, fontSize: 15, color: BRAND.sub, cursor: "pointer" },
-  thinkingIndicator: { display: "inline-flex", alignItems: "center", gap: 9, padding: "2px 0" },
-  thinkingAiBox: { display: "inline-flex", alignItems: "center", gap: 1, padding: "5px 8px", borderRadius: 8, background: "linear-gradient(135deg, #fff 0%, #f8f8ff 42%, #f1eaff 100%)", boxShadow: "0 2px 8px rgba(102, 78, 190, 0.12)", border: "1px solid rgba(102, 78, 190, 0.10)" },
-  thinkingAiText: { marginLeft: 4, padding: "2px 4px", borderRadius: 4, background: "linear-gradient(135deg, #13a7d8, #9c35cc)", color: "#fff", fontSize: 11, fontWeight: 800, letterSpacing: 0.2 },
-  thinkingSpinner: { width: 16, height: 16, borderRadius: "50%", border: "2px solid transparent", borderTopColor: BRAND.yellow, borderRightColor: BRAND.green, borderBottomColor: BRAND.red, borderLeftColor: BRAND.blue, animation: "postai-spin 0.85s linear infinite" },
+  thinkingIndicator: { display: "inline-flex", alignItems: "center", justifyContent: "center", padding: "2px 0" },
+  thinkingSpinner: { display: "block", animation: "postai-spin 0.8s linear infinite" },
 
   avatarButton: { border: "none", background: "transparent", padding: 0, cursor: "pointer", display: "flex" },
 
