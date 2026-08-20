@@ -12651,8 +12651,8 @@ function UserProfileScreen({
       color: "var(--muted)",
       fontSize: 13
     }
-  }, "📍 ", profile.location), profile.website && /*#__PURE__*/React.createElement("a", {
-    href: profile.website.startsWith("http") ? profile.website : `https://${profile.website}`,
+  }, "📍 ", profile.location), typeof profile.website === "string" && profile.website.trim() && /*#__PURE__*/React.createElement("a", {
+    href: profile.website.trim().match(/^https?:\/\//i) ? profile.website.trim() : `https://${profile.website.trim()}`,
     target: "_blank",
     style: {
       color: COLORS.blue,
@@ -16305,8 +16305,8 @@ function ProfileTab({
     cx: "12",
     cy: "10",
     r: "3"
-  })), user.location), user.website && /*#__PURE__*/React.createElement("a", {
-    href: user.website.startsWith("http") ? user.website : `https://${user.website}`,
+  })), user.location), typeof user.website === "string" && user.website.trim() && /*#__PURE__*/React.createElement("a", {
+    href: user.website.trim().match(/^https?:\/\//i) ? user.website.trim() : `https://${user.website.trim()}`,
     target: "_blank",
     style: {
       color: COLORS.blue,
