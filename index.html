@@ -3163,7 +3163,7 @@ function DrawerPanel({open, onClose, user, onNavigate, isDark, onToggleDark, onO
         color:"var(--text)", textAlign:"left"
       }
     },
-      React.createElement("span", {style:{flexShrink:0, color:"var(--text)", opacity: primary?1:0.7}}, primary ? React.cloneElement(icon, {width:24,height:24}) : icon),
+      React.createElement("span", {style:{flexShrink:0, color:"var(--text)", opacity: primary?1:0.7}}, React.isValidElement(icon) ? React.cloneElement(icon, {width:24,height:24}) : null),
       React.createElement("span", {style:{
         fontSize: primary ? 20 : 15,
         fontWeight: primary ? 800 : 500,
