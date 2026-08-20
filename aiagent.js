@@ -724,7 +724,7 @@ export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = 
     [apiBaseUrl, userId, libraryTab, librarySearch, showDeleted]
   );
 
-  const openLibrary = (tab) => {
+  const openLibrary = (tab = "all") => {
     setSidebarOpen(false);
     setLibraryTab(tab);
     setShowDeleted(false);
@@ -799,10 +799,18 @@ export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = 
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
+  const handleSelectAll = () => {
+    const ids = libraryItems.map((item) => item.id);
+    const allSelected = selectMode && ids.length > 0 && selectedIds.length === ids.length;
+    setSelectMode(!allSelected);
+    setSelectedIds(allSelected ? [] : ids);
+    setLibraryMenuOpen(false);
+  };
+
   const handleDeleteSelected = async () => {
     const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
     try {
-      await Promise.all(
+      const responses = await Promise.all(
         selectedIds.map((id) =>
           fetch(`${apiBaseUrl}/api/library/items/${id}?user_id=${encodeURIComponent(userId)}`, {
             method: "DELETE",
@@ -810,6 +818,8 @@ export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = 
           })
         )
       );
+      if (responses.some((response) => !response.ok)) throw new Error("Delete failed.");
+      setLibraryMenuOpen(false);
       setSelectedIds([]);
       setSelectMode(false);
       await fetchLibrary();
@@ -1086,7 +1096,7 @@ export default function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = 
             <button style={styles.menuButton} onClick={() => (showDeleted ? closeDeleted() : setLibraryOpen(false))} title="Back">
               <Icon.ArrowLeft />
             </button>
-            <div style={styles.libraryTitle}>{showDeleted ? "Deleted" : "Library"}</div>
+            <div style={styles.libraryTitle}>{showDeleted ? "Deleted" : "Post"}</div>
             <div style={{ flex: 1 }} />
             {selectMode && selectedIds.length > 0 && !showDeleted && (
               <button style={styles.libraryDeleteBtn} onClick={handleDeleteSelected}>
@@ -1765,13 +1775,14 @@ const styles = {
 
   // ---- Library / Album screen ----
   libraryHeader: {
+    position: "relative",
     display: "flex",
     alignItems: "center",
     gap: 10,
     padding: "14px 12px",
     borderBottom: `1px solid ${BRAND.line}`,
   },
-  libraryTitle: { fontWeight: 800, fontSize: 19, color: BRAND.ink },
+  libraryTitle: { position: "absolute", left: "50%", transform: "translateX(-50%)", fontWeight: 800, fontSize: 19, color: BRAND.ink, pointerEvents: "none" },
   libraryDeleteBtn: {
     border: "none",
     background: BRAND.red,
