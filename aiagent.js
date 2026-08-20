@@ -595,7 +595,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     } finally {
       setLoadingConversations(false);
     }
-  }, [apiBaseUrl, userId]);
+  }, [baseUrl, userId]);
 
   useEffect(() => {
     if (sidebarOpen) fetchConversations();
@@ -664,7 +664,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     setAccountLoading(true);
     setAccountError(null);
     try {
-      const res = await fetch(`${apiBaseUrl}/api/auth/me`, {
+      const res = await fetch(`${baseUrl}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) {
@@ -681,7 +681,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     } finally {
       setAccountLoading(false);
     }
-  }, [apiBaseUrl]);
+  }, [baseUrl]);
 
   const openAccountInfo = () => {
     setSidebarOpen(false);
@@ -693,7 +693,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
     try {
       if (token) {
-        await fetch(`${apiBaseUrl}/api/auth/logout`, {
+        await fetch(`${baseUrl}/api/auth/logout`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -717,7 +717,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
       try {
         const params = new URLSearchParams({ user_id: userId, tab, deleted: String(deleted) });
         if (search.trim()) params.set("search", search.trim());
-        const res = await fetch(`${apiBaseUrl}/api/library/items?${params.toString()}`, {
+        const res = await fetch(`${baseUrl}/api/library/items?${params.toString()}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         const data = await res.json();
@@ -729,7 +729,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
         setLibraryLoading(false);
       }
     },
-    [apiBaseUrl, userId, libraryTab, librarySearch, showDeleted]
+    [baseUrl, userId, libraryTab, librarySearch, showDeleted]
   );
 
   const openLibrary = (tab = "all") => {
@@ -761,7 +761,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
         const form = new FormData();
         form.append("file", file);
         form.append("user_id", userId);
-        const res = await fetch(`${apiBaseUrl}/api/library/upload`, {
+        const res = await fetch(`${baseUrl}/api/library/upload`, {
           method: "POST",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           body: form,
@@ -788,7 +788,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
       const form = new FormData();
       form.append("user_id", userId);
       form.append("name", name.trim());
-      const res = await fetch(`${apiBaseUrl}/api/library/folders`, {
+      const res = await fetch(`${baseUrl}/api/library/folders`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: form,
@@ -820,7 +820,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     try {
       const responses = await Promise.all(
         selectedIds.map((id) =>
-          fetch(`${apiBaseUrl}/api/library/items/${id}?user_id=${encodeURIComponent(userId)}`, {
+          fetch(`${baseUrl}/api/library/items/${id}?user_id=${encodeURIComponent(userId)}`, {
             method: "DELETE",
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           })
@@ -850,7 +850,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
   const restoreItem = async (id) => {
     const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
     try {
-      await fetch(`${apiBaseUrl}/api/library/items/${id}/restore?user_id=${encodeURIComponent(userId)}`, {
+      await fetch(`${baseUrl}/api/library/items/${id}/restore?user_id=${encodeURIComponent(userId)}`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -1309,7 +1309,7 @@ function LibraryCard({ item, view, apiBaseUrl, selectMode, selected, onToggleSel
   const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
   const thumbUrl =
     isImage && item.file_id
-      ? `${apiBaseUrl}/api/library/files/${item.file_id}${token ? `?token=${encodeURIComponent(token)}` : ""}`
+      ? `${baseUrl}/api/library/files/${item.file_id}${token ? `?token=${encodeURIComponent(token)}` : ""}`
       : null;
 
   const cardStyle = view === "grid" ? styles.libCardGrid : styles.libCardList;
