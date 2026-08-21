@@ -1028,7 +1028,6 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
               Cancel
             </button>
           </div>
-        </div>
       )}
 
       {/* Left sidebar — New chat + real chat history (Recents) */}
