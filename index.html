@@ -71,7 +71,7 @@ video::-webkit-media-controls { display: none !important; }
 @keyframes _rpt_spin{to{transform:rotate(360deg)}}
 </style>
 <style id="post-mobile-compat">html,body,#root{min-height:100%;}body{min-height:100vh;min-height:100dvh;margin:0;overscroll-behavior-y:none;-webkit-text-size-adjust:100%;}button,input,textarea{font:inherit;}@supports(padding:max(0px)){body{padding-bottom:env(safe-area-inset-bottom);}}</style>
-<style>.assistant-rich-text strong,.assistant-rich-text h3{font-size:22px;}.assistant-rich-text h3{display:block;margin:14px 0 8px;}.assistant-rich-text ol{list-style-position:inside;padding-left:0;margin:8px 0;}.assistant-rich-text ol li{padding-left:4px;}</style></head>
+<style>.assistant-rich-text strong,.assistant-rich-text h3{font-size:22px;}.assistant-rich-text h3{display:block;margin:14px 0 8px;font-weight:700;}.assistant-rich-text ol{list-style-position:inside;padding-left:0;margin:8px 0;}.assistant-rich-text ol li{padding-left:4px;}.assistant-rich-text ol li::marker{font-weight:700;font-size:22px;}</style></head>
 <body>
 <div id="root"></div>
 <script>const {
@@ -167,9 +167,11 @@ function PostAIAgent(props) {
     var text=String(raw||'').replace(/\r\n?/g,'\n').trim();
     function esc(v){return v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');}
     function inline(v){return esc(v).replace(/\*/g,'').replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noreferrer">$1</a>');}
-    var lines=text.split('\n'),html=[],list='';
+    function looksLikeHeading(v){if(v.length<12||/[.!?:;,]$/.test(v))return false;var words=v.split(/\s+/).filter(Boolean),stop=/^(and|or|the|of|in|on|to|for|a|an|as|by|with|from|at|into|under|over)$/i,significant=words.filter(function(w){return !stop.test(w);});return words.length>=4&&significant.length>=3&&significant.every(function(w){return /^[A-Z][A-Za-z0-9-]*$/.test(w)||/^[A-Z]{2,}$/.test(w);});}
+    var prepared=text.replace(/([.!?])\s+(?=[A-Z][A-Za-z0-9-]*(?:\s+(?:[A-Z][A-Za-z0-9-]*|and|or|the|of|in|on|to|for|a|an|as|by|with|from|at|into|under|over)){3,}(?:\s|$))/g,'$1\n').replace(/\s+(?=\d+[.)]\s+)/g,'\n');
+    var lines=prepared.split('\n'),html=[],list='';
     function close(){if(list){html.push('</'+list+'>');list='';}}
-    lines.forEach(function(line){var v=line.trim();if(!v){close();return;}var boldHeading=(v.indexOf('**')===0&&v.lastIndexOf('**')===v.length-2)?v.slice(2,-2).trim():((v.indexOf('__')===0&&v.lastIndexOf('__')===v.length-2)?v.slice(2,-2).trim():'');if(boldHeading){close();html.push('<h3>'+inline(boldHeading)+'</h3>');return;}var h=v.match(/^#{1,3}\s+(.+)$/);if(h){close();html.push('<h3>'+inline(h[1])+'</h3>');return;}var item=v.match(/^(?:[-*•]|\d+[.)])\s+(.+)$/);if(item){var type=/^\d/.test(v)?'ol':'ul';if(list!==type){close();html.push('<'+type+'>');list=type;}html.push('<li>'+inline(item[1])+'</li>');return;}if(/^>\s?/.test(v)){close();html.push('<blockquote>'+inline(v.replace(/^>\s?/,'') )+'</blockquote>');return;}close();html.push('<p>'+inline(v)+'</p>');});close();return html.join('');
+    lines.forEach(function(line){var v=line.trim();if(!v){close();return;}var boldHeading=(v.indexOf('**')===0&&v.lastIndexOf('**')===v.length-2)?v.slice(2,-2).trim():((v.indexOf('__')===0&&v.lastIndexOf('__')===v.length-2)?v.slice(2,-2).trim():'');if(boldHeading){close();html.push('<h3>'+inline(boldHeading)+'</h3>');return;}var h=v.match(/^#{1,3}\s+(.+)$/);if(h){close();html.push('<h3>'+inline(h[1])+'</h3>');return;}if(looksLikeHeading(v)){close();html.push('<h3>'+inline(v)+'</h3>');return;}var item=v.match(/^(?:[-*•]|\d+[.)])\s+(.+)$/);if(item){var type=/^\d/.test(v)?'ol':'ul';if(list!==type){close();html.push('<'+type+'>');list=type;}html.push('<li>'+inline(item[1])+'</li>');return;}if(/^>\s?/.test(v)){close();html.push('<blockquote>'+inline(v.replace(/^>\s?/,'') )+'</blockquote>');return;}close();html.push('<p>'+inline(v)+'</p>');});close();return html.join('');
   }
   function updateLast(text){setMessages(function(prev){var next=prev.slice(),last=next.length-1;if(last>=0)next[last]=Object.assign({},next[last],{content:text});return next;});}
   function setFeedback(index,value){setMessageFeedback(function(prev){var next=Object.assign({},prev);next[index]=next[index]===value?"":value;return next;});}
