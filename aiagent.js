@@ -595,7 +595,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     } finally {
       setLoadingConversations(false);
     }
-  }, [baseUrl, userId]);
+  }, [apiBaseUrl, userId]);
 
   useEffect(() => {
     if (sidebarOpen) fetchConversations();
@@ -664,7 +664,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     setAccountLoading(true);
     setAccountError(null);
     try {
-      const res = await fetch(`${baseUrl}/api/auth/me`, {
+      const res = await fetch(`${apiBaseUrl}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.status === 401) {
@@ -681,7 +681,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     } finally {
       setAccountLoading(false);
     }
-  }, [baseUrl]);
+  }, [apiBaseUrl]);
 
   const openAccountInfo = () => {
     setSidebarOpen(false);
@@ -693,7 +693,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
     try {
       if (token) {
-        await fetch(`${baseUrl}/api/auth/logout`, {
+        await fetch(`${apiBaseUrl}/api/auth/logout`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -717,7 +717,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
       try {
         const params = new URLSearchParams({ user_id: userId, tab, deleted: String(deleted) });
         if (search.trim()) params.set("search", search.trim());
-        const res = await fetch(`${baseUrl}/api/library/items?${params.toString()}`, {
+        const res = await fetch(`${apiBaseUrl}/api/library/items?${params.toString()}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         const data = await res.json();
@@ -729,7 +729,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
         setLibraryLoading(false);
       }
     },
-    [baseUrl, userId, libraryTab, librarySearch, showDeleted]
+    [apiBaseUrl, userId, libraryTab, librarySearch, showDeleted]
   );
 
   const openLibrary = (tab = "all") => {
@@ -761,7 +761,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
         const form = new FormData();
         form.append("file", file);
         form.append("user_id", userId);
-        const res = await fetch(`${baseUrl}/api/library/upload`, {
+        const res = await fetch(`${apiBaseUrl}/api/library/upload`, {
           method: "POST",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           body: form,
@@ -788,7 +788,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
       const form = new FormData();
       form.append("user_id", userId);
       form.append("name", name.trim());
-      const res = await fetch(`${baseUrl}/api/library/folders`, {
+      const res = await fetch(`${apiBaseUrl}/api/library/folders`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: form,
@@ -820,7 +820,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
     try {
       const responses = await Promise.all(
         selectedIds.map((id) =>
-          fetch(`${baseUrl}/api/library/items/${id}?user_id=${encodeURIComponent(userId)}`, {
+          fetch(`${apiBaseUrl}/api/library/items/${id}?user_id=${encodeURIComponent(userId)}`, {
             method: "DELETE",
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           })
@@ -850,7 +850,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
   const restoreItem = async (id) => {
     const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
     try {
-      await fetch(`${baseUrl}/api/library/items/${id}/restore?user_id=${encodeURIComponent(userId)}`, {
+      await fetch(`${apiBaseUrl}/api/library/items/${id}/restore?user_id=${encodeURIComponent(userId)}`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -1140,87 +1140,60 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
             {libraryLoading && <div style={styles.accountLoading}>Loading…</div>}
 
             {!libraryLoading && libraryError && (
-                <div style={styles.accountErrorBox}>
-                  {libraryError}
-                  <button style={styles.retryBtn} onClick={() => fetchLibrary()}>
-                    Retry
-                  </button>
-                </div>
-              )}
-
-              {!libraryLoading && !libraryError && (
-                libraryItems.length === 0 ? (
-                  <div style={styles.accountEmpty}>No files yet.</div>
-                ) : (
-                  <div style={libraryView === "grid" ? styles.libraryGrid : styles.libraryList}>
-                    {libraryItems.map((item) => (
-                      <LibraryCard
-                        key={item.id}
-                        item={item}
-                        view={libraryView}
-                        apiBaseUrl={baseUrl}
-                        selectMode={selectMode}
-                        selected={selectedIds.includes(item.id)}
-                        onToggleSelect={() => toggleSelectItem(item.id)}
-                        showDeleted={showDeleted}
-                        onRestore={() => restoreItem(item.id)}
-                      />
-                    ))}
-                  </div>
-                )
-              )}
-
-              {libraryMenuOpen && (
-                <div style={styles.sheetOverlay} onClick={() => setLibraryMenuOpen(false)}>
-                  <div style={styles.libraryMenuSheet} onClick={(e) => e.stopPropagation()}>
-                    <button style={styles.libraryMenuRow} onClick={handleSelectAll}>
-                      <Icon.CheckCircle />
-                      <span>{selectMode && selectedIds.length === libraryItems.length && libraryItems.length > 0 ? "Clear selection" : "Select all"}</span>
-                    </button>
-                    <button style={styles.libraryMenuRow} onClick={() => { libraryFileInputRef.current?.click(); setLibraryMenuOpen(false); }}>
-                      <Icon.Upload />
-                      <span>Upload files</span>
-                    </button>
-                    <button style={styles.libraryMenuRow} onClick={handleNewFolder}>
-                      <Icon.NewFolder />
-                      <span>New folder</span>
-                    </button>
-                    <div style={styles.libraryMenuDivider} />
-                    <button
-                      style={styles.libraryMenuRow}
-                      onClick={() => { setLibraryView("grid"); setLibraryMenuOpen(false); }}
-                    >
-                      <Icon.Grid />
-                      <span style={{ flex: 1 }}>Grid</span>
-                      {libraryView === "grid" && <Icon.Check />}
-                    </button>
-                    <button
-                      style={styles.libraryMenuRow}
-                      onClick={() => { setLibraryView("list"); setLibraryMenuOpen(false); }}
-                    >
-                      <Icon.List />
-                      <span style={{ flex: 1 }}>List</span>
-                      {libraryView === "list" && <Icon.Check />}
-                    </button>
-                    {selectMode && selectedIds.length > 0 && (
-                      <>
-                        <div style={styles.libraryMenuDivider} />
-                        <button style={styles.libraryMenuRow} onClick={handleDeleteSelected}>
-                          <Icon.Trash />
-                          <span>Delete selected ({selectedIds.length})</span>
-                        </button>
-                      </>
-                    )}
-                    <div style={styles.libraryMenuDivider} />
-                    <button style={styles.libraryMenuRow} onClick={openDeleted}>
-                      <Icon.Trash />
-                      <span>Deleted</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+              <div style={styles.accountErrorBox}>
+                {libraryError}
+               <button style={styles.libraryMenuRow} onClick={handleSelectAll}>
+              <Icon.CheckCircle />
+              <span>{selectMode && selectedIds.length === libraryItems.length && libraryItems.length > 0 ? "Clear selection" : "Select all"}</span>
+            </button>
+            <button style={styles.libraryMenuRow} onClick={() => libraryFileInputRef.current?.click()}>
+              <Icon.Upload />
+              <span>Upload files</span>
+            </button>
+            <button style={styles.libraryMenuRow} onClick={handleNewFolder}>
+              <Icon.NewFolder />
+              <span>New folder</span>
+            </button>
+            <div style={styles.libraryMenuDivider} />
+            <button
+              style={styles.libraryMenuRow}
+              onClick={() => {
+                setLibraryView("grid");
+                setLibraryMenuOpen(false);
+              }}
+            >
+              <Icon.Grid />
+              <span style={{ flex: 1 }}>Grid</span>
+              {libraryView === "grid" && <Icon.Check />}
+            </button>
+            <button
+              style={styles.libraryMenuRow}
+              onClick={() => {
+                setLibraryView("list");
+                setLibraryMenuOpen(false);
+              }}
+            >
+              <Icon.List />
+              <span style={{ flex: 1 }}>List</span>
+              {libraryView === "list" && <Icon.Check />}
+            </button>
+            <div style={styles.libraryMenuDivider} />
+            {selectMode && selectedIds.length > 0 && (
+              <>
+                <div style={styles.libraryMenuDivider} />
+                <button style={styles.libraryMenuRow} onClick={handleDeleteSelected}>
+                  <Icon.Trash />
+                  <span>Delete selected ({selectedIds.length})</span>
+                </button>
+              </>
+            )}
+            <div style={styles.libraryMenuDivider} />
+            <button style={styles.libraryMenuRow} onClick={openDeleted}>
+              <Icon.Trash />
+              <span>Deleted</span>
+            </button>
           </div>
+        </div>
       )}
 
       {/* Account information — real data from /api/auth/me, real logout */}
@@ -1336,7 +1309,7 @@ function LibraryCard({ item, view, apiBaseUrl, selectMode, selected, onToggleSel
   const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
   const thumbUrl =
     isImage && item.file_id
-      ? `${baseUrl}/api/library/files/${item.file_id}${token ? `?token=${encodeURIComponent(token)}` : ""}`
+      ? `${apiBaseUrl}/api/library/files/${item.file_id}${token ? `?token=${encodeURIComponent(token)}` : ""}`
       : null;
 
   const cardStyle = view === "grid" ? styles.libCardGrid : styles.libCardList;
