@@ -1142,60 +1142,55 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
             {!libraryLoading && libraryError && (
               <div style={styles.accountErrorBox}>
                 {libraryError}
-               <button style={styles.libraryMenuRow} onClick={handleSelectAll}>
-              <Icon.CheckCircle />
-              <span>{selectMode && selectedIds.length === libraryItems.length && libraryItems.length > 0 ? "Clear selection" : "Select all"}</span>
-            </button>
-            <button style={styles.libraryMenuRow} onClick={() => libraryFileInputRef.current?.click()}>
-              <Icon.Upload />
-              <span>Upload files</span>
-            </button>
-            <button style={styles.libraryMenuRow} onClick={handleNewFolder}>
-              <Icon.NewFolder />
-              <span>New folder</span>
-            </button>
-            <div style={styles.libraryMenuDivider} />
-            <button
-              style={styles.libraryMenuRow}
-              onClick={() => {
-                setLibraryView("grid");
-                setLibraryMenuOpen(false);
-              }}
-            >
-              <Icon.Grid />
-              <span style={{ flex: 1 }}>Grid</span>
-              {libraryView === "grid" && <Icon.Check />}
-            </button>
-            <button
-              style={styles.libraryMenuRow}
-              onClick={() => {
-                setLibraryView("list");
-                setLibraryMenuOpen(false);
-              }}
-            >
-              <Icon.List />
-              <span style={{ flex: 1 }}>List</span>
-              {libraryView === "list" && <Icon.Check />}
-            </button>
-            <div style={styles.libraryMenuDivider} />
-            {selectMode && selectedIds.length > 0 && (
-              <>
-                <div style={styles.libraryMenuDivider} />
-                <button style={styles.libraryMenuRow} onClick={handleDeleteSelected}>
-                  <Icon.Trash />
-                  <span>Delete selected ({selectedIds.length})</span>
-                </button>
-              </>
+                <button style={styles.retryBtn} onClick={() => fetchLibrary()}>Retry</button>
+              </div>
             )}
-            <div style={styles.libraryMenuDivider} />
-            <button style={styles.libraryMenuRow} onClick={openDeleted}>
-              <Icon.Trash />
-              <span>Deleted</span>
-            </button>
+
+            {!libraryLoading && !libraryError && (
+              libraryItems.length === 0 ? (
+                <div style={styles.accountEmpty}>No files yet.</div>
+              ) : (
+                <div style={libraryView === "grid" ? styles.libraryGrid : styles.libraryList}>
+                  {libraryItems.map((item) => (
+                    <LibraryCard
+                      key={item.id}
+                      item={item}
+                      view={libraryView}
+                      apiBaseUrl={baseUrl}
+                      selectMode={selectMode}
+                      selected={selectedIds.includes(item.id)}
+                      onToggleSelect={() => toggleSelectItem(item.id)}
+                      showDeleted={showDeleted}
+                      onRestore={() => restoreItem(item.id)}
+                    />
+                  ))}
+                </div>
+              )
+            )}
+
+            {libraryMenuOpen && (
+              <div style={styles.sheetOverlay} onClick={() => setLibraryMenuOpen(false)}>
+                <div style={styles.libraryMenuSheet} onClick={(e) => e.stopPropagation()}>
+                  <button style={styles.libraryMenuRow} onClick={handleSelectAll}><Icon.CheckCircle /><span>Select all</span></button>
+                  <button style={styles.libraryMenuRow} onClick={() => libraryFileInputRef.current?.click()}><Icon.Upload /><span>Upload files</span></button>
+                  <button style={styles.libraryMenuRow} onClick={handleNewFolder}><Icon.NewFolder /><span>New folder</span></button>
+                  <div style={styles.libraryMenuDivider} />
+                  <button style={styles.libraryMenuRow} onClick={() => { setLibraryView("grid"); setLibraryMenuOpen(false); }}><Icon.Grid /><span style={{ flex: 1 }}>Grid</span>{libraryView === "grid" && <Icon.Check />}</button>
+                  <button style={styles.libraryMenuRow} onClick={() => { setLibraryView("list"); setLibraryMenuOpen(false); }}><Icon.List /><span style={{ flex: 1 }}>List</span>{libraryView === "list" && <Icon.Check />}</button>
+                  {selectMode && selectedIds.length > 0 && (
+                    <>
+                      <div style={styles.libraryMenuDivider} />
+                      <button style={styles.libraryMenuRow} onClick={handleDeleteSelected}><Icon.Trash /><span>Delete selected ({selectedIds.length})</span></button>
+                    </>
+                  )}
+                  <div style={styles.libraryMenuDivider} />
+                  <button style={styles.libraryMenuRow} onClick={openDeleted}><Icon.Trash /><span>Deleted</span></button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
-
       {/* Account information — real data from /api/auth/me, real logout */}
       {accountOpen && (
         <div style={styles.accountScreen}>
