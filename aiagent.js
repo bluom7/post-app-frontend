@@ -196,17 +196,17 @@ const Icon = {
     </svg>
   ),
   Album: (p) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" {...p}>
-      <rect x="3.5" y="5.5" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" />
-      <circle cx="8" cy="10" r="1.4" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M5 16l3.5-3.5a1.2 1.2 0 0 1 1.7 0L13.5 15.5M12.5 14.5l1-1a1.2 1.2 0 0 1 1.7 0L17.5 15.7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M20.5 8.5v9a2 2 0 0 1-2 2h-9" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...p}>
+      <rect x="3.25" y="3.25" width="17.5" height="17.5" rx="2.75" stroke="currentColor" strokeWidth="1.9" />
+      <circle cx="8.25" cy="8.25" r="1.45" fill="currentColor" />
+      <path d="M5.5 17l4.1-4.1a1.15 1.15 0 0 1 1.63 0l2.02 2.02 1.35-1.35a1.15 1.15 0 0 1 1.63 0L18.5 16.9" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
   LibraryIcon: (p) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" {...p}>
-      <path d="M4 4.5h6.5v15H4a1 1 0 0 1-1-1v-13a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M13.5 5l6 1.4-3 14.1-6-1.4z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...p}>
+      <path d="M5 4.25h4.25v15.5H5a1.75 1.75 0 0 1-1.75-1.75V6A1.75 1.75 0 0 1 5 4.25Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
+      <path d="M10.25 4.25h4.25v15.5h-4.25z" stroke="currentColor" strokeWidth="1.9" />
+      <path d="M15.5 5.25l3.33-.7a1.45 1.45 0 0 1 1.72 1.1l2.02 9.55a1.45 1.45 0 0 1-1.1 1.72l-2.85.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
   Folder: (p) => (
