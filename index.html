@@ -197,7 +197,7 @@ function PostAIAgent(props) {
   function openLibrary() {
     setDrawerOpen(false); setLibraryTab("all"); setLibraryShowDeleted(false); setLibrarySelectMode(false); setLibrarySelected([]); setLibraryOpen(true); setLibraryMenuOpen(false); loadLibrary("all",false,"");
   }
-  function toggleLibrarySelect(id) { setLibrarySelected(function(prev){return prev.indexOf(id)>=0?prev.filter(function(x){return x!==id;}):prev.concat([id]);}); }
+  function toggleLibrarySelect(id) { setLibrarySelected(function(prev){var next=prev.indexOf(id)>=0?prev.filter(function(x){return x!==id;}):prev.concat([id]);setLibrarySelectMode(next.length>0);return next;}); }
   function selectAllLibrary() {
     var ids=libraryItems.map(function(item){return item.id;});
     var all=librarySelectMode && ids.length>0 && librarySelected.length===ids.length;
