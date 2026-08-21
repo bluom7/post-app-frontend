@@ -1093,6 +1093,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
               </button>
             </div>
           </div>
+        </div>
       )}
 
       {/* Library / Album — real files from /api/library, real upload/folder/delete */}
