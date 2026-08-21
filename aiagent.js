@@ -1287,7 +1287,6 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
               </>
             )}
           </div>
-        </div>
       )}
 
       <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFilePick} />
