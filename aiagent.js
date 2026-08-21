@@ -1219,6 +1219,7 @@ function AIAgentScreen({ apiBaseUrl, userId = "anon", userName = "You", userAvat
                   </div>
                 </div>
               )}
+            </div>
       {/* Account information — real data from /api/auth/me, real logout */}
       {accountOpen && (
         <div style={styles.accountScreen}>
