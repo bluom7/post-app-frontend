@@ -176,7 +176,7 @@ function PostAiIcon(props) {
   function formatAssistantHtml(raw){
     var text=String(raw||'').replace(/\r\n?/g,'\n').trim();
     function esc(v){return v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');}
-    function inline(v){return esc(v).replace(/\*/g,'').replace(/#+/g,'').replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_self" rel="noreferrer">$1</a>');}
+    function inline(v){return esc(v).replace(/\*/g,'').replace(/#+/g,'').replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noreferrer">$1</a>');}
     function looksLikeHeading(v){if(v.length<12||/[.!?:;,]$/.test(v))return false;var words=v.split(/\s+/).filter(Boolean),stop=/^(and|or|the|of|in|on|to|for|a|an|as|by|with|from|at|into|under|over)$/i,significant=words.filter(function(w){return !stop.test(w);});return words.length>=4&&significant.length>=3&&significant.every(function(w){return /^[A-Z][A-Za-z0-9-]*$/.test(w)||/^[A-Z]{2,}$/.test(w);});}
     var prepared=text.replace(/\s+#{1,6}\s+(?=\S)/g,'\n').replace(/\s+-\s+(?=[A-Z])/g,'\n').replace(/\s+-\s+(?=[A-Z][^:\n]{2,80}:)/g,'\n').replace(/([.!?])\s+(?=[A-Z][A-Za-z0-9-]*(?:\s+(?:[A-Z][A-Za-z0-9-]*|and|or|the|of|in|on|to|for|a|an|as|by|with|from|at|into|under|over)){3,}(?:\s|$))/g,'$1\n').replace(/\s+(?=\d+[.)]\s+)/g,'\n');
     var lines=prepared.split('\n'),html=[],list='';
@@ -2734,7 +2734,7 @@ function AdminPanel({ token, user, showToast, onBack, onViewProfile }) {
           React.createElement("div", { style: { fontSize: 13, marginBottom: 8, lineHeight: 1.7 } },
             React.createElement("b", null, "Full Name: "), req.full_name, React.createElement("br", null),
             React.createElement("b", null, "Category: "), req.category,
-            req.id_proof_url ? React.createElement(React.Fragment, null, React.createElement("br", null), React.createElement("b", null, "ID Proof: "), React.createElement("a", { href: req.id_proof_url, target: "_self", style: { color: COLORS.blue } }, "View Link")) : null,
+            req.id_proof_url ? React.createElement(React.Fragment, null, React.createElement("br", null), React.createElement("b", null, "ID Proof: "), React.createElement("a", { href: req.id_proof_url, target: "_blank", style: { color: COLORS.blue } }, "View Link")) : null,
             req.social_links ? React.createElement(React.Fragment, null, React.createElement("br", null), React.createElement("b", null, "Social: "), React.createElement("span", { style: { wordBreak: "break-all", color: "var(--muted)", fontSize: 12 } }, req.social_links)) : null
           ),
           req.reject_reason && React.createElement("div", { style: { fontSize: 12, color: COLORS.red, marginBottom: 8 } }, "Reason: " + req.reject_reason),
@@ -3080,7 +3080,7 @@ function JoinWorldModal({open, onClose, token, user, showToast}) {
                         e("line",{x1:"16",y1:"17",x2:"8",y2:"17"})),
                       e("div", null, "No news found for this selection."))
                   : articles.map((a,i) =>
-                      e("div", {key:i, onClick:()=>{if(a.url)window.location.assign(a.url)},
+                      e("div", {key:i, onClick:()=>window.open(a.url,"_blank"),
                         style:{display:"flex",gap:12,padding:"12px 14px",borderBottom:"1px solid var(--border)",cursor:"pointer"}},
                         a.image && e("img", {src:a.image, alt:"", onError:ev=>{ev.target.style.display="none";},
                           style:{width:84,height:74,objectFit:"cover",borderRadius:10,flexShrink:0,background:"var(--input-bg)"}}),
@@ -12734,7 +12734,7 @@ function UserProfileScreen({
     }
   }, "📍 ", profile.location), typeof profile.website === "string" && profile.website.trim() && /*#__PURE__*/React.createElement("a", {
     href: profile.website.trim().match(/^https?:\/\//i) ? profile.website.trim() : `https://${profile.website.trim()}`,
-    target: "_self",
+    target: "_blank",
     style: {
       color: COLORS.blue,
       fontSize: 13,
@@ -16388,7 +16388,7 @@ function ProfileTab({
     r: "3"
   })), user.location), typeof user.website === "string" && user.website.trim() && /*#__PURE__*/React.createElement("a", {
     href: user.website.trim().match(/^https?:\/\//i) ? user.website.trim() : `https://${user.website.trim()}`,
-    target: "_self",
+    target: "_blank",
     style: {
       color: COLORS.blue,
       fontSize: 13,
@@ -21362,7 +21362,7 @@ function InviteFriendsScreen({
   const copyLink = () => {
     navigator.clipboard.writeText(inviteUrl).then(() => showToast("Invite link copied ✓", COLORS.green), () => showToast("Could not copy link", COLORS.red));
   };
-  const openShare = url => { if (url) window.location.assign(url); };
+  const openShare = url => window.open(url, "_blank", "noopener,noreferrer");
   const channels = [{
     label: "WhatsApp",
     color: "#25D366",
