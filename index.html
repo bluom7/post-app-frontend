@@ -176,7 +176,7 @@ function PostAiIcon(props) {
   function formatAssistantHtml(raw){
     var text=String(raw||'').replace(/\r\n?/g,'\n').trim();
     function esc(v){return v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;');}
-    function inline(v){return esc(v).replace(/\*/g,'').replace(/#+/g,'').replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noreferrer">$1</a>');}
+    function inline(v){return esc(v).replace(/\*/g,'').replace(/#+/g,'').replace(/\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_self" rel="noreferrer">$1</a>');}
     function looksLikeHeading(v){if(v.length<12||/[.!?:;,]$/.test(v))return false;var words=v.split(/\s+/).filter(Boolean),stop=/^(and|or|the|of|in|on|to|for|a|an|as|by|with|from|at|into|under|over)$/i,significant=words.filter(function(w){return !stop.test(w);});return words.length>=4&&significant.length>=3&&significant.every(function(w){return /^[A-Z][A-Za-z0-9-]*$/.test(w)||/^[A-Z]{2,}$/.test(w);});}
     var prepared=text.replace(/\s+#{1,6}\s+(?=\S)/g,'\n').replace(/\s+-\s+(?=[A-Z])/g,'\n').replace(/\s+-\s+(?=[A-Z][^:\n]{2,80}:)/g,'\n').replace(/([.!?])\s+(?=[A-Z][A-Za-z0-9-]*(?:\s+(?:[A-Z][A-Za-z0-9-]*|and|or|the|of|in|on|to|for|a|an|as|by|with|from|at|into|under|over)){3,}(?:\s|$))/g,'$1\n').replace(/\s+(?=\d+[.)]\s+)/g,'\n');
     var lines=prepared.split('\n'),html=[],list='';
