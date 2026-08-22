@@ -19620,7 +19620,13 @@ function AccountRecoveryScreen({
      )
    );
  }
-   onLoggedOut,
+ function SettingsScreen({
+  token,
+  user,
+  setUser,
+  showToast,
+  onBack,
+  onLoggedOut,
   initialCategory,
   onInitialCategoryConsumed,
   onGoRecovery
