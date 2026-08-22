@@ -19642,7 +19642,7 @@ function AccountRecoveryScreen({
        if (onInitialCategoryConsumed) onInitialCategoryConsumed();
      }
    }, [initialCategory]);
-   const [settingsTheme, setSettingsTheme] = useState(user.theme || "light");
+   const [settingsTheme, setSettingsTheme] = useState(document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : (user.theme || "light"));
    useEffect(() => {
      const handleThemeChange = event => setSettingsTheme(event.detail && event.detail.theme === "dark" ? "dark" : "light");
      window.addEventListener("post-theme-change", handleThemeChange);
