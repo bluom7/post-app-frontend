@@ -2734,7 +2734,7 @@ function AdminPanel({ token, user, showToast, onBack, onViewProfile }) {
           React.createElement("div", { style: { fontSize: 13, marginBottom: 8, lineHeight: 1.7 } },
             React.createElement("b", null, "Full Name: "), req.full_name, React.createElement("br", null),
             React.createElement("b", null, "Category: "), req.category,
-            req.id_proof_url ? React.createElement(React.Fragment, null, React.createElement("br", null), React.createElement("b", null, "ID Proof: "), React.createElement("a", { href: req.id_proof_url, target: "_blank", style: { color: COLORS.blue } }, "View Link")) : null,
+            req.id_proof_url ? React.createElement(React.Fragment, null, React.createElement("br", null), React.createElement("b", null, "ID Proof: "), React.createElement("a", { href: req.id_proof_url, target: "_self", style: { color: COLORS.blue } }, "View Link")) : null,
             req.social_links ? React.createElement(React.Fragment, null, React.createElement("br", null), React.createElement("b", null, "Social: "), React.createElement("span", { style: { wordBreak: "break-all", color: "var(--muted)", fontSize: 12 } }, req.social_links)) : null
           ),
           req.reject_reason && React.createElement("div", { style: { fontSize: 12, color: COLORS.red, marginBottom: 8 } }, "Reason: " + req.reject_reason),
@@ -3080,7 +3080,7 @@ function JoinWorldModal({open, onClose, token, user, showToast}) {
                         e("line",{x1:"16",y1:"17",x2:"8",y2:"17"})),
                       e("div", null, "No news found for this selection."))
                   : articles.map((a,i) =>
-                      e("div", {key:i, onClick:()=>window.open(a.url,"_blank"),
+                      e("div", {key:i, onClick:()=>{if(a.url)window.location.assign(a.url)},
                         style:{display:"flex",gap:12,padding:"12px 14px",borderBottom:"1px solid var(--border)",cursor:"pointer"}},
                         a.image && e("img", {src:a.image, alt:"", onError:ev=>{ev.target.style.display="none";},
                           style:{width:84,height:74,objectFit:"cover",borderRadius:10,flexShrink:0,background:"var(--input-bg)"}}),
@@ -12734,7 +12734,7 @@ function UserProfileScreen({
     }
   }, "📍 ", profile.location), typeof profile.website === "string" && profile.website.trim() && /*#__PURE__*/React.createElement("a", {
     href: profile.website.trim().match(/^https?:\/\//i) ? profile.website.trim() : `https://${profile.website.trim()}`,
-    target: "_blank",
+    target: "_self",
     style: {
       color: COLORS.blue,
       fontSize: 13,
@@ -16388,7 +16388,7 @@ function ProfileTab({
     r: "3"
   })), user.location), typeof user.website === "string" && user.website.trim() && /*#__PURE__*/React.createElement("a", {
     href: user.website.trim().match(/^https?:\/\//i) ? user.website.trim() : `https://${user.website.trim()}`,
-    target: "_blank",
+    target: "_self",
     style: {
       color: COLORS.blue,
       fontSize: 13,
@@ -21362,7 +21362,7 @@ function InviteFriendsScreen({
   const copyLink = () => {
     navigator.clipboard.writeText(inviteUrl).then(() => showToast("Invite link copied ✓", COLORS.green), () => showToast("Could not copy link", COLORS.red));
   };
-  const openShare = url => window.open(url, "_blank", "noopener,noreferrer");
+  const openShare = url => { if (url) window.location.assign(url); };
   const channels = [{
     label: "WhatsApp",
     color: "#25D366",
