@@ -19474,7 +19474,7 @@ function AccountRecoveryScreen({
                   sec.articles.map(function(article, articleIndex) {
                     return e("button", {
                       key:article.title,
-                      onClick:function(){ setManagingAccArticle({ sectionKey:sec.key, article:article }); window.scrollTo(0,0); },
+                      onClick:function(){ setManagingAccArticle(sec); window.scrollTo(0,0); },
                       style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"15px 18px", border:0, borderBottom:articleIndex < sec.articles.length - 1 ? "1px solid var(--help-line)" : 0, background:"var(--help-surface)", color:"var(--help-blue)", cursor:"pointer", textAlign:"left", fontSize:15, lineHeight:1.4, fontWeight:600 }
                     }, e("span", null, article.title), icon("M9 18l6-6-6-6", "var(--help-muted)", 18));
                   })
