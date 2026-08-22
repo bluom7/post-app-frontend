@@ -515,6 +515,7 @@ function useReelSync(setter) {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('post_theme', theme);
+  window.dispatchEvent(new CustomEvent('post-theme-change', { detail: { theme } }));
 }
 
 // Language translations
@@ -3555,6 +3556,11 @@ function PostApp() {
   const [accountSwitcherOpen, setAccountSwitcherOpen] = useState(false);
   const [showVerifModal, setShowVerifModal] = useState(false);
   const [isDarkState, setIsDarkState] = useState(document.documentElement.getAttribute("data-theme")==="dark");
+  useEffect(() => {
+    const handleThemeChange = event => setIsDarkState(event.detail && event.detail.theme === "dark");
+    window.addEventListener("post-theme-change", handleThemeChange);
+    return () => window.removeEventListener("post-theme-change", handleThemeChange);
+  }, []);
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [notifPost, setNotifPost] = useState(null);
   const [notifPostLoading, setNotifPostLoading] = useState(false);
@@ -19637,6 +19643,11 @@ function AccountRecoveryScreen({
      }
    }, [initialCategory]);
    const [settingsTheme, setSettingsTheme] = useState(user.theme || "light");
+   useEffect(() => {
+     const handleThemeChange = event => setSettingsTheme(event.detail && event.detail.theme === "dark" ? "dark" : "light");
+     window.addEventListener("post-theme-change", handleThemeChange);
+     return () => window.removeEventListener("post-theme-change", handleThemeChange);
+   }, []);
    const [settingsLanguage, setSettingsLanguage] = useState(user.language || "en");
    const _np = user.notifications_prefs || { likes: false, comments: false, friend_requests: false, messages: false, mentions: false, tags: false };
    const [notifLikes, setNotifLikes] = useState(!!_np.likes);
