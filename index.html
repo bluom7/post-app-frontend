@@ -6717,7 +6717,7 @@ function BentoPostCard({
       React.createElement("div", { style:{ flex:"1 1 auto", minWidth:0, overflow:"hidden" } },
         React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:5, minWidth:0, whiteSpace:"nowrap", overflow:"hidden", lineHeight:1.15 } },
           React.createElement("span", { onClick:e=>{e.stopPropagation();canViewProfile&&onViewProfile(post.user_id);}, style:{ fontWeight:800, fontSize:15, color:"#fff", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", cursor:canViewProfile?"pointer":"default", pointerEvents:"auto" } }, post.user_name || ""),
-          post.is_badge_verified && React.createElement("span", { onClick:e=>{e.stopPropagation();setShowVerifiedInfo(true);}, style:{ display:"inline-flex", alignItems:"center", flexShrink:0, pointerEvents:"auto", cursor:"pointer" } }, React.createElement(VerifiedBadge,{size:13})),
+          post.is_badge_verified && React.createElement("span", { onClick:e=>{e.stopPropagation();setShowVerifiedInfo(true);}, style:{ display:"inline-flex", alignItems:"center", flexShrink:0, pointerEvents:"auto", cursor:"pointer" } }, React.createElement(VerifiedBadge,{size:13,color:"#fff"})),
           post.user_handle && React.createElement("span", { style:{ fontSize:14, color:"rgba(255,255,255,.98)", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" } }, "@" + post.user_handle.replace(/^@/, ""))
         ),
         React.createElement("div", { style:{ display:"flex", alignItems:"center", gap:4, marginTop:4, minWidth:0, overflow:"hidden", maxWidth:"100%" } },
