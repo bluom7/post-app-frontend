@@ -15413,7 +15413,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
       onViewProfile: (uid) => { setShowFollowListDM(null); onViewProfile && onViewProfile(uid); }
     });
 
-    const blockedByVerified = !user.is_badge_verified && !!(partnerProfile || partner).is_badge_verified;
+    const blockedByVerified = !user.is_badge_verified && !!(partnerProfile || partner.user || partner).is_badge_verified;
 
     return React.createElement('div', {
       style: { position: 'fixed', inset: 0, zIndex: 100, background: 'var(--bg)', display: 'flex', flexDirection: 'column' }
@@ -15477,19 +15477,19 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
       },
         /* ── Partner profile card (always shown at top) ── */
         React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 16px 20px' } },
-          React.createElement('div', { style: { width: 80, height: 80, borderRadius: 0, background: normalizeColor((partnerProfile || partner).avatar_bg) || COLORS.yellow, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 32, flexShrink: 0, overflow: 'hidden' } },
-            (partnerProfile || partner).avatar_photo
-              ? React.createElement('img', { src: (partnerProfile || partner).avatar_photo, style: { width: '100%', height: '100%', objectFit: 'cover' } })
-              : ((partnerProfile || partner).avatar_letter || ((partnerProfile || partner).name || '?')[0] || '?').toUpperCase()
+          React.createElement('div', { style: { width: 80, height: 80, borderRadius: 0, background: normalizeColor((partnerProfile || partner.user || partner).avatar_bg) || COLORS.yellow, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 32, flexShrink: 0, overflow: 'hidden' } },
+            (partnerProfile || partner.user || partner).avatar_photo
+              ? React.createElement('img', { src: (partnerProfile || partner.user || partner).avatar_photo, style: { width: '100%', height: '100%', objectFit: 'cover' } })
+              : ((partnerProfile || partner.user || partner).avatar_letter || ((partnerProfile || partner.user || partner).name || '?')[0] || '?').toUpperCase()
           ),
           React.createElement('div', { style: { marginTop: 12, display: 'flex', alignItems: 'center', gap: 6 } },
-            React.createElement('span', { style: { fontWeight: 800, fontSize: 20 } }, (partnerProfile || partner).name || partner.name),
-            (partnerProfile || partner).is_badge_verified && React.createElement(VerifiedBadge, { size: 18 })
+            React.createElement('span', { style: { fontWeight: 800, fontSize: 20 } }, (partnerProfile || partner.user || partner).name || partner.name),
+            (partnerProfile || partner.user || partner).is_badge_verified && React.createElement(VerifiedBadge, { size: 18 })
           ),
-          React.createElement('div', { style: { fontSize: 13, color: 'var(--muted)', marginTop: 2 } }, '@' + ((partnerProfile || partner).handle || (partnerProfile || partner).username || '').replace(/^@/, '')),
+          React.createElement('div', { style: { fontSize: 13, color: 'var(--muted)', marginTop: 2 } }, '@' + ((partnerProfile || partner.user || partner).handle || (partnerProfile || partner.user || partner).username || '').replace(/^@/, '')),
           React.createElement('div', { style: { fontSize: 13, color: 'var(--muted)', marginTop: 6, display: 'flex', gap: 16 } },
-            React.createElement('span', { onClick: () => setShowFollowListDM('followers'), style: { cursor: 'pointer' } }, React.createElement('b', null, ((partnerProfile || partner).followers_count ?? (((partnerProfile || partner).stats || {}).followers ?? ((partnerProfile || partner).followers || []).length ?? 0))), ' Followers'),
-            React.createElement('span', { onClick: () => setShowFollowListDM('following'), style: { cursor: 'pointer' } }, React.createElement('b', null, ((partnerProfile || partner).following_count ?? (((partnerProfile || partner).stats || {}).following ?? ((partnerProfile || partner).following || []).length ?? 0))), ' Following')
+            React.createElement('span', { onClick: () => setShowFollowListDM('followers'), style: { cursor: 'pointer' } }, React.createElement('b', null, ((partnerProfile || partner.user || partner).followers_count ?? (((partnerProfile || partner.user || partner).stats || {}).followers ?? ((partnerProfile || partner.user || partner).followers || []).length ?? 0))), ' Followers'),
+            React.createElement('span', { onClick: () => setShowFollowListDM('following'), style: { cursor: 'pointer' } }, React.createElement('b', null, ((partnerProfile || partner.user || partner).following_count ?? (((partnerProfile || partner.user || partner).stats || {}).following ?? ((partnerProfile || partner.user || partner).following || []).length ?? 0))), ' Following')
           ),
           React.createElement('button', {
             onClick: () => onViewProfile && onViewProfile(partner.id),
@@ -15498,9 +15498,9 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
         ),
         msgsLoading && msgs.length === 0
           ? React.createElement('div', { style: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: 160, gap: 8 } },
-              React.createElement('div', { style: { width: 10, height: 10, borderRadius: '50%', background: COLORS.yellow, animation: 'pulse 1s ease-in-out 0s infinite' } }),
-              React.createElement('div', { style: { width: 10, height: 10, borderRadius: '50%', background: COLORS.yellow, animation: 'pulse 1s ease-in-out 0.2s infinite' } }),
-              React.createElement('div', { style: { width: 10, height: 10, borderRadius: '50%', background: COLORS.yellow, animation: 'pulse 1s ease-in-out 0.4s infinite' } })
+              React.createElement('div', { style: { width: 10, height: 10, borderRadius: '50%', background: COLORS.yellow, animation: 'chatTypingDot 1.1s ease-in-out 0s infinite' } }),
+              React.createElement('div', { style: { width: 10, height: 10, borderRadius: '50%', background: COLORS.yellow, animation: 'chatTypingDot 1.1s ease-in-out 0.18s infinite' } }),
+              React.createElement('div', { style: { width: 10, height: 10, borderRadius: '50%', background: COLORS.yellow, animation: 'chatTypingDot 1.1s ease-in-out 0.36s infinite' } })
             )
           : msgs.length === 0
             ? React.createElement('div', { style: { textAlign: 'center', color: 'var(--muted)', marginTop: 40, fontSize: 14 } }, 'No messages yet. Say hi! 👋')
@@ -25930,6 +25930,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       .reel-camera-effects-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
       @keyframes countdownPop { 0%{transform:scale(0.5);opacity:0;} 30%{transform:scale(1.2);opacity:1;} 60%{transform:scale(1);} 100%{transform:scale(0.9);opacity:0.8;} }
       @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+      @keyframes chatTypingDot { 0%,60%,100%{transform:translateY(0) scale(1);opacity:.55;} 30%{transform:translateY(-7px) scale(1.12);opacity:1;} }
     `)
   );
 }
