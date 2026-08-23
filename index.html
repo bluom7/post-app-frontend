@@ -13439,9 +13439,12 @@ lpItem&&React.createElement("div",{onClick:function(){setLpItem(null);},style:{p
       React.createElement("div",{style:{width:25,height:25,borderRadius:"50%",background:normalizeColor(lpItem.avatar_bg)||COLORS.yellow,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:13,overflow:"hidden",flexShrink:0}},
         lpItem.avatar_photo?React.createElement("img",{src:lpItem.avatar_photo,style:{width:"100%",height:"100%",objectFit:"cover"}}):lpItem.avatar_letter
       ),
-      React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4,minWidth:0}},
-        React.createElement("span",{style:{fontWeight:700,fontSize:15,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:220}},lpItem.name||"User"),
-        lpItem.type==="dm"&&lpItem.is_badge_verified&&React.createElement(VerifiedBadge,{size:15})
+      React.createElement("div",{style:{display:"flex",flexDirection:"column",minWidth:0}},
+        React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4,minWidth:0}},
+          React.createElement("span",{style:{fontWeight:700,fontSize:15,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:220}},lpItem.name||"User"),
+          lpItem.type==="dm"&&lpItem.is_badge_verified&&React.createElement(VerifiedBadge,{size:15})
+        ),
+        lpItem.type==="dm"&&React.createElement("span",{style:{fontSize:12,color:"var(--muted)",marginTop:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},"@"+(lpItem.handle||lpItem.username||lpItem.id||"").replace(/^@/,""))
       )
     ),
     [
