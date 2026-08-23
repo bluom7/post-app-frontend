@@ -13369,9 +13369,9 @@ React.createElement("div",{style:{display:"flex",alignItems:"center",justifyCont
       React.createElement("div",{style:{position:"absolute",top:"calc(100% + 6px)",right:0,background:"var(--card-bg)",border:"1px solid var(--border)",borderRadius:14,boxShadow:"0 6px 24px var(--shadow)",zIndex:99,minWidth:175,overflow:"hidden"}},
         [{key:"all",label:"All"},{key:"unread",label:"Unread"},{key:"favorites",label:"Favourite"},{key:"groups",label:"Group"}].map(function(opt){
           var isAct=filterTab===opt.key;
-          return React.createElement("button",{key:opt.key,onClick:function(){setFilterTab(opt.key);setShowFilterMenu(false);},style:{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",padding:"13px 16px",background:isAct?"rgba(255,214,0,0.08)":"none",border:"none",borderBottom:"1px solid var(--border)",color:isAct?"#FFD600":"var(--text)",fontSize:14,fontWeight:isAct?700:500,cursor:"pointer",textAlign:"left"}},
+          return React.createElement("button",{key:opt.key,onClick:function(){setFilterTab(opt.key);setShowFilterMenu(false);},style:{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",padding:"13px 16px",background:isAct?"rgba(255,214,0,0.08)":"none",border:"none",borderBottom:"1px solid var(--border)",color:isAct?COLORS.blue:"var(--text)",fontSize:14,fontWeight:isAct?700:500,cursor:"pointer",textAlign:"left"}},
             React.createElement("span",null,opt.label),
-            isAct&&React.createElement("svg",{width:16,height:16,viewBox:"0 0 24 24",fill:"none",stroke:"#FFD600",strokeWidth:"2.5",strokeLinecap:"round"},React.createElement("polyline",{points:"20 6 9 17 4 12"}))
+            isAct&&React.createElement("svg",{width:16,height:16,viewBox:"0 0 24 24",fill:"none",stroke:COLORS.blue,strokeWidth:"2.5",strokeLinecap:"round"},React.createElement("polyline",{points:"20 6 9 17 4 12"}))
           );
         })
       )
