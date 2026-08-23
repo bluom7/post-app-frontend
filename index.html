@@ -13877,6 +13877,8 @@ return React.createElement("div",{style:{position:"fixed",inset:0,background:"va
 var _grpClearedIds={};
 // CACHE: stores messages per group so re-entering shows them instantly
 var _grpMsgCache={};
+// CACHE: remembers that a group has completed its first load, including empty chats.
+var _grpLoadedCache={};
 // CACHE: stores last sent message per conv/group ID for instant chat-list update
 var _lastMsgCache={};
 // FIX: Same for 1-on-1 (DM) chats — keyed by partner user ID.
@@ -13891,7 +13893,7 @@ var groupDataState=React.useState(group);var groupData=groupDataState[0];var set
 var editingGroupNameState=React.useState(false);var editingGroupName=editingGroupNameState[0];var setEditingGroupName=editingGroupNameState[1];
 var groupNameDraftState=React.useState(function(){return(group&&group.name)||"Group";});var groupNameDraft=groupNameDraftState[0];var setGroupNameDraft=groupNameDraftState[1];
 var savingGroupNameState=React.useState(false);var savingGroupName=savingGroupNameState[0];var setSavingGroupName=savingGroupNameState[1];
-var loadingState=React.useState(true);var loading=loadingState[0];var setLoading=loadingState[1];
+var loadingState=React.useState(function(){return !_grpLoadedCache[_gcInitId] && !(_grpMsgCache[_gcInitId]&&_grpMsgCache[_gcInitId].length>0);});var loading=loadingState[0];var setLoading=loadingState[1];
 var replyingState=React.useState(null);var replyingTo=replyingState[0];var setReplyingTo=replyingState[1];
 var longPressState=React.useState(null);var longPressMsg=longPressState[0];var setLongPressMsg=longPressState[1];
 var gcReactionsState=React.useState({});var gcReactions=gcReactionsState[0];var setGcReactions=gcReactionsState[1];
@@ -13956,6 +13958,7 @@ var loadMsgs=async function(){
       // response and (b) is not being deleted.
       // Update module-level cache with fresh server messages
       _grpMsgCache[groupId]=serverMsgs;
+      _grpLoadedCache[groupId]=true;
       setMessages(function(prev){
         var localPending=prev.filter(function(m){
           return m.id&&!serverIds.has(m.id)&&!deletingIdsGCRef.current.has(m.id);
@@ -13964,7 +13967,7 @@ var loadMsgs=async function(){
       });
       setLoading(false);
     }
-  }catch(e){setLoading(false);}
+  }catch(e){_grpLoadedCache[groupId]=true;setLoading(false);}
 };
 var loadGroup=async function(){
   try{var d=await api("/groups/"+groupId,"GET",null,token);if(d)setGroupData(d);}catch(e){}
