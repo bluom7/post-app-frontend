@@ -14808,6 +14808,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
         avatar_photo:  initialChatUser.avatar_photo   || null,
         is_online:     initialChatUser.is_online,
         last_seen:     initialChatUser.last_seen,
+        is_badge_verified: initialChatUser.is_badge_verified,
       });
       if (onChatOpened) onChatOpened();
     }
@@ -15773,6 +15774,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
                     is_online:     u.is_online,
                     last_seen:     u.last_seen,
                     handle:        u.handle,
+                    is_badge_verified: u.is_badge_verified,
                   });
                   api('/messages/conversations/' + conv._id + '/seen', 'POST', null, token).catch(() => {});
                   setConvs(prev => prev.map(c => c._id === conv._id ? { ...c, unread: 0 } : c));
@@ -15791,7 +15793,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
                 /* text block */
                 React.createElement('div', { style: { flex: 1, minWidth: 0 } },
                   React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 } },
-                    React.createElement('span', { style: { fontWeight: 700, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 } }, u.name || u.username || 'User'),
+                    React.createElement('span', { style: { fontWeight: 700, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 } }, u.name || u.username || 'User', u.is_badge_verified && React.createElement(VerifiedBadge, { size: 13 })),
                     React.createElement('span', { style: { fontSize: 12, color: 'var(--muted)', flexShrink: 0 } }, fmtConvTime(conv.last_time))
                   ),
                   React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
