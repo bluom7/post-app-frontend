@@ -13315,7 +13315,7 @@ var chatItems=[].concat(
     var u=c.user||{};
     var _rawNm=u.name||u.username||u.handle||c._id;var _cleanNm=_rawNm?_rawNm.replace(/^@/,""):_rawNm;var nm=_cleanNm&&_cleanNm.length>0?_cleanNm.charAt(0).toUpperCase()+_cleanNm.slice(1):_cleanNm;
     var ltr=(nm[0]||"?").toUpperCase();
-    return{id:c._id,type:"dm",name:nm,avatar_bg:u.avatar_bg||"#FFD600",avatar_letter:u.avatar_letter||ltr,avatar_photo:u.avatar_photo||null,last_message:c.last_text||(c.last_photo?"📷 Photo":""),last_time:c.last_time,unread:c.unread||0,is_online:u.is_online,handle:u.handle,is_badge_verified:u.is_badge_verified||false,_raw:c};
+    return{id:c._id,type:"dm",name:nm,avatar_bg:u.avatar_bg||"#FFD600",avatar_letter:u.avatar_letter||ltr,avatar_photo:u.avatar_photo||null,last_message:(c.last_text||c.last_message||c.text||"").trim()||(c.last_photo?"📷 Photo":c.last_gif?"GIF":(c.last_audio?"🎙️ Audio":((c.last_shared_post||c.last_shared_reel)?"Shared post":""))),last_time:c.last_time,unread:c.unread||0,is_online:u.is_online,handle:u.handle,is_badge_verified:u.is_badge_verified||false,_raw:c};
   }),
   groups.map(function(g){return{id:g.id,type:"group",name:g.name,avatar_bg:g.avatar_color||"#FFD600",avatar_letter:g.avatar_letter||(g.name?g.name[0].toUpperCase():"G"),avatar_photo:g.avatar_photo,last_message:g.last_message?(g.last_from_name?g.last_from_name+": "+g.last_message:g.last_message):"",last_time:g.last_message_at,unread:g.unread||0,member_count:g.members?g.members.length:0,_raw:g};}),
   friendsNoConv.map(function(f){
