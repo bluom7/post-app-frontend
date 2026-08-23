@@ -14193,7 +14193,7 @@ showGroupInfo&&React.createElement("div",{style:{position:"fixed",inset:0,backgr
     React.createElement("div",{style:{margin:"0 16px 16px",background:"transparent",borderRadius:0,padding:"0",border:"none"}},
       React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:12}},
         React.createElement("div",{style:{fontWeight:700,fontSize:13,color:"var(--muted)",letterSpacing:.3}},"MEMBERS"),
-        React.createElement("div",{style:{fontWeight:800,fontSize:12,background:COLORS.blue+"20",color:COLORS.blue,borderRadius:20,padding:"5px 9px",whiteSpace:"nowrap"}},members.length," total"),
+        React.createElement("div",{style:{fontWeight:800,fontSize:12,background:COLORS.blue+"20",color:COLORS.blue,borderRadius:20,padding:"5px 9px",whiteSpace:"nowrap"}},members.length),
         React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginLeft:"auto"}},
               memberSearchOpen&&React.createElement("input",{autoFocus:true,value:memberQuery,onChange:function(e){setMemberQuery(e.target.value);},placeholder:"Search members",ariaLabel:"Search members",style:{width:145,border:"1px solid var(--border)",borderRadius:10,padding:"7px 9px",background:"var(--input-bg)",color:"var(--text)",fontSize:12,outline:"none"}}),
           React.createElement("button",{onClick:function(){setMemberSearchOpen(function(v){return !v;});if(memberSearchOpen)setMemberQuery("");},ariaLabel:"Search members",style:{width:32,height:32,border:"1px solid var(--border)",borderRadius:"50%",background:"var(--input-bg)",color:"var(--text)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",padding:0}},
