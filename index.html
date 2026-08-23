@@ -13407,7 +13407,7 @@ React.createElement("div",null,
       onMouseDown:function(){lpItemTimerRef.current=setTimeout(function(){setLpItem(item);},700);},
       onMouseUp:function(){clearTimeout(lpItemTimerRef.current);},
       onMouseLeave:function(){clearTimeout(lpItemTimerRef.current);},
-      style:{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",cursor:"pointer",borderBottom:"1px solid var(--border)",background:isLocalUnr?"rgba(255,214,0,0.04)":"transparent",userSelect:"none",WebkitUserSelect:"none",WebkitTouchCallout:"none"}
+      style:{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",cursor:"pointer",borderBottom:"none",background:isLocalUnr?"rgba(255,214,0,0.04)":"transparent",userSelect:"none",WebkitUserSelect:"none",WebkitTouchCallout:"none"}
     },
       React.createElement("div",{style:{position:"relative",flexShrink:0}},
         React.createElement("div",{style:{width:50,height:50,borderRadius:"50%",background:normalizeColor(item.avatar_bg)||COLORS.yellow,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:20,overflow:"hidden"}},
