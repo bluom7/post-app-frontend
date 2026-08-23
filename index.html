@@ -14177,7 +14177,8 @@ showGroupInfo&&React.createElement("div",{style:{position:"fixed",inset:0,backgr
     ),
     showGroupActionsMenu&&React.createElement("div",{style:{position:"absolute",top:50,right:16,width:170,background:"var(--card-bg)",border:"1px solid var(--border)",borderRadius:12,boxShadow:"0 8px 24px rgba(0,0,0,.16)",padding:6,zIndex:5,textAlign:"left"}},
       React.createElement("button",{onClick:function(){setShowGroupActionsMenu(false);setConfirmClear(true);},style:{width:"100%",border:"none",background:"transparent",color:"var(--text)",padding:"11px 10px",textAlign:"left",fontSize:14,cursor:"pointer",borderRadius:8}},"Clear Chat"),
-      React.createElement("button",{onClick:function(){setShowGroupActionsMenu(false);setConfirmExit(true);},style:{width:"100%",border:"none",background:"transparent",color:"var(--text)",padding:"11px 10px",textAlign:"left",fontSize:14,cursor:"pointer",borderRadius:8}},"Exit Group")
+      React.createElement("button",{onClick:function(){setShowGroupActionsMenu(false);setConfirmExit(true);},style:{width:"100%",border:"none",background:"transparent",color:"var(--text)",padding:"11px 10px",textAlign:"left",fontSize:14,cursor:"pointer",borderRadius:8}},"Exit Group"),
+      groupData&&groupData.creator_id===user.id&&React.createElement("button",{onClick:function(){setShowGroupActionsMenu(false);setConfirmDeleteGrp(true);},style:{width:"100%",border:"none",background:"transparent",color:"var(--text)",padding:"11px 10px",textAlign:"left",fontSize:14,cursor:"pointer",borderRadius:8}},"Delete Group")
     ),
     React.createElement("input",{type:"file",accept:"image/*",ref:avatarPhotoRefGI,style:{display:"none"},onChange:function(e){var f=e.target.files&&e.target.files[0];if(f)changeGroupAvatar(f);}}),
     React.createElement("div",{onClick:function(e){e.preventDefault();e.stopPropagation();if(avatarPhotoRefGI.current)avatarPhotoRefGI.current.click();},onPointerDown:function(e){e.preventDefault();e.stopPropagation();},style:{margin:"0 auto",width:96,height:96,borderRadius:"50%",background:normalizeColor(groupData&&(groupData.avatar_color||groupData.avatar_bg))||"#6c63ff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:40,color:"#fff",overflow:"hidden",cursor:"pointer",position:"relative",WebkitTapHighlightColor:"transparent",WebkitTouchCallout:"none",userSelect:"none",WebkitUserSelect:"none",boxShadow:"0 5px 18px rgba(0,0,0,.14)"}},
@@ -14274,20 +14275,10 @@ showGroupInfo&&React.createElement("div",{style:{position:"fixed",inset:0,backgr
           React.createElement("div",{style:{fontSize:13,color:"var(--muted)",marginBottom:14}},"This will permanently delete the group and all messages for everyone."),
           React.createElement("div",{style:{display:"flex",gap:10}},
             React.createElement("button",{onClick:function(){setConfirmDeleteGrp(false);},style:{flex:1,padding:10,borderRadius:10,border:"1px solid var(--border)",background:"var(--input-bg)",fontWeight:700,cursor:"pointer",color:"var(--text)"}},"Cancel"),
-            React.createElement("button",{onClick:deleteGroup,style:{flex:1,padding:10,borderRadius:10,border:"none",background:"#FF1744",color:"#fff",fontWeight:800,cursor:"pointer"}},"Delete Forever")
+            React.createElement("button",{onClick:deleteGroup,style:{flex:1,padding:10,borderRadius:10,border:"none",background:COLORS.blue,color:"#fff",fontWeight:800,cursor:"pointer"}},"Delete Forever")
           )
         )
-      :React.createElement("button",{onClick:function(){setConfirmDeleteGrp(true);},style:{padding:"14px 16px",borderRadius:14,border:"1px solid var(--border)",background:"var(--card-bg)",color:"#FF1744",fontWeight:800,fontSize:15,cursor:"pointer",textAlign:"left",display:"flex",alignItems:"center",gap:12}},
-          React.createElement("div",{style:{width:36,height:36,borderRadius:"50%",background:"#FF174418",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
-            React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#FF1744",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"},
-              React.createElement("polyline",{points:"3 6 5 6 21 6"}),
-              React.createElement("path",{d:"M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"}),
-              React.createElement("path",{d:"M10 11v6M14 11v6"}),
-              React.createElement("path",{d:"M9 6V4h6v2"})
-            )
-          ),
-          "Delete Group"
-        )
+      :null
     )
 ),
 longPressMsg&&React.createElement("div",{onClick:function(){setLongPressMsg(null);},style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:200,display:"flex",alignItems:"flex-end"}},
