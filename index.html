@@ -14114,23 +14114,25 @@ var openGroupInfo=async function(){
 };
 var clearGroupChat=async function(){
   clearingRef.current=true;
+  var _cset=new Set(messages.map(function(m){return m.id;}));
+  _grpClearedIds[groupId]=_cset;
+  _grpMsgCache[groupId]=[];
+  setMessages([]);
+  setConfirmClear(false);
+  showToast("Chat cleared","#6c63ff");
+  setTimeout(function(){if(_grpClearedIds[groupId]===_cset)delete _grpClearedIds[groupId];},60000);
   try{
     await api("/groups/"+groupId+"/clear-chat","POST",null,token);
-    // FIX: Store cleared message IDs in module-level map so re-entering the chat
-    // (which remounts the component) still filters them out during the 60 s window
-    // before server-side deleted_for becomes the sole source of truth.
-    var _cset=new Set(messages.map(function(m){return m.id;}));
-    _grpClearedIds[groupId]=_cset;
-    setTimeout(function(){if(_grpClearedIds[groupId]===_cset)delete _grpClearedIds[groupId];},60000);
-    setMessages([]);setConfirmClear(false);showToast("Chat cleared","#6c63ff");
-  }catch(e){showToast(e.message||"Error",COLORS.red);}
+  }catch(e){showToast(e.message||"Could not clear chat",COLORS.red);}
   finally{clearingRef.current=false;}
 };
 var exitGroup=async function(){
-  try{await api("/groups/"+groupId+"/leave","POST",null,token);setConfirmExit(false);showToast("Left group","#6c63ff");onBack&&onBack();}catch(e){showToast(e.message||"Error",COLORS.red);}
+  setConfirmExit(false);setShowGroupInfo(false);setShowGroupActionsMenu(false);onBack&&onBack();
+  try{await api("/groups/"+groupId+"/leave","POST",null,token);showToast("Left group","#6c63ff");}catch(e){showToast(e.message||"Could not leave group",COLORS.red);}
 };
 var deleteGroup=async function(){
-  try{await api("/groups/"+groupId,"DELETE",null,token);setConfirmDeleteGrp(false);showToast("Group deleted","#6c63ff");onBack&&onBack();}catch(e){showToast(e.message||"Error",COLORS.red);}
+  setConfirmDeleteGrp(false);setShowGroupInfo(false);setShowGroupActionsMenu(false);onBack&&onBack();
+  try{await api("/groups/"+groupId,"DELETE",null,token);showToast("Group deleted","#6c63ff");}catch(e){showToast(e.message||"Could not delete group",COLORS.red);}
 };
 var changeGroupAvatar=async function(file){
   try{
