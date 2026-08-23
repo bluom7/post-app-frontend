@@ -13804,7 +13804,7 @@ if(step==="name"){
 /* ── STEP 1: Select members ── */
 return React.createElement("div",{style:{position:"fixed",inset:0,background:"var(--bg)",zIndex:500,display:"flex",flexDirection:"column"}},
 
-  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"1px solid var(--border)",background:"var(--nav-bg)",flexShrink:0}},
+  React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",borderBottom:"none",background:"var(--nav-bg)",flexShrink:0}},
     React.createElement("button",{onClick:onBack,style:{background:"none",border:"none",cursor:"pointer",color:"var(--text)",padding:4,display:"flex",alignItems:"center"}},
       React.createElement("svg",{width:22,height:22,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2.2",strokeLinecap:"round"},React.createElement("polyline",{points:"15 18 9 12 15 6"}))
     ),
@@ -13814,7 +13814,7 @@ return React.createElement("div",{style:{position:"fixed",inset:0,background:"va
     )
   ),
 
-  React.createElement("div",{style:{padding:"10px 16px",background:"var(--nav-bg)",borderBottom:"1px solid var(--border)",flexShrink:0}},
+  React.createElement("div",{style:{padding:"10px 16px",background:"var(--nav-bg)",borderBottom:"none",flexShrink:0}},
     React.createElement("div",{style:{position:"relative"}},
       React.createElement("svg",{style:{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",opacity:0.45},width:15,height:15,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2"},React.createElement("circle",{cx:11,cy:11,r:8}),React.createElement("line",{x1:21,y1:21,x2:16.65,y2:16.65})),
       React.createElement("input",{type:"text",placeholder:"Name, @username...",value:search,onChange:function(e){setSearch(e.target.value);},style:{width:"100%",padding:"9px 12px 9px 36px",borderRadius:22,border:"1px solid var(--border)",background:"var(--input-bg)",color:"var(--text)",fontSize:14,outline:"none",boxSizing:"border-box"}}),
@@ -13822,7 +13822,7 @@ return React.createElement("div",{style:{position:"fixed",inset:0,background:"va
     )
   ),
 
-  selected.length>0&&React.createElement("div",{style:{display:"flex",gap:10,padding:"10px 16px",overflowX:"auto",borderBottom:"1px solid var(--border)",flexShrink:0}},
+  selected.length>0&&React.createElement("div",{style:{display:"flex",gap:10,padding:"10px 16px",overflowX:"auto",borderBottom:"none",flexShrink:0}},
     selected.map(function(sid){
       var f=friends.find(function(x){return x.id===sid;});
       if(!f)return null;
@@ -13851,7 +13851,7 @@ return React.createElement("div",{style:{position:"fixed",inset:0,background:"va
       var isSel=selected.includes(f.id);
       var nm=f.name||f.username||"";
       var ltr=(nm[0]||"?").toUpperCase();
-      return React.createElement("div",{key:f.id,onClick:function(){toggle(f.id);},style:{display:"flex",alignItems:"center",gap:14,padding:"10px 16px",cursor:"pointer",background:"transparent",borderBottom:"1px solid var(--border)"}},
+      return React.createElement("div",{key:f.id,onClick:function(){toggle(f.id);},style:{display:"flex",alignItems:"center",gap:14,padding:"10px 16px",cursor:"pointer",background:"transparent",borderBottom:"none"}},
         React.createElement("div",{style:{width:48,height:48,borderRadius:"50%",background:normalizeColor(f.avatar_bg)||COLORS.yellow,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:19,overflow:"hidden",flexShrink:0,color:"#fff"}},
           f.avatar_photo?React.createElement("img",{src:f.avatar_photo,style:{width:"100%",height:"100%",objectFit:"cover"}}):ltr
         ),
