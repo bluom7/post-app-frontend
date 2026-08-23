@@ -13896,6 +13896,8 @@ var GC_EMOJIS=["👍","❤️","😂","😮","😢","😡"];
 var photoRefGC=useRef(null);
 var cameraRefGC=useRef(null);
 var msgEndGC=useRef(null);
+var msgScrollGC=useRef(null);
+var isAtBottomGCRef=useRef(true);
 var lpTimerGC=useRef(null);
 var avatarPhotoRefGI=useRef(null);
 var clearingRef=useRef(false);
@@ -13965,7 +13967,7 @@ useEffect(function(){
   var iv=setInterval(loadMsgs,3000);
   return function(){clearInterval(iv);};
 },[groupId]);
-useEffect(function(){if(msgEndGC.current)msgEndGC.current.scrollIntoView({behavior:"smooth"});},[messages]);
+useEffect(function(){if(!isAtBottomGCRef.current||!msgScrollGC.current)return;var el=msgScrollGC.current;requestAnimationFrame(function(){el.scrollTo({top:el.scrollHeight,behavior:"smooth"});});},[messages]);
 var send=async function(){
   var t=text.trim();
   var savedGif=gifUrlGC;
@@ -14341,7 +14343,7 @@ React.createElement("div",{style:{display:"flex",alignItems:"center",gap:12,padd
     )
   )
 ),
-React.createElement("div",{style:{flex:1,overflowY:"auto",padding:"10px 12px",display:"flex",flexDirection:"column",gap:4}},
+React.createElement("div",{ref:msgScrollGC,onScroll:function(e){var el=e.currentTarget;isAtBottomGCRef.current=(el.scrollHeight-el.scrollTop-el.clientHeight)<80;},style:{flex:1,overflowY:"auto",padding:"10px 12px",display:"flex",flexDirection:"column",gap:4}},
   loading?React.createElement("div",{style:{display:"flex",justifyContent:"center",padding:"30px"}},React.createElement("div",{style:{width:24,height:24,border:"3px solid var(--border)",borderTop:"3px solid "+COLORS.yellow,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}))
   :messages.length===0?React.createElement("div",{style:{color:"var(--muted)",textAlign:"center",padding:"40px 20px",flex:1}},React.createElement("div",{style:{fontSize:40}},"💬"),React.createElement("div",{style:{marginTop:10}},"No messages yet"),React.createElement("div",{style:{fontSize:12,marginTop:6}},"Say hi to the group!"))
   :messages.map(function(msg,idx){
