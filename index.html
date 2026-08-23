@@ -14754,12 +14754,12 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
     } catch(e) { return ''; }
   };
 
-  const AvatarDiv = ({ u, size }) => {
+  const AvatarDiv = ({ u, size, circle }) => {
     const s = size || 44;
     const bg = (u && normalizeColor(u.avatar_bg)) || COLORS.yellow;
     const letter = (u && (u.avatar_letter || (u.name && u.name[0]) || '?')) || '?';
     return React.createElement('div', {
-      style: { width: s, height: s, borderRadius: Math.round(s * 0.28), background: bg,
+      style: { width: s, height: s, borderRadius: circle ? "50%" : Math.round(s * 0.28), background: bg,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontWeight: 900, fontSize: Math.round(s * 0.42), overflow: 'hidden', color: '#000', flexShrink: 0 }
     },
@@ -15413,7 +15413,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
         }, React.createElement('svg', { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: COLORS.yellow, strokeWidth: '2.2', strokeLinecap: 'round', strokeLinejoin: 'round' },
           React.createElement('polyline', { points: '15 18 9 12 15 6' })
         )),
-        React.createElement(AvatarDiv, { u: partner, size: 40 }),
+        React.createElement(AvatarDiv, { u: partner, size: 40, circle: true }),
         React.createElement('div', { style: { flex: 1, minWidth: 0 } },
           React.createElement('div', { style: { fontWeight: 700, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, partner.name),
           React.createElement('div', { style: { fontSize: 12, color: isTyping ? COLORS.green : (partner.is_online ? COLORS.green : 'var(--muted)') } },
