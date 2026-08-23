@@ -19471,12 +19471,12 @@ function AccountRecoveryScreen({
                   icon(isOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6", "var(--help-heading)", 19)
                 ),
                 isOpen ? e("div", { style:{ width:"100%", boxSizing:"border-box", border:"1px solid var(--help-line)", borderTop:0, background:"var(--help-surface)" } },
-                  sec.articles.map(function(article, articleIndex) {
+                  sec.guide.map(function(guide, guideIndex) {
                     return e("button", {
-                      key:article.title,
+                      key:guide.heading,
                       onClick:function(){ setManagingAccArticle(sec); window.scrollTo(0,0); },
-                      style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"15px 18px", border:0, borderBottom:articleIndex < sec.articles.length - 1 ? "1px solid var(--help-line)" : 0, background:"var(--help-surface)", color:"var(--help-blue)", cursor:"pointer", textAlign:"left", fontSize:15, lineHeight:1.4, fontWeight:600 }
-                    }, e("span", null, article.title), icon("M9 18l6-6-6-6", "var(--help-muted)", 18));
+                      style:{ width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"15px 18px", border:0, borderBottom:guideIndex < sec.guide.length - 1 ? "1px solid var(--help-line)" : 0, background:"var(--help-surface)", color:"var(--help-blue)", cursor:"pointer", textAlign:"left", fontSize:15, lineHeight:1.4, fontWeight:600 }
+                    }, e("span", null, guide.heading), icon("M9 18l6-6-6-6", "var(--help-muted)", 18));
                   })
                 ) : null
               );
