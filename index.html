@@ -14190,7 +14190,7 @@ showGroupInfo&&React.createElement("div",{style:{position:"fixed",inset:0,backgr
     React.createElement("div",{className:"group-media-scroll",style:{display:"flex",gap:8,overflowX:"auto",padding:"0 16px",scrollSnapType:"x mandatory",WebkitOverflowScrolling:"touch"}},groupMedia.map(function(m,i){var src=m.photo_url||m.gif_url;return React.createElement("img",{key:m.id||i,src:src,alt:"Group media",loading:"lazy",onClick:function(){window.open(src,"_blank","noopener,noreferrer");},style:{width:116,height:116,flex:"0 0 116px",objectFit:"cover",borderRadius:12,scrollSnapAlign:"start",cursor:"pointer",background:"var(--input-bg)",WebkitTapHighlightColor:"transparent"}});}))
   ),
   /* members list */
-    React.createElement("div",{style:{margin:"0 16px 16px",background:"var(--card-bg)",borderRadius:14,padding:"16px",border:"1px solid var(--border)"}},
+    React.createElement("div",{style:{margin:"0 16px 16px",background:"transparent",borderRadius:0,padding:"0",border:"none"}},
       React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,marginBottom:12}},
         React.createElement("div",{style:{fontWeight:700,fontSize:13,color:"var(--muted)",letterSpacing:.3}},"MEMBERS"),
         React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8}},
@@ -14219,7 +14219,7 @@ showGroupInfo&&React.createElement("div",{style:{position:"fixed",inset:0,backgr
           }catch(e){showToast(e.message||"Error",COLORS.red);}
           setFollowingInProgress(function(prev){var n=Object.assign({},prev);delete n[m.id];return n;});
         };
-        return React.createElement("div",{key:m.id,style:{display:"flex",alignItems:"flex-start",gap:10,padding:"11px 0",borderBottom:memberIndex===displayedMembers.length-1?"none":"1px solid var(--border)"}},
+        return React.createElement("div",{key:m.id,style:{display:"flex",alignItems:"flex-start",gap:10,padding:"11px 0",borderBottom:"none"}},
           React.createElement("div",{style:{width:42,height:42,borderRadius:"50%",background:normalizeColor(m.avatar_bg)||"#6c63ff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:15,color:"#fff",overflow:"hidden",flexShrink:0}},
             m.avatar_photo?React.createElement("img",{src:m.avatar_photo,alt:m.name||"Member",style:{width:"100%",height:"100%",objectFit:"cover"}}):m.avatar_letter||"?"
           ),
