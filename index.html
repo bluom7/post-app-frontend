@@ -14775,6 +14775,22 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
       const d = await api('/messages/conversations', 'GET', null, token);
       if (d && Array.isArray(d.conversations)) {
         setConvs(d.conversations);
+        // Warm recent chat histories in the background so opening a chat can
+        // render the local cache immediately instead of waiting on the API.
+        d.conversations.slice(0, 10).forEach(conv => {
+          const warmKey = 'msgs_warm_' + user.id + '_' + conv._id;
+          try {
+            const warmedAt = Number(sessionStorage.getItem(warmKey) || 0);
+            if (Date.now() - warmedAt < 30000) return;
+            sessionStorage.setItem(warmKey, String(Date.now()));
+          } catch(_) {}
+          api('/messages?with_user=' + conv._id, 'GET', null, token).then(payload => {
+            const warmMessages = payload && payload.messages ? payload.messages : (Array.isArray(payload) ? payload : []);
+            if (warmMessages.length > 0) {
+              try { localStorage.setItem('msgs_cache_' + user.id + '_' + conv._id, JSON.stringify(warmMessages)); } catch(_) {}
+            }
+          }).catch(() => {});
+        });
         if (partnerRef.current) {
           const fresh = d.conversations.find(c => c._id === partnerRef.current.id);
           if (fresh && fresh.user) {
