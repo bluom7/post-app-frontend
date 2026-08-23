@@ -15818,7 +15818,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
                 onMouseUp:    endLP,
                 onTouchStart: () => startLP(() => setLpConv(conv._id)),
                 onTouchEnd:   endLP,
-                style: { background: isLpC ? 'rgba(220,38,38,0.05)' : 'var(--card-bg)', border: isLpC ? '1.5px solid rgba(220,38,38,0.3)' : '1px solid var(--border)', borderRadius: 16, padding: '12px 14px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'background 0.15s' }
+                style: { background: isLpC ? 'rgba(220,38,38,0.05)' : 'var(--card-bg)', border: isLpC ? '1.5px solid rgba(220,38,38,0.3)' : 'none', borderRadius: 16, padding: '12px 14px', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'background 0.15s' }
               },
                 /* avatar + online dot */
                 React.createElement('div', { style: { position: 'relative', flexShrink: 0 } },
