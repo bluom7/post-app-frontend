@@ -13888,6 +13888,9 @@ var _gcInitId=group&&group.id;var msgsState=React.useState(function(){return(_gr
 var textState=React.useState("");var text=textState[0];var setText=textState[1];
 var sendingState=React.useState(false);var sending=sendingState[0];var setSending=sendingState[1];
 var groupDataState=React.useState(group);var groupData=groupDataState[0];var setGroupData=groupDataState[1];
+var editingGroupNameState=React.useState(false);var editingGroupName=editingGroupNameState[0];var setEditingGroupName=editingGroupNameState[1];
+var groupNameDraftState=React.useState(function(){return(group&&group.name)||"Group";});var groupNameDraft=groupNameDraftState[0];var setGroupNameDraft=groupNameDraftState[1];
+var savingGroupNameState=React.useState(false);var savingGroupName=savingGroupNameState[0];var setSavingGroupName=savingGroupNameState[1];
 var loadingState=React.useState(true);var loading=loadingState[0];var setLoading=loadingState[1];
 var replyingState=React.useState(null);var replyingTo=replyingState[0];var setReplyingTo=replyingState[1];
 var longPressState=React.useState(null);var longPressMsg=longPressState[0];var setLongPressMsg=longPressState[1];
@@ -14132,6 +14135,18 @@ var changeGroupAvatar=async function(file){
     showToast("Avatar updated",COLORS.blue);
   }catch(e){showToast(e.message||"Upload failed",COLORS.red);}
 };
+var saveGroupName=async function(){
+  var nextName=String(groupNameDraft||"").trim();
+  if(!nextName){showToast("Group name required",COLORS.red);return;}
+  setSavingGroupName(true);
+  try{
+    await api("/groups/"+groupId,"PATCH",{name:nextName},token);
+    setGroupData(function(prev){return Object.assign({},prev,{name:nextName,avatar_letter:nextName.charAt(0).toUpperCase()});});
+    setGroupNameDraft(nextName);setEditingGroupName(false);
+    showToast("Group name updated",COLORS.green);
+  }catch(e){showToast(e.message||"Could not update group name",COLORS.red);}
+  finally{setSavingGroupName(false);}
+};
 var addMemberToGroup=async function(uid){
   try{await api("/groups/"+groupId+"/members","POST",{user_id:uid},token);loadGroup();showToast("Member added","#6c63ff");}catch(e){showToast(e.message||"Error",COLORS.red);}
 };
@@ -14149,11 +14164,11 @@ showGroupInfo&&React.createElement("div",{style:{position:"fixed",inset:0,backgr
   /* avatar section */
   React.createElement("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",padding:"28px 16px 20px"}},
     React.createElement("input",{type:"file",accept:"image/*",ref:avatarPhotoRefGI,style:{display:"none"},onChange:function(e){var f=e.target.files&&e.target.files[0];if(f)changeGroupAvatar(f);}}),
-    React.createElement("div",{onClick:function(){avatarPhotoRefGI.current&&avatarPhotoRefGI.current.click();},style:{width:88,height:88,borderRadius:"50%",background:normalizeColor(groupData&&(groupData.avatar_color||groupData.avatar_bg))||"#6c63ff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:36,color:"#fff",overflow:"hidden",cursor:"pointer",position:"relative"}},
+    React.createElement("div",{onClick:function(e){e.preventDefault();e.stopPropagation();if(avatarPhotoRefGI.current)avatarPhotoRefGI.current.click();},onPointerDown:function(e){e.preventDefault();e.stopPropagation();},style:{width:88,height:88,borderRadius:"50%",background:normalizeColor(groupData&&(groupData.avatar_color||groupData.avatar_bg))||"#6c63ff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:36,color:"#fff",overflow:"hidden",cursor:"pointer",position:"relative",WebkitTapHighlightColor:"transparent",WebkitTouchCallout:"none",userSelect:"none",WebkitUserSelect:"none"}},
       groupData&&groupData.avatar_photo?React.createElement("img",{src:groupData.avatar_photo,style:{width:"100%",height:"100%",objectFit:"cover"}}):React.createElement("svg",{width:40,height:40,viewBox:"0 0 24 24",fill:"white"},React.createElement("path",{d:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"}),React.createElement("circle",{cx:9,cy:7,r:4}),React.createElement("path",{d:"M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"})),
       React.createElement("div",{style:{position:"absolute",bottom:0,left:0,right:0,background:"rgba(0,0,0,0.45)",textAlign:"center",fontSize:11,color:"#fff",padding:"3px 0"}},"Edit")
     ),
-    React.createElement("div",{style:{fontWeight:800,fontSize:18,marginTop:12}},(groupData&&groupData.name)||"Group"),
+    editingGroupName?React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,marginTop:12,width:"100%",maxWidth:300}},React.createElement("input",{autoFocus:true,type:"text",value:groupNameDraft,onChange:function(e){setGroupNameDraft(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")saveGroupName();if(e.key==="Escape"){setGroupNameDraft((groupData&&groupData.name)||"Group");setEditingGroupName(false);}},maxLength:60,style:{flex:1,minWidth:0,border:"1px solid var(--border)",borderRadius:8,padding:"8px 10px",background:"var(--input-bg)",color:"var(--text)",fontSize:16,outline:"none"}}),React.createElement("button",{onClick:saveGroupName,disabled:savingGroupName,style:{border:"none",borderRadius:8,padding:"8px 10px",background:COLORS.blue,color:"#fff",fontWeight:700,cursor:"pointer",opacity:savingGroupName?0.6:1}},savingGroupName?"…":"Save"),React.createElement("button",{onClick:function(){setGroupNameDraft((groupData&&groupData.name)||"Group");setEditingGroupName(false);},disabled:savingGroupName,style:{border:"1px solid var(--border)",borderRadius:8,padding:"8px 10px",background:"var(--input-bg)",color:"var(--text)",fontWeight:700,cursor:"pointer"}},"Cancel")):React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginTop:12}},React.createElement("div",{style:{fontWeight:800,fontSize:18}},(groupData&&groupData.name)||"Group"),React.createElement("button",{onClick:function(){setGroupNameDraft((groupData&&groupData.name)||"Group");setEditingGroupName(true);},style:{border:"none",background:"transparent",color:COLORS.blue,fontWeight:700,fontSize:13,cursor:"pointer",padding:"4px 6px",WebkitTapHighlightColor:"transparent"}},"Edit")),
     React.createElement("div",{style:{color:"var(--muted)",fontSize:13,marginTop:2}},(groupData&&groupData.members&&groupData.members.length)||0," members")
   ),
   /* invite link */
