@@ -14791,6 +14791,19 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
             }
           }).catch(() => {});
         });
+        // Preload follower/following totals with recent chat profiles too.
+        d.conversations.slice(0, 10).forEach(conv => {
+          api('/users/' + conv._id, 'GET', null, token).then(profile => {
+            const stats = profile && profile.stats ? profile.stats : {};
+            const followersCount = profile && profile.followers_count != null ? profile.followers_count : stats.followers;
+            const followingCount = profile && profile.following_count != null ? profile.following_count : stats.following;
+            if (followersCount != null || followingCount != null) {
+              setConvs(prev => prev.map(c => c._id === conv._id ? {
+                ...c, user: { ...(c.user || {}), followers_count: followersCount, following_count: followingCount }
+              } : c));
+            }
+          }).catch(() => {});
+        });
         if (partnerRef.current) {
           const fresh = d.conversations.find(c => c._id === partnerRef.current.id);
           if (fresh && fresh.user) {
@@ -15492,8 +15505,8 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
           ),
           React.createElement('div', { style: { fontSize: 13, color: 'var(--muted)', marginTop: 2 } }, '@' + ((partnerProfile || partner).handle || (partnerProfile || partner).username || '').replace(/^@/, '')),
           React.createElement('div', { style: { fontSize: 13, color: 'var(--muted)', marginTop: 6, display: 'flex', gap: 16 } },
-            React.createElement('span', { onClick: () => setShowFollowListDM('followers'), style: { cursor: 'pointer' } }, React.createElement('b', null, ((partnerProfile || partner).followers_count || ((partnerProfile || partner).followers || []).length || 0)), ' Followers'),
-            React.createElement('span', { onClick: () => setShowFollowListDM('following'), style: { cursor: 'pointer' } }, React.createElement('b', null, ((partnerProfile || partner).following_count || ((partnerProfile || partner).following || []).length || 0)), ' Following')
+            React.createElement('span', { onClick: () => setShowFollowListDM('followers'), style: { cursor: 'pointer' } }, React.createElement('b', null, ((partnerProfile || partner).followers_count ?? (((partnerProfile || partner).stats || {}).followers ?? ((partnerProfile || partner).followers || []).length ?? 0))), ' Followers'),
+            React.createElement('span', { onClick: () => setShowFollowListDM('following'), style: { cursor: 'pointer' } }, React.createElement('b', null, ((partnerProfile || partner).following_count ?? (((partnerProfile || partner).stats || {}).following ?? ((partnerProfile || partner).following || []).length ?? 0))), ' Following')
           ),
           React.createElement('button', {
             onClick: () => onViewProfile && onViewProfile(partner.id),
