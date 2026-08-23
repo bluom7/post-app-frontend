@@ -14808,6 +14808,9 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
         avatar_photo:  initialChatUser.avatar_photo   || null,
         is_online:     initialChatUser.is_online,
         last_seen:     initialChatUser.last_seen,
+        followers_count: initialChatUser.followers_count,
+        following_count: initialChatUser.following_count,
+        is_badge_verified: initialChatUser.is_badge_verified,
         is_badge_verified: initialChatUser.is_badge_verified,
       });
       if (onChatOpened) onChatOpened();
@@ -15472,9 +15475,9 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
             (partnerProfile || partner).is_badge_verified && React.createElement(VerifiedBadge, { size: 18 })
           ),
           React.createElement('div', { style: { fontSize: 13, color: 'var(--muted)', marginTop: 2 } }, '@' + ((partnerProfile || partner).handle || (partnerProfile || partner).username || '').replace(/^@/, '')),
-          partnerProfile && React.createElement('div', { style: { fontSize: 13, color: 'var(--muted)', marginTop: 6, display: 'flex', gap: 16 } },
-            React.createElement('span', { onClick: () => setShowFollowListDM('followers'), style: { cursor: 'pointer' } }, React.createElement('b', null, (partnerProfile.followers_count || (partnerProfile.followers || []).length || 0)), ' Followers'),
-            React.createElement('span', { onClick: () => setShowFollowListDM('following'), style: { cursor: 'pointer' } }, React.createElement('b', null, (partnerProfile.following_count || (partnerProfile.following || []).length || 0)), ' Following')
+          React.createElement('div', { style: { fontSize: 13, color: 'var(--muted)', marginTop: 6, display: 'flex', gap: 16 } },
+            React.createElement('span', { onClick: () => setShowFollowListDM('followers'), style: { cursor: 'pointer' } }, React.createElement('b', null, ((partnerProfile || partner).followers_count || ((partnerProfile || partner).followers || []).length || 0)), ' Followers'),
+            React.createElement('span', { onClick: () => setShowFollowListDM('following'), style: { cursor: 'pointer' } }, React.createElement('b', null, ((partnerProfile || partner).following_count || ((partnerProfile || partner).following || []).length || 0)), ' Following')
           ),
           React.createElement('button', {
             onClick: () => onViewProfile && onViewProfile(partner.id),
@@ -15774,6 +15777,9 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
                     is_online:     u.is_online,
                     last_seen:     u.last_seen,
                     handle:        u.handle,
+                    followers_count:  u.followers_count,
+                    following_count:  u.following_count,
+                    is_badge_verified: u.is_badge_verified,
                     is_badge_verified: u.is_badge_verified,
                   });
                   api('/messages/conversations/' + conv._id + '/seen', 'POST', null, token).catch(() => {});
