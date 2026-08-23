@@ -4205,7 +4205,7 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
       setOpenGroupId(group);
       setTab("group-chat");
     }
-  }), tab === "messages" && /*#__PURE__*/React.createElement(MessagesTab, {
+  }), user && tab === "messages" && /*#__PURE__*/React.createElement(MessagesTab, {
     token: token,
     user: user,
     setUser: setUser,
