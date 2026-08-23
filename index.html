@@ -14180,21 +14180,9 @@ showGroupInfo&&React.createElement("div",{style:{position:"fixed",inset:0,backgr
     )
   ),
   /* horizontally scrolling media strip */
-  groupMedia.length>0&&React.createElement("section",{style:{borderTop:"1px solid var(--border)",borderBottom:"1px solid var(--border)",background:"var(--card-bg)",padding:"16px 0 18px"}},
+  groupMedia.length>0&&React.createElement("section",{style:{background:"var(--card-bg)",padding:"16px 0 18px"}},
     React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 16px 11px"}},React.createElement("span",{style:{fontWeight:700,fontSize:16}},"Media, links, and docs"),React.createElement("span",{style:{color:"var(--muted)",fontSize:13}},groupMedia.length+" items")),
     React.createElement("div",{style:{display:"flex",gap:8,overflowX:"auto",padding:"0 16px",scrollSnapType:"x mandatory",WebkitOverflowScrolling:"touch"}},groupMedia.map(function(m,i){var src=m.photo_url||m.gif_url;return React.createElement("img",{key:m.id||i,src:src,alt:"Group media",loading:"lazy",onClick:function(){window.open(src,"_blank","noopener,noreferrer");},style:{width:116,height:116,flex:"0 0 116px",objectFit:"cover",borderRadius:12,scrollSnapAlign:"start",cursor:"pointer",background:"var(--input-bg)",WebkitTapHighlightColor:"transparent"}});}))
-  ),
-  /* invite link */
-  React.createElement("div",{style:{margin:"0 16px 16px",background:"var(--card-bg)",borderRadius:14,padding:16,border:"1px solid var(--border)"}},
-    React.createElement("div",{style:{fontWeight:700,fontSize:13,marginBottom:10,color:"var(--muted)"}},"INVITE LINK"),
-    loadingInvite?React.createElement("div",{style:{color:"var(--muted)",fontSize:13}},"Loading...")
-    :React.createElement(React.Fragment,null,
-      React.createElement("div",{style:{background:"var(--input-bg)",borderRadius:10,padding:"10px 12px",fontSize:13,wordBreak:"break-all",marginBottom:10,color:"var(--text)",border:"1px solid var(--border)"}},inviteLink||"—"),
-      React.createElement("div",{style:{display:"flex",gap:8}},
-        React.createElement("button",{onClick:function(){if(inviteLink){navigator.clipboard&&navigator.clipboard.writeText(inviteLink).catch(function(){});showToast("Link copied!",COLORS.blue);}},style:{flex:1,padding:"10px",borderRadius:10,border:"none",background:COLORS.blue,color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer"}},"📋 Copy Link"),
-        React.createElement("button",{onClick:function(){if(navigator.share&&inviteLink){navigator.share({title:(groupData&&groupData.name)||"Group",url:inviteLink}).catch(function(){});}else if(inviteLink){navigator.clipboard&&navigator.clipboard.writeText(inviteLink).catch(function(){});showToast("Link copied!","#6c63ff");}},style:{padding:"10px 14px",borderRadius:10,border:"1px solid var(--border)",background:"var(--input-bg)",color:"var(--text)",fontWeight:700,fontSize:14,cursor:"pointer"}},"Share")
-      )
-    )
   ),
   /* invite followers/following */
   React.createElement("div",{style:{margin:"0 16px 16px",background:"var(--card-bg)",borderRadius:14,padding:16,border:"1px solid var(--border)"}},
