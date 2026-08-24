@@ -14077,8 +14077,8 @@ var getMember=function(uid){return members.find(function(m){return m.id===uid;})
 var filteredMembers=members.filter(function(m){var q=String(memberQuery||"").trim().toLowerCase();if(!q)return true;return String(m.name||"").toLowerCase().includes(q)||String(m.handle||m.username||"").toLowerCase().includes(q)||String(m.bio||"").toLowerCase().includes(q);});
 var displayedMembers=showAllMembers?filteredMembers:filteredMembers.slice(0,20);
 var openGroupInfo=async function(){
-  // Load follow state before showing the member list so existing follows
-  // render as “Following” immediately instead of flashing “Follow”.
+  // Open the info screen immediately; load invite and follow data in the background.
+  setShowGroupInfo(true);
   setLoadingInvite(true);
   try{var d=await api("/groups/"+groupId+"/invite-link","GET",null,token);setInviteLink(d.invite_link||"");setInviteCode(d.invite_code||"");}catch(e){}
   try{
