@@ -13901,6 +13901,7 @@ var confirmClearState=React.useState(false);var confirmClear=confirmClearState[0
 var confirmExitState=React.useState(false);var confirmExit=confirmExitState[0];var setConfirmExit=confirmExitState[1];
 var confirmDeleteGrpState=React.useState(false);var confirmDeleteGrp=confirmDeleteGrpState[0];var setConfirmDeleteGrp=confirmDeleteGrpState[1];
 var myFollowingState=React.useState([]);var myFollowing=myFollowingState[0];var setMyFollowing=myFollowingState[1];
+var followingLoadedState=React.useState(false);var followingLoaded=followingLoadedState[0];var setFollowingLoaded=followingLoadedState[1];
 var followingInProgressState=React.useState({});var followingInProgress=followingInProgressState[0];var setFollowingInProgress=followingInProgressState[1];
 var memberSearchOpenState=React.useState(false);var memberSearchOpen=memberSearchOpenState[0];var setMemberSearchOpen=memberSearchOpenState[1];
 var memberQueryState=React.useState("");var memberQuery=memberQueryState[0];var setMemberQuery=memberQueryState[1];
@@ -13946,8 +13947,12 @@ var loadMsgs=async function(){
 var loadGroup=async function(){
   try{var d=await api("/groups/"+groupId,"GET",null,token);if(d)setGroupData(d);}catch(e){}
 };
+var loadMyFollowing=async function(){
+  loadMyFollowing();
+  finally{setFollowingLoaded(true);}
+};
 useEffect(function(){
-  loadMsgs();loadGroup();
+  loadMsgs();loadGroup();loadMyFollowing();
   var iv=setInterval(loadMsgs,3000);
   return function(){clearInterval(iv);};
 },[groupId]);
@@ -14215,12 +14220,12 @@ addMembersOpen&&React.createElement("div",{style:{position:"fixed",inset:0,backg
       displayedMembers.map(function(m,memberIndex){
         var isMe=m.id===user.id;
         var isAdmin=groupData&&groupData.admins&&groupData.admins.includes(m.id);
-        var isFollowing=myFollowing.indexOf(m.id)!==-1;
+        var isFollowing=myFollowing.indexOf(m.id)!==-1||m.is_following===true||m.isFollowing===true;
         var inProgress=followingInProgress[m.id];
         var handle=(m.handle||m.username)?"@"+String(m.handle||m.username).replace(/^@+/,""):"";
         var bio=String(m.bio||"").trim();
         var followMember=async function(){
-          if(inProgress||isMe)return;
+          if(!followingLoaded||inProgress||isMe)return;
           setFollowingInProgress(function(prev){return Object.assign({},prev,{[m.id]:true});});
           try{
             await api("/users/"+m.id+"/follow","POST",null,token);
@@ -14242,7 +14247,7 @@ addMembersOpen&&React.createElement("div",{style:{position:"fixed",inset:0,backg
             handle&&React.createElement("div",{style:{fontSize:11,color:"var(--muted)",marginTop:2}},handle),
             bio&&React.createElement("div",{style:{fontSize:12,color:"var(--text)",opacity:.78,marginTop:3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},bio)
           ),
-          !isMe&&React.createElement("button",{onClick:followMember,disabled:!!inProgress,style:{padding:"7px 13px",borderRadius:20,border:isFollowing?"1px solid var(--border)":"none",background:isFollowing?"var(--input-bg)":COLORS.blue,color:isFollowing?"var(--muted)":"#fff",fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,opacity:inProgress?0.6:1}},inProgress?"…":isFollowing?"Following":"Follow")
+          !isMe&&React.createElement("button",{onClick:followMember,disabled:!!inProgress||!followingLoaded,style:{padding:"7px 13px",borderRadius:20,border:isFollowing?"1px solid var(--border)":"none",background:isFollowing?"var(--input-bg)":COLORS.blue,color:isFollowing?"var(--muted)":"#fff",fontWeight:700,fontSize:12,cursor:"pointer",flexShrink:0,opacity:inProgress?0.6:1}},!followingLoaded?"…":inProgress?"…":isFollowing?"Following":"Follow")
         );
       }),
       filteredMembers.length>20&&React.createElement("button",{onClick:function(){setShowAllMembers(function(v){return !v;});},style:{width:"100%",marginTop:10,border:"none",background:"transparent",color:COLORS.blue,fontWeight:800,fontSize:13,cursor:"pointer",padding:"8px 0 2px"}},showAllMembers?"Show less":"More")
