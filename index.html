@@ -38,7 +38,7 @@ button, [role="button"] { -webkit-tap-highlight-color: transparent; }
 button:focus:not([data-follow-control]) { outline: none !important; box-shadow: none !important; border: none !important; }
 button:focus-visible:not([data-follow-control]) { outline: none !important; box-shadow: none !important; border: none !important; }
 :root {
-  --bg: #ffffff; --card-bg: #ffffff; --text: #111111; --muted: #666666;
+  --bg: #ffffff; --card-bg: #ffffff; --text: #111111; --muted: #666666; --friends-spinner: #1877F2;
   --border: #e0e0e0; --input-bg: #f5f5f5; --nav-bg: #ffffff;
   --shadow: rgba(0,0,0,0.08);
   --help-page-bg: #ffffff; --help-surface: #ffffff; --help-soft: #F0F2F5;
@@ -47,7 +47,7 @@ button:focus-visible:not([data-follow-control]) { outline: none !important; box-
   --help-blue: #087EBB; --help-selected: #EEF6FF; --help-hero: #111820;
 }
 [data-theme="dark"] {
-  --bg: #0f0f0f; --card-bg: #1a1a1a; --text: #f0f0f0; --muted: #aaaaaa;
+  --bg: #0f0f0f; --card-bg: #1a1a1a; --text: #f0f0f0; --muted: #aaaaaa; --friends-spinner: #ffffff;
   --border: #2e2e2e; --input-bg: #252525; --nav-bg: #141414;
   --shadow: rgba(0,0,0,0.4);
   --help-page-bg: #0f0f0f; --help-surface: #1a1a1a; --help-soft: #202124;
@@ -8281,7 +8281,7 @@ function TagPeopleOverlay(props) {
     e("div", { style: { flex:1, overflowY:"auto", padding:"4px 0 16px" } },
       loading
         ? e("div", { style: { textAlign:"center", padding:40, color:"var(--muted)", fontSize:14, display:"flex", flexDirection:"column", alignItems:"center", gap:10 } },
-            e("div", { style: { width:28, height:28, border:"3px solid var(--border)", borderTop:"3px solid "+COLORS.blue, borderRadius:"50%", animation:"spin 0.8s linear infinite" } }),
+            e("div", { style: { width:28, height:28, border:"3px solid var(--border)", borderTop:"3px solid var(--friends-spinner)", borderRadius:"50%", animation:"spin 0.8s linear infinite" } }),
             e("div", null, "Loading...")
           )
         : tab==="invite"
