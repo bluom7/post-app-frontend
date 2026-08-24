@@ -14323,7 +14323,7 @@ React.createElement("div",{ref:msgScrollGC,onScroll:function(e){var el=e.current
     return React.createElement(React.Fragment,{key:msg.id},
       showDate&&React.createElement("div",{style:{textAlign:"center",color:"var(--muted)",fontSize:11,margin:"8px 0"}},fmtDate(msg.created_at)),
       React.createElement("div",{
-        style:{display:"flex",flexDirection:isMe?"row-reverse":"row",alignItems:"flex-end",gap:6,marginBottom:2},
+        style:{display:"flex",flexDirection:isMe?"row-reverse":"row",alignItems:"flex-start",gap:6,marginBottom:2},
         onTouchStart:function(){lpTimerGC.current=setTimeout(function(){setLongPressMsg(msg);},600);},
         onTouchEnd:function(){clearTimeout(lpTimerGC.current);},
         onMouseDown:function(){lpTimerGC.current=setTimeout(function(){setLongPressMsg(msg);},700);},
