@@ -12988,7 +12988,7 @@ var localVideoRef=React.useRef(null);
 var remoteAVRef=React.useRef(null);
 var pollRef=React.useRef(null);
 var durRef=React.useRef(null);
-var sigIdxRef=React.useRef(0);
+var sigIdxRef=React.useRef(0);var pendingIceRef=React.useRef([]);var remoteDescriptionSetRef=React.useRef(false);
 var ringRef=React.useRef(null);
 var isVideo=callInfo.type==="video";
 var remoteUser=callInfo.remoteUser||{};
@@ -13087,29 +13087,39 @@ var initPC=function(stream){
   return pc;
 };
 var startPolling=function(){
-  pollRef.current=setInterval(async function(){
-    try{
-      var d=await api("/calls/"+callInfo.callId+"/signals","GET",null,token);
-      var sigs=(d&&d.signals)||[];
-      for(var i=sigIdxRef.current;i<sigs.length;i++){
-        var sig=sigs[i];
-        if(sig.from_id===user.id){sigIdxRef.current=i+1;continue;}
-        sigIdxRef.current=i+1;
-        var pc=pcRef.current;
-        if(!pc)continue;
-        if(sig.type==="answer"&&pc.signalingState!=="stable"){
-          try{await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sig.data)));setStatus("connected");startDuration();}catch(e){}
-        }else if(sig.type==="ice"){
-          try{await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(sig.data)));}catch(e){}
-        }else if(sig.type==="end"||sig.type==="decline"){
-          clearInterval(pollRef.current);cleanup();onEnd();return;
+    if(pollRef.current)clearInterval(pollRef.current);
+    pollRef.current=setInterval(async function(){
+      try{
+        var cursor=sigIdxRef.current;
+        var d=await api("/calls/"+callInfo.callId+"/signals?since="+encodeURIComponent(String(cursor)),"GET",null,token);
+        var sigs=(d&&d.signals)||[];
+        if(d&&typeof d.total==="number")sigIdxRef.current=d.total;
+        for(var i=0;i<sigs.length;i++){
+          var sig=sigs[i];
+          var pc=pcRef.current;
+          if(!pc)continue;
+          if(sig.type==="answer"&&pc.signalingState!=="stable"){
+            try{
+              await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(sig.data)));
+              remoteDescriptionSetRef.current=true;
+              var queued=pendingIceRef.current.splice(0);
+              for(var qi=0;qi<queued.length;qi++){try{await pc.addIceCandidate(queued[qi]);}catch(e){}}
+              setStatus("connected");startDuration();
+            }catch(e){}
+          }else if(sig.type==="ice"){
+            try{
+              var candidate=new RTCIceCandidate(JSON.parse(sig.data));
+              if(remoteDescriptionSetRef.current)await pc.addIceCandidate(candidate);else pendingIceRef.current.push(candidate);
+            }catch(e){}
+          }else if(sig.type==="end"||sig.type==="decline"){
+            clearInterval(pollRef.current);cleanup();onEnd();return;
+          }
         }
-      }
-      var call=await api("/calls/"+callInfo.callId,"GET",null,token);
-      if(call&&(call.status==="ended"||call.status==="declined")){clearInterval(pollRef.current);cleanup();onEnd();}
-    }catch(e){}
-  },1500);
-};
+        var call=await api("/calls/"+callInfo.callId,"GET",null,token);
+        if(call&&(call.status==="ended"||call.status==="declined")){clearInterval(pollRef.current);cleanup();onEnd();}
+      }catch(e){}
+    },1000);
+    };
 var startOutgoing=async function(){
   try{
     // Fetch fresh ICE servers (TURN credentials) from backend
@@ -13128,29 +13138,37 @@ var startOutgoing=async function(){
   }
 };
 var acceptCall=async function(){
-  setStatus("connecting");
-  try{
-    try{var iceD2=await api("/calls/ice-servers","GET",null,token);if(iceD2&&iceD2.iceServers){globalThis._cachedIceServers=iceD2.iceServers;}}catch(e){}
-    var stream=await getMedia();
-    localStreamRef.current=stream;
-    if(localVideoRef.current)localVideoRef.current.srcObject=stream;
-    var pc=initPC(stream);
-    var d=await api("/calls/"+callInfo.callId+"/signals","GET",null,token);
-    var sigs=(d&&d.signals)||[];
-    var offerSig=sigs.find(function(s){return s.type==="offer";});
-    if(!offerSig){if(showToast)showToast("Call signal lost");cleanup();onEnd();return;}
-    sigIdxRef.current=sigs.length;
-    await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(offerSig.data)));
-    var answer=await pc.createAnswer();
-    await pc.setLocalDescription(answer);
-    await api("/calls/"+callInfo.callId+"/answer","POST",{answer:JSON.stringify(answer)},token);
-    await api("/calls/"+callInfo.callId+"/signal","POST",{type:"answer",data:JSON.stringify(answer)},token);
-    startPolling();
-  }catch(e){
-    if(showToast)showToast("Could not connect call");
-    cleanup();onEnd();
-  }
-};
+    setStatus("connecting");
+    try{
+      try{var iceD2=await api("/calls/ice-servers","GET",null,token);if(iceD2&&iceD2.iceServers){globalThis._cachedIceServers=iceD2.iceServers;}}catch(e){}
+      var stream=await getMedia();
+      localStreamRef.current=stream;
+      if(localVideoRef.current)localVideoRef.current.srcObject=stream;
+      var pc=initPC(stream);
+      var d=null,sigs=[],offerSig=null;
+      for(var attempt=0;attempt<20&&!offerSig;attempt++){
+        d=await api("/calls/"+callInfo.callId+"/signals?since=0","GET",null,token);
+        sigs=(d&&d.signals)||[];
+        offerSig=sigs.find(function(s){return s.type==="offer";});
+        if(!offerSig)await new Promise(function(resolve){setTimeout(resolve,300);});
+      }
+      if(!offerSig){if(showToast)showToast("Call signal lost");cleanup();onEnd();return;}
+      sigIdxRef.current=d&&typeof d.total==="number"?d.total:sigs.length;
+      await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(offerSig.data)));
+      remoteDescriptionSetRef.current=true;
+      for(var si=0;si<sigs.length;si++){
+        if(sigs[si].type==="ice"){try{await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(sigs[si].data)));}catch(e){}}
+      }
+      var answer=await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await api("/calls/"+callInfo.callId+"/answer","POST",{answer:JSON.stringify(answer)},token);
+      await api("/calls/"+callInfo.callId+"/signal","POST",{type:"answer",data:JSON.stringify(answer)},token);
+      startPolling();
+    }catch(e){
+      if(showToast)showToast("Could not connect call");
+      cleanup();onEnd();
+    }
+    };
 React.useEffect(function(){
   // Wait for callId before starting outgoing — overlay shows instantly while API resolves
   if(callInfo.direction==="outgoing" && callInfo.callId)startOutgoing();
