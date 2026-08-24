@@ -14785,10 +14785,15 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
             const stats = profile && profile.stats ? profile.stats : {};
             const followersCount = profile && profile.followers_count != null ? profile.followers_count : stats.followers;
             const followingCount = profile && profile.following_count != null ? profile.following_count : stats.following;
-            if (followersCount != null || followingCount != null) {
+            if (followersCount != null || followingCount != null || profile.handle || profile.username) {
+              const profilePatch = { ...profile, followers_count: followersCount, following_count: followingCount };
               setConvs(prev => prev.map(c => c._id === conv._id ? {
-                ...c, user: { ...(c.user || {}), followers_count: followersCount, following_count: followingCount }
+                ...c, user: { ...(c.user || {}), ...profilePatch }
               } : c));
+              if (partnerRef.current && String(partnerRef.current.id) === String(conv._id)) {
+                setPartner(prev => prev && String(prev.id) === String(conv._id) ? { ...prev, ...profilePatch } : prev);
+                setPartnerProfile(prev => ({ ...(prev || {}), ...profilePatch }));
+              }
             }
           }).catch(() => {});
         });
@@ -14842,6 +14847,8 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
       if (_oc) { const _oa = JSON.parse(_oc); if (Array.isArray(_oa)) _initMsgs = _oa; }
     } catch(_oe) {}
     setPartner(p);
+    const seededProfile = p && (p.handle || p.username || p.followers_count != null || p.following_count != null) ? p : null;
+    setPartnerProfile(seededProfile);
     setMsgs(_initMsgs);
     setInput('');
     setReplyTo(null);
