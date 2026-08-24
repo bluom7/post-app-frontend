@@ -13948,8 +13948,11 @@ var loadGroup=async function(){
   try{var d=await api("/groups/"+groupId,"GET",null,token);if(d)setGroupData(d);}catch(e){}
 };
 var loadMyFollowing=async function(){
-  loadMyFollowing();
-  finally{setFollowingLoaded(true);}
+  try{
+    var f=await api("/users/"+user.id+"/following","GET",null,token);
+    var flist=Array.isArray(f)?f:(f&&Array.isArray(f.following)?f.following:(f&&Array.isArray(f.users)?f.users:[]));
+    setMyFollowing(flist.map(function(u2){return u2.id||u2._id;}).filter(Boolean));
+  }catch(e){}finally{setFollowingLoaded(true);}
 };
 useEffect(function(){
   loadMsgs();loadGroup();loadMyFollowing();
