@@ -14077,16 +14077,18 @@ var getMember=function(uid){return members.find(function(m){return m.id===uid;})
 var filteredMembers=members.filter(function(m){var q=String(memberQuery||"").trim().toLowerCase();if(!q)return true;return String(m.name||"").toLowerCase().includes(q)||String(m.handle||m.username||"").toLowerCase().includes(q)||String(m.bio||"").toLowerCase().includes(q);});
 var displayedMembers=showAllMembers?filteredMembers:filteredMembers.slice(0,20);
 var openGroupInfo=async function(){
-  setShowGroupInfo(true);
+  // Load follow state before showing the member list so existing follows
+  // render as “Following” immediately instead of flashing “Follow”.
   setLoadingInvite(true);
   try{var d=await api("/groups/"+groupId+"/invite-link","GET",null,token);setInviteLink(d.invite_link||"");setInviteCode(d.invite_code||"");}catch(e){}
-  setLoadingInvite(false);
   try{
     var f=await api("/users/"+user.id+"/following","GET",null,token);
     var flist=Array.isArray(f)?f:(f.following||[]);
     setFollowers(flist);
-    setMyFollowing(flist.map(function(u2){return u2.id;}));
+    setMyFollowing(flist.map(function(u2){return u2.id||u2._id;}));
   }catch(e){}
+  setLoadingInvite(false);
+  setShowGroupInfo(true);
 };
 var openAddMembers=async function(){setAddMembersOpen(true);setAddSelection([]);setAddFilter("all");setAddFilterMenuOpen(false);setAddMembersLoading(true);try{var relationUserId=String((user&&(user.id||user._id))||"");if(!relationUserId)throw new Error("Could not identify current user");var pickerCacheBust="?picker_refresh="+Date.now();var r=await Promise.all([api("/users/"+encodeURIComponent(relationUserId)+"/followers"+pickerCacheBust,"GET",null,token),api("/users/"+encodeURIComponent(relationUserId)+"/following"+pickerCacheBust,"GET",null,token)]);var people=function(value,key){if(Array.isArray(value))return value;if(value&&Array.isArray(value[key]))return value[key];if(value&&Array.isArray(value.users))return value.users;if(value&&Array.isArray(value.data))return value.data;return [];};var fl=people(r[0],"followers");var fg=people(r[1],"following");var toId=function(x){return x&&String(x.id||x._id||x.user_id||"");};var fi=new Set(fl.map(toId).filter(Boolean));var gi=new Set(fg.map(toId).filter(Boolean));var ei=new Set(members.map(toId).filter(Boolean));var map={};fl.concat(fg).forEach(function(x){var xid=toId(x);if(!xid||xid===relationUserId)return;var normalized=Object.assign({},x,{id:xid});map[xid]={user:normalized,relation:fi.has(xid)&&gi.has(xid)?"mutual":fi.has(xid)?"follower":"following",alreadyInGroup:ei.has(xid)};});var order={mutual:0,follower:1,following:2};setAddCandidates(Object.keys(map).map(function(id){return map[id];}).sort(function(a,b){return order[a.relation]-order[b.relation]||String(a.user.name||a.user.handle||a.user.username||"").localeCompare(String(b.user.name||b.user.handle||b.user.username||""));}));}catch(e){setAddCandidates([]);showToast(e.message||"Could not load people",COLORS.red);}finally{setAddMembersLoading(false);}};
 var toggleAddMember=function(uid){setAddSelection(function(p){return p.indexOf(uid)!==-1?p.filter(function(id){return id!==uid;}):p.concat([uid]);});};
