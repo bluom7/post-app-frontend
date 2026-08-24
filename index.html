@@ -14127,12 +14127,17 @@ var deleteGroup=async function(){
   try{await api("/groups/"+groupId,"DELETE",null,token);showToast("Group deleted","#6c63ff");}catch(e){showToast(e.message||"Could not delete group",COLORS.red);}
 };
 var changeGroupAvatar=async function(file){
+  if(!file)return;
+  if(!file.type||file.type.indexOf("image/")!==0){showToast("Please select an image",COLORS.red);return;}
   try{
-    var fd=new FormData();fd.append("file",file);
+    var fd=new FormData();fd.append("file",file,file.name||"group-avatar");
     var r=await fetch(API+"/groups/"+groupId+"/avatar",{method:"POST",headers:{Authorization:"Bearer "+token},body:fd});
     var d=await r.json().catch(function(){return{};});
-    if(!r.ok)throw new Error(d.detail||"Upload failed");
-    setGroupData(function(prev){return Object.assign({},prev,{avatar_photo:d.avatar_photo});});
+    if(!r.ok)throw new Error((typeof d.detail==="string"&&d.detail)||"Upload failed");
+    var nextAvatar=String(d.avatar_photo||"").trim();
+    if(!nextAvatar)throw new Error("Server did not return the uploaded image");
+    setGroupData(function(prev){return Object.assign({},prev,{avatar_photo:nextAvatar});});
+    await loadGroup();
     showToast("Avatar updated",COLORS.blue);
   }catch(e){showToast(e.message||"Upload failed",COLORS.red);}
 };
@@ -14190,7 +14195,7 @@ addMembersOpen&&React.createElement("div",{style:{position:"fixed",inset:0,backg
       React.createElement("button",{onClick:function(){setShowGroupActionsMenu(false);setConfirmExit(true);},style:{width:"100%",border:"none",background:"transparent",color:"var(--text)",padding:"11px 10px",textAlign:"left",fontSize:14,cursor:"pointer",borderRadius:8}},"Exit Group"),
       groupData&&groupData.creator_id===user.id&&React.createElement("button",{onClick:function(){setShowGroupActionsMenu(false);setConfirmDeleteGrp(true);},style:{width:"100%",border:"none",background:"transparent",color:"var(--text)",padding:"11px 10px",textAlign:"left",fontSize:14,cursor:"pointer",borderRadius:8}},"Delete Group")
     ),
-    React.createElement("input",{type:"file",accept:"image/*",ref:avatarPhotoRefGI,style:{display:"none"},onChange:function(e){var f=e.target.files&&e.target.files[0];if(f)changeGroupAvatar(f);}}),
+    React.createElement("input",{type:"file",accept:"image/*",ref:avatarPhotoRefGI,style:{display:"none"},onChange:function(e){var f=e.target.files&&e.target.files[0];if(f)changeGroupAvatar(f);e.target.value="";}}),
     React.createElement("div",{onClick:function(e){e.preventDefault();e.stopPropagation();if(avatarPhotoRefGI.current)avatarPhotoRefGI.current.click();},onPointerDown:function(e){e.stopPropagation();},style:{margin:"0 auto",width:96,height:96,borderRadius:"50%",background:normalizeColor(groupData&&(groupData.avatar_color||groupData.avatar_bg))||"#6c63ff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:40,color:"#fff",overflow:"hidden",cursor:"pointer",position:"relative",WebkitTapHighlightColor:"transparent",WebkitTouchCallout:"none",userSelect:"none",WebkitUserSelect:"none",boxShadow:"0 5px 18px rgba(0,0,0,.14)"}},
       groupData&&groupData.avatar_photo?React.createElement("img",{src:groupData.avatar_photo,alt:"Group avatar",style:{width:"100%",height:"100%",objectFit:"cover",objectPosition:"center",transform:"scale(1.18)",background:"var(--input-bg)"}}):React.createElement("svg",{width:42,height:42,viewBox:"0 0 24 24",fill:"white"},React.createElement("path",{d:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"}),React.createElement("circle",{cx:9,cy:7,r:4}),React.createElement("path",{d:"M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"})),
       React.createElement("span",{style:{position:"absolute",bottom:0,left:0,right:0,background:"rgba(0,0,0,.5)",fontSize:11,color:"#fff",padding:"4px 0"}},"Edit")
