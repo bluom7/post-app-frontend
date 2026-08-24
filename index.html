@@ -14127,20 +14127,30 @@ var deleteGroup=async function(){
   try{await api("/groups/"+groupId,"DELETE",null,token);showToast("Group deleted","#6c63ff");}catch(e){showToast(e.message||"Could not delete group",COLORS.red);}
 };
 var changeGroupAvatar=async function(file){
-  if(!file)return;
-  if(!file.type||file.type.indexOf("image/")!==0){showToast("Please select an image",COLORS.red);return;}
-  try{
-    var fd=new FormData();fd.append("file",file,file.name||"group-avatar");
-    var r=await fetch(API+"/groups/"+groupId+"/avatar",{method:"POST",headers:{Authorization:"Bearer "+token},body:fd});
-    var d=await r.json().catch(function(){return{};});
-    if(!r.ok)throw new Error((typeof d.detail==="string"&&d.detail)||"Upload failed");
-    var nextAvatar=String(d.avatar_photo||"").trim();
-    if(!nextAvatar)throw new Error("Server did not return the uploaded image");
-    setGroupData(function(prev){return Object.assign({},prev,{avatar_photo:nextAvatar});});
-    await loadGroup();
-    showToast("Avatar updated",COLORS.blue);
-  }catch(e){showToast(e.message||"Upload failed",COLORS.red);}
-};
+      if(!file)return;
+      if(!file.type||file.type.indexOf("image/")!==0){showToast("Please select an image",COLORS.red);return;}
+      var localPreview=URL.createObjectURL(file);
+      var previousAvatar=groupData&&groupData.avatar_photo;
+      // Show the selected image immediately; the network upload continues below.
+      setGroupData(function(prev){return Object.assign({},prev,{avatar_photo:localPreview});});
+      try{
+        var fd=new FormData();fd.append("file",file,file.name||"group-avatar");
+        var r=await fetch(API+"/groups/"+groupId+"/avatar",{method:"POST",headers:{Authorization:"Bearer "+token},body:fd});
+        var d=await r.json().catch(function(){return{};});
+        if(!r.ok)throw new Error((typeof d.detail==="string"&&d.detail)||"Upload failed");
+        var nextAvatar=String(d.avatar_photo||"").trim();
+        if(!nextAvatar)throw new Error("Server did not return the uploaded image");
+        setGroupData(function(prev){return Object.assign({},prev,{avatar_photo:nextAvatar});});
+        URL.revokeObjectURL(localPreview);
+        // Refresh persisted group data without delaying the visible avatar update.
+        loadGroup();
+        showToast("Avatar updated",COLORS.blue);
+      }catch(e){
+        URL.revokeObjectURL(localPreview);
+        setGroupData(function(prev){return Object.assign({},prev,{avatar_photo:previousAvatar||null});});
+        showToast(e.message||"Upload failed",COLORS.red);
+      }
+    };
 var saveGroupName=async function(){
   var nextName=String(groupNameDraft||"").trim();
   if(!nextName){showToast("Group name required",COLORS.red);return;}
