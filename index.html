@@ -13398,7 +13398,7 @@ React.createElement("div",null,
           onOpenGroup&&onOpenGroup(item._raw);
         }else{
           setConversations(function(prev){return prev.map(function(c){return c._id===item.id?Object.assign({},c,{unread:0}):c;});});
-          onOpenChat&&onOpenChat(Object.assign({},(item._raw&&item._raw.user)||{}, {id:item._raw._id||item.id,name:item.name,username:item.username,avatar_bg:item.avatar_bg,avatar_letter:item.avatar_letter,avatar_photo:item.avatar_photo,handle:item.handle,followers_count:item.followers_count,following_count:item.following_count,is_online:item.is_online,is_badge_verified:item.is_badge_verified}));
+          onOpenChat&&onOpenChat(Object.assign({},(item._raw&&item._raw.user)||{}, {id:item._raw._id||item.id,name:item.name,username:item.username||((item._raw&&item._raw.user)||{}).username,avatar_bg:item.avatar_bg,avatar_letter:item.avatar_letter,avatar_photo:item.avatar_photo,handle:item.handle||((item._raw&&item._raw.user)||{}).handle||(((item._raw&&item._raw.user)||{}).username?"@"+((item._raw&&item._raw.user)||{}).username:undefined),followers_count:item.followers_count,following_count:item.following_count,is_online:item.is_online,is_badge_verified:item.is_badge_verified}));
         }
       },
       onTouchStart:function(){lpItemTimerRef.current=setTimeout(function(){setLpItem(item);},600);},
@@ -14825,6 +14825,8 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
       openChat({
         id:            initialChatUser.id,
         name:          initialChatUser.name          || 'User',
+        username:      initialChatUser.username || (initialChatUser.handle || '').replace(/^@/, ''),
+        handle:        initialChatUser.handle || (initialChatUser.username ? '@' + initialChatUser.username : undefined),
         avatar_bg:     initialChatUser.avatar_bg,
         avatar_letter: initialChatUser.avatar_letter  || ((initialChatUser.name || 'U')[0]).toUpperCase(),
         avatar_photo:  initialChatUser.avatar_photo   || null,
