@@ -20521,13 +20521,17 @@ function AccountRecoveryScreen({
                 React.createElement("div",{style:{fontSize:13}}, "Reports you submit will appear here")
               )
             : myReports.map((r,i)=>React.createElement("div",{key:r.id||i,style:{padding:"14px 4px"}},
+                r.reported_user && React.createElement("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:7}},
+                  r.reported_user.avatar_photo ? React.createElement("img",{src:r.reported_user.avatar_photo,alt:r.reported_user.name||"Reported user",style:{width:30,height:30,borderRadius:"50%",objectFit:"cover",flexShrink:0}}) : React.createElement("div",{style:{width:30,height:30,borderRadius:"50%",background:r.reported_user.avatar_bg||"#1877F2",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800,flexShrink:0}},r.reported_user.avatar_letter||((r.reported_user.name||"U")[0]||"U").toUpperCase()),
+                  React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},r.reported_user.name||r.reported_user.handle||"Reported user")
+                ),
                 React.createElement("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:4}},
                   React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",flex:1,marginRight:8}}, r.type || (r.report_kind==="general"?"General Report":"Content Report")),
                   React.createElement("div",{style:{fontSize:11,fontWeight:700,color:rptStatusColor(r.status),background:"var(--card-bg)",padding:"3px 8px",borderRadius:20,border:"1px solid "+(r.status==="resolved"?COLORS.green:r.status==="rejected"?"#e53935":"var(--border)"),whiteSpace:"nowrap",flexShrink:0}}, rptStatusLabel(r.status))
                 ),
                 r.description && React.createElement("div",{style:{fontSize:13,color:"var(--muted)",lineHeight:1.4,marginBottom:4}},r.description.length>120?r.description.substring(0,120)+"...":r.description),
                 (r.target_username||r.target_user_id) && React.createElement("div",{style:{fontSize:12,color:"var(--muted)",marginBottom:2}},"Reported: @"+(r.target_username||r.target_user_id)),
-                React.createElement("div",{style:{fontSize:11,color:"var(--muted)",marginTop:2}},r.created_at?new Date(r.created_at).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):"")
+                React.createElement("div",{style:{fontSize:11,color:"var(--muted)",marginTop:2}},r.created_at?new Date(r.created_at).toLocaleString("en-IN",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}):"")
               ))
       )
     );
