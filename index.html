@@ -3573,6 +3573,7 @@ function PostApp() {
   const [newToken, setNewToken] = useState(null);
   const [refBy, setRefBy] = useState(null);
   const [viewUser, setViewUser] = useState(null); // user_id of profile being viewed
+  const [viewUserProfile, setViewUserProfile] = useState(null);
   const [openChatUser, setOpenChatUser] = useState(null); // user object to open chat with
   const [chatReturnTab, setChatReturnTab] = useState(null); // tab to return to after closing chat
   const [chatReturnSection, setChatReturnSection] = useState("connect"); // section within FriendsTab to restore
@@ -3594,11 +3595,13 @@ function PostApp() {
   // Ref tracks viewUser inside popstate handler (avoids stale closure)
   const viewUserRef = React.useRef(null);
   React.useEffect(() => { viewUserRef.current = viewUser; }, [viewUser]);
-  const onViewProfile = uid => {
-    if (uid && uid !== user?.id) {
-      setViewUser(uid);
+  const onViewProfile = (uid, profileData) => {
+    const realId = profileData?.id || uid;
+    if (realId && realId !== user?.id) {
+      setViewUser(realId);
+      setViewUserProfile(profileData || null);
       // Push history entry so phone back button can close this overlay
-      history.pushState({ viewingProfile: uid }, "");
+      history.pushState({ viewingProfile: realId }, "");
     }
   };
   const showToast = (msg, color = COLORS.yellow) => {
@@ -4278,9 +4281,10 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
     onViewProfile: onViewProfile,
   }), viewUser && /*#__PURE__*/React.createElement(UserProfileScreen, {
     userId: viewUser,
+    initialProfile: viewUserProfile,
     token: token,
     currentUser: user,
-    onClose: () => setViewUser(null),
+    onClose: () => { setViewUser(null); setViewUserProfile(null); },
     showToast: showToast,
     onGoMessages: profileUser => {
       setOpenChatUser(profileUser);
@@ -12314,6 +12318,7 @@ function FollowListModal({
 
 function UserProfileScreen({
   userId,
+  initialProfile,
   token,
   currentUser,
   onClose,
@@ -12321,7 +12326,7 @@ function UserProfileScreen({
   onGoMessages,
   onViewProfile
 }) {
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState(initialProfile || null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [friendStatus, setFriendStatus] = useState("none"); // none | pending_out | pending_in | friends
@@ -12351,6 +12356,10 @@ function UserProfileScreen({
   }, [userId, currentUser && currentUser.id]);
 
   useEffect(() => {
+    if (initialProfile) {
+      setProfile(initialProfile);
+      setStats(initialProfile.stats || {posts: 0, followers: 0, following: 0});
+    }
     setLoading(true);
     (async () => {
     if (!_warmupDone) await Promise.race([warmupReady, new Promise(r => setTimeout(r, 30000))]);
@@ -12367,7 +12376,7 @@ function UserProfileScreen({
       setPosts((postsData.posts || []).filter(p => p.user_id === userId));
     }).catch(() => {}).finally(() => setLoading(false));
     })();
-  }, [userId]);
+  }, [userId, initialProfile]);
   const fmtNum = n => n >= 1000 ? (n / 1000).toFixed(1) + "K" : n || 0;
   const toggleFollow = async () => {
     if (followLoading) return;
@@ -15558,7 +15567,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
         }, React.createElement('svg', { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: '2.2', strokeLinecap: 'round', strokeLinejoin: 'round' },
           React.createElement('polyline', { points: '15 18 9 12 15 6' })
         )),
-        React.createElement('div', { onClick: () => onViewProfile && onViewProfile((partnerProfile && partnerProfile.id) || partner.id), role: 'button', tabIndex: 0, 'aria-label': 'Open profile', onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') onViewProfile && onViewProfile((partnerProfile && partnerProfile.id) || partner.id); }, style: { cursor: 'pointer', display: 'flex', flexShrink: 0 } }, React.createElement(AvatarDiv, { u: partner, size: 40, circle: true })),
+        React.createElement('div', { onClick: () => onViewProfile && onViewProfile((partnerProfile && partnerProfile.id) || partner.id, partnerProfile || partner), role: 'button', tabIndex: 0, 'aria-label': 'Open profile', onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') onViewProfile && onViewProfile((partnerProfile && partnerProfile.id) || partner.id, partnerProfile || partner); }, style: { cursor: 'pointer', display: 'flex', flexShrink: 0 } }, React.createElement(AvatarDiv, { u: partner, size: 40, circle: true })),
         React.createElement('div', { style: { flex: 1, minWidth: 0 } },
           React.createElement('div', { style: { fontWeight: 700, fontSize: 15, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, partner.name),
           React.createElement('div', { style: { fontSize: 12, color: isTyping ? COLORS.green : (partner.is_online ? COLORS.green : 'var(--muted)') } },
@@ -15606,7 +15615,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
       },
         /* ── Partner profile card (always shown at top) ── */
         React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 16px 20px' } },
-          React.createElement('div', { onClick: () => onViewProfile && onViewProfile((partnerProfile && partnerProfile.id) || partner.id), role: 'button', tabIndex: 0, 'aria-label': 'Open profile', onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') onViewProfile && onViewProfile((partnerProfile && partnerProfile.id) || partner.id); }, style: { width: 80, height: 80, borderRadius: 0, background: normalizeColor(chatProfile.avatar_bg) || COLORS.yellow, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 32, flexShrink: 0, overflow: 'hidden', cursor: 'pointer' } },
+          React.createElement('div', { onClick: () => onViewProfile && onViewProfile((partnerProfile && partnerProfile.id) || partner.id, partnerProfile || partner), role: 'button', tabIndex: 0, 'aria-label': 'Open profile', onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') onViewProfile && onViewProfile((partnerProfile && partnerProfile.id) || partner.id, partnerProfile || partner); }, style: { width: 80, height: 80, borderRadius: 0, background: normalizeColor(chatProfile.avatar_bg) || COLORS.yellow, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 32, flexShrink: 0, overflow: 'hidden', cursor: 'pointer' } },
             chatProfile.avatar_photo
               ? React.createElement('img', { src: chatProfile.avatar_photo, style: { width: '100%', height: '100%', objectFit: 'cover' } })
               : (chatProfile.avatar_letter || (chatProfile.name || '?')[0] || '?').toUpperCase()
@@ -15621,7 +15630,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
             React.createElement('span', { onClick: () => setShowFollowListDM('following'), style: { cursor: 'pointer' } }, React.createElement('b', null, (chatProfile.following_count ?? ((chatProfile.stats || {}).following ?? (chatProfile.following || []).length ?? 0))), ' Following')
           ),
           React.createElement('button', {
-            onClick: () => onViewProfile && onViewProfile((partnerProfile && partnerProfile.id) || partner.id),
+            onClick: () => onViewProfile && onViewProfile((partnerProfile && partnerProfile.id) || partner.id, partnerProfile || partner),
             style: { marginTop: 14, padding: '9px 28px', borderRadius: 24, background: '#1877F2', border: 'none', fontWeight: 700, fontSize: 14, cursor: 'pointer', color: '#fff' }
           }, 'View Profile')
         ),
