@@ -15350,6 +15350,32 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
     deletingIdsRef.current.add(msgId);
     // Optimistically remove from UI immediately
     setMsgs(prev => prev.filter(m => m.id !== msgId));
+
+    // Update the conversation-list preview immediately as well. The deleted
+    // message must never remain under the friend's name while the server list
+    // refresh is in flight; use the newest remaining message as the preview.
+    const _deletedPartnerId = partner && partner.id;
+    const _remainingMsgs = (msgs || []).filter(m => m.id !== msgId);
+    const _previousMsg = _remainingMsgs.length ? _remainingMsgs[_remainingMsgs.length - 1] : null;
+    const _previewText = _previousMsg
+      ? (_previousMsg.text || (_previousMsg.photo_url ? '📷 Photo' : (_previousMsg.gif_url ? 'GIF' : (_previousMsg.audio_url ? '🎤 Voice message' : ''))))
+      : '';
+    const _previewPatch = {
+      last_text: _previewText,
+      last_photo: _previousMsg ? (_previousMsg.photo_url || null) : null,
+      last_gif: _previousMsg ? (_previousMsg.gif_url || null) : null,
+      last_audio: _previousMsg ? (_previousMsg.audio_url || null) : null,
+      last_shared_post: _previousMsg ? (_previousMsg.shared_post_id || null) : null,
+      last_shared_reel: _previousMsg ? (_previousMsg.shared_reel_id || null) : null,
+      last_time: _previousMsg ? (_previousMsg.created_at || null) : null,
+      last_from: _previousMsg ? (_previousMsg.from_id || null) : null,
+      last_status: _previousMsg ? (_previousMsg.status || null) : null,
+      last_mood: _previousMsg ? (_previousMsg.mood_color || null) : null,
+    };
+    if (_deletedPartnerId) {
+      setConvs(prev => prev.map(c => c._id === _deletedPartnerId ? { ...c, ..._previewPatch } : c));
+    }
+
     try {
       await api('/messages/' + msgId + '?delete_for=' + (forEveryone ? 'everyone' : 'self'), 'DELETE', null, token);
       // Remove from sentMsgsRef so re-entering the chat won't restore this message.
@@ -15368,6 +15394,14 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
         _dmClearedIds[partner.id].add(msgId);
       }
       // Bust localStorage cache so openChat() instant-load doesn't show it
+      // Refresh the server-backed preview after the optimistic update so the
+      // list remains correct even when the previous message was outside the
+      // locally loaded history.
+      invalidateCache('/messages/conversations');
+      api('/messages/conversations', 'GET', null, token).then(_fresh => {
+        if (_fresh && Array.isArray(_fresh.conversations)) setConvs(_fresh.conversations);
+      }).catch(() => {});
+
       try {
         const _dk = 'msgs_cache_' + user.id + '_' + partner.id;
         const _dc = localStorage.getItem(_dk);
