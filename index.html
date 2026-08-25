@@ -20514,7 +20514,7 @@ function AccountRecoveryScreen({
         React.createElement("div", {style:{fontSize:13,color:"var(--muted)",lineHeight:1.5,padding:"8px 4px 18px"}}, "Reports you submit will appear here."),
         React.createElement("button", {onClick:refreshReportsPage,disabled:myReportsLoading,style:{display:"block",margin:"0 4px 18px",padding:0,border:0,background:"transparent",color:"var(--primary,#FFD600)",fontSize:13,fontWeight:700,cursor:"pointer"}}, myReportsLoading?"Loading...":"Refresh reports"),
         myReportsLoading
-          ? React.createElement("div",{style:{textAlign:"center",padding:"24px 0",color:"var(--muted)",fontSize:14}}, "Loading...")
+          ? React.createElement("div",{style:{textAlign:"center",padding:"24px 0",color:"var(--muted)",fontSize:14}}, React.createElement("span",{style:{width:22,height:22,border:"3px solid #1877F2",borderTopColor:"transparent",borderRadius:"50%",display:"inline-block",animation:"spin 0.8s linear infinite",verticalAlign:"middle",marginRight:8}}), "Loading...")
           : myReports.length === 0
             ? React.createElement("div",{style:{textAlign:"center",padding:"32px 16px",color:"var(--muted)"}},
                 React.createElement("div",{style:{fontSize:15,fontWeight:600,marginBottom:4}}, "No reports yet"),
