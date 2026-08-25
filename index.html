@@ -13442,14 +13442,14 @@ React.createElement("div",null,
       ),
       React.createElement("div",{style:{flex:1,minWidth:0}},
         React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:2}},
-          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:3,overflow:"hidden",maxWidth:"65%",flexShrink:1,minWidth:0}},React.createElement("span",{style:{fontWeight:isLocalUnr?800:700,fontSize:15,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},item.name),item.type==="dm"&&item.is_badge_verified&&React.createElement(VerifiedBadge,{size:13})),
-          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,flexShrink:0}},
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:3,overflow:"hidden",flex:1,minWidth:0}},React.createElement("span",{style:{fontWeight:isLocalUnr?800:700,fontSize:15,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},item.name),item.type==="dm"&&item.is_badge_verified&&React.createElement(VerifiedBadge,{size:13})),
+          React.createElement("div",{style:{display:"flex",alignItems:"center",gap:5,flexShrink:0,alignSelf:"center",marginLeft:10}},
             isFav&&React.createElement("span",{style:{fontSize:11,color:"#FFD600"}},"\u2605"),
             React.createElement("span",{style:{color:"var(--muted)",fontSize:11}},fmtTime(item.last_time))
           )
         ),
-        React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between"}},
-          React.createElement("span",{style:{color:isLocalUnr?"var(--text)":"var(--muted)",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,fontWeight:isLocalUnr?600:400}},item.type==="group"&&item.member_count?"👥 "+item.member_count+" • ":"",item.last_message||(item.type==="group"?"New group":"Tap to chat")),
+        React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",minHeight:20}},
+          React.createElement("span",{style:{color:isLocalUnr?"var(--text)":"var(--muted)",fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,fontWeight:isLocalUnr?600:400,lineHeight:18}},item.type==="group"&&item.member_count?"👥 "+item.member_count+" • ":"",item.last_message||(item.type==="group"?"New group":"Tap to chat")),
           item.unread>0&&React.createElement("div",{style:{background:"#25D366",color:"#fff",fontSize:11,fontWeight:800,borderRadius:12,padding:"2px 7px",marginLeft:6,flexShrink:0,minWidth:20,textAlign:"center"}},item.unread>99?"99+":item.unread)
         )
       )
