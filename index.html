@@ -20503,6 +20503,8 @@ function AccountRecoveryScreen({
   
 
   if (subScreen === 'privacy-my-reports') {
+    const rptStatusColor = s => s==="resolved"?COLORS.green:s==="rejected"?"#e53935":"var(--muted)";
+    const rptStatusLabel = s => s==="pending"?"Under review":s==="resolved"?"Resolved":s==="rejected"?"Rejected":"Under review";
     const refreshReportsPage = () => {
       setMyReportsLoading(true);
       api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false));
