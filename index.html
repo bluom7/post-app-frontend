@@ -20487,38 +20487,51 @@ function AccountRecoveryScreen({
           settingsIcon("M9 18l6-6-6-6","var(--muted)")
         ),
         React.createElement("div",{style:{padding:"16px 4px",fontSize:13,color:"var(--muted)",lineHeight:1.5}}, "Our team reviews all reports within 24 hours. For urgent safety concerns, email postbluom@gmail.com"),
-        React.createElement("div",{style:{marginTop:8,paddingTop:8}},
-          React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 4px 8px"}},
-            React.createElement("div",{style:{fontSize:15,fontWeight:800,color:"var(--text)"}}, "My Reports"),
-            React.createElement("button",{onClick:refreshMyReports,style:{background:"none",border:"none",fontSize:12,fontWeight:700,color:"var(--primary,#FFD600)",cursor:"pointer",padding:"4px 8px"}}, myReportsLoading?"...":"Refresh")
+        React.createElement("button",{onClick:()=>{setSubScreen("privacy-my-reports");refreshMyReports();},style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,outline:"none",boxShadow:"none",WebkitTapHighlightColor:"transparent",background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",marginTop:8}},
+          settingsIcon("M4 5h16v14H4zM8 9h8M8 13h8M8 17h5","var(--text)"),
+          React.createElement("span",{style:{flex:1}},
+            React.createElement("span",{style:{display:"block",fontSize:16,fontWeight:700}}, "My Reports"),
+            React.createElement("span",{style:{display:"block",fontSize:13,color:"var(--muted)",marginTop:2}}, "View reports you've submitted")
           ),
-          myReportsLoading
-            ? React.createElement("div",{style:{textAlign:"center",padding:"24px 0",color:"var(--muted)",fontSize:14}}, "Loading...")
-            : myReports.length === 0
-              ? React.createElement("div",{style:{textAlign:"center",padding:"24px 16px",color:"var(--muted)"}},
-                  React.createElement("div",{style:{fontSize:15,fontWeight:600,marginBottom:4}}, "No reports yet"),
-                  React.createElement("div",{style:{fontSize:13}}, "Reports you submit will appear here")
-                )
-              : myReports.map((r,i) => React.createElement("div",{key:r.id||i,style:{padding:"14px 4px"}},
-                  React.createElement("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:4}},
-                    React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",flex:1,marginRight:8}},
-                      r.type || (r.report_kind==="general"?"General Report":"Content Report")
-                    ),
-                    React.createElement("div",{style:{fontSize:11,fontWeight:700,color:rptStatusColor(r.status),background:"var(--card-bg)",padding:"3px 8px",borderRadius:20,border:"1px solid "+(r.status==="resolved"?COLORS.green:r.status==="rejected"?"#e53935":"var(--border)"),whiteSpace:"nowrap",flexShrink:0}},
-                      rptStatusLabel(r.status)
-                    )
-                  ),
-                  r.description && React.createElement("div",{style:{fontSize:13,color:"var(--muted)",lineHeight:1.4,marginBottom:4}}, r.description.length>120?r.description.substring(0,120)+"...":r.description),
-                  (r.target_username||r.target_user_id) && React.createElement("div",{style:{fontSize:12,color:"var(--muted)",marginBottom:2}}, "Reported: @"+(r.target_username||r.target_user_id)),
-                  React.createElement("div",{style:{fontSize:11,color:"var(--muted)",marginTop:2}}, r.created_at?new Date(r.created_at).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):"")
-                ))
-        )
+          settingsIcon("M9 18l6-6-6-6","var(--muted)")
+        ),
       )
     );
   }
 
 
-  if (subScreen === 'report-content') {
+  
+
+  if (subScreen === 'privacy-my-reports') {
+    const refreshReportsPage = () => {
+      setMyReportsLoading(true);
+      api("/users/me/reports","GET",null,token).then(d=>setMyReports(Array.isArray(d.reports)?d.reports:[])).catch(()=>setMyReports([])).finally(()=>setMyReportsLoading(false));
+    };
+    return React.createElement("div", {style: subPageStyle},
+      subHeader("My Reports"),
+      React.createElement("div", {style:{padding:"8px 0"}},
+        React.createElement("div", {style:{fontSize:13,color:"var(--muted)",lineHeight:1.5,padding:"8px 4px 18px"}}, "Reports you submit will appear here."),
+        React.createElement("button", {onClick:refreshReportsPage,disabled:myReportsLoading,style:{display:"block",margin:"0 4px 18px",padding:0,border:0,background:"transparent",color:"var(--primary,#FFD600)",fontSize:13,fontWeight:700,cursor:"pointer"}}, myReportsLoading?"Loading...":"Refresh reports"),
+        myReportsLoading
+          ? React.createElement("div",{style:{textAlign:"center",padding:"24px 0",color:"var(--muted)",fontSize:14}}, "Loading...")
+          : myReports.length === 0
+            ? React.createElement("div",{style:{textAlign:"center",padding:"32px 16px",color:"var(--muted)"}},
+                React.createElement("div",{style:{fontSize:15,fontWeight:600,marginBottom:4}}, "No reports yet"),
+                React.createElement("div",{style:{fontSize:13}}, "Reports you submit will appear here")
+              )
+            : myReports.map((r,i)=>React.createElement("div",{key:r.id||i,style:{padding:"14px 4px"}},
+                React.createElement("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:4}},
+                  React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",flex:1,marginRight:8}}, r.type || (r.report_kind==="general"?"General Report":"Content Report")),
+                  React.createElement("div",{style:{fontSize:11,fontWeight:700,color:rptStatusColor(r.status),background:"var(--card-bg)",padding:"3px 8px",borderRadius:20,border:"1px solid "+(r.status==="resolved"?COLORS.green:r.status==="rejected"?"#e53935":"var(--border)"),whiteSpace:"nowrap",flexShrink:0}}, rptStatusLabel(r.status))
+                ),
+                r.description && React.createElement("div",{style:{fontSize:13,color:"var(--muted)",lineHeight:1.4,marginBottom:4}},r.description.length>120?r.description.substring(0,120)+"...":r.description),
+                (r.target_username||r.target_user_id) && React.createElement("div",{style:{fontSize:12,color:"var(--muted)",marginBottom:2}},"Reported: @"+(r.target_username||r.target_user_id)),
+                React.createElement("div",{style:{fontSize:11,color:"var(--muted)",marginTop:2}},r.created_at?new Date(r.created_at).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}):"")
+              ))
+      )
+    );
+  }
+if (subScreen === 'report-content') {
     const doSubmitReport = async () => {
       if (!reportText.trim()) { showToast("Please add a description", COLORS.red); return; }
       setReportSubmitting(true);
