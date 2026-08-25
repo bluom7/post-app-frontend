@@ -20466,7 +20466,7 @@ function AccountRecoveryScreen({
       React.createElement("div", {style:{padding:"8px 0"}},
         React.createElement("button", {
           onClick: () => { setReportSubmitted(false); setReportType(''); setReportText(''); setReportUsername(''); setReportStep('reasons'); setSubScreen("report-content"); },
-          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,outline:"none",boxShadow:"none",WebkitTapHighlightColor:"transparent",background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",marginBottom:4}
+          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,outline:"none",boxShadow:"none",WebkitTapHighlightColor:"transparent",background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",marginBottom:4}
         },
           settingsIcon("M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0ZM12 9v4M12 17h.01","var(--text)"),
           React.createElement("span",{style:{flex:1}},
@@ -20477,7 +20477,7 @@ function AccountRecoveryScreen({
         ),
         React.createElement("button", {
           onClick: () => { window.location.href = "mailto:postbluom@gmail.com?subject=Safety+Report"; },
-          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,outline:"none",boxShadow:"none",WebkitTapHighlightColor:"transparent",background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",borderBottom:"1px solid var(--border)",marginBottom:4}
+          style:{display:"flex",alignItems:"center",gap:14,width:"100%",padding:"16px 4px",border:0,outline:"none",boxShadow:"none",WebkitTapHighlightColor:"transparent",background:"transparent",cursor:"pointer",color:"var(--text)",textAlign:"left",marginBottom:4}
         },
           settingsIcon("M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10ZM9 12l2 2 4-4","var(--text)"),
           React.createElement("span",{style:{flex:1}},
@@ -20487,7 +20487,7 @@ function AccountRecoveryScreen({
           settingsIcon("M9 18l6-6-6-6","var(--muted)")
         ),
         React.createElement("div",{style:{padding:"16px 4px",fontSize:13,color:"var(--muted)",lineHeight:1.5}}, "Our team reviews all reports within 24 hours. For urgent safety concerns, email postbluom@gmail.com"),
-        React.createElement("div",{style:{marginTop:8,paddingTop:8,borderTop:"1px solid var(--border)"}},
+        React.createElement("div",{style:{marginTop:8,paddingTop:8}},
           React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 4px 8px"}},
             React.createElement("div",{style:{fontSize:15,fontWeight:800,color:"var(--text)"}}, "My Reports"),
             React.createElement("button",{onClick:refreshMyReports,style:{background:"none",border:"none",fontSize:12,fontWeight:700,color:"var(--primary,#FFD600)",cursor:"pointer",padding:"4px 8px"}}, myReportsLoading?"...":"Refresh")
@@ -20499,7 +20499,7 @@ function AccountRecoveryScreen({
                   React.createElement("div",{style:{fontSize:15,fontWeight:600,marginBottom:4}}, "No reports yet"),
                   React.createElement("div",{style:{fontSize:13}}, "Reports you submit will appear here")
                 )
-              : myReports.map((r,i) => React.createElement("div",{key:r.id||i,style:{padding:"14px 4px",borderBottom:i<myReports.length-1?"1px solid var(--border)":"none"}},
+              : myReports.map((r,i) => React.createElement("div",{key:r.id||i,style:{padding:"14px 4px"}},
                   React.createElement("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",marginBottom:4}},
                     React.createElement("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",flex:1,marginRight:8}},
                       r.type || (r.report_kind==="general"?"General Report":"Content Report")
