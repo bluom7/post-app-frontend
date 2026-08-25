@@ -19856,6 +19856,7 @@ function AccountRecoveryScreen({
   const [secLoginAlertsOn, setSecLoginAlertsOn] = useState(user.login_alerts_enabled !== false);
   const [secSessions, setSecSessions] = useState([]);
   const [secSessionsLoading, setSecSessionsLoading] = useState(false);
+  const [secSelectedDevice, setSecSelectedDevice] = useState(null);
   const [secDownloadLoading, setSecDownloadLoading] = useState(false);
 
   // Unified Phone & Email
@@ -20652,34 +20653,37 @@ if (subScreen === 'report-content') {
       )
     );
   }
-  if (subScreen === 'security-sessions') return React.createElement("div", {style: subPageStyle},
-    subHeader("Where you're logged in"),
-    secSessionsLoading ? React.createElement("div", {style:{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,padding:40,color:"var(--muted)"}},
-      React.createElement("div", {style:{width:26,height:26,borderRadius:"50%",border:"3px solid var(--border)",borderTopColor:"#1877F2",animation:"spin 0.75s linear infinite"},"aria-label":"Loading sessions","role":"status"}),
-      React.createElement("span", null, "Loading sessions...")) :
-    React.createElement(React.Fragment, null,
-      React.createElement("div", {style:{background:"var(--card-bg)",borderRadius:16,border:"1px solid var(--border)",padding:"0 16px",marginBottom:12}},
-        secSessions.length === 0
-          ? React.createElement("div", {style:{padding:"24px 0",textAlign:"center",color:"var(--muted)",fontSize:15}}, "No active sessions found")
-          : secSessions.map((s,i) => React.createElement("div", {key: s.id, style:{display:"flex",alignItems:"center",gap:14,padding:"14px 0",borderBottom:i<secSessions.length-1?"1px solid var(--border)":"none"}},
-              settingsIcon(s.is_mobile ? "M10 2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6" : "M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm-8 11H8m4 0v-4m0 4h4", "var(--text)"),
-              React.createElement("div", {style:{flex:1}},
-                React.createElement("div", {style:{fontSize:15,fontWeight:700,color:"var(--text)"}}, s.device_name || "Unknown device"),
-                React.createElement("div", {style:{fontSize:12,color:"var(--muted)",marginTop:2}}, s.location || "Unknown location"),
-                React.createElement("div", {style:{fontSize:11,color:"var(--muted)",marginTop:1}}, s.is_current ? "🟢 Current session" : ("Last active: " + (s.last_active ? new Date(s.last_active).toLocaleDateString() : "Unknown")))
-              ),
-              !s.is_current && React.createElement("button", {
-                onClick: () => revokeSession(s.id),
-                style:{background:"none",border:"1.5px solid "+COLORS.red,borderRadius:10,padding:"6px 12px",fontSize:12,fontWeight:700,color:COLORS.red,cursor:"pointer",flexShrink:0}
-              }, "Log out")
-            ))
+  if (subScreen === 'security-sessions') {
+    const grouped = Object.values(secSessions.reduce((groups, session) => {
+      const key = session.device_name || session.device || "Unknown device";
+      (groups[key] ||= []).push(session); return groups;
+    }, {}));
+    if (secSelectedDevice) {
+      const current = secSelectedDevice.filter(s => s.is_current);
+      const other = secSelectedDevice.filter(s => !s.is_current);
+      const phonePath = "M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm5 17h.01";
+      const sessionDate = s => s.created_at ? new Date(s.created_at).toLocaleString([], {day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit"}) : "Date unavailable";
+      return React.createElement("div", {style: subPageStyle},
+        React.createElement("div", {style:{display:"flex",alignItems:"center",gap:12,marginBottom:24}},
+          React.createElement("button", {onClick:()=>setSecSelectedDevice(null), "aria-label":"Back to logged-in devices", style:{background:"none",border:0,cursor:"pointer",padding:4,color:"var(--text)"}}, settingsIcon("M15 18 9 12l6-6", "var(--text)")),
+          React.createElement("div", {style:{fontSize:20,fontWeight:900,color:"var(--text)"}}, "Account login activity")
+        ),
+        React.createElement("div", {style:{fontSize:16,color:"var(--text)",marginBottom:16}}, "You're currently logged in on these devices:"),
+        current.length > 0 && React.createElement("div", {style:{background:"var(--card-bg)",border:"1px solid var(--border)",borderRadius:20,padding:"16px",marginBottom:26}},
+          React.createElement("div", {style:{display:"flex",alignItems:"center",gap:14}}, settingsIcon(phonePath,"var(--text)"), React.createElement("div", {style:{flex:1}}, React.createElement("div", {style:{fontSize:17,fontWeight:700}}, current[0].device_name || "Unknown device"), React.createElement("div", {style:{fontSize:15,marginTop:3}}, current[0].location || "Unknown location"), React.createElement("div", {style:{fontSize:14,color:"#16803c",marginTop:3}}, "This device"))))),
+        other.length > 0 && React.createElement("div", null,
+          React.createElement("div", {style:{fontSize:18,fontWeight:800,marginBottom:12}}, "Logins on other devices"),
+          React.createElement("div", {style:{background:"var(--card-bg)",border:"1px solid var(--border)",borderRadius:18,overflow:"hidden"}}, other.map((s,i)=>React.createElement("div", {key:s.id,style:{display:"flex",alignItems:"center",gap:14,padding:"16px",borderBottom:i<other.length-1?"1px solid var(--border)":"none"}}, settingsIcon(phonePath,"var(--text)"), React.createElement("div", {style:{flex:1,minWidth:0}}, React.createElement("div", {style:{fontSize:16,fontWeight:700}}, s.device_name || "Unknown device"), React.createElement("div", {style:{fontSize:15,marginTop:3}}, s.location || "Unknown location"), React.createElement("div", {style:{fontSize:13,color:"var(--muted)",marginTop:3}}, sessionDate(s))), React.createElement("button", {onClick:()=>revokeSession(s.id),style:{background:"none",border:0,color:"var(--text)",fontSize:24,cursor:"pointer",padding:4}}, "›"))))
+        )
+      );
+    }
+    return React.createElement("div", {style: subPageStyle}, subHeader("Where you're logged in"), secSessionsLoading ? React.createElement("div", {style:{textAlign:"center",padding:40,color:"var(--muted)"}}, "Loading sessions...") : React.createElement(React.Fragment, null,
+      React.createElement("div", {style:{fontSize:15,color:"var(--muted)",marginBottom:16}}, "Review devices that have access to your account."}),
+      React.createElement("div", {style:{background:"var(--card-bg)",borderRadius:20,border:"1px solid var(--border)",overflow:"hidden"}}, grouped.length===0 ? React.createElement("div", {style:{padding:24,textAlign:"center",color:"var(--muted)"}}, "No active sessions found") : grouped.map((group,i)=>{ const first=group[0]; return React.createElement("button", {key:(first.device_name||"device")+i,onClick:()=>setSecSelectedDevice(group),style:{display:"flex",alignItems:"center",gap:14,width:"100%",textAlign:"left",padding:"16px",border:0,borderBottom:i<grouped.length-1?"1px solid var(--border)":"none",background:"transparent",color:"var(--text)",cursor:"pointer"}}, settingsIcon("M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm5 17h.01","var(--text)"), React.createElement("div", {style:{flex:1}}, React.createElement("div", {style:{fontSize:16,fontWeight:700}}, first.device_name || "Unknown device"), React.createElement("div", {style:{fontSize:14,color:"var(--muted)",marginTop:3}}, first.location || "Unknown location"), React.createElement("div", {style:{fontSize:13,color:"var(--muted)",marginTop:3}}, group.length>1 ? "+ "+(group.length-1)+" more" : (first.is_current ? "Current session" : "Recent login"))), React.createElement("span", {style:{fontSize:28,color:"var(--muted)"}}, "›")); }))
       ),
-      secSessions.filter(s => !s.is_current).length > 0 && React.createElement("button", {
-        onClick: revokeAllSessions,
-        style:{width:"100%",padding:"14px 0",background:"none",border:"1.5px solid "+COLORS.red,borderRadius:14,fontSize:15,fontWeight:700,color:COLORS.red,cursor:"pointer",marginTop:8}
-      }, "Log out from all other devices")
-    )
-  );
+      secSessions.filter(s=>!s.is_current).length>0 && React.createElement("button", {onClick:revokeAllSessions,style:{width:"100%",padding:"14px 0",background:"none",border:"1.5px solid "+COLORS.red,borderRadius:14,fontSize:15,fontWeight:700,color:COLORS.red,cursor:"pointer",marginTop:16}}, "Log out from all other devices")
+    ));
+  }
   if (subScreen === 'security-apps') return React.createElement("div", {style: subPageStyle},
     subHeader("Apps and sessions"),
     React.createElement("div", {style:{background:"var(--card-bg)",borderRadius:16,border:"1px solid var(--border)",padding:"20px 16px",textAlign:"center"}},
