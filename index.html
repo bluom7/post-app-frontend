@@ -13304,17 +13304,20 @@ var load=async function(){
     if(results[0].status==="fulfilled"&&results[0].value&&results[0].value.conversations){
       // FIX: expire entries older than 30 s, then zero-out unread for recently-read convs
       var _nowTs=Date.now();var _rrIds=recentlyReadIdsRef.current;
+      Object.keys(_recentlyReadChatIds).forEach(function(id){if(_nowTs-_recentlyReadChatIds[id]>30000)delete _recentlyReadChatIds[id];});
       Object.keys(_rrIds).forEach(function(id){if(_nowTs-_rrIds[id]>30000)delete _rrIds[id];});
+      var _readIds=Object.assign({},_recentlyReadChatIds,_rrIds);
       var _convs=results[0].value.conversations.filter(function(c){return!deletedIdsRef.current.has(c._id);}).map(function(c){
-        return _rrIds[c._id]?Object.assign({},c,{unread:0}):c;
+        return _readIds[c._id]?Object.assign({},c,{unread:0}):c;
       });
       setConversations(_convs);
     }
     if(results[1].status==="fulfilled"&&results[1].value&&results[1].value.groups){
       // FIX: same protection for groups
       var _nowTs2=Date.now();var _rrIds2=recentlyReadIdsRef.current;
+      var _readIds2=Object.assign({},_recentlyReadChatIds,_rrIds2);
       var _grps=results[1].value.groups.filter(function(g){return!deletedIdsRef.current.has(g.id);}).map(function(g){
-        return _rrIds2[g.id]?Object.assign({},g,{unread:0}):g;
+        return _readIds2[g.id]?Object.assign({},g,{unread:0}):g;
       });
       setGroups(_grps);
     }
@@ -13410,7 +13413,11 @@ React.createElement("div",null,
     var isFav=favorites.has(item.id);
     return React.createElement("div",{key:item.id,
       onClick:function(){
-        recentlyReadIdsRef.current[item.id]=Date.now();
+        // Clear the badge immediately and preserve that read state if the
+        // FriendsTab remounts while the chat screen is open.
+        var _readAt=Date.now();
+        recentlyReadIdsRef.current[item.id]=_readAt;
+        _recentlyReadChatIds[item.id]=_readAt;
         if(isLocalUnr){setLocalUnread(function(prev){var next=new Set(prev);next.delete(item.id);try{localStorage.setItem("chat_local_unread",JSON.stringify([...next]));}catch(e){}return next;});}
         if(item.type==="group"){
           setGroups(function(prev){return prev.map(function(g){return g.id===item.id?Object.assign({},g,{unread:0}):g;});});
@@ -13865,6 +13872,9 @@ var _grpMsgCache={};
 var _grpLoadedCache={};
 // CACHE: stores last sent message per conv/group ID for instant chat-list update
 var _lastMsgCache={};
+// Read state must survive FriendsTab remounts while the opened chat finishes
+// its server-side seen acknowledgement.
+var _recentlyReadChatIds={};
 // FIX: Same for 1-on-1 (DM) chats — keyed by partner user ID.
 // Without this, clearing a DM and re-opening via profile restores all messages
 // because deletingIdsRef (component-level) is always a fresh empty Set on remount.
