@@ -14300,6 +14300,7 @@ addMembersOpen&&React.createElement("div",{style:{position:"fixed",inset:0,backg
           React.createElement("div",{style:{flex:1,minWidth:0,paddingTop:1}},
             React.createElement("div",{style:{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}},
               React.createElement("span",{style:{fontWeight:700,fontSize:14,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%"}},m.name||"Member"),
+              m.is_badge_verified&&React.createElement(VerifiedBadge,{size:14}),
               isAdmin&&React.createElement("span",{style:{fontSize:10,background:COLORS.blue+"20",color:COLORS.blue,borderRadius:6,padding:"2px 6px",fontWeight:700,flexShrink:0}},"Admin"),
               isMe&&React.createElement("span",{style:{fontSize:10,background:"#FFD60020",color:"#b8860b",borderRadius:6,padding:"2px 6px",fontWeight:700,flexShrink:0}},"You")
             ),
