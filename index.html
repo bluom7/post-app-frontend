@@ -13903,7 +13903,9 @@ var gcPhotoPreviewState=React.useState(null);var gcPhotoPreview=gcPhotoPreviewSt
 var gcPhotoFileState=React.useState(null);var gcPhotoFile=gcPhotoFileState[0];var setGcPhotoFile=gcPhotoFileState[1];
 var gcVoicePlayingState=React.useState(false);var gcVoicePlaying=gcVoicePlayingState[0];var setGcVoicePlaying=gcVoicePlayingState[1];
 var groupId=group&&group.id;
-var showInfoState=React.useState(false);var showGroupInfo=showInfoState[0];var setShowGroupInfo=showInfoState[1];
+    var groupTypingState=React.useState({});var groupTyping=groupTypingState[0];var setGroupTyping=groupTypingState[1];
+    var groupWsRef=useRef(null);var groupTypingTimerRef=useRef({});var groupTypingSentRef=useRef(false);
+    var showInfoState=React.useState(false);var showGroupInfo=showInfoState[0];var setShowGroupInfo=showInfoState[1];
 var inviteLinkState=React.useState("");var inviteLink=inviteLinkState[0];var setInviteLink=inviteLinkState[1];
 var inviteCodeState=React.useState("");var inviteCode=inviteCodeState[0];var setInviteCode=inviteCodeState[1];
 var followersState=React.useState([]);var followers=followersState[0];var setFollowers=followersState[1];
@@ -13974,15 +13976,20 @@ var loadMyFollowing=async function(){
   }catch(e){}finally{setFollowingLoaded(true);}
 };
 useEffect(function(){
-  loadMsgs();loadGroup();loadMyFollowing();
-  var iv=setInterval(loadMsgs,3000);
-  return function(){clearInterval(iv);};
-},[groupId]);
-useEffect(function(){if(!isAtBottomGCRef.current||!msgScrollGC.current)return;var el=msgScrollGC.current;requestAnimationFrame(function(){el.scrollTo({top:el.scrollHeight,behavior:"smooth"});});},[messages]);
-var send=async function(){
+      loadMsgs();loadGroup();loadMyFollowing();
+      var iv=setInterval(loadMsgs,3000);
+      return function(){clearInterval(iv);};
+    },[groupId]);
+    useEffect(function(){
+      var mounted=true;var reconnectTimer=null;var wsBase=API.replace(/^https/,"wss").replace(/^http/,"ws").replace("/api","");
+      var connect=function(){if(!mounted||!groupId)return;try{var ws=new WebSocket(wsBase+"/ws/"+encodeURIComponent(user.id)+"?token="+encodeURIComponent(token));ws.onmessage=function(evt){try{var data=JSON.parse(evt.data);if(data.type==="typing"&&data.group_id===groupId&&data.from_user_id!==user.id){setGroupTyping(function(prev){var next=Object.assign({},prev);if(data.is_typing)next[data.from_user_id]=true;else delete next[data.from_user_id];return next;});if(data.is_typing){if(groupTypingTimerRef.current[data.from_user_id])clearTimeout(groupTypingTimerRef.current[data.from_user_id]);groupTypingTimerRef.current[data.from_user_id]=setTimeout(function(){setGroupTyping(function(prev){var next=Object.assign({},prev);delete next[data.from_user_id];return next;});delete groupTypingTimerRef.current[data.from_user_id];},4000);}else if(groupTypingTimerRef.current[data.from_user_id]){clearTimeout(groupTypingTimerRef.current[data.from_user_id]);delete groupTypingTimerRef.current[data.from_user_id];}}}catch(e){}};ws.onclose=function(){if(mounted)reconnectTimer=setTimeout(connect,3000);};ws.onerror=function(){};groupWsRef.current=ws;}catch(e){if(mounted)reconnectTimer=setTimeout(connect,3000);}};connect();return function(){mounted=false;if(reconnectTimer)clearTimeout(reconnectTimer);if(groupWsRef.current){try{groupWsRef.current.close();}catch(e){}groupWsRef.current=null;}Object.keys(groupTypingTimerRef.current).forEach(function(id){clearTimeout(groupTypingTimerRef.current[id]);});groupTypingTimerRef.current={};groupTypingSentRef.current=false;setGroupTyping({});};
+    },[groupId,token,user.id]);useEffect(function(){if(!isAtBottomGCRef.current||!msgScrollGC.current)return;var el=msgScrollGC.current;requestAnimationFrame(function(){el.scrollTo({top:el.scrollHeight,behavior:"smooth"});});},[messages]);
+var stopGroupTyping=function(){if(groupTypingSentRef.current&&groupWsRef.current&&groupWsRef.current.readyState===1&&groupId)groupWsRef.current.send(JSON.stringify({type:"typing",group_id:groupId,is_typing:false}));groupTypingSentRef.current=false;if(groupTypingTimerRef.current.__self)clearTimeout(groupTypingTimerRef.current.__self);delete groupTypingTimerRef.current.__self;};
+    var send=async function(){
   var t=text.trim();
   var savedGif=gifUrlGC;
   if(!t&&!savedGif)return;
+   stopGroupTyping();
   setText("");
   if(savedGif){setGifUrlGC(null);}
   _lastMsgCache[groupId]={text:t||(savedGif?"GIF":""),time:new Date().toISOString()};
@@ -14190,6 +14197,7 @@ var openGroupChatSearch=function(){setShowGroupInfo(false);setGroupSearchQuery("
 var groupSearchItems=messages.filter(function(m){var s=m&& (m.sender||m.user||m.author||{});var name=String((m&& (m.sender_name||m.user_name||m.author_name))||s.name||s.display_name||s.username||"");var handle=String((m&& (m.sender_handle||m.handle||m.username))||s.handle||s.username||"");var text=String((m&& (m.text||m.message||m.content||m.body))||"");var q=String(groupSearchQuery||"").trim().toLowerCase().replace(/^@+/,"");return !q||name.toLowerCase().includes(q)||handle.toLowerCase().includes(q)||text.toLowerCase().includes(q);});
 var startGroupVoice=function(){setShowGroupInfo(false);setTimeout(function(){gcStartVoiceRecording();},80);};
 if(showGifPickerGC)return React.createElement(GifPickerModal,{onSelect:function(url){setGifUrlGC(url);setShowGifPickerGC(false);},onClose:function(){setShowGifPickerGC(false);}});
+var groupTypingIds=Object.keys(groupTyping).filter(function(id){return groupTyping[id]&&id!==user.id;});var groupTypingLabel=groupTypingIds.map(function(id){var member=(groupData&&groupData.member_details||[]).find(function(m){return m.id===id;});return member&&member.name||"Someone";}).join(", ");groupTypingLabel=groupTypingLabel?(groupTypingLabel+(groupTypingIds.length===1?" is typing...":" are typing...")):"";
 return React.createElement("div",{style:{background:"var(--bg)",minHeight:"100vh",display:"flex",flexDirection:"column"}},
 groupSearchOpen&&React.createElement("div",{style:{position:"fixed",inset:0,zIndex:1000,background:"#fff",display:"flex",flexDirection:"column"}},
   React.createElement("div",{style:{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"var(--nav-bg)",borderBottom:"1px solid var(--border)",minHeight:58}},
@@ -14482,11 +14490,12 @@ React.createElement("div",{style:{position:"sticky",bottom:0,background:"var(--n
             )
           )
         ),
+    groupTypingLabel&&React.createElement("div",{style:{fontSize:12,color:COLORS.blue,fontWeight:700,padding:"0 12px 6px",minHeight:18}},groupTypingLabel),
     /* text input + GIF button — hidden when voice recorder is active */
     gcVoicePhase===null&&React.createElement("div",{style:{flex:1,position:"relative"}},
       React.createElement("textarea",{
         value:text,
-        onChange:function(e){setText(e.target.value);},
+        onChange:function(e){var next=e.target.value;setText(next);if(!groupWsRef.current||groupWsRef.current.readyState!==1||!groupId)return;if(next.trim()&&!groupTypingSentRef.current){groupTypingSentRef.current=true;groupWsRef.current.send(JSON.stringify({type:"typing",group_id:groupId,is_typing:true}));}if(groupTypingTimerRef.current.__self)clearTimeout(groupTypingTimerRef.current.__self);if(!next.trim()){stopGroupTyping();return;}groupTypingTimerRef.current.__self=setTimeout(stopGroupTyping,2500);},
         onKeyDown:function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}},
         placeholder:"Message...",rows:1,
         style:{width:"100%",padding:"10px 46px 10px 14px",borderRadius:22,border:"1px solid var(--border)",background:"var(--input-bg)",color:"var(--text)",fontSize:15,outline:"none",resize:"none",maxHeight:100,overflowY:"auto",boxSizing:"border-box"}
