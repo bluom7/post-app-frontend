@@ -13325,6 +13325,7 @@ var load=async function(){
   }finally{setLoading(false);}
 };
 useEffect(function(){load();var iv=setInterval(load,6000);return function(){clearInterval(iv);};;},[]);
+useEffect(function(){var onGroupMemberLeft=function(e){var d=e&&e.detail||{};if(!d.groupId)return;setGroups(function(prev){return prev.filter(function(g){return String(g.id)!==String(d.groupId);});});};window.addEventListener("__groupMemberLeft",onGroupMemberLeft);return function(){window.removeEventListener("__groupMemberLeft",onGroupMemberLeft);};},[]);
 var fmtTime=function(ts){if(!ts)return"";var d=new Date(ts);var now2=new Date();var diff=now2-d;if(diff<60000)return"now";if(diff<3600000)return Math.floor(diff/60000)+"m";if(diff<86400000)return d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});if(diff<604800000)return d.toLocaleDateString([],{weekday:"short"});return d.toLocaleDateString([],{month:"numeric",day:"numeric"});};
 var convUserIds={};conversations.forEach(function(c){convUserIds[c._id]=true;});
 var friendsNoConv=connectedFriends.filter(function(f){return!convUserIds[f.id]&&!deletedIdsRef.current.has(f.id);});
@@ -14158,8 +14159,10 @@ var clearGroupChat=async function(){
   finally{clearingRef.current=false;}
 };
 var exitGroup=async function(){
-  setConfirmExit(false);setShowGroupInfo(false);setShowGroupActionsMenu(false);onBack&&onBack();
-  try{await api("/groups/"+groupId+"/leave","POST",null,token);showToast("Left group","#6c63ff");}catch(e){showToast(e.message||"Could not leave group",COLORS.red);}
+  setConfirmExit(false);setShowGroupInfo(false);setShowGroupActionsMenu(false);
+  window.dispatchEvent(new CustomEvent("__groupMemberLeft",{detail:{groupId:groupId,userId:user&&user.id}}));
+  onBack&&onBack();
+  try{await api("/groups/"+groupId+"/leave","POST",null,token);showToast("Left group","#6c63ff");}catch(e){load&&load();showToast(e.message||"Could not leave group",COLORS.red);}
 };
 var deleteGroup=async function(){
   setConfirmDeleteGrp(false);setShowGroupInfo(false);setShowGroupActionsMenu(false);onBack&&onBack();
