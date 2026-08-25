@@ -20410,7 +20410,10 @@ function AccountRecoveryScreen({
     );
   }
 
-  if (subScreen === 'privacy-data') return React.createElement("div", {style: subPageStyle},
+  if (subScreen === 'privacy-data') {
+    const deleteActivity = async (type, id) => { if (!window.confirm("Delete this activity permanently? This cannot be undone.")) return; try { await api("/data/activity-log/"+type+"/"+encodeURIComponent(id), "DELETE", null, token); setPrivActivityLog(prev => ({...prev, posts: type === "post" ? (prev.posts||[]).filter(x => x.id !== id) : (prev.posts||[]), comments: type === "comment" ? (prev.comments||[]).filter(x => x.id !== id) : (prev.comments||[])})); showToast("Activity deleted", COLORS.green); } catch(e) { showToast(e.message, COLORS.red); } };
+    
+    return React.createElement("div", {style: subPageStyle},
     subHeader("Data and activity"),
     React.createElement("div", {style:{padding:"8px 0"}},
       React.createElement("button", {
@@ -20437,16 +20440,17 @@ function AccountRecoveryScreen({
         React.createElement("div",{style:{display:"flex",flexDirection:"column",gap:10}},
           (privActivityLog.posts||[]).map((item,i)=>React.createElement("div",{key:"post-"+(item.id||i),style:{display:"flex",gap:11,alignItems:"flex-start",padding:"11px 4px",borderBottom:"1px solid var(--border)"}},
             item.author?.avatar_photo?React.createElement("img",{src:item.author.avatar_photo,alt:"",style:{width:38,height:38,borderRadius:"50%",objectFit:"cover"}}):React.createElement("div",{style:{width:38,height:38,borderRadius:"50%",background:item.author?.avatar_bg||"#1877F2",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800}},item.author?.avatar_letter||"P"),
-            React.createElement("div",{style:{flex:1,minWidth:0}},React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"var(--text)"}},item.author?.name||"You"),React.createElement("div",{style:{fontSize:15,color:"var(--text)",lineHeight:1.35,marginTop:2}},item.content),React.createElement("div",{style:{fontSize:13,color:"var(--muted)",marginTop:4}},item.created_at?new Date(item.created_at).toLocaleString():"")),item.media_url&&React.createElement("img",{src:item.media_url,alt:"",style:{width:60,height:60,borderRadius:8,objectFit:"cover",flexShrink:0}})
+            React.createElement("div",{style:{flex:1,minWidth:0}},React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"var(--text)"}},item.author?.name||"You"),React.createElement("div",{style:{fontSize:15,color:"var(--text)",lineHeight:1.35,marginTop:2}},item.content),React.createElement("div",{style:{fontSize:13,color:"var(--muted)",marginTop:4}},item.created_at?new Date(item.created_at).toLocaleString():"")),item.media_url&&React.createElement("img",{src:item.media_url,alt:"",style:{width:60,height:60,borderRadius:8,objectFit:"cover",flexShrink:0}}),React.createElement("button",{onClick:()=>deleteActivity("post",item.id),title:"Delete permanently",style:{border:0,background:"transparent",color:"#d93025",fontSize:11,fontWeight:700,padding:"4px 0",cursor:"pointer",flexShrink:0}},"Delete")
           )),
           (privActivityLog.comments||[]).map((item,i)=>React.createElement("div",{key:"comment-"+(item.id||i),style:{display:"flex",gap:11,alignItems:"flex-start",padding:"11px 4px",borderBottom:"1px solid var(--border)"}},
             item.actor?.avatar_photo?React.createElement("img",{src:item.actor.avatar_photo,alt:"",style:{width:38,height:38,borderRadius:"50%",objectFit:"cover"}}):React.createElement("div",{style:{width:38,height:38,borderRadius:"50%",background:item.actor?.avatar_bg||"#1877F2",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800}},item.actor?.avatar_letter||"P"),
-            React.createElement("div",{style:{flex:1,minWidth:0}},React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"var(--text)"}},item.actor?.name||"You"),React.createElement("div",{style:{fontSize:15,color:"var(--text)",lineHeight:1.35,marginTop:2}},item.comment||"Comment"),React.createElement("div",{style:{fontSize:13,color:"var(--muted)",marginTop:4}},(item.target_type==="reel"?"Commented on reel by ":"Commented on post by ")+(item.target_author?.name||"Unknown")+(item.target_created_at?" · "+new Date(item.target_created_at).toLocaleString():"")),React.createElement("div",{style:{fontSize:13,color:"var(--muted)",marginTop:2}},item.target_content||"")),item.target_media_url&&React.createElement("img",{src:item.target_media_url,alt:"",style:{width:60,height:60,borderRadius:8,objectFit:"cover",flexShrink:0}})
+            React.createElement("div",{style:{flex:1,minWidth:0}},React.createElement("div",{style:{fontSize:16,fontWeight:800,color:"var(--text)"}},item.actor?.name||"You"),React.createElement("div",{style:{fontSize:15,color:"var(--text)",lineHeight:1.35,marginTop:2}},item.comment||"Comment"),React.createElement("div",{style:{fontSize:13,color:"var(--muted)",marginTop:4}},(item.target_type==="reel"?"Commented on reel by ":"Commented on post by ")+(item.target_author?.name||"Unknown")+(item.target_created_at?" · "+new Date(item.target_created_at).toLocaleString():"")),React.createElement("div",{style:{fontSize:13,color:"var(--muted)",marginTop:2}},item.target_content||"")),item.target_media_url&&React.createElement("img",{src:item.target_media_url,alt:"",style:{width:60,height:60,borderRadius:8,objectFit:"cover",flexShrink:0}}),React.createElement("button",{onClick:()=>deleteActivity("comment",item.id),title:"Delete permanently",style:{border:0,background:"transparent",color:"#d93025",fontSize:11,fontWeight:700,padding:"4px 0",cursor:"pointer",flexShrink:0}},"Delete")
           ))
         )
       )
     )
   );
+  }
 
   if (subScreen === 'privacy-report') {
     const rptStatusColor = s => s==="resolved"?COLORS.green:s==="rejected"?"#e53935":"var(--muted)";
