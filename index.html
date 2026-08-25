@@ -14400,7 +14400,7 @@ React.createElement("div",{ref:msgScrollGC,onScroll:function(e){var el=e.current
         onMouseUp:function(){clearTimeout(lpTimerGC.current);},
         onMouseLeave:function(){clearTimeout(lpTimerGC.current);}
       },
-        !isMe&&React.createElement("div",{onClick:function(){onViewProfile&&onViewProfile(msg.from_id);},style:{width:28,height:28,borderRadius:"50%",background:normalizeColor(msg.from_avatar_bg)||COLORS.yellow,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:12,overflow:"hidden",flexShrink:0,cursor:"pointer"}},
+        !isMe&&React.createElement("div",{style:{width:28,height:28,borderRadius:"50%",background:normalizeColor(msg.from_avatar_bg)||COLORS.yellow,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:12,overflow:"hidden",flexShrink:0}},
           msg.from_avatar_photo?React.createElement("img",{src:msg.from_avatar_photo,style:{width:"100%",height:"100%",objectFit:"cover"}}):msg.from_avatar_letter
         ),
         React.createElement("div",{style:{maxWidth:"72%",background:(msg.photo_url||msg.gif_url||msg.shared_post)?"transparent":"#f1f3f5",color:"#000",borderRadius:(msg.photo_url||msg.gif_url||msg.shared_post)?"0":"16px",padding:(msg.photo_url||msg.gif_url||msg.shared_post)?0:"8px 12px",border:"none",position:"relative",paddingBottom:(msg.photo_url||msg.gif_url||msg.shared_post)?0:(gcReactions[msg.id]?"16px":"8px")}},
