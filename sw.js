@@ -1,3 +1,19 @@
+self.addEventListener('fetch', function(event) {
+  if (event.request.mode !== 'navigate') return;
+  event.respondWith(fetch(event.request).then(async function(response) {
+    var contentType = response.headers.get('content-type') || '';
+    if (contentType.indexOf('text/html') === -1) return response;
+    var html = await response.text();
+    var oldMarkup = 'secSessionsLoading ? React.createElement("div", {style:{textAlign:"center",padding:40,color:"var(--muted)"}}, "Loading sessions...") :';
+    var newMarkup = 'secSessionsLoading ? React.createElement("div", {style:{display:"flex",alignItems:"center",justifyContent:"center",padding:40}}, React.createElement("span", {role:"status","aria-label":"Loading sessions",style:{width:30,height:30,borderRadius:"50%",border:"3px solid #dbeafe",borderTopColor:"#1877F2",display:"inline-block",animation:"_rpt_spin 0.75s linear infinite"}})) :';
+    if (html.indexOf(oldMarkup) === -1) return new Response(html, {status: response.status, statusText: response.statusText, headers: response.headers});
+    var headers = new Headers(response.headers);
+    headers.delete('content-length');
+    headers.delete('content-encoding');
+    return new Response(html.replace(oldMarkup, newMarkup), {status: response.status, statusText: response.statusText, headers: headers});
+  }).catch(function() { return fetch(event.request); }));
+});
+
 const APP_NAME = 'Post App';
 
 self.addEventListener('push', function(event) {
