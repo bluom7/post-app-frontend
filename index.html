@@ -19857,6 +19857,7 @@ function AccountRecoveryScreen({
   const [secSessions, setSecSessions] = useState([]);
   const [secSessionsLoading, setSecSessionsLoading] = useState(false);
   const [secSelectedDevice, setSecSelectedDevice] = useState(null);
+  const [secSelectedSession, setSecSelectedSession] = useState(null);
   const [secDownloadLoading, setSecDownloadLoading] = useState(false);
 
   // Unified Phone & Email
@@ -20004,6 +20005,7 @@ function AccountRecoveryScreen({
     try {
       await api("/security/sessions/" + sid, "DELETE", null, token);
       setSecSessions(prev => prev.filter(s => s.id !== sid));
+      setSecSelectedSession(null);
       showToast("Session revoked ✓", COLORS.green);
     } catch(e) { showToast(e.message, COLORS.red); }
   };
@@ -20658,6 +20660,23 @@ if (subScreen === 'report-content') {
       const key = session.device_name || session.device || "Unknown device";
       (groups[key] ||= []).push(session); return groups;
     }, {}));
+    if (secSelectedSession) {
+      const session = secSelectedSession;
+      const sessionDate = session.created_at ? new Date(session.created_at).toLocaleString([], {day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit"}) : "Date unavailable";
+      return React.createElement("div", {style:{...subPageStyle,background:"#fff",borderRadius:28,minHeight:"calc(100vh - 32px)",padding:24}},
+        React.createElement("div", {style:{display:"flex",alignItems:"center",gap:12,marginBottom:28}},
+          React.createElement("button", {onClick:()=>setSecSelectedSession(null), "aria-label":"Back to login activity", style:{background:"none",border:0,cursor:"pointer",padding:4,color:"var(--text)"}}, settingsIcon("M15 18 9 12l6-6", "var(--text)")),
+          React.createElement("div", {style:{fontSize:20,fontWeight:900,color:"var(--text)"}}, "Logins on " + (session.device_name || session.device || "Unknown device")),
+          React.createElement("button", {onClick:()=>setSecSelectedSession(null), "aria-label":"Close", style:{marginLeft:"auto",background:"none",border:0,cursor:"pointer",fontSize:30,lineHeight:1,color:"var(--text)"}}, "×")
+        ),
+        React.createElement("div", {style:{fontSize:16,lineHeight:1.35,color:"var(--text)",marginBottom:18}}, "We'll help you secure your account in case you see a login that you don't recognise. ", React.createElement("span", {style:{color:"#1877F2",fontWeight:800}}, "Secure account")),
+        React.createElement("div", {style:{background:"var(--card-bg)",border:"1px solid var(--border)",borderRadius:20,padding:"16px 18px"}},
+          React.createElement("div", {style:{fontSize:18,fontWeight:700,color:"var(--text)"}}, session.location || "Unknown location"),
+          React.createElement("div", {style:{fontSize:15,marginTop:6,color:"var(--text)"}}, "at " + sessionDate),
+          React.createElement("button", {onClick:()=>revokeSession(session.id), style:{width:"100%",marginTop:18,padding:"12px 16px",borderRadius:10,border:"1px solid var(--border)",background:"transparent",color:"var(--text)",fontSize:16,fontWeight:700,cursor:"pointer"}}, "Log out")
+        )
+      );
+    }
     if (secSelectedDevice) {
       const current = secSelectedDevice.filter(s => s.is_current);
       const other = secSelectedDevice.filter(s => !s.is_current);
@@ -20673,7 +20692,7 @@ if (subScreen === 'report-content') {
           React.createElement("div", {style:{display:"flex",alignItems:"center",gap:14}}, settingsIcon(phonePath,"var(--text)"), React.createElement("div", {style:{flex:1}}, React.createElement("div", {style:{fontSize:17,fontWeight:700}}, current[0].device_name || "Unknown device"), React.createElement("div", {style:{fontSize:15,marginTop:3}}, current[0].location || "Unknown location"), React.createElement("div", {style:{fontSize:14,color:"#16803c",marginTop:3}}, "This device")))),
         other.length > 0 && React.createElement("div", null,
           React.createElement("div", {style:{fontSize:18,fontWeight:800,marginBottom:12}}, "Logins on other devices"),
-          React.createElement("div", {style:{background:"var(--card-bg)",border:"1px solid var(--border)",borderRadius:18,overflow:"hidden"}}, other.map((s,i)=>React.createElement("div", {key:s.id,style:{display:"flex",alignItems:"center",gap:14,padding:"16px",borderBottom:i<other.length-1?"1px solid var(--border)":"none"}}, settingsIcon(phonePath,"var(--text)"), React.createElement("div", {style:{flex:1,minWidth:0}}, React.createElement("div", {style:{fontSize:16,fontWeight:700}}, s.device_name || "Unknown device"), React.createElement("div", {style:{fontSize:15,marginTop:3}}, s.location || "Unknown location"), React.createElement("div", {style:{fontSize:13,color:"var(--muted)",marginTop:3}}, sessionDate(s))), React.createElement("button", {onClick:()=>revokeSession(s.id),style:{background:"none",border:0,color:"var(--text)",fontSize:24,cursor:"pointer",padding:4}}, "›"))))
+          React.createElement("div", {style:{background:"var(--card-bg)",border:"1px solid var(--border)",borderRadius:18,overflow:"hidden"}}, other.map((s,i)=>React.createElement("button", {key:s.id,type:"button",onClick:()=>setSecSelectedSession(s),style:{display:"flex",alignItems:"center",gap:14,padding:"16px",border:0,borderBottom:i<other.length-1?"1px solid var(--border)":"none",background:"transparent",width:"100%",textAlign:"left",color:"var(--text)",cursor:"pointer"}}, settingsIcon(phonePath,"var(--text)"), React.createElement("div", {style:{flex:1,minWidth:0}}, React.createElement("div", {style:{fontSize:16,fontWeight:700}}, s.device_name || "Unknown device"), React.createElement("div", {style:{fontSize:15,marginTop:3}}, s.location || "Unknown location"), React.createElement("div", {style:{fontSize:13,color:"var(--muted)",marginTop:3}}, sessionDate(s))), React.createElement("span", {style:{fontSize:24,color:"var(--text)"}}, "›")))
         )
       );
     }
@@ -20794,7 +20813,7 @@ if (subScreen === 'report-content') {
       categoryContent = React.createElement(React.Fragment, null,
         _flatItem("Change password", "Update your password anytime to keep your account secure", "M3 11h18v10H3V11Zm3 0V7a6 6 0 0 1 12 0v4", () => { setSubScreen("password"); setCurPass(""); setNewPass(""); setConfirmPass(""); }),
         _secToggleRow("M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3ZM12 8v4M12 14h.01", "Two-factor authentication", "Extra layer of security using SMS or an authenticator app", secTwoFaOn, toggleTwoFa),
-        _flatItem("Where you're logged in", "See your active sessions and log out from devices you don't recognize", "M10 2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6M14 2h6v6M11 13l9-9", () => { setSubScreen("security-sessions"); loadSecSessions(); }),
+        _flatItem("Where you're logged in", "See your active sessions and log out from devices you don't recognize", "M10 2H4a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6M14 2h6v6M11 13l9-9", () => { setSecSelectedDevice(null); setSecSelectedSession(null); setSubScreen("security-sessions"); loadSecSessions(); }),
         _secToggleRow("M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0", "Login alerts", "Get notified when someone logs in from a new device", secLoginAlertsOn, toggleLoginAlerts),
         _flatItem("Apps and sessions", "Manage third-party apps connected to your account", "M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.2-1.2", () => setSubScreen("security-apps")),
         _flatItem("Account recovery", "Set a backup email or phone number to recover your account", "M18 8h-1V6a5 5 0 0 0-10 0v2H6a2 2 0 0 0-2 2v10h16V10a2 2 0 0 0-2-2Z", () => onGoRecovery && onGoRecovery())
