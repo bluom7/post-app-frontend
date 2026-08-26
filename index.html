@@ -20701,12 +20701,79 @@ if (subScreen === 'report-content') {
       secSessions.filter(s=>!s.is_current).length>0 && React.createElement("button", {onClick:revokeAllSessions,style:{width:"100%",padding:"14px 0",background:"none",border:"1.5px solid "+COLORS.red,borderRadius:14,fontSize:15,fontWeight:700,color:COLORS.red,cursor:"pointer",marginTop:16}}, "Log out from all other devices")
     ));
   }
-  if (subScreen === 'security-apps') return React.createElement("div", {style: subPageStyle},
-    subHeader("Apps and sessions"),
-    React.createElement("div", {style:{background:"var(--card-bg)",borderRadius:16,border:"1px solid var(--border)",padding:"20px 16px",textAlign:"center"}},
-      settingsIcon("M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.2 1.2M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.2-1.2", "var(--muted)"),
-      React.createElement("div", {style:{fontSize:15,fontWeight:600,color:"var(--muted)",marginTop:12}}, "No third-party apps connected"),
-      React.createElement("div", {style:{fontSize:13,color:"var(--muted)",marginTop:4}}, "Apps you authorize will appear here")
+  if (subScreen === 'security-apps') return React.createElement("div", {
+    style:{
+      position:"fixed",
+      inset:0,
+      zIndex:300,
+      display:"flex",
+      justifyContent:"center",
+      padding:"76px 5px 38px",
+      boxSizing:"border-box",
+      background:"rgba(0,0,0,0.6)"
+    },
+    role:"presentation"
+  },
+    React.createElement("div", {
+      role:"dialog",
+      "aria-modal":true,
+      "aria-labelledby":"app-connections-title",
+      style:{
+        position:"relative",
+        width:"100%",
+        maxWidth:520,
+        height:"100%",
+        overflowY:"auto",
+        boxSizing:"border-box",
+        padding:"72px 24px 28px",
+        background:"#fff",
+        borderRadius:38,
+        color:"#111",
+        boxShadow:"0 18px 50px rgba(0,0,0,0.2)"
+      }
+    },
+      React.createElement("button", {
+        type:"button",
+        onClick:goBack,
+        "aria-label":"Close app connections",
+        style:{
+          position:"absolute",
+          top:20,
+          right:18,
+          width:40,
+          height:40,
+          display:"flex",
+          alignItems:"center",
+          justifyContent:"center",
+          padding:0,
+          border:0,
+          background:"transparent",
+          color:"#111",
+          cursor:"pointer"
+        }
+      }, settingsIcon("M6 6l12 12M18 6L6 18", "#111")),
+      React.createElement("div", {
+        id:"app-connections-title",
+        style:{fontSize:28,fontWeight:800,lineHeight:1.15,letterSpacing:-0.5,marginBottom:12}
+      }, "App connections"),
+      React.createElement("div", {
+        style:{fontSize:18,lineHeight:1.35,marginBottom:22}
+      }, "Third-party apps help you do things across Meta technologies and other businesses, such as having Meta AI summarise your emails and events for you."),
+      React.createElement("div", {
+        style:{
+          display:"flex",
+          alignItems:"center",
+          gap:16,
+          minHeight:64,
+          padding:"12px 18px",
+          boxSizing:"border-box",
+          border:"1px solid #e5e5e5",
+          borderRadius:34
+        }
+      },
+        settingsIcon("M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM7 18a5 5 0 0 1 10 0", "#111"),
+        React.createElement("div", {style:{fontSize:17,fontWeight:700,lineHeight:1.25}}, "You don't have any app connections")
+      )
     )
   );
   const settingsCategories = [
