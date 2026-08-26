@@ -5,7 +5,7 @@ self.addEventListener('fetch', function(event) {
     if (contentType.indexOf('text/html') === -1) return response;
     var html = await response.text();
     var oldMarkup = 'secSessionsLoading ? React.createElement("div", {style:{textAlign:"center",padding:40,color:"var(--muted)"}}, "Loading sessions...") :';
-    var newMarkup = 'secSessionsLoading ? React.createElement("div", {style:{display:"flex",alignItems:"center",justifyContent:"center",padding:40}}, React.createElement("span", {role:"status","aria-label":"Loading sessions",style:{width:30,height:30,borderRadius:"50%",border:"3px solid #dbeafe",borderTopColor:"#1877F2",display:"inline-block",animation:"_rpt_spin 0.75s linear infinite"}})) :';
+    var newMarkup = 'secSessionsLoading ? React.createElement("div", {style:{display:"flex",alignItems:"center",justifyContent:"center",padding:40}}, React.createElement("span", {role:"status","aria-label":"Loading sessions",style:{width:22,height:22,borderRadius:"50%",border:"2.5px solid #dbeafe",borderTopColor:"#1877F2",display:"inline-block",animation:"_rpt_spin 0.75s linear infinite"}})) :';
     if (html.indexOf(oldMarkup) === -1) return new Response(html, {status: response.status, statusText: response.statusText, headers: response.headers});
     var headers = new Headers(response.headers);
     headers.delete('content-length');
