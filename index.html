@@ -23105,6 +23105,118 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     startCamera();
   }
 
+  function exitReelComposer() {
+    setShowReelDiscardDialog(false);
+    setShowEditDiscardDialog(false);
+    setDiscardDialogFromEditor(false);
+    setCaption("");
+    setUploadError(null);
+    setShowShareSheet(false);
+    setPreviewPlaying(false);
+    if (previewMusicAudioRef.current) {
+      try { previewMusicAudioRef.current.pause(); } catch (_) {}
+      previewMusicAudioRef.current = null;
+    }
+    audioUrlRef.current = null;
+    audioFileRef.current = null;
+    audioStartTimeRef.current = 0;
+    setAudioLabel("Original Audio");
+    setAudioArtist("");
+    setAudioArtwork("");
+    setExportedBlob(null);
+    setRecordedBlob(null);
+    if (recordedURL) {
+      try { URL.revokeObjectURL(recordedURL); } catch (_) {}
+    }
+    setRecordedURL(null);
+    allSegmentsRef.current = [];
+    setTotalSegmentTime(0);
+    recordTimeRef.current = 0;
+    setReviewTextOverlays([]);
+    setReviewEmojiOverlays([]);
+    setReviewCrop({ left: 0, top: 0, right: 0, bottom: 0 });
+    setReviewTool(null);
+    setReviewTextDraft("");
+    setTextOverlays([]);
+    setEditEmojiOverlays([]);
+    setReelStickerOverlays([]);
+    setReelStickerQuery("");
+    setEffect("none");
+    setFilterThumb(null);
+    setAspect("original");
+    setResolution("1080p");
+    setTrimStart(0);
+    setTrimEnd(0);
+    setTrimTextOpen(false);
+    setEditingOverlayId(null);
+    setTextDraft("");
+    setEditTool(null);
+    setIsPhotoReel(false);
+    setOrigAudioOn(false);
+    setShareSrc(null);
+    setFrameStrip([]);
+    setReviewMode(false);
+    stopStream();
+    onClose && onClose();
+  }
+
+  async function saveReelDraft() {
+    const blobToSave = exportedBlob || recordedBlob;
+    const draft = {
+      id: "reel_" + Date.now(),
+      type: "reel",
+      caption: caption || "",
+      savedAt: Date.now(),
+      isPhoto: !!isPhotoReel,
+      audioLabel: audioLabel || "Original Audio",
+      audioArtist: audioArtist || "",
+      audioArtwork: audioArtwork || "",
+      media: blobToSave || null,
+      mediaType: blobToSave && blobToSave.type ? blobToSave.type : null,
+    };
+    try {
+      localStorage.setItem("reel_draft_meta", JSON.stringify({
+        id: draft.id,
+        type: draft.type,
+        caption: draft.caption,
+        savedAt: draft.savedAt,
+        isPhoto: draft.isPhoto,
+      }));
+    } catch (_) {}
+    let stored = false;
+    if (typeof indexedDB !== "undefined") {
+      try {
+        await new Promise((resolve, reject) => {
+          const request = indexedDB.open("post-app-drafts", 1);
+          request.onupgradeneeded = () => {
+            if (!request.result.objectStoreNames.contains("reels")) {
+              request.result.createObjectStore("reels", { keyPath: "id" });
+            }
+          };
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => {
+            const db = request.result;
+            const tx = db.transaction("reels", "readwrite");
+            tx.objectStore("reels").put(draft);
+            tx.oncomplete = () => { stored = true; db.close(); resolve(); };
+            tx.onerror = () => { db.close(); reject(tx.error); };
+          };
+        });
+      } catch (_) {}
+    }
+    if (stored || !blobToSave) {
+      showToast && showToast("Draft saved", "#22C55E");
+    } else {
+      showToast && showToast("Draft details saved", "#22C55E");
+    }
+    exitReelComposer();
+  }
+
+  function discardReel() {
+    showToast && showToast("Post discarded", "#666");
+    exitReelComposer();
+  }
+
   function discardReelEdits() {
     // Keep the selected original media; remove only changes made in the editor.
     setShowEditDiscardDialog(false);
@@ -25402,7 +25514,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         },
         videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; } if (trimVideoRef.current) { trimVideoRef.current.muted = true; } trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); if (!isPhotoReel) startPreviewMusicWithVideo(); if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); } showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
 
-      // Editor discard sheet must be rendered in the editor return path.
+      // Keep the same close actions available from the editor as from camera.
       discardDialogFromEditor && showReelDiscardDialog && React.createElement("div", {
         style: { position: "absolute", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 9999, display: "flex", alignItems: "flex-end", justifyContent: "center" },
         onClick: () => setShowReelDiscardDialog(false)
@@ -25412,22 +25524,24 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           onClick: e => e.stopPropagation()
         },
           React.createElement("div", { style: { width: 40, height: 4, background: "var(--border)", borderRadius: 2, margin: "14px auto 18px" } }),
-          React.createElement("div", { style: { textAlign: "center", fontWeight: 800, fontSize: 17, color: "var(--text)", marginBottom: 6 } }, "Discard post?"),
-          React.createElement("div", { style: { color: "var(--muted)", textAlign: "center", fontSize: 13, marginBottom: 20, padding: "0 24px" } }, "Your edits will be removed, but the original media will stay."),
+          React.createElement("div", { style: { textAlign: "center", fontWeight: 800, fontSize: 17, color: "var(--text)", marginBottom: 6 } }, "Want to finish your post later?"),
+          React.createElement("div", { style: { color: "var(--muted)", textAlign: "center", fontSize: 13, marginBottom: 20, padding: "0 24px" } }, "Your recording will be saved if you choose draft."),
           React.createElement("button", {
-            onClick: () => setShowReelDiscardDialog(false),
+            onClick: saveReelDraft,
             style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 24px", background: "none", border: "none", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 15, color: "var(--text)", textAlign: "left" }
           },
             React.createElement("span", { style: { width: 36, height: 36, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
               React.createElement("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "var(--text)", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-                React.createElement("polyline", { points: "20 6 9 17 4 12" })
+                React.createElement("path", { d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" }),
+                React.createElement("polyline", { points: "14 2 14 8 20 8" }),
+                React.createElement("line", { x1: 9, y1: 15, x2: 15, y2: 15 })
               )
             ),
-            React.createElement("span", { style: { fontWeight: 700 } }, "Continue editing")
+            React.createElement("span", { style: { fontWeight: 700 } }, "Save as draft")
           ),
           React.createElement("button", {
-            onClick: discardReelEdits,
-            style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 24px", background: "none", border: "none", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 15, color: "var(--text)", textAlign: "left", marginBottom: 8 }
+            onClick: discardReel,
+            style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 24px", background: "none", border: "none", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 15, color: "var(--text)", textAlign: "left" }
           },
             React.createElement("span", { style: { width: 36, height: 36, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
               React.createElement("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "var(--text)", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
@@ -25437,6 +25551,17 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
               )
             ),
             React.createElement("span", { style: { fontWeight: 700 } }, "Discard post")
+          ),
+          React.createElement("button", {
+            onClick: () => { setShowReelDiscardDialog(false); setDiscardDialogFromEditor(false); },
+            style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 24px", background: "none", border: "none", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 15, color: "var(--text)", textAlign: "left", marginBottom: 8 }
+          },
+            React.createElement("span", { style: { width: 36, height: 36, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
+              React.createElement("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "var(--text)", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+                React.createElement("polyline", { points: "20 6 9 17 4 12" })
+              )
+            ),
+            React.createElement("span", { style: { fontWeight: 700 } }, "Continue editing")
           )
         )
       )
@@ -25609,7 +25734,22 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     // (progress bar replaced by ring on record button)
 
     // ── Top bar — hidden during recording (full-screen minimal mode) ──
-    !recording && React.createElement("div", { style: { position: "relative", zIndex: 20, display: "flex", alignItems: "center", justifyContent: "center", padding: "14px 14px 0" } },
+    !recording && React.createElement("div", { style: { position: "relative", zIndex: 20, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 14px 0" } },
+      // Close the reel composer without losing the current work until the user chooses an action.
+      React.createElement("button", {
+        onClick: () => {
+          if (!uploading && !exporting) {
+            setDiscardDialogFromEditor(false);
+            setShowReelDiscardDialog(true);
+          }
+        },
+        "aria-label": "Close reel composer",
+        style: { width: 42, height: 42, borderRadius: "50%", background: "transparent", border: "none", color: "#fff", cursor: uploading || exporting ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", opacity: uploading || exporting ? 0.45 : 1, padding: 0, WebkitTapHighlightColor: "transparent" }
+      },
+        React.createElement("svg", { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2.5, strokeLinecap: "round", style: { filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.85))", mixBlendMode: "difference" } },
+          React.createElement("path", { d: "M18 6 6 18M6 6l12 12" })
+        )
+      ),
       // Center: flash + speed + timer
       React.createElement("div", { style: { display: "flex", gap: 8 } },
         React.createElement("button", { onClick: toggleFlash, style: { width: 42, height: 42, borderRadius: 12, background: (flashOn || showBrightnessPicker || brightnessVal !== 100) ? "#FFD600" : "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s" } },
@@ -25625,8 +25765,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           )
         )
       ),
-      // Next button removed from top bar — it now lives in the review bottom bar (bottom-left, white)
-      React.createElement("div", { style: { width: 0 } }) // spacer removed after closing X
+      // Balance the close button so the controls remain centered.
+      React.createElement("div", { style: { width: 42, height: 42 } })
     ),
 
     // Add audio button
@@ -26055,40 +26195,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         React.createElement("div", { style: { textAlign: "center", fontWeight: 800, fontSize: 17, color: "var(--text)", marginBottom: 6 } }, "Want to finish your post later?"),
         React.createElement("div", { style: { color: "var(--muted)", textAlign: "center", fontSize: 13, marginBottom: 20, padding: "0 24px" } }, "Your recording will be lost if you discard."),
         React.createElement("button", {
-          onClick: async () => {
-            const draft = { caption: caption || "", savedAt: Date.now(), type: "reel" };
-            try { localStorage.setItem("reel_draft_caption", JSON.stringify(draft)); } catch(e) {}
-            const blobToSave = exportedBlob || recordedBlob;
-            if (blobToSave) {
-              try {
-                const isPhoto = blobToSave.type && blobToSave.type.startsWith("image");
-                const ext = isPhoto ? "jpg" : "mp4";
-                const mimeType = isPhoto ? "image/jpeg" : "video/mp4";
-                const fileName = "post_draft." + ext;
-                const fileToShare = new File([blobToSave], fileName, { type: mimeType });
-                if (navigator.canShare && navigator.canShare({ files: [fileToShare] })) {
-                  try {
-                    await navigator.share({ files: [fileToShare], title: "Post Draft" });
-                  } catch(shareErr) {
-                    if (shareErr.name !== "AbortError") {
-                      const blobUrl = URL.createObjectURL(blobToSave);
-                      const a = document.createElement("a"); a.href = blobUrl; a.download = fileName;
-                      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-                    }
-                  }
-                } else {
-                  const blobUrl = URL.createObjectURL(blobToSave);
-                  const a = document.createElement("a"); a.href = blobUrl; a.download = fileName;
-                  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                  setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-                }
-              } catch(e) {}
-            }
-            setShowReelDiscardDialog(false);
-            showToast && showToast("Draft saved! Gallery mein dekho 📁", "#22C55E");
-            retakeReel();
-          },
+          onClick: saveReelDraft,
           style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 24px", background: "none", border: "none", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 15, color: "var(--text)", textAlign: "left" }
         },
           React.createElement("span", { style: { width: 36, height: 36, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
@@ -26101,7 +26208,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           React.createElement("span", { style: { fontWeight: 700, fontSize: 15 } }, "Save as draft")
         ),
         React.createElement("button", {
-          onClick: () => { if (discardDialogFromEditor) { discardReelEdits(); return; } setShowReelDiscardDialog(false); setCaption(""); setExportedBlob(null); setTextOverlays([]); setReelStickerOverlays([]); setReelStickerQuery(""); setUploadError(null); setShowShareSheet(false); setPreviewPlaying(false); audioUrlRef.current = null; audioFileRef.current = null; audioStartTimeRef.current = 0; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } setRecordedBlob(null); if (recordedURL) URL.revokeObjectURL(recordedURL); setRecordedURL(null); allSegmentsRef.current = []; setTotalSegmentTime(0); recordTimeRef.current = 0; setAudioLabel("Original Audio"); setAudioArtist(""); setAudioArtwork(""); setReviewTextOverlays([]); setReviewEmojiOverlays([]); setReviewCrop({ left: 0, top: 0, right: 0, bottom: 0 }); setReviewTool(null); setReviewTextDraft(""); setTextDraft(""); setEditTool(null); setTrimStart(0); setTrimEnd(0); setIsPhotoReel(false); setFilterThumb(null); setOrigAudioOn(false); setShareSrc(null); setFrameStrip([]); setReviewMode(false); stopStream(); setTimeout(function(){ if (fileInputRef.current) { fileInputRef.current.value = ''; fileInputRef.current.click(); } var _ov=function(){if(document.visibilityState==='visible'){document.removeEventListener('visibilitychange',_ov);if(!streamRef.current)startCamera();}}; document.addEventListener('visibilitychange',_ov); }, 80); },
+          onClick: discardReel,
           style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 24px", background: "none", border: "none", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 15, color: "var(--text)", textAlign: "left" }
         },
           React.createElement("span", { style: { width: 36, height: 36, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
@@ -26115,7 +26222,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           React.createElement("span", { style: { fontWeight: 700, fontSize: 15 } }, "Discard post")
         ),
         React.createElement("button", {
-          onClick: () => setShowReelDiscardDialog(false),
+          onClick: () => { setShowReelDiscardDialog(false); setDiscardDialogFromEditor(false); },
           style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "16px 24px", background: "none", border: "none", borderTop: "1px solid var(--border)", cursor: "pointer", fontSize: 15, color: "var(--text)", textAlign: "left", marginBottom: 8 }
         },
           React.createElement("span", { style: { width: 36, height: 36, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
