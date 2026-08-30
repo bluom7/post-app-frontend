@@ -25787,11 +25787,14 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                   React.createElement("path", { d: "M8 5.2v13.6c0 .8.9 1.3 1.6.85l9.3-6.8a1.05 1.05 0 0 0 0-1.7L9.6 4.35C8.9 3.9 8 4.4 8 5.2Z", fill: "rgba(255,255,255,0.96)" })
                 )
               )))
-      : React.createElement("video", { ref: videoRef, autoPlay: true, playsInline: true, muted: true,
-          style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: videoFilter, transform: facingMode === "user" ? "scaleX(-1)" : "none" }
+     : React.createElement("video", { ref: videoRef, autoPlay: true, playsInline: true, muted: true,
+         style: { position: "absolute", top: 0, left: 0, right: 0, bottom: recording ? "18%" : 0, width: "100%", height: recording ? "82%" : "100%", objectFit: "cover", filter: videoFilter, transform: facingMode === "user" ? "scaleX(-1)" : "none" }
         }),
+    // Instagram-style black control sheet during recording. The saved video
+    // composition stays portrait; this only changes the live camera layout.
+    recording && React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, height: "18%", background: "#000", zIndex: 1, pointerEvents: "none" } }),
     // Gradient overlay bottom
-    React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, height: "55%", background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)", pointerEvents: "none" } }),
+    React.createElement("div", { style: { position: "absolute", bottom: recording ? "18%" : 0, left: 0, right: 0, height: recording ? "22%" : "55%", background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)", pointerEvents: "none" } }),
 
     // ── Review-screen TEXT overlays (draggable) ──
     reviewing && reviewTextOverlays.map(o => {
@@ -26283,17 +26286,19 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         },
           React.createElement("svg", { width: 92, height: 92, viewBox: "0 0 92 92", style: { position: "absolute", inset: 0, transform: "rotate(-90deg)" } },
             React.createElement("defs", null,
-              React.createElement("linearGradient", { id: "recRingGrad", x1: "1", y1: "0", x2: "0", y2: "1", gradientUnits: "objectBoundingBox" },
-                React.createElement("stop", { offset: "0%", stopColor: "#F77737" }),
-                React.createElement("stop", { offset: "45%", stopColor: "#E1306C" }),
-                React.createElement("stop", { offset: "100%", stopColor: "#833AB4" })
+               React.createElement("linearGradient", { id: "recRingGrad", x1: "1", y1: "0", x2: "0", y2: "1", gradientUnits: "objectBoundingBox" },
+                 React.createElement("stop", { offset: "0%", stopColor: "#FFD600" }),
+                 React.createElement("stop", { offset: "28%", stopColor: "#00C853" }),
+                 React.createElement("stop", { offset: "55%", stopColor: "#FF1744" }),
+                 React.createElement("stop", { offset: "80%", stopColor: "#1877F2" }),
+                 React.createElement("stop", { offset: "100%", stopColor: "#FFD600" })
               )
             ),
-            React.createElement("circle", { cx: 46, cy: 46, r: 40, fill: "none", stroke: "rgba(255,255,255,0.28)", strokeWidth: 5 }),
+             React.createElement("circle", { cx: 46, cy: 46, r: 40, fill: "none", stroke: "rgba(255,255,255,0.28)", strokeWidth: 7 }),
             React.createElement("circle", {
               cx: 46, cy: 46, r: 40, fill: "none",
-              stroke: recording ? "url(#recRingGrad)" : "rgba(255,255,255,0.9)",
-              strokeWidth: 5,
+               stroke: recording ? "url(#recRingGrad)" : "rgba(255,255,255,0.9)",
+               strokeWidth: 7,
               strokeDasharray: String(2 * Math.PI * 40),
               strokeDashoffset: String(recording ? 2 * Math.PI * 40 * (1 - progressPct / 100) : 0),
               strokeLinecap: "round",
