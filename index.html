@@ -22490,6 +22490,10 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const skipCameraRestartRef = React.useRef(false); // flip-during-record: skip useEffect restart
   const canvasRecRef = React.useRef(null);           // off-screen canvas fed to MediaRecorder
   const rafRecRef = React.useRef(null);              // rAF id for the canvas draw loop
+  const videoFrameRequestRef = React.useRef(null);   // requestVideoFrameCallback id
+  const videoFrameVideoRef = React.useRef(null);     // video element owning that callback
+  const canvasStreamRef = React.useRef(null);        // canvas stream used by the recorder
+  const recordingFramesActiveRef = React.useRef(false);
   const flipVideoStreamRef = React.useRef(null);     // video-only stream acquired during a recording flip
   const facingModeRef = React.useRef("environment"); // sync ref so rAF closure sees latest facingMode
   const recordTimeRef = React.useRef(0);           // sync mirror of recordTime for onstop closure
@@ -22743,8 +22747,23 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
   async function startCamera() {
     setCameraError(null);
+    // Release the previous camera before opening another one. Keeping two
+    // camera streams alive on Android causes preview frame drops and audio
+    // contention after a recording is stopped.
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode,
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
+          frameRate: { ideal: 30, max: 30 },
+        },
+        audio: true,
+      });
       streamRef.current = stream;
       if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}); }
     } catch(e) {
@@ -22762,7 +22781,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       // isolated from the camera — flipping never stops the recording.
       try {
         const newVidStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: newFacing, width: { ideal: 1280 }, height: { ideal: 720 } },
+          video: { facingMode: newFacing, width: { ideal: 1280, max: 1920 }, height: { ideal: 720, max: 1080 }, frameRate: { ideal: 30, max: 30 } },
           audio: false
         });
         // Release previous flip stream
@@ -22981,39 +23000,114 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     } else { startRecording(); }
   }
 
+  function stopRecordingFrameLoop() {
+    recordingFramesActiveRef.current = false;
+    if (rafRecRef.current) {
+      cancelAnimationFrame(rafRecRef.current);
+      rafRecRef.current = null;
+    }
+    const frameVideo = videoFrameVideoRef.current;
+    if (frameVideo && videoFrameRequestRef.current !== null && frameVideo.cancelVideoFrameCallback) {
+      try { frameVideo.cancelVideoFrameCallback(videoFrameRequestRef.current); } catch (_) {}
+    }
+    videoFrameRequestRef.current = null;
+    videoFrameVideoRef.current = null;
+    canvasRecRef.current = null;
+    if (canvasStreamRef.current) {
+      // The audio track belongs to the live camera stream; only release the
+      // temporary canvas video track here.
+      canvasStreamRef.current.getVideoTracks().forEach(track => track.stop());
+      canvasStreamRef.current = null;
+    }
+  }
+
   function startRecording() {
     if (!streamRef.current) return;
     const remaining = maxLength - totalSegmentTime;
     if (remaining <= 0) { showToast && showToast("Max recording time reached", "#888"); return; }
     chunksRef.current = [];
     recordTimeRef.current = 0;
-    // ── Canvas-based recording: MediaRecorder records from an off-screen canvas
-    // that mirrors the live <video> element.  Camera flips only swap videoRef.srcObject;
-    // the canvas stream (and thus the recorder) is never interrupted. ──
+    stopRecordingFrameLoop();
+    // Record a portrait composition that matches the camera preview. The
+    // frame loop follows decoded camera frames instead of drawing on every
+    // animation tick; this removes duplicate frames and keeps mobile devices
+    // from starving the live preview while MediaRecorder encodes.
     let recStream = streamRef.current;
     if (typeof document !== "undefined" && document.createElement("canvas").captureStream) {
       const cvs = document.createElement("canvas");
       cvs.width = 720; cvs.height = 1280;
       const ctx2d = cvs.getContext("2d");
+      const sourceVideo = videoRef.current;
+      if (!ctx2d || !sourceVideo) {
+        showToast && showToast("Recording preview unavailable", "#FF1744");
+        return;
+      }
+      ctx2d.imageSmoothingEnabled = true;
       canvasRecRef.current = cvs;
-      const drawLoop = () => {
-        if (videoRef.current && videoRef.current.readyState >= 2) {
+      const drawFrame = () => {
+        const video = videoRef.current;
+        if (video && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+          const sourceAspect = video.videoWidth / video.videoHeight;
+          const targetAspect = cvs.width / cvs.height;
+          let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight;
+          if (sourceAspect > targetAspect) {
+            sw = video.videoHeight * targetAspect;
+            sx = (video.videoWidth - sw) / 2;
+          } else if (sourceAspect < targetAspect) {
+            sh = video.videoWidth / targetAspect;
+            sy = (video.videoHeight - sh) / 2;
+          }
           ctx2d.save();
+          ctx2d.clearRect(0, 0, cvs.width, cvs.height);
+          ctx2d.filter = videoFilter;
           if (facingModeRef.current === "user") { ctx2d.translate(cvs.width, 0); ctx2d.scale(-1, 1); }
-          ctx2d.drawImage(videoRef.current, 0, 0, cvs.width, cvs.height);
+          ctx2d.drawImage(video, sx, sy, sw, sh, 0, 0, cvs.width, cvs.height);
           ctx2d.restore();
         }
-        rafRecRef.current = requestAnimationFrame(drawLoop);
       };
-      rafRecRef.current = requestAnimationFrame(drawLoop);
+      recordingFramesActiveRef.current = true;
       const canvasStream = cvs.captureStream(30);
+      canvasStreamRef.current = canvasStream;
       const audioTk = streamRef.current.getAudioTracks()[0];
       if (audioTk) canvasStream.addTrack(audioTk);
       if (canvasStream.getTracks().length) recStream = canvasStream;
+      drawFrame();
+      if (typeof sourceVideo.requestVideoFrameCallback === "function") {
+        videoFrameVideoRef.current = sourceVideo;
+        const onVideoFrame = () => {
+          if (!recordingFramesActiveRef.current) return;
+          drawFrame();
+          videoFrameRequestRef.current = sourceVideo.requestVideoFrameCallback(onVideoFrame);
+        };
+        videoFrameRequestRef.current = sourceVideo.requestVideoFrameCallback(onVideoFrame);
+      } else {
+        let lastDraw = 0;
+        const drawLoop = now => {
+          if (!recordingFramesActiveRef.current) return;
+          if (now - lastDraw >= 33) {
+            drawFrame();
+            lastDraw = now;
+          }
+          rafRecRef.current = requestAnimationFrame(drawLoop);
+        };
+        rafRecRef.current = requestAnimationFrame(drawLoop);
+      }
     }
     let rec;
-    try { rec = new MediaRecorder(recStream, { mimeType: "video/webm;codecs=vp8,opus" }); }
-    catch(e) { try { rec = new MediaRecorder(recStream); } catch(e2) { if (rafRecRef.current) { cancelAnimationFrame(rafRecRef.current); rafRecRef.current = null; } showToast && showToast("Recording not supported on this browser", "#FF1744"); return; } }
+    const recorderOptions = {
+      mimeType: "video/webm;codecs=vp8,opus",
+      videoBitsPerSecond: 4000000,
+      audioBitsPerSecond: 128000,
+    };
+    try { rec = new MediaRecorder(recStream, recorderOptions); }
+    catch(e) {
+      try { rec = new MediaRecorder(recStream); }
+      catch(e2) {
+        stopRecordingFrameLoop();
+        showToast && showToast("Recording not supported on this browser", "#FF1744");
+        return;
+      }
+    }
     recorderRef.current = rec;
     rec.ondataavailable = e => { if (e.data && e.data.size > 0) chunksRef.current.push(e.data); };
     rec.onstop = () => {
@@ -23026,14 +23120,15 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       const merged = new Blob(allSegmentsRef.current, { type: segBlob.type });
       setRecordedBlob(merged);
       setRecordedURL(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(merged); });
-      // Cancel canvas draw loop and release any flip stream before restarting camera
-      if (rafRecRef.current) { cancelAnimationFrame(rafRecRef.current); rafRecRef.current = null; }
+      // Stop frame capture before restarting the camera preview.
+      stopRecordingFrameLoop();
       if (flipVideoStreamRef.current) { flipVideoStreamRef.current.getTracks().forEach(t => t.stop()); flipVideoStreamRef.current = null; }
+      recorderRef.current = null;
       // After segment stops: stay on camera screen so user can record more or tap the circle to review
       // reviewMode stays false — camera restarts automatically
       startCamera();
     };
-    rec.start(200); setRecording(true); setRecordTime(0); recordTimeRef.current = 0;
+    rec.start(); setRecording(true); setRecordTime(0); recordTimeRef.current = 0;
     timerRef.current = setInterval(() => {
       setRecordTime(t => {
         const next = t + 1;
