@@ -23105,7 +23105,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     startCamera();
   }
 
-  function exitReelComposer() {
+  function exitReelComposer(shouldClose = true) {
     setShowReelDiscardDialog(false);
     setShowEditDiscardDialog(false);
     setDiscardDialogFromEditor(false);
@@ -23157,7 +23157,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     setFrameStrip([]);
     setReviewMode(false);
     stopStream();
-    onClose && onClose();
+    if (shouldClose) onClose && onClose();
   }
 
   async function saveReelDraft() {
@@ -23214,7 +23214,30 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
   function discardReel() {
     showToast && showToast("Post discarded", "#666");
-    exitReelComposer();
+    const hadMedia = !!(recordedBlob || recordedURL || exportedBlob);
+    if (!hadMedia) {
+      exitReelComposer();
+      return;
+    }
+    // Keep the composer mounted and immediately let the user replace the
+    // discarded media from the device's real gallery.
+    exitReelComposer(false);
+    setStep("camera");
+    setReviewMode(false);
+    const input = fileInputRef.current;
+    if (input) {
+      // Open synchronously while the tap is still a trusted user gesture.
+      input.value = "";
+      input.click();
+    } else {
+      setTimeout(() => {
+        const retryInput = fileInputRef.current;
+        if (retryInput) {
+          retryInput.value = "";
+          retryInput.click();
+        }
+      }, 80);
+    }
   }
 
   function discardReelEdits() {
@@ -25739,8 +25762,12 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       React.createElement("button", {
         onClick: () => {
           if (!uploading && !exporting) {
-            setDiscardDialogFromEditor(false);
-            setShowReelDiscardDialog(true);
+            if (recordedBlob || recordedURL || exportedBlob) {
+              setDiscardDialogFromEditor(false);
+              setShowReelDiscardDialog(true);
+            } else {
+              exitReelComposer();
+            }
           }
         },
         "aria-label": "Close reel composer",
