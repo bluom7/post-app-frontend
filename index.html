@@ -23643,6 +23643,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       cancelled = true;
       video.removeEventListener("loadeddata", startPlayback);
       video.removeEventListener("canplay", startPlayback);
+      video.pause();
     };
   }, [reviewing, recordedURL, isPhotoReel]);
 
@@ -25749,6 +25750,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
           : React.createElement("div", { style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", filter: videoFilter, background: "#000", willChange: "filter" } },
               !cropApplying && React.createElement("video", { ref: reviewVideoRef, key: recordedURL, src: recordedURL, preload: "auto", autoPlay: false, muted: true, loop: true, playsInline: true, disableRemotePlayback: true,
                 onClick: togglePreviewPlay,
+                 onPlay: () => setPreviewPlaying(true),
+                 onPause: () => setPreviewPlaying(false),
                 // FIX: Auto-retry on decode failure — Android Chrome sometimes blacks out a
                 // blob URL video on first load.  Removing src + re-setting it forces a fresh
                 // decode context.  _retried flag prevents infinite retry loops.
@@ -25766,7 +25769,14 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                   }
                 },
                 style: { position: "relative", width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center", cursor: "pointer", WebkitTapHighlightColor: "transparent", background: "#000", transform: "translateZ(0)", willChange: "transform" }
-              })))
+               }),
+              !cropApplying && !previewPlaying && React.createElement("div", {
+                style: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 72, height: 72, borderRadius: 16, background: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 12, boxShadow: "0 2px 16px rgba(0,0,0,0.28)" }
+              },
+                React.createElement("svg", { width: 38, height: 38, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+                  React.createElement("path", { d: "M8 5.2v13.6c0 .8.9 1.3 1.6.85l9.3-6.8a1.05 1.05 0 0 0 0-1.7L9.6 4.35C8.9 3.9 8 4.4 8 5.2Z", fill: "#555" })
+                )
+              )))
       : React.createElement("video", { ref: videoRef, autoPlay: true, playsInline: true, muted: true,
           style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: videoFilter, transform: facingMode === "user" ? "scaleX(-1)" : "none" }
         }),
