@@ -25788,7 +25788,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                 )
               )))
      : React.createElement("video", { ref: videoRef, autoPlay: true, playsInline: true, muted: true,
-         style: { position: "absolute", top: 0, left: 0, right: 0, bottom: recording ? "18%" : 0, width: "100%", height: recording ? "82%" : "100%", objectFit: "cover", filter: videoFilter, transform: facingMode === "user" ? "scaleX(-1)" : "none" }
+          style: { position: "absolute", top: 0, left: 0, right: 0, bottom: recording ? "18%" : 0, width: "100%", height: recording ? "82%" : "100%", objectFit: "cover", borderRadius: recording ? "0 0 22px 22px" : 0, filter: videoFilter, transform: facingMode === "user" ? "scaleX(-1)" : "none" }
         }),
     // Instagram-style black control sheet during recording. The saved video
     // composition stays portrait; this only changes the live camera layout.
