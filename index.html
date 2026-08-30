@@ -25152,7 +25152,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       // Android Chrome skips CSS filter on hardware-decoded video elements;
       // a wrapper div creates a new compositing layer that the filter IS applied to.
       recordedURL && React.createElement("div", {
-        style: { position: "absolute", top: 50, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", filter: videoFilter, background: "#000", willChange: "filter" }
+        style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(129px, 17.3vh, 157px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", filter: videoFilter, background: "#000", willChange: "filter" }
       },
         isPhotoReel
           ? React.createElement("img", { src: recordedURL, onClick: togglePreviewPlay, style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
