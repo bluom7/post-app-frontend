@@ -8823,8 +8823,16 @@ function VideoStickerPickerModal({ onSelect, onClose }) {
 }
 
 function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete, onChangeSong }) {
-  const [CLIP_DUR, setClipDur] = React.useState(15);
+  const DEFAULT_CLIP_DUR = 15;
+  const MAX_CLIP_DUR = 30;
+  const [CLIP_DUR, setClipDurState] = React.useState(DEFAULT_CLIP_DUR);
+  const clipDurRef = React.useRef(DEFAULT_CLIP_DUR);
   const [showClipDurationPicker, setShowClipDurationPicker] = React.useState(false);
+  const setClipDur = dur => {
+    const next = Number(dur) === MAX_CLIP_DUR ? MAX_CLIP_DUR : DEFAULT_CLIP_DUR;
+    clipDurRef.current = next;
+    setClipDurState(next);
+  };
   const songDur = Math.max(CLIP_DUR, Math.round((song.music_duration_ms || 30000) / 1000));
   const maxStart = Math.max(0, songDur - CLIP_DUR);
 
@@ -8864,10 +8872,21 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
   };
 
   const selectClipDuration = dur => {
-    setClipDur(dur);
-    setStartSec(Math.max(0, Math.min(startSecRef.current, Math.max(0, songDur - dur))));
+    const nextDuration = Number(dur) === MAX_CLIP_DUR ? MAX_CLIP_DUR : DEFAULT_CLIP_DUR;
+    setClipDur(nextDuration);
+    setStartSec(Math.max(0, Math.min(startSecRef.current, Math.max(0, songDur - nextDuration))));
     setShowClipDurationPicker(false);
     stopAudio();
+  };
+  // On Android, the duration menu sits outside the 86px top-bar box. Handle
+  // the pointer release on the option itself so the preview surface cannot
+  // consume the tap before React's synthetic click is generated.
+  const chooseClipDuration = (dur, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    selectClipDuration(dur);
   };
 
   // Load real waveform via Web Audio API
@@ -9035,7 +9054,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
         const fullMaxStart = Math.max(0, songDur - CLIP_DUR);
         const previewStart = fullMaxStart > 0
           ? (startSecRef.current / fullMaxStart) * previewMaxStart : 0;
-        onConfirm(Math.round(Math.max(0, Math.min(previewStart, previewMaxStart)) * 1000), CLIP_DUR);
+        onConfirm(Math.round(Math.max(0, Math.min(previewStart, previewMaxStart)) * 1000), clipDurRef.current);
       }, style: { position:'absolute', top:14, right:18, width:56, height:40, display:'flex', alignItems:'center', justifyContent:'center', background:'#fff', border:'none', borderRadius:4, padding:0, fontWeight:700, fontSize:17, cursor:'pointer', color:'#111', textShadow:'none', pointerEvents:'auto', zIndex:3 } }, 'Done'),
       // Compact clip-duration control directly beneath Done, like the camera time tool.
       React.createElement('div', { style: { position:'absolute', top:58, right:12, zIndex:6, pointerEvents:'auto' } },
@@ -9056,7 +9075,7 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
           role:'menu',
           'aria-label':'Song clip duration',
           onClick:e => e.stopPropagation(),
-          style: { position:'absolute', top:40, right:0, width:116, padding:6, background:'rgba(28,28,28,0.96)', border:'1px solid rgba(255,255,255,0.22)', borderRadius:12, boxShadow:'0 8px 24px rgba(0,0,0,0.5)', display:'flex', flexDirection:'column', gap:3 }
+          style: { position:'absolute', top:40, right:0, width:116, padding:6, background:'rgba(28,28,28,0.96)', border:'1px solid rgba(255,255,255,0.22)', borderRadius:12, boxShadow:'0 8px 24px rgba(0,0,0,0.5)', display:'flex', flexDirection:'column', gap:3, zIndex:20, pointerEvents:'auto' }
         },
           React.createElement('div',{style:{color:'rgba(255,255,255,0.58)',fontSize:10,fontWeight:700,padding:'3px 7px 4px',letterSpacing:0.2}}, 'Song clip'),
           [15,30].map(dur => React.createElement('button', {
@@ -9064,8 +9083,9 @@ function MusicTrimmerModal({ song, photos, videoSrc, onConfirm, onBack, onDelete
             type:'button',
             role:'menuitemradio',
             'aria-checked':CLIP_DUR === dur,
-            onClick:() => selectClipDuration(dur),
-            style: { width:'100%', height:34, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 9px', border:'none', borderRadius:8, background:CLIP_DUR === dur ? 'rgba(255,255,255,0.18)' : 'transparent', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:700 }
+            onPointerUp:e => chooseClipDuration(dur, e),
+            onClick:e => { e.stopPropagation(); if (e.detail === 0) chooseClipDuration(dur, e); },
+            style: { width:'100%', height:34, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 9px', border:'none', borderRadius:8, background:CLIP_DUR === dur ? 'rgba(255,255,255,0.18)' : 'transparent', color:'#fff', cursor:'pointer', fontSize:13, fontWeight:700, touchAction:'manipulation', pointerEvents:'auto' }
           },
             React.createElement('span',null,dur+' sec'),
             CLIP_DUR === dur && React.createElement('span',{style:{fontSize:15,lineHeight:1}}, '✓')
@@ -21996,6 +22016,10 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
     setShowDurationPicker(false);
     stopTrimAudio();
   };
+  var chooseClipDuration=function(dur,e){
+    if(e){e.preventDefault();e.stopPropagation();}
+    selectClipDuration(dur);
+  };
 
   // fetch songs
   var fetchSongs=async function(term){
@@ -22206,10 +22230,10 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
               React.createElement('circle',{cx:12,cy:12,r:8.5}),React.createElement('path',{d:'M12 7v5l3 2'})),
             React.createElement('span',{style:{fontSize:10,fontWeight:800,lineHeight:1}},clipDuration)),
           showDurationPicker && React.createElement('div',{role:'menu','aria-label':'Song clip duration',onClick:function(e){e.stopPropagation();},
-            style:{position:'absolute',top:'calc(100% + 8px)',right:0,width:116,padding:6,background:'rgba(28,28,28,0.96)',border:'1px solid rgba(255,255,255,0.22)',borderRadius:12,boxShadow:'0 8px 24px rgba(0,0,0,0.5)',display:'flex',flexDirection:'column',gap:3,zIndex:10}},
+            style:{position:'absolute',top:'calc(100% + 8px)',right:0,width:116,padding:6,background:'rgba(28,28,28,0.96)',border:'1px solid rgba(255,255,255,0.22)',borderRadius:12,boxShadow:'0 8px 24px rgba(0,0,0,0.5)',display:'flex',flexDirection:'column',gap:3,zIndex:20,pointerEvents:'auto'}},
             React.createElement('div',{style:{color:'rgba(255,255,255,0.58)',fontSize:10,fontWeight:700,padding:'3px 7px 4px',letterSpacing:0.2}},'Song clip'),
-            [15,30].map(function(dur){return React.createElement('button',{key:dur,type:'button',role:'menuitemradio','aria-checked':clipDuration===dur,onClick:function(){selectClipDuration(dur);},
-              style:{width:'100%',height:34,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 9px',border:'none',borderRadius:8,background:clipDuration===dur?'rgba(255,255,255,0.18)':'transparent',color:'#fff',cursor:'pointer',fontSize:13,fontWeight:700}},
+            [15,30].map(function(dur){return React.createElement('button',{key:dur,type:'button',role:'menuitemradio','aria-checked':clipDuration===dur,onPointerUp:function(e){chooseClipDuration(dur,e);},onClick:function(e){e.stopPropagation();if(e.detail===0)chooseClipDuration(dur,e);},
+              style:{width:'100%',height:34,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 9px',border:'none',borderRadius:8,background:clipDuration===dur?'rgba(255,255,255,0.18)':'transparent',color:'#fff',cursor:'pointer',fontSize:13,fontWeight:700,touchAction:'manipulation',pointerEvents:'auto'}},
               React.createElement('span',null,dur+' sec'),clipDuration===dur&&React.createElement('span',{style:{fontSize:15,lineHeight:1}},'✓'));})
           )
         )),
