@@ -25757,7 +25757,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     reviewing
       ? (isPhotoReel
           ? React.createElement("img", { key: recordedURL, ref: reviewImgRef, src: recordedURL, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", background: "#000" } })
-          : React.createElement("div", { style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", filter: videoFilter, background: "#000", willChange: "filter" } },
+          : React.createElement("div", { style: { position: "absolute", inset: 0, display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", filter: videoFilter, background: "#000", willChange: "filter" } },
               !cropApplying && React.createElement("video", { ref: reviewVideoRef, key: recordedURL, src: recordedURL, preload: "auto", autoPlay: false, muted: true, loop: true, playsInline: true, disableRemotePlayback: true,
                 onClick: togglePreviewPlay,
                  onPlay: () => setPreviewPlaying(true),
@@ -25915,7 +25915,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     // (progress bar replaced by ring on record button)
 
     // ── Top bar — hidden during recording (full-screen minimal mode) ──
-    !recording && React.createElement("div", { style: { position: "relative", zIndex: 20, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 14px 0" } },
+    !recording && !reviewing && React.createElement("div", { style: { position: "relative", zIndex: 20, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 14px 0" } },
       // Close the reel composer without losing the current work until the user chooses an action.
       React.createElement("button", {
         onClick: () => {
@@ -26126,7 +26126,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
 
     // ── Instagram-style pink time pill (top right) ──
     (recording || reviewing) && React.createElement("div", {
-      style: { position: "absolute", top: 14, right: 14, zIndex: 30, background: "#E1306C", borderRadius: 20, height: 42, boxSizing: "border-box", padding: "0 14px", display: "flex", alignItems: "center" }
+      style: { position: "absolute", top: 14, right: 14, zIndex: 30, width: 68, height: 36, background: "#E1306C", borderRadius: 10, boxSizing: "border-box", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }
     },
       React.createElement("span", { style: { color: "#fff", fontSize: 14, fontWeight: 800, letterSpacing: 0.3, fontVariantNumeric: "tabular-nums" } },
         (function(s){ const m=Math.floor(s/60); const sec=(s%60).toString().padStart(2,'0'); return m+':'+sec; })(recordTime)
