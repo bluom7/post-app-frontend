@@ -24591,7 +24591,10 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       textOverlays, setTextOverlays,
       selectedMusic: audioUrlRef.current ? {
         music_preview_url: audioUrlRef.current,
-        music_start_ms: audioStartTimeRef.current || 0
+        music_start_ms: audioStartTimeRef.current || 0,
+        music_title: audioLabel !== "Original Audio" ? audioLabel : "",
+        music_artist: audioArtist || "",
+        music_artwork: audioArtwork || ""
       } : null,
       onDone: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setStep("edit"); },
       onCancel: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setStep("edit"); },
