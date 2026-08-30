@@ -23647,19 +23647,6 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     };
   }, [reviewing, recordedURL, isPhotoReel]);
 
-  React.useEffect(() => {
-    const v = editVideoRef.current;
-    if (!v || step !== "edit") return;
-    function onTime() {
-      setPreviewTime(v.currentTime);
-      if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v);
-    }
-    function onEnded() { finishPreviewPlayback(v); }
-    v.addEventListener("timeupdate", onTime);
-    v.addEventListener("ended", onEnded);
-    return () => { v.removeEventListener("timeupdate", onTime); v.removeEventListener("ended", onEnded); };
-  }, [trimStart, trimEnd, step]);
-
   // Thumbnail for Filters panel — photo: use blob URL directly; video: canvas-capture a still frame
   React.useEffect(() => {
     if (editTool !== "Filters") return;
@@ -24031,7 +24018,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     if (step !== "edit" || isPhotoReel || !editVideoRef.current) return;
     const poster = captureTrimPoster();
     if (poster) setEditorVideoPoster(poster);
-    restoreEditorVideoPlayback(true);
+    restoreEditorVideoPlayback(false);
     return () => {
       if (editorVideoRecoveryTimerRef.current) {
         clearTimeout(editorVideoRecoveryTimerRef.current);
@@ -25152,7 +25139,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       // Android Chrome skips CSS filter on hardware-decoded video elements;
       // a wrapper div creates a new compositing layer that the filter IS applied to.
       recordedURL && React.createElement("div", {
-        style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(142px, 19vh, 173px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: "filter" }
+        style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(142px, 19vh, 173px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: videoFilter === "none" ? "auto" : "filter" }
       },
         isPhotoReel
           ? React.createElement("img", { src: recordedURL, onClick: togglePreviewPlay, style: { width: "100%", height: "100%", maxHeight: "none", objectFit: "cover", objectPosition: "center center", display: "block", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
@@ -25164,7 +25151,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                  const v = e.target;
                  // canplay may fire again after a pause on Android. Only the
                  // first ready event is allowed to perform the initial play.
-                 if (v._initialReviewPlayAttempted) return;
+                 if (v._initialReviewPlayAttempted || !v.paused) return;
                  v._initialReviewPlayAttempted = true;
                  v.muted = true;
                  v.play().then(() => setPreviewPlaying(true)).catch(() => { v._initialReviewPlayAttempted = false; });
@@ -25174,9 +25161,9 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                // If Android loses the hardware-decoded frame, use the same
                // guarded recovery path used when the Aa editor opens/closes.
                onError: () => { restoreEditorVideoPlayback(true); },
-              onTimeUpdate: e => { if (editTool === "Trim") return; const v = e.target; setPreviewTime(v.currentTime); if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v); },
+              onTimeUpdate: e => { if (editTool === "Trim") return; const v = e.target; if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v); },
               onClick: togglePreviewPlay,
-               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: "cover", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000" }
+               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: "cover", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform" }
             })
       ),
 
