@@ -21945,7 +21945,16 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
   var timerRef=React.useRef(null);
 
   // trimmer state
-  var _cd=React.useState(DEFAULT_CLIP_DURATION); var clipDuration=_cd[0]; var setClipDuration=_cd[1];
+  var _cd=React.useState(DEFAULT_CLIP_DURATION); var clipDuration=_cd[0]; var setClipDurationState=_cd[1];
+  // Keep the selected duration in a ref as well as state. The Done tap can
+  // happen immediately after the duration menu closes, before another render,
+  // so the value passed to the parent must never fall back to 15 seconds.
+  var clipDurationRef=React.useRef(DEFAULT_CLIP_DURATION);
+  var setClipDuration=function(value){
+    var next=Number(value)===30?30:DEFAULT_CLIP_DURATION;
+    clipDurationRef.current=next;
+    setClipDurationState(next);
+  };
   var _sdp=React.useState(false); var showDurationPicker=_sdp[0]; var setShowDurationPicker=_sdp[1];
   var _sd=React.useState(30); var songDuration=_sd[0]; var setSongDuration=_sd[1];
   var _pl=React.useState(false); var playing=_pl[0]; var setPlaying=_pl[1];
@@ -22138,12 +22147,13 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
   function handleUse(){
     if(!selectedSong)return;
     stopTrimAudio();
+    var selectedClipDuration=clipDurationRef.current===30?30:DEFAULT_CLIP_DURATION;
     // Scale: startSecRef is full-song seconds (0..maxStart).
     // previewUrl is only ~30s — map proportionally so 15-sec clip plays fully.
     var previewDur=(trimAudioRef.current&&isFinite(trimAudioRef.current.duration)&&trimAudioRef.current.duration>0)?trimAudioRef.current.duration:30;
-    var scaledSec=maxStart>0?(startSecRef.current/maxStart)*Math.max(0,previewDur-clipDuration):0;
+    var scaledSec=maxStart>0?(startSecRef.current/maxStart)*Math.max(0,previewDur-selectedClipDuration):0;
     scaledSec=Math.max(0,Math.min(scaledSec,previewDur-0.5));
-    onSelect(selectedSong.previewUrl, selectedSong.trackName, Math.round(scaledSec*1000), (selectedSong.artworkUrl100||'').replace('100x100bb','300x300bb'), selectedSong.artistName||'', clipDuration);
+    onSelect(selectedSong.previewUrl, selectedSong.trackName, Math.round(scaledSec*1000), (selectedSong.artworkUrl100||'').replace('100x100bb','300x300bb'), selectedSong.artistName||'', selectedClipDuration);
   }
 
   // ── Full-screen trimmer (when song selected) — video background style ───────
@@ -22359,6 +22369,13 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
 
 function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGallery }) {
   const MAX_REEL_SECONDS = 30; // backend hard limit — must match server.py MAX_POST_VIDEO_SECONDS
+  const DEFAULT_MUSIC_CLIP_SECONDS = 15;
+  const normalizeMusicClipDuration = value => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed)
+      ? Math.max(1, Math.min(MAX_REEL_SECONDS, parsed))
+      : DEFAULT_MUSIC_CLIP_SECONDS;
+  };
   const [step, setStep] = React.useState("camera");
   const [recording, setRecording] = React.useState(false);
   const [countdown, setCountdown] = React.useState(0);
@@ -23219,6 +23236,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     audioUrlRef.current = null;
     audioFileRef.current = null;
     audioStartTimeRef.current = 0;
+    audioClipDurationRef.current = DEFAULT_MUSIC_CLIP_SECONDS;
     setAudioLabel("Original Audio");
     setAudioArtist("");
     setAudioArtwork("");
@@ -23371,7 +23389,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     audioUrlRef.current = null;
     audioFileRef.current = null;
     audioStartTimeRef.current = 0;
-    audioClipDurationRef.current = 15;
+    audioClipDurationRef.current = DEFAULT_MUSIC_CLIP_SECONDS;
     if (previewMusicAudioRef.current) {
       previewMusicAudioRef.current.pause();
       previewMusicAudioRef.current = null;
@@ -23401,7 +23419,10 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         finally { clearTimeout(pTimeout); }
         if (!pResp.ok) { const d = await pResp.json().catch(() => ({})); throw new Error(d.detail || "Photo upload failed"); }
         const pData = await pResp.json(); setUploadProgress(75);
-        const _allTxtOvPh = [...(textOverlays||[]), ...(reviewTextOverlays||[])]; const _allEmoOvPh = [...(editEmojiOverlays||[]), ...(reviewEmojiOverlays||[])]; const reel = await api("/reels", "POST", { photo_url: pData.url, caption: caption.trim(), audio_label: audioLabel, music_url: audioUrlRef.current || undefined, music_start_time: audioStartTimeRef.current || 0, music_clip_duration: audioClipDurationRef.current || 15, music_title: (audioLabel && audioLabel !== "Original Audio") ? audioLabel : undefined, music_artist: audioArtist || undefined, music_artwork: audioArtwork || undefined, sticker_overlays: reelStickerOverlays.length ? reelStickerOverlays : undefined, text_overlays: _allTxtOvPh.length ? _allTxtOvPh : undefined, emoji_overlays: _allEmoOvPh.length ? _allEmoOvPh : undefined, video_effect: (effect && effect !== 'none') ? effect : undefined, location: reelLocation || undefined, tagged_users: reelTaggedUsers.length ? reelTaggedUsers : undefined, audience: reelAudience.type, audience_users: reelAudience.type === "only_show" && reelAudience.users.length ? reelAudience.users : undefined }, token, 30000);
+        const musicClipDuration = audioUrlRef.current
+          ? normalizeMusicClipDuration(audioClipDurationRef.current)
+          : undefined;
+        const _allTxtOvPh = [...(textOverlays||[]), ...(reviewTextOverlays||[])]; const _allEmoOvPh = [...(editEmojiOverlays||[]), ...(reviewEmojiOverlays||[])]; const reel = await api("/reels", "POST", { photo_url: pData.url, caption: caption.trim(), audio_label: audioLabel, music_url: audioUrlRef.current || undefined, music_start_time: Math.max(0, Number(audioStartTimeRef.current || 0) / 1000), music_clip_duration: musicClipDuration, music_title: (audioLabel && audioLabel !== "Original Audio") ? audioLabel : undefined, music_artist: audioArtist || undefined, music_artwork: audioArtwork || undefined, sticker_overlays: reelStickerOverlays.length ? reelStickerOverlays : undefined, text_overlays: _allTxtOvPh.length ? _allTxtOvPh : undefined, emoji_overlays: _allEmoOvPh.length ? _allEmoOvPh : undefined, video_effect: (effect && effect !== 'none') ? effect : undefined, location: reelLocation || undefined, tagged_users: reelTaggedUsers.length ? reelTaggedUsers : undefined, audience: reelAudience.type, audience_users: reelAudience.type === "only_show" && reelAudience.users.length ? reelAudience.users : undefined }, token, 30000);
         setUploadProgress(100);
         showToast && showToast("Photo reel posted! 📸", "#FF1744");
         onUploaded && onUploaded(reel); onClose();
@@ -23420,14 +23441,20 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     //     This case was previously missing, so unmodified gallery videos
     //     always got preflightDuration=0 → "Clip is too short" error.
     const _galleryFallback = (trimEnd > 0 ? (trimEnd - trimStart) : videoDuration) || 0;
+    const measuredClientDuration = [shareVidRef.current, editVideoRef.current, reviewVideoRef.current]
+      .map(video => video && Number(video.duration))
+      .find(value => Number.isFinite(value) && value > 0) || 0;
     const preflightDuration = exportedBlob
       ? (trimEnd - trimStart)
-      : (recordTime > 0 ? recordTime : _galleryFallback);
+      : (recordTime > 0 ? recordTime : (_galleryFallback || measuredClientDuration));
     if (preflightDuration > MAX_REEL_SECONDS + 0.5) {
       setUploadError(`Reel must be 1\u2013${MAX_REEL_SECONDS} seconds — trim your clip shorter before posting.`);
       return;
     }
-    if (preflightDuration < 1) {
+    // Blob duration may be unavailable until its first metadata event. Let the
+    // server validate an otherwise valid file instead of blocking the post at
+    // the client with a false "too short" error.
+    if (preflightDuration > 0 && preflightDuration < 1) {
       setUploadError("Clip is too short to post.");
       return;
     }
@@ -23451,10 +23478,23 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       // can capture fewer seconds than requested on slow/buffering mobile connections,
       // making the stored duration longer than the actual video. Cloudinary's
       // duration reflects exactly what was stored, so it must be the final word.
-      const finalDuration = (upData.duration && upData.duration > 0)
-        ? upData.duration
-        : (exportedBlob ? (trimEnd - trimStart) : recordTime);
-      const _allTxtOvVid = [...(textOverlays||[]), ...(reviewTextOverlays||[])]; const _allEmoOvVid = [...(editEmojiOverlays||[]), ...(reviewEmojiOverlays||[])]; const reel = await api("/reels", "POST", { video_url: upData.video_url, caption: caption.trim(), audio_label: audioLabel, music_url: audioUrlRef.current || undefined, music_start_time: audioStartTimeRef.current || 0, music_clip_duration: audioClipDurationRef.current || 15, music_title: (audioLabel && audioLabel !== "Original Audio") ? audioLabel : undefined, music_artist: audioArtist || undefined, music_artwork: audioArtwork || undefined, duration: Math.max(1, Math.min(MAX_REEL_SECONDS, Math.round(finalDuration))), sticker_overlays: reelStickerOverlays.length ? reelStickerOverlays : undefined, text_overlays: _allTxtOvVid.length ? _allTxtOvVid : undefined, emoji_overlays: _allEmoOvVid.length ? _allEmoOvVid : undefined, video_effect: (effect && effect !== 'none') ? effect : undefined, location: reelLocation || undefined, tagged_users: reelTaggedUsers.length ? reelTaggedUsers : undefined, audience: reelAudience.type, audience_users: reelAudience.type === "only_show" && reelAudience.users.length ? reelAudience.users : undefined }, token, 30000);
+      const measuredDuration = Number(upData.duration);
+      const fallbackDuration = exportedBlob
+        ? (trimEnd - trimStart)
+        : (recordTime || _galleryFallback || measuredClientDuration);
+      const finalDuration = Number.isFinite(measuredDuration) && measuredDuration > 0
+        ? measuredDuration
+        : fallbackDuration;
+      const postDuration = Math.max(
+        1,
+        Math.min(MAX_REEL_SECONDS, Math.round(
+          Number.isFinite(finalDuration) && finalDuration > 0 ? finalDuration : 1
+        ))
+      );
+      const musicClipDuration = audioUrlRef.current
+        ? normalizeMusicClipDuration(audioClipDurationRef.current)
+        : undefined;
+      const _allTxtOvVid = [...(textOverlays||[]), ...(reviewTextOverlays||[])]; const _allEmoOvVid = [...(editEmojiOverlays||[]), ...(reviewEmojiOverlays||[])]; const reel = await api("/reels", "POST", { video_url: upData.video_url, caption: caption.trim(), audio_label: audioLabel, music_url: audioUrlRef.current || undefined, music_start_time: Math.max(0, Number(audioStartTimeRef.current || 0) / 1000), music_clip_duration: musicClipDuration, music_title: (audioLabel && audioLabel !== "Original Audio") ? audioLabel : undefined, music_artist: audioArtist || undefined, music_artwork: audioArtwork || undefined, duration: postDuration, sticker_overlays: reelStickerOverlays.length ? reelStickerOverlays : undefined, text_overlays: _allTxtOvVid.length ? _allTxtOvVid : undefined, emoji_overlays: _allEmoOvVid.length ? _allEmoOvVid : undefined, video_effect: (effect && effect !== 'none') ? effect : undefined, location: reelLocation || undefined, tagged_users: reelTaggedUsers.length ? reelTaggedUsers : undefined, audience: reelAudience.type, audience_users: reelAudience.type === "only_show" && reelAudience.users.length ? reelAudience.users : undefined }, token, 30000);
       setUploadProgress(100);
       showToast && showToast("Reel posted! 🎬", "#FF1744");
       onUploaded && onUploaded(reel); onClose();
@@ -24318,11 +24358,15 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       const canvasStream = (canvas.captureStream || canvas.webkitCaptureStream).call(canvas, 30);
 
       let audioStream = null;
+      const exportMusicStartSec = Math.max(0, Number(audioStartTimeRef.current || 0) / 1000);
+      const exportMusicClipDurationSec = normalizeMusicClipDuration(audioClipDurationRef.current);
       if (audioFileRef.current || audioUrlRef.current) {
         audioEl = document.createElement("audio");
         audioEl.crossOrigin = "anonymous";
         audioEl.src = audioUrlRef.current ? audioUrlRef.current : URL.createObjectURL(audioFileRef.current);
-        audioEl.loop = true;
+        // Export exactly the clip selected in the music picker. Looping the
+        // source here made the 15/30 choice disappear from the final video.
+        audioEl.loop = false;
         await new Promise(r => { audioEl.onloadedmetadata = r; audioEl.onerror = r; setTimeout(r, 4000); });
         try {
           const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -24368,7 +24412,19 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         ]);
       }
       await video.play().catch(() => {});
-      if (audioEl) { audioEl.currentTime = (audioStartTimeRef.current || 0) / 1000; await audioEl.play().catch(() => {}); }
+      if (audioEl) {
+        const sourceDuration = Number(audioEl.duration);
+        const safeStart = Number.isFinite(sourceDuration) && sourceDuration > 0
+          ? Math.min(exportMusicStartSec, Math.max(0, sourceDuration - 0.05))
+          : exportMusicStartSec;
+        audioEl.currentTime = safeStart;
+        audioEl.ontimeupdate = () => {
+          if (audioEl.currentTime >= safeStart + exportMusicClipDurationSec - 0.05) {
+            audioEl.pause();
+          }
+        };
+        await audioEl.play().catch(() => {});
+      }
       recorder.start(200);
 
       const durationToRecord = Math.max(0.2, effTrimEnd - effTrimStart);
@@ -24594,6 +24650,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       selectedMusic: audioUrlRef.current ? {
         music_preview_url: audioUrlRef.current,
         music_start_ms: audioStartTimeRef.current || 0,
+        music_clip_duration_ms: normalizeMusicClipDuration(audioClipDurationRef.current) * 1000,
         music_title: audioLabel !== "Original Audio" ? audioLabel : "",
         music_artist: audioArtist || "",
         music_artwork: audioArtwork || ""
@@ -25680,7 +25737,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; } if (trimVideoRef.current) { trimVideoRef.current.muted = true; } trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); if (!isPhotoReel) startPreviewMusicWithVideo(); if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); } showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = normalizeMusicClipDuration(clipDuration); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; } if (trimVideoRef.current) { trimVideoRef.current.muted = true; } trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); if (!isPhotoReel) startPreviewMusicWithVideo(); if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); } showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
 
       // Keep the same close actions available from the editor as from camera.
       discardDialogFromEditor && showReelDiscardDialog && React.createElement("div", {
@@ -26426,7 +26483,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = Math.max(1, Math.min(30, Number(clipDuration) || 15)); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) { trimVideoRef.current.muted = true; } setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setPreviewPlaying(false); showToast && showToast("Song add hua ✓", "#22C55E"); stopStream(); setReviewMode(true); } }),
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = normalizeMusicClipDuration(clipDuration); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) { trimVideoRef.current.muted = true; } setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setPreviewPlaying(false); showToast && showToast("Song add hua ✓", "#22C55E"); stopStream(); setReviewMode(true); } }),
     // CSS animations
     React.createElement("style", null, `
       .reel-camera-effects-scroll { scrollbar-width: none; -ms-overflow-style: none; }
