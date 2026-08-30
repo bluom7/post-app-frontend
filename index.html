@@ -25152,10 +25152,10 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       // Android Chrome skips CSS filter on hardware-decoded video elements;
       // a wrapper div creates a new compositing layer that the filter IS applied to.
       recordedURL && React.createElement("div", {
-        style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(129px, 17.3vh, 157px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", filter: videoFilter, background: "#000", willChange: "filter" }
+        style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(142px, 19vh, 173px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: "filter" }
       },
         isPhotoReel
-          ? React.createElement("img", { src: recordedURL, onClick: togglePreviewPlay, style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
+          ? React.createElement("img", { src: recordedURL, onClick: togglePreviewPlay, style: { width: "100%", height: "100%", maxHeight: "none", objectFit: "cover", objectPosition: "center center", display: "block", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
           : React.createElement("video", {
               key: recordedURL,
                ref: editVideoRef, src: recordedURL, poster: editorVideoPoster || undefined, preload: "auto", playsInline: true, autoPlay: true, muted: true, loop: true,
@@ -25176,7 +25176,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                onError: () => { restoreEditorVideoPlayback(true); },
               onTimeUpdate: e => { if (editTool === "Trim") return; const v = e.target; setPreviewTime(v.currentTime); if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v); },
               onClick: togglePreviewPlay,
-              style: { width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000" }
+               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: "cover", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000" }
             })
       ),
 
