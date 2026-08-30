@@ -25788,11 +25788,11 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                 )
               )))
      : React.createElement("video", { ref: videoRef, autoPlay: true, playsInline: true, muted: true,
-          style: { position: "absolute", top: 0, left: 0, right: 0, bottom: recording ? "18%" : "clamp(106px, 14.3vh, 130px)", width: "100%", height: recording ? "82%" : "calc(100% - clamp(106px, 14.3vh, 130px))", objectFit: "cover", borderRadius: "0 0 22px 22px", filter: videoFilter, transform: facingMode === "user" ? "scaleX(-1)" : "none" }
+          style: { position: "absolute", top: 0, left: 0, right: 0, bottom: recording ? "18%" : "clamp(117px, 15.7vh, 143px)", width: "100%", height: recording ? "82%" : "calc(100% - clamp(117px, 15.7vh, 143px))", objectFit: "cover", borderRadius: "0 0 22px 22px", filter: videoFilter, transform: facingMode === "user" ? "scaleX(-1)" : "none" }
         }),
     // Instagram-style black control sheet during recording. The saved video
     // composition stays portrait; this only changes the live camera layout.
-    !reviewing && React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, height: recording ? "18%" : "clamp(106px, 14.3vh, 130px)", background: "#000", zIndex: 1, pointerEvents: "none" } }),
+    !reviewing && React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, height: recording ? "18%" : "clamp(117px, 15.7vh, 143px)", background: "#000", zIndex: 1, pointerEvents: "none" } }),
     // Gradient overlay bottom
     React.createElement("div", { style: { position: "absolute", bottom: recording ? "18%" : 0, left: 0, right: 0, height: recording ? "22%" : "55%", background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)", pointerEvents: "none" } }),
 
