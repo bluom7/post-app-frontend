@@ -22510,6 +22510,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const previewAreaRef = React.useRef(null);
   const reviewAreaRef = React.useRef(null);
   const reviewImgRef = React.useRef(null);
+  const reviewVideoRef = React.useRef(null);
+  const reviewing = reviewMode && !!recordedBlob;
   const autoPostRef = React.useRef(false);
   const trimTimelineRef = React.useRef(null);
   const trimDragSideRef = React.useRef(null); // "left" | "right" | null
@@ -23478,7 +23480,9 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     { id: "dreamy",  label: "Dreamy",    filter: "blur(1.5px) brightness(1.1) saturate(1.2)" },
   ];
   const currEff = EFFECTS.find(e => e.id === effect) || EFFECTS[0];
-  const videoFilter = "brightness(" + (brightnessVal / 100).toFixed(2) + ") " + (touchUp > 0 ? "brightness(" + (1 + touchUp * 0.0018).toFixed(3) + ") contrast(" + (1 - touchUp * 0.0013).toFixed(3) + ") saturate(" + (1 + touchUp * 0.0012).toFixed(3) + ") " : "") + currEff.filter;
+  const videoFilter = brightnessVal === 100 && touchUp === 0 && currEff.filter === "none"
+    ? "none"
+    : "brightness(" + (brightnessVal / 100).toFixed(2) + ") " + (touchUp > 0 ? "brightness(" + (1 + touchUp * 0.0018).toFixed(3) + ") contrast(" + (1 - touchUp * 0.0013).toFixed(3) + ") saturate(" + (1 + touchUp * 0.0012).toFixed(3) + ") " : "") + currEff.filter;
   const progressPct = maxLength > 0 ? Math.min(100, ((totalSegmentTime + recordTime) / maxLength) * 100) : 0;
 
   const THEMES = [
@@ -23552,7 +23556,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       return;
     }
 
-    const video = editVideoRef.current;
+    const video = reviewVideoRef.current || editVideoRef.current;
     const trimVideo = trimVideoRef.current;
     if (!video && !trimVideo) return;
 
@@ -23598,6 +23602,49 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       playPrimary();
     }
   }
+
+  // Review playback gets its own decoder owner. Starting it only after the
+  // first decoded frame prevents Android Chrome from repeatedly re-buffering
+  // the blob video while the editor controls are mounted.
+  React.useEffect(() => {
+    if (!reviewing || isPhotoReel || !recordedURL) return;
+    const video = reviewVideoRef.current;
+    if (!video) return;
+    let cancelled = false;
+    let started = false;
+    const startPlayback = () => {
+      if (cancelled || started) return;
+      started = true;
+      video.preload = "auto";
+      video.playsInline = true;
+      video.loop = true;
+      video.muted = true;
+      const playPromise = video.play();
+      if (playPromise && playPromise.then) {
+        playPromise.then(() => {
+          if (cancelled) return;
+          setPreviewPlaying(true);
+          // The review screen is entered from a user tap. Unmute only after
+          // playback has started so audio cannot block the video decoder.
+          video.muted = false;
+        }).catch(() => {});
+      } else {
+        setPreviewPlaying(true);
+        video.muted = false;
+      }
+    };
+    if (video.readyState >= 2) {
+      startPlayback();
+    } else {
+      video.addEventListener("loadeddata", startPlayback, { once: true });
+      video.addEventListener("canplay", startPlayback, { once: true });
+    }
+    return () => {
+      cancelled = true;
+      video.removeEventListener("loadeddata", startPlayback);
+      video.removeEventListener("canplay", startPlayback);
+    };
+  }, [reviewing, recordedURL, isPhotoReel]);
 
   React.useEffect(() => {
     const v = editVideoRef.current;
@@ -25690,7 +25737,6 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   // Once a clip has been recorded or picked, this screen switches into a
   // review mode: playback of the clip + Retake, instead of the live feed.
   // reviewing = reviewMode is explicitly open (user tapped the pink circle to review)
-  const reviewing = reviewMode && !!recordedBlob;
   return React.createElement("div", { ref: reviewAreaRef, style: { position: "fixed", inset: 0, background: "#000", zIndex: 500, overflow: "hidden" },
     onPointerMove: reviewing ? reviewOnPointerMove : undefined,
     onPointerUp:   reviewing ? reviewEndDrag : undefined,
@@ -25701,16 +25747,8 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       ? (isPhotoReel
           ? React.createElement("img", { key: recordedURL, ref: reviewImgRef, src: recordedURL, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", background: "#000" } })
           : React.createElement("div", { style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", filter: videoFilter, background: "#000", willChange: "filter" } },
-              !cropApplying && React.createElement("video", { key: recordedURL, src: recordedURL, autoPlay: true, muted: true, loop: true, playsInline: true,
+              !cropApplying && React.createElement("video", { ref: reviewVideoRef, key: recordedURL, src: recordedURL, preload: "auto", autoPlay: false, muted: true, loop: true, playsInline: true, disableRemotePlayback: true,
                 onClick: togglePreviewPlay,
-                onCanPlay: e => {
-                  const v = e.target;
-                  // Review preview always uses the video's natural voice.
-                  v.muted = false;
-                  v.play().catch(() => {});
-                  // Do NOT touch previewMusicAudioRef here.
-                  // Music started in onSelect() persists on its own across all navigation.
-                },
                 // FIX: Auto-retry on decode failure — Android Chrome sometimes blacks out a
                 // blob URL video on first load.  Removing src + re-setting it forces a fresh
                 // decode context.  _retried flag prevents infinite retry loops.
@@ -25719,10 +25757,15 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
                   if (v.src && recordedURL && !v._retried) {
                     v._retried = true;
                     v.removeAttribute('src'); v.load();
-                    setTimeout(() => { v.src = recordedURL; v.load(); }, 300);
+                    setTimeout(() => {
+                      v.src = recordedURL;
+                      v.load();
+                      v.muted = true;
+                      v.play().then(() => { v.muted = false; setPreviewPlaying(true); }).catch(() => {});
+                    }, 300);
                   }
                 },
-                style: { position: "relative", width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center", cursor: "pointer", WebkitTapHighlightColor: "transparent", background: "#000" }
+                style: { position: "relative", width: "100%", height: "auto", maxHeight: "100%", objectFit: "contain", objectPosition: "center", cursor: "pointer", WebkitTapHighlightColor: "transparent", background: "#000", transform: "translateZ(0)", willChange: "transform" }
               })))
       : React.createElement("video", { ref: videoRef, autoPlay: true, playsInline: true, muted: true,
           style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: videoFilter, transform: facingMode === "user" ? "scaleX(-1)" : "none" }
