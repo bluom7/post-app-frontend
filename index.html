@@ -22563,6 +22563,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const editorVideoRecoveryTimerRef = React.useRef(null);
   const editorVideoMetaURLRef = React.useRef(null);
   const gallerySelectionRef = React.useRef(null);
+  const galleryPosterPromiseRef = React.useRef(null);
 
   // Gallery video poster preparation runs in the background after the editor opens.
   // This prevents Android Chrome from briefly painting the video surface black.
@@ -22805,6 +22806,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         // original audio only when the user explicitly enabled that control.
         video.muted = true;
         video.loop = true;
+        if (video.readyState >= 2 && video.videoWidth) setEditorVideoFrameReady(true);
         const promise = video.play();
         if (promise && promise.then) {
           promise.then(() => {
@@ -22822,10 +22824,14 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     };
 
     if (!needsReload) {
+      setEditorVideoFrameReady(true);
       playVideo();
       return;
     }
 
+    // The element is about to lose its decoded surface. Keep the cached poster
+    // visible until the replacement element has decoded a real frame.
+    setEditorVideoFrameReady(false);
     try {
       video.pause();
       video.removeAttribute("src");
@@ -23449,11 +23455,14 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     const mediaUrl = URL.createObjectURL(file);
     const selectionToken = {};
     gallerySelectionRef.current = selectionToken;
+    galleryPosterPromiseRef.current = null;
 
     if (recordedURL) { try { URL.revokeObjectURL(recordedURL); } catch (_) {} }
     setIsPhotoReel(isPhoto);
     setEditorVideoPoster(null);
     setEditorVideoFrameReady(isPhoto);
+    setReviewPoster(null);
+    setReviewVideoReady(false);
     setRecordedBlob(file);
     setRecordedURL(mediaUrl);
     stopStream(); setRecordTime(0);
@@ -23464,14 +23473,16 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     setGalleryFiles([]);
 
     if (!isPhoto) {
-      prepareGalleryVideo(file).then(prepared => {
+      const posterPromise = prepareGalleryVideo(file).then(prepared => {
         try { URL.revokeObjectURL(prepared.url); } catch (_) {}
-        if (gallerySelectionRef.current !== selectionToken) return;
+        if (gallerySelectionRef.current !== selectionToken) return prepared.poster;
+        // The same decoded frame is the fallback for editor, review, share,
+        // and every return path, so none of those surfaces starts from black.
         setEditorVideoPoster(prepared.poster);
-      }).catch(() => {
-        // The editor's video element remains the source of truth if poster
-        // extraction is unavailable on the device.
-      });
+        setReviewPoster(prepared.poster);
+        return prepared.poster;
+      }).catch(() => null);
+      galleryPosterPromiseRef.current = posterPromise;
     }
   }
 
@@ -23493,6 +23504,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
   function retakeReel() {
     gallerySelectionRef.current = null;
+    galleryPosterPromiseRef.current = null;
     setIsPhotoReel(false);
     setRecordedBlob(null);
     setReviewPoster(null);
@@ -23513,6 +23525,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
   function exitReelComposer(shouldClose = true) {
     gallerySelectionRef.current = null;
+    galleryPosterPromiseRef.current = null;
     setShowReelDiscardDialog(false);
     setShowEditDiscardDialog(false);
     setDiscardDialogFromEditor(false);
@@ -24517,6 +24530,16 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
   async function handleExport() {
     if (!recordedBlob || exporting) return;
+    if (!isPhotoReel) {
+      const currentPoster = captureTrimPoster();
+      if (currentPoster) {
+        setEditorVideoPoster(currentPoster);
+        setReviewPoster(currentPoster);
+      } else if (!editorVideoPoster && galleryPosterPromiseRef.current) {
+        // Do not enter share until a gallery clip has a non-black fallback.
+        await galleryPosterPromiseRef.current;
+      }
+    }
     if (isPhotoReel) {
       // Bake text & sticker overlays onto the photo before sharing
       setExporting(true); setExportProgress(15);
@@ -24818,6 +24841,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
   // ── Share step ──
   if (step === "share") {
+    const shareFallbackPoster = editorVideoPoster || reviewPoster;
     return React.createElement("div", { style: { position: "fixed", inset: 0, background: "#fff", zIndex: 500, display: "flex", flexDirection: "column", overflowY: "auto" } },
       showReelLocationPicker && React.createElement(LocationPickerOverlay, {
         onClose: () => setShowReelLocationPicker(false),
@@ -24835,7 +24859,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
       // Header
       React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "14px 16px 12px", borderBottom: "1px solid #f0f0f0", flexShrink: 0 } },
-        React.createElement("button", { onClick: () => setStep("edit"),
+        React.createElement("button", { onClick: () => { setEditorVideoFrameReady(false); setStep("edit"); },
           style: { background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center" } },
           React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "#111", strokeWidth: 2.5, strokeLinecap: "round" },
             React.createElement("path", { d: "M19 12H5M12 5l-7 7 7 7" }))),
@@ -24847,7 +24871,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
           shareSrc && (isPhotoReel
             ? React.createElement("img", { key: shareSrc, src: shareSrc, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
             : React.createElement("video", {
-                key: shareSrc, src: shareSrc, poster: editorVideoPoster || reviewPoster || undefined, autoPlay: true, loop: true, playsInline: true, muted: true,
+                key: shareSrc, src: shareSrc, poster: shareFallbackPoster || undefined, autoPlay: true, loop: true, playsInline: true, muted: true,
                 onLoadedData: e => {
                   const v = e.currentTarget;
                   const reveal = () => setShareVideoReady(true);
@@ -24858,11 +24882,11 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
                 },
                 onPlaying: () => setShareVideoReady(true),
                 onCanPlay: e => { const v = e.target; v.play().catch(() => {}); },
-                onError: e => { const v = e.target; if (v.src) { const s = v.src; v.removeAttribute('src'); v.load(); v.src = s; } },
+                onError: e => { const v = e.target; setShareVideoReady(false); if (v.src) { const s = v.src; v.removeAttribute('src'); v.load(); v.src = s; } },
                 onClick: e => { const v = e.currentTarget; if (v.paused) { v.play().catch(()=>{}); } else v.pause(); },
                 style: { width: "100%", height: "100%", objectFit: "cover", display: "block", WebkitTapHighlightColor: "transparent", cursor: "pointer", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter, opacity: (editorVideoPoster || reviewPoster) && !shareVideoReady ? 0 : 1 }
               }),
-            (editorVideoPoster || reviewPoster) && !shareVideoReady && React.createElement("img", { src: editorVideoPoster || reviewPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", zIndex: 1, filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })),
+            (editorVideoPoster || reviewPoster) && !shareVideoReady && React.createElement("img", { src: shareFallbackPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", zIndex: 1, filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })),
           React.createElement("div", { style: { position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.55)", borderRadius: 20, padding: "5px 14px", whiteSpace: "nowrap" } },
             React.createElement("span", { style: { color: "#fff", fontSize: 12, fontWeight: 600 } }, "Edit cover"))
         )
@@ -24958,7 +24982,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       src: recordedURL,
       duration: videoDuration || recordTime,
       trimStart, trimEnd, setTrimStart, setTrimEnd,
-      poster: trimPoster,
+      poster: trimPoster || editorVideoPoster || reviewPoster,
       textOverlays, setTextOverlays,
       selectedMusic: audioUrlRef.current ? {
         music_preview_url: audioUrlRef.current,
@@ -24968,10 +24992,10 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         music_artist: audioArtist || "",
         music_artwork: audioArtwork || ""
       } : null,
-      onDone: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setStep("edit"); },
-      onCancel: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setStep("edit"); },
-      onAudio: () => { setReturnToTrimAfterMusic(true); setStep("edit"); setShowMusicPicker(true); },
-      onText: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setTextDraft(""); setEditingOverlayId(null); setStep("edit"); setEditTool("Text"); }
+      onDone: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setEditorVideoFrameReady(false); setStep("edit"); },
+      onCancel: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setEditorVideoFrameReady(false); setStep("edit"); },
+      onAudio: () => { setReturnToTrimAfterMusic(true); setEditorVideoFrameReady(false); setStep("edit"); setShowMusicPicker(true); },
+      onText: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setEditorVideoFrameReady(false); setTextDraft(""); setEditingOverlayId(null); setStep("edit"); setEditTool("Text"); }
     });
   }
 
@@ -26032,7 +26056,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         // Bottom action buttons: Edit + Next →
         !editTextEditorOpen && React.createElement("div",{style:{display:"flex",justifyContent:"space-between",gap:0,padding:"6px 16px calc(6px + env(safe-area-inset-bottom))"}},
           React.createElement("button",{
-            onClick:e=>{ e.preventDefault(); e.stopPropagation(); if (isPhotoReel) return; setTrimPoster(captureTrimPoster()); setStep("trim"); },
+            onClick:e=>{ e.preventDefault(); e.stopPropagation(); if (isPhotoReel) return; setTrimPoster(captureTrimPoster() || editorVideoPoster || reviewPoster); setStep("trim"); },
             style:{flex:"0 0 110px",width:110,height:56,padding:0,borderRadius:8,background:"#fff",border:"none",color:"#000",fontWeight:700,fontSize:17,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.1}
           },
             "Edit"
@@ -26119,6 +26143,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   // Once a clip has been recorded or picked, this screen switches into a
   // review mode: playback of the clip + Retake, instead of the live feed.
   // reviewing = reviewMode is explicitly open (user tapped the pink circle to review)
+  const reviewFallbackPoster = reviewPoster || editorVideoPoster;
   return React.createElement("div", { ref: reviewAreaRef, style: { position: "fixed", inset: 0, background: "#07151c", zIndex: 500, overflow: "hidden" },
     onPointerMove: reviewing ? reviewOnPointerMove : undefined,
     onPointerUp:   reviewing ? reviewEndDrag : undefined,
@@ -26129,8 +26154,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       ? (isPhotoReel
           ? React.createElement("img", { key: recordedURL, ref: reviewImgRef, src: recordedURL, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", background: "#000" } })
           : React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(106px, 14.3vh, 130px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: "filter" } },
-              reviewPoster && !reviewVideoReady && React.createElement("img", { key: "review-poster-" + recordedURL, src: reviewPoster, alt: "", style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", zIndex: 0, pointerEvents: "none" } }),
-              !cropApplying && React.createElement("video", { ref: reviewVideoRef, key: recordedURL, src: recordedURL, poster: reviewPoster || undefined, preload: "auto", autoPlay: false, muted: true, loop: true, playsInline: true, disableRemotePlayback: true,
+              reviewFallbackPoster && !reviewVideoReady && React.createElement("img", { key: "review-poster-" + recordedURL, src: reviewFallbackPoster, alt: "", style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", zIndex: 0, pointerEvents: "none" } }),
+              !cropApplying && React.createElement("video", { ref: reviewVideoRef, key: recordedURL, src: recordedURL, poster: reviewFallbackPoster || undefined, preload: "auto", autoPlay: false, muted: true, loop: true, playsInline: true, disableRemotePlayback: true,
                 onClick: togglePreviewPlay,
                  onLoadedData: () => setReviewVideoReady(true),
                  onPlay: () => { setReviewVideoReady(true); setPreviewPlaying(true); },
@@ -26140,6 +26165,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
                 // decode context.  _retried flag prevents infinite retry loops.
                 onError: e => {
                   const v = e.target;
+                  // Never expose the browser's black error surface while the
+                  // same clip is being reloaded.
+                  setReviewVideoReady(false);
                   if (v.src && recordedURL && !v._retried) {
                     v._retried = true;
                     v.removeAttribute('src'); v.load();
@@ -26163,9 +26191,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
      : React.createElement(React.Fragment, null,
        !cameraReady && React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: recording ? "18%" : "clamp(129px, 17.3vh, 157px)", borderRadius: "0 0 22px 22px", background: "#07151c", zIndex: 0 } }),
        React.createElement("video", { ref: videoRef, autoPlay: true, playsInline: true, muted: true,
-          onLoadedMetadata: () => setCameraReady(true),
-          onCanPlay: () => setCameraReady(true),
-          onPlaying: () => setCameraReady(true),
+          onLoadedMetadata: () => { setCameraReady(true); setCameraTransitionPoster(null); },
+          onCanPlay: () => { setCameraReady(true); setCameraTransitionPoster(null); },
+          onPlaying: () => { setCameraReady(true); setCameraTransitionPoster(null); },
           style: { position: "absolute", top: 0, left: 0, right: 0, bottom: recording ? "18%" : "clamp(129px, 17.3vh, 157px)", width: "100%", height: recording ? "82%" : "calc(100% - clamp(129px, 17.3vh, 157px))", objectFit: "cover", borderRadius: "0 0 22px 22px", filter: videoFilter, transform: facingMode === "user" ? "scaleX(-1)" : "none", opacity: cameraReady ? 1 : 0, transition: "opacity 120ms ease", background: "transparent" }
         }),
        cameraTransitionPoster && React.createElement("img", { src: cameraTransitionPoster, alt: "", style: { position: "absolute", top: 0, left: 0, right: 0, bottom: recording ? "18%" : "clamp(129px, 17.3vh, 157px)", width: "100%", height: recording ? "82%" : "calc(100% - clamp(129px, 17.3vh, 157px))", objectFit: "cover", borderRadius: "0 0 22px 22px", zIndex: 2, pointerEvents: "none" } }),
@@ -26564,7 +26592,12 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
             // ── Center: progress ring circle (tap = go back to camera screen) ──
             // Ring fills based on recorded time / maxLength (not always full)
             React.createElement("div", {
-              onClick: () => { setReviewMode(false); startCamera(); },
+              onClick: () => {
+                 if (reviewFallbackPoster) setCameraTransitionPoster(reviewFallbackPoster);
+                 setCameraReady(false);
+                 setReviewMode(false);
+                 startCamera();
+               },
               style: { position: "relative", width: 80, height: 80, cursor: "pointer", WebkitTapHighlightColor: "transparent" }
             },
               React.createElement("svg", { width: 80, height: 80, viewBox: "0 0 80 80", style: { position: "absolute", inset: 0, transform: "rotate(-90deg)" } },
@@ -26603,6 +26636,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
                 const xEmoji = reviewEmojiOverlays.map(o => ({ id: o.id + "_re", text: o.emoji, xPct: o.xPct ?? 50, yPct: o.yPct ?? 40, color: "#fff", size: 52 }));
                 if (xText.length || xEmoji.length) setTextOverlays(prev => [...prev, ...xText, ...xEmoji]);
                 setReviewTextOverlays([]); setReviewEmojiOverlays([]);
+                if (reviewFallbackPoster) setEditorVideoPoster(reviewFallbackPoster);
+                setEditorVideoFrameReady(false);
                 setStep("edit");
               },
               style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 5, background: "none", border: "none", cursor: "pointer", WebkitTapHighlightColor: "transparent" }
