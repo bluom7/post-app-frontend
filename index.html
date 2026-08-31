@@ -24915,7 +24915,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       React.createElement("div", { style: { display: "flex", justifyContent: "center", padding: "18px 16px 8px", flexShrink: 0 } },
         React.createElement("div", { style: { width: "52%", maxWidth: 200, borderRadius: 16, overflow: "hidden", position: "relative", background: "#000", aspectRatio: "9/16" } },
           shareMediaSrc && (isPhotoReel
-            ? React.createElement("img", { key: shareMediaSrc, src: shareMediaSrc, onError: e => { if (recordedURL && e.currentTarget.src !== recordedURL) e.currentTarget.src = recordedURL; }, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
+            ? React.createElement("img", { key: shareMediaSrc, src: shareMediaSrc, onError: e => { const fallback = photoDataUrl || recordedURL; if (fallback && e.currentTarget.src !== fallback) e.currentTarget.src = fallback; }, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
             : React.createElement("video", {
                 key: shareMediaSrc, src: shareMediaSrc, poster: shareFallbackPoster || undefined, autoPlay: true, loop: true, playsInline: true, muted: true,
                 onLoadedData: e => {
