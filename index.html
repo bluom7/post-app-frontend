@@ -23448,42 +23448,54 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     return function() { urls.forEach(function(u) { if (u) URL.revokeObjectURL(u); }); };
   }, [galleryFiles]);
 
-  function useGalleryFile(file) {
+  async function useGalleryFile(file) {
     setExportedBlob(null);
     setTextOverlays([]); setReelStickerOverlays([]);
     const isPhoto = file.type.startsWith("image/");
-    const mediaUrl = URL.createObjectURL(file);
     const selectionToken = {};
     gallerySelectionRef.current = selectionToken;
     galleryPosterPromiseRef.current = null;
+    setShowPickGallery(false);
+    setGalleryFiles([]);
+    stopStream(); setRecordTime(0);
 
+    // Decode the first video frame before mounting the editor. Android Chrome
+    // can paint a newly mounted video surface black for one or more frames;
+    // keeping the editor closed until its poster is ready removes that flash.
+    let mediaUrl;
+    let poster = null;
+    if (isPhoto) {
+      mediaUrl = URL.createObjectURL(file);
+    } else {
+      try {
+        const prepared = await prepareGalleryVideo(file);
+        if (gallerySelectionRef.current !== selectionToken) {
+          try { URL.revokeObjectURL(prepared.url); } catch (_) {}
+          return;
+        }
+        mediaUrl = prepared.url;
+        poster = prepared.poster;
+      } catch (_) {
+        // Keep supported-but-unseekable files usable; the editor will reveal
+        // only after its own video element has decoded a real frame.
+        mediaUrl = URL.createObjectURL(file);
+      }
+    }
+
+    if (gallerySelectionRef.current !== selectionToken) {
+      try { URL.revokeObjectURL(mediaUrl); } catch (_) {}
+      return;
+    }
     if (recordedURL) { try { URL.revokeObjectURL(recordedURL); } catch (_) {} }
     setIsPhotoReel(isPhoto);
-    setEditorVideoPoster(null);
+    setEditorVideoPoster(poster);
     setEditorVideoFrameReady(isPhoto);
-    setReviewPoster(null);
+    setReviewPoster(poster);
     setReviewVideoReady(false);
     setRecordedBlob(file);
     setRecordedURL(mediaUrl);
-    stopStream(); setRecordTime(0);
-    // Open the editor in the same selection flow. Video poster extraction is
-    // deliberately non-blocking so the camera/reel landing screen is skipped.
+    // Open the editor directly after the selected media has a safe first frame.
     setStep("edit");
-    setShowPickGallery(false);
-    setGalleryFiles([]);
-
-    if (!isPhoto) {
-      const posterPromise = prepareGalleryVideo(file).then(prepared => {
-        try { URL.revokeObjectURL(prepared.url); } catch (_) {}
-        if (gallerySelectionRef.current !== selectionToken) return prepared.poster;
-        // The same decoded frame is the fallback for editor, review, share,
-        // and every return path, so none of those surfaces starts from black.
-        setEditorVideoPoster(prepared.poster);
-        setReviewPoster(prepared.poster);
-        return prepared.poster;
-      }).catch(() => null);
-      galleryPosterPromiseRef.current = posterPromise;
-    }
   }
 
   function onGalleryPick(e) {
@@ -25570,7 +25582,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
                onError: () => { restoreEditorVideoPlayback(true); },
               onTimeUpdate: e => { if (editTool === "Trim") return; const v = e.target; if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v); },
               onClick: togglePreviewPlay,
-               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: "cover", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform", opacity: editorVideoPoster && !editorVideoFrameReady ? 0 : 1 }
+               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: "cover", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform", opacity: editorVideoFrameReady ? 1 : 0 }
             }),
             editorVideoPoster && !editorVideoFrameReady && React.createElement("img", { src: editorVideoPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center center", display: "block", zIndex: 2, pointerEvents: "none" } })
       ),
