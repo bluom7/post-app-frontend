@@ -22710,6 +22710,21 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     } catch (_) {}
   }
 
+
+  function clearPreviewMusicAudio(resetToStart) {
+    const audio = previewMusicAudioRef.current;
+    if (!audio) return;
+    try {
+      audio.pause();
+      audio.onended = null;
+      audio.onerror = null;
+      audio.ontimeupdate = null;
+      if (resetToStart) audio.currentTime = Math.max(0, (audioStartTimeRef.current || 0) / 1000);
+      audio.removeAttribute('src');
+      audio.load();
+    } catch (_) {}
+    previewMusicAudioRef.current = null;
+  }
   // One playback owner for editor video + selected song. The video stays muted;
   // the song is seeked once at startup and never reset from video timeupdate.
   function startPreviewMusicWithVideo() {
@@ -25576,7 +25591,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
       // Hidden audio input
       React.createElement("input", { ref: audioInputRef, type: "file", accept: "audio/*", style: { display: "none" },
-        onChange: e => { const f = e.target.files && e.target.files[0]; if (f) { audioUrlRef.current = null; audioFileRef.current = f; audioStartTimeRef.current = 0; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; } if (trimVideoRef.current) trimVideoRef.current.muted = true; trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setPreviewPlaying(false); setAudioLabel(f.name.replace(/\.[^.]+$/, "")); startPreviewMusicWithVideo(); showToast && showToast("Audio added ✓", "#22C55E"); } } }),
+        onChange: e => { const f = e.target.files && e.target.files[0]; if (f) { audioUrlRef.current = null; audioFileRef.current = f; audioStartTimeRef.current = 0; clearPreviewMusicAudio(true); if (editVideoRef.current) { editVideoRef.current.pause(); editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; } if (trimVideoRef.current) { trimVideoRef.current.pause(); trimVideoRef.current.currentTime = trimStart || 0; trimVideoRef.current.muted = true; } trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setPreviewPlaying(false); setAudioLabel(f.name.replace(/\.[^.]+$/, "")); showToast && showToast("Audio added ✓", "#22C55E"); } } }),
 
       // ── Full-screen video (tap to play/pause) ──
       // NOTE: filter is on the wrapper div, NOT on <video>/<img>.
@@ -26129,7 +26144,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = normalizeMusicClipDuration(clipDuration); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) { editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; } if (trimVideoRef.current) { trimVideoRef.current.muted = true; } trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); if (!isPhotoReel) startPreviewMusicWithVideo(); if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); } showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = normalizeMusicClipDuration(clipDuration); clearPreviewMusicAudio(true); if (editVideoRef.current) { editVideoRef.current.pause(); editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; } if (trimVideoRef.current) { trimVideoRef.current.pause(); trimVideoRef.current.currentTime = trimStart || 0; trimVideoRef.current.muted = true; } trimShouldBePausedRef.current = false; setTrimVideoEnded(false); setOrigAudioOn(false); setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setEditTool(null); setPreviewPlaying(false); if (returnToTrimAfterMusic) { setReturnToTrimAfterMusic(false); setStep("trim"); } showToast && showToast("Song add hua ✓ — play dabao", "#22C55E"); } }),
 
       // Keep the same close actions available from the editor as from camera.
       discardDialogFromEditor && showReelDiscardDialog && React.createElement("div", {
