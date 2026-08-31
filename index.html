@@ -25038,6 +25038,18 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
   // ── Reels trim step: use the exact Compose module overlay ──
   if (step === "trim" && recordedURL && !isPhotoReel) {
+    // Preserve the decoded trim frame while the editor video remounts. Android
+    // can briefly lose the blob decoder during this trim -> edit transition.
+    const returnToEditorFromTrim = () => {
+      const fallbackPoster = trimPoster || editorVideoPoster || reviewPoster;
+      if (fallbackPoster) setEditorVideoPoster(fallbackPoster);
+      // Let the new editor element decode its first frame before any playback.
+      initialEditorPauseRef.current = true;
+      setReturnToTrimAfterMusic(false);
+      setTrimPoster(null);
+      setEditorVideoFrameReady(false);
+      setStep("edit");
+    };
     return React.createElement(ComposeVideoTrimOverlay, {
       src: recordedURL,
       duration: videoDuration || recordTime,
@@ -25052,10 +25064,10 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         music_artist: audioArtist || "",
         music_artwork: audioArtwork || ""
       } : null,
-      onDone: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setEditorVideoFrameReady(false); setStep("edit"); },
-      onCancel: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setEditorVideoFrameReady(false); setStep("edit"); },
+      onDone: returnToEditorFromTrim,
+      onCancel: returnToEditorFromTrim,
       onAudio: () => { setReturnToTrimAfterMusic(true); setEditorVideoFrameReady(false); setStep("edit"); setShowMusicPicker(true); },
-      onText: () => { setReturnToTrimAfterMusic(false); setTrimPoster(null); setEditorVideoFrameReady(false); setTextDraft(""); setEditingOverlayId(null); setStep("edit"); setEditTool("Text"); }
+      onText: () => { returnToEditorFromTrim(); setTextDraft(""); setEditingOverlayId(null); setEditTool("Text"); }
     });
   }
 
