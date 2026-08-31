@@ -24623,7 +24623,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         _pctx.drawImage(_pImg, 0, 0, _pW, _pH);
         // Bake sticker overlays
         await Promise.all(reelStickerOverlays.map(s => new Promise(res => {
-          const si = new Image(); si.onload = () => {
+          const si = new Image(); si.crossOrigin = "anonymous"; si.onload = () => {
             const sw = Math.round(_pW * 0.2);
             _pctx.drawImage(si, (s.xPct/100)*_pW - sw/2, (s.yPct/100)*_pH - sw/2, sw, sw);
             res();
