@@ -22515,6 +22515,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const initialCameraStreamRef = React.useRef(initialStream || null);
   const initialCameraErrorRef = React.useRef(initialCameraError || null);
   const streamRef = React.useRef(null);
+  const cameraStartPromiseRef = React.useRef(null);
   const recorderRef = React.useRef(null);
   const chunksRef = React.useRef([]);
   const timerRef = React.useRef(null);
@@ -22547,6 +22548,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const reviewImgRef = React.useRef(null);
   const reviewVideoRef = React.useRef(null);
   const reviewing = reviewMode && !!recordedBlob;
+  const reviewCameraRestoreRef = React.useRef(reviewing);
   const autoPostRef = React.useRef(false);
   const trimTimelineRef = React.useRef(null);
   const trimDragSideRef = React.useRef(null); // "left" | "right" | null
@@ -22759,7 +22761,6 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
   function attachCameraStream(stream) {
     streamRef.current = stream;
-    setCameraReady(false);
     const video = videoRef.current;
     if (!video) return;
     video.srcObject = stream;
@@ -22804,11 +22805,27 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   }, [facingMode]);
   React.useEffect(() => { facingModeRef.current = facingMode; }, [facingMode]);
 
+  // Returning from review can race React mounting the live camera video.
+  // Re-attach the existing stream after the camera view is committed.
+  React.useEffect(() => {
+    const wasReviewing = reviewCameraRestoreRef.current;
+    reviewCameraRestoreRef.current = reviewing;
+    if (reviewing || !wasReviewing) return;
+    let cancelled = false;
+    const frame = requestAnimationFrame(() => {
+      if (cancelled) return;
+      if (streamRef.current) attachCameraStream(streamRef.current);
+      else startCamera();
+    });
+    return () => { cancelled = true; cancelAnimationFrame(frame); };
+  }, [reviewing]);
+
   function stopStream() {
     if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
   }
 
   async function startCamera() {
+    if (cameraStartPromiseRef.current) return cameraStartPromiseRef.current;
     setCameraError(null);
     setCameraReady(false);
     // Release the previous camera before opening another one. Keeping two
@@ -22818,20 +22835,27 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
     }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode,
-          width: { ideal: 1280, max: 1920 },
-          height: { ideal: 720, max: 1080 },
-          frameRate: { ideal: 30, max: 30 },
-        },
-        audio: true,
-      });
-      attachCameraStream(stream);
-    } catch(e) {
-      setCameraError(e.name === "NotAllowedError" ? "Camera permission denied.\nPlease allow camera access." : "Camera error: " + e.message);
-    }
+    let startPromise;
+    startPromise = (async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode,
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 720, max: 1080 },
+            frameRate: { ideal: 30, max: 30 },
+          },
+          audio: true,
+        });
+        attachCameraStream(stream);
+      } catch(e) {
+        setCameraError(e.name === "NotAllowedError" ? "Camera permission denied.\nPlease allow camera access." : "Camera error: " + e.message);
+      } finally {
+        if (cameraStartPromiseRef.current === startPromise) cameraStartPromiseRef.current = null;
+      }
+    })();
+    cameraStartPromiseRef.current = startPromise;
+    return startPromise;
   }
 
   async function flipCamera() {
@@ -25891,7 +25915,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
                 )
               )))
      : React.createElement(React.Fragment, null,
-       !cameraReady && React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: recording ? "18%" : "clamp(129px, 17.3vh, 157px)", borderRadius: "0 0 22px 22px", background: "radial-gradient(circle at 18% 18%, rgba(71,196,221,0.42), transparent 34%), radial-gradient(circle at 82% 22%, rgba(18,104,137,0.55), transparent 42%), radial-gradient(circle at 50% 75%, rgba(8,47,68,0.95), transparent 62%), linear-gradient(145deg, #0b566f 0%, #10394f 48%, #a19382 100%)", filter: "blur(12px)", transform: "scale(1.04)", zIndex: 0 } }),
+       !cameraReady && React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: recording ? "18%" : "clamp(129px, 17.3vh, 157px)", borderRadius: "0 0 22px 22px", background: "#07151c", zIndex: 0 } }),
        React.createElement("video", { ref: videoRef, autoPlay: true, playsInline: true, muted: true,
           onLoadedMetadata: () => setCameraReady(true),
           onCanPlay: () => setCameraReady(true),
