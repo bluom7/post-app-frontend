@@ -22560,8 +22560,6 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const [trimPoster, setTrimPoster] = React.useState(null);
   const [editorVideoPoster, setEditorVideoPoster] = React.useState(null);
   const [editorVideoFrameReady, setEditorVideoFrameReady] = React.useState(false);
-  // Only the first decode after a direct gallery video selection shows loading.
-  const [galleryInitialVideoLoading, setGalleryInitialVideoLoading] = React.useState(false);
   const editorVideoRecoveryTimerRef = React.useRef(null);
   const editorVideoMetaURLRef = React.useRef(null);
   const gallerySelectionRef = React.useRef(null);
@@ -22649,10 +22647,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     // A picked video opens the editor immediately. Keep readiness false until
     // its own video element decodes, without resetting it when the background
     // poster becomes available.
-    if (isPhotoReel || !recordedURL) {
-      setEditorVideoFrameReady(true);
-      setGalleryInitialVideoLoading(false);
-    }
+    if (isPhotoReel || !recordedURL) setEditorVideoFrameReady(true);
   }, [recordedURL, isPhotoReel]);
 
   // Keep one stable audio element for the editor. Recreating Audio on every tap
@@ -22811,10 +22806,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         // original audio only when the user explicitly enabled that control.
         video.muted = true;
         video.loop = true;
-        if (video.readyState >= 2 && video.videoWidth) {
-      setEditorVideoFrameReady(true);
-      setGalleryInitialVideoLoading(false);
-    }
+        if (video.readyState >= 2 && video.videoWidth) setEditorVideoFrameReady(true);
         const promise = video.play();
         if (promise && promise.then) {
           promise.then(() => {
@@ -22833,7 +22825,6 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
     if (!needsReload) {
       setEditorVideoFrameReady(true);
-      setGalleryInitialVideoLoading(false);
       playVideo();
       return;
     }
@@ -23470,14 +23461,13 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     setIsPhotoReel(isPhoto);
     setEditorVideoPoster(null);
     setEditorVideoFrameReady(isPhoto);
-    setGalleryInitialVideoLoading(!isPhoto);
     setReviewPoster(null);
     setReviewVideoReady(false);
     setRecordedBlob(file);
     setRecordedURL(mediaUrl);
     stopStream(); setRecordTime(0);
-    // Mount the editor immediately. Video decoding and poster preparation run
-    // in parallel, so the camera/main screen never appears between screens.
+    // Open the editor in the same selection flow. Video poster extraction is
+    // deliberately non-blocking so the camera/reel landing screen is skipped.
     setStep("edit");
     setShowPickGallery(false);
     setGalleryFiles([]);
@@ -23486,8 +23476,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       const posterPromise = prepareGalleryVideo(file).then(prepared => {
         try { URL.revokeObjectURL(prepared.url); } catch (_) {}
         if (gallerySelectionRef.current !== selectionToken) return prepared.poster;
-        // Keep the decoded poster as a safe fallback while the editor video
-        // obtains its own real frame; this prevents any black compositor flash.
+        // The same decoded frame is the fallback for editor, review, share,
+        // and every return path, so none of those surfaces starts from black.
         setEditorVideoPoster(prepared.poster);
         setReviewPoster(prepared.poster);
         return prepared.poster;
@@ -25558,10 +25548,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
               onLoadedMetadata: onEditedMeta,
                onLoadedData: e => {
                  const v = e.target;
-                 const reveal = () => {
-                    setEditorVideoFrameReady(true);
-                    setGalleryInitialVideoLoading(false);
-                  };
+                 const reveal = () => setEditorVideoFrameReady(true);
                  if (typeof v.requestVideoFrameCallback === "function") {
                    try { v.requestVideoFrameCallback(reveal); return; } catch (_) {}
                  }
@@ -25583,11 +25570,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
                onError: () => { restoreEditorVideoPlayback(true); },
               onTimeUpdate: e => { if (editTool === "Trim") return; const v = e.target; if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v); },
               onClick: togglePreviewPlay,
-               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: "cover", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform", opacity: editorVideoFrameReady ? 1 : 0 }
+               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: "cover", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform", opacity: editorVideoPoster && !editorVideoFrameReady ? 0 : 1 }
             }),
-            galleryInitialVideoLoading && !editorVideoFrameReady && React.createElement("div", { role: "status", "aria-label": "Loading video", style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 3, pointerEvents: "none", background: "#000" } },
-              React.createElement("div", { style: { width: 32, height: 32, border: "3px solid rgba(255,255,255,0.25)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" } })
-            )
+            editorVideoPoster && !editorVideoFrameReady && React.createElement("img", { src: editorVideoPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center center", display: "block", zIndex: 2, pointerEvents: "none" } })
       ),
 
       // Live draft preview: keep the exact text in sync with the bottom Text input while typing.
