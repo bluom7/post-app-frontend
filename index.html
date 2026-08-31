@@ -23260,16 +23260,21 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       const done = new Promise(res => { recorder.onstop = res; });
       recorder.start(100);
       let animId;
+      let cropHasFrame = false;
       const drawLoop = () => {
-        if (!vid.paused && !vid.ended) {
+        if (vid.ended) return;
+        if (!vid.paused && vid.readyState >= 2 && vid.videoWidth > 0 && vid.videoHeight > 0) {
           ctx.drawImage(vid, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-          animId = requestAnimationFrame(drawLoop);
+          cropHasFrame = true;
         }
+        animId = requestAnimationFrame(drawLoop);
       };
       vid.onplay = drawLoop;
       vid.onended = () => { cancelAnimationFrame(animId); recorder.stop(); };
       await vid.play();
+      drawLoop();
       await done;
+      if (!cropHasFrame) throw new Error("Could not decode a crop frame");
       const newBlob = new Blob(chunks, { type: chunks[0]?.type || supported });
       const oldURL = recordedURL;
       const newURL = URL.createObjectURL(newBlob);
@@ -23764,7 +23769,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     if (isPhotoReel) {
       setUploading(true); setUploadProgress(5); setUploadError(null);
       try {
-        const photoFile = recordedBlob instanceof File ? recordedBlob : new File([recordedBlob], "photo.jpg", { type: recordedBlob.type || "image/jpeg" });
+        const photoSource = exportedBlob || recordedBlob;
+        const photoFile = photoSource instanceof File ? photoSource : new File([photoSource], "photo.jpg", { type: photoSource.type || "image/jpeg" });
         const pfd = new FormData(); pfd.append("file", photoFile, photoFile.name);
         setUploadProgress(15);
         const pCtrl = new AbortController();
@@ -24291,7 +24297,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     return () => {
       if (prevShareSrcRef.current) { try { URL.revokeObjectURL(prevShareSrcRef.current); } catch(_){} prevShareSrcRef.current = null; }
     };
-  }, [step, exportedBlob, recordedURL]);
+  }, [step, exportedBlob, recordedBlob, recordedURL]);
 
   // Share gets its own video element/URL. Keep the captured first frame visible
   // until that new element has decoded a frame, avoiding Android black flashes.
@@ -24604,10 +24610,12 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     if (isPhotoReel) {
       // Bake text & sticker overlays onto the photo before sharing
       setExporting(true); setExportProgress(15);
+      let _photoUrl = null;
       try {
+        _photoUrl = URL.createObjectURL(recordedBlob);
         const _pImg = new Image();
         // NOTE: No crossOrigin on blob URLs — setting it taints canvas on mobile, causing black export
-        await new Promise((res) => { _pImg.onload = res; _pImg.onerror = () => res(); _pImg.src = recordedURL; });
+        await new Promise((res) => { _pImg.onload = res; _pImg.onerror = () => res(); _pImg.src = _photoUrl; });
         const _pW = _pImg.naturalWidth || 1080, _pH = _pImg.naturalHeight || 1920;
         const _pc = document.createElement("canvas");
         _pc.width = _pW; _pc.height = _pH;
@@ -24621,17 +24629,26 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
             res();
           }; si.onerror = () => res(); si.src = s.url;
         })));
-        // Bake text / emoji overlays
-        textOverlays.forEach(o => {
+        // Bake text, emoji, and sticker overlays onto the photo.
+        const _photoTextOverlays = [...(textOverlays || []), ...(reviewTextOverlays || [])];
+        _photoTextOverlays.forEach(o => {
           _pctx.save();
-          const _fs = Math.round(_pW * ((o.size || 22) / 390));
-          _pctx.font = "bold " + _fs + "px sans-serif";
+          const _fs = Math.max(12, Math.round(_pW * ((o.size || 22) / 390)));
+          _pctx.font = (o.font === "Headline" ? "900 " : "bold ") + _fs + "px sans-serif";
           _pctx.fillStyle = o.color || "#fff";
           _pctx.strokeStyle = "rgba(0,0,0,0.7)";
           _pctx.lineWidth = Math.max(2, _pW * 0.004);
           _pctx.textAlign = "center"; _pctx.textBaseline = "middle";
-          _pctx.strokeText(o.text, (o.xPct / 100) * _pW, (o.yPct / 100) * _pH);
-          _pctx.fillText(o.text, (o.xPct / 100) * _pW, (o.yPct / 100) * _pH);
+          const _px = (o.xPct / 100) * _pW, _py = (o.yPct / 100) * _pH;
+          _pctx.strokeText(o.text, _px, _py);
+          _pctx.fillText(o.text, _px, _py);
+          _pctx.restore();
+        });
+        [...(editEmojiOverlays || []), ...(reviewEmojiOverlays || [])].forEach(o => {
+          _pctx.save();
+          _pctx.font = Math.max(24, Math.round(_pW * ((o.size || 64) / 390))) + "px sans-serif";
+          _pctx.textAlign = "center"; _pctx.textBaseline = "middle";
+          _pctx.fillText(o.emoji || "", (o.xPct / 100) * _pW, (o.yPct / 100) * _pH);
           _pctx.restore();
         });
         setExportProgress(80);
@@ -24642,261 +24659,207 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         setExportedBlob(_pBlob);
         setExportProgress(100);
       } catch (_pe) { /* keep original on error */ }
+      finally { if (_photoUrl) { try { URL.revokeObjectURL(_photoUrl); } catch (_) {} } }
       setExporting(false); setStep("share"); return;
     }
 
-    // ── FAST PATH: skip MediaRecorder re-encoding for unmodified gallery videos ──
-    //
-    // MediaRecorder re-encodes the video in real-time via canvas + requestAnimationFrame.
-    // On mobile this is unreliable: the video may buffer mid-capture, causing the
-    // wall-clock timer to advance while video.currentTime freezes, resulting in a
-    // shorter exported clip (e.g. 16 s instead of 23 s).
-    //
-    // When the user picks a gallery video and posts it without any edits that need
-    // to be baked into the video frames (no text/sticker/emoji overlays, no filter
-    // effect, no aspect-ratio crop, no external music mix-in), there is NO reason to
-    // re-encode at all. We just upload the original File and Cloudinary stores it
-    // at its real, unmodified duration.
-    //
-    // Canvas re-encoding is only required when overlays, effects, or external music
-    // must be baked into the video bitstream.
-    const _isGalleryFile  = recordedBlob instanceof File;
-    const _hasTextOv      = (textOverlays && textOverlays.length > 0) ||
-                            (reviewTextOverlays && reviewTextOverlays.length > 0);
-    const _hasStickerOv   = reelStickerOverlays && reelStickerOverlays.length > 0;
-    const _hasEmojiOv     = (editEmojiOverlays && editEmojiOverlays.length > 0) ||
-                            (reviewEmojiOverlays && reviewEmojiOverlays.length > 0);
-    const _hasEffect      = effect && effect !== 'none';
-    const _hasCrop        = aspect && aspect !== 'original';
-    const _hasExtMusic    = !!(audioFileRef.current || audioUrlRef.current);
-    const _needsBaking    = _hasTextOv || _hasStickerOv || _hasEmojiOv || _hasEffect || _hasCrop || _hasExtMusic;
+    // ── VIDEO EXPORT ────────────────────────────────────────────────────────────
+    // Keep the original File when no pixels/audio need changing. Every path that
+    // does need processing uses one dedicated decoder and only records decoded
+    // video frames. Android Chrome can expose a readyState=2 video whose current
+    // surface is still black; recording that surface is the source of the old bug.
+    const _isGalleryFile = recordedBlob instanceof File;
+    const _hasTextOv = (textOverlays && textOverlays.length > 0) || (reviewTextOverlays && reviewTextOverlays.length > 0);
+    const _hasStickerOv = reelStickerOverlays && reelStickerOverlays.length > 0;
+    const _hasEmojiOv = (editEmojiOverlays && editEmojiOverlays.length > 0) || (reviewEmojiOverlays && reviewEmojiOverlays.length > 0);
+    const _hasEffect = effect && effect !== "none";
+    const _hasCrop = aspect && aspect !== "original";
+    const _hasExtMusic = !!(audioFileRef.current || audioUrlRef.current);
+    const _needsBaking = _hasTextOv || _hasStickerOv || _hasEmojiOv || _hasEffect || _hasCrop || _hasExtMusic;
 
     if (_isGalleryFile && !_needsBaking) {
-      // Nothing to bake — upload the original gallery File as-is.
-      // exportedBlob stays null → blobToUpload = recordedBlob (original File).
-      // Cloudinary will see the real video and return the correct duration.
       setExportedBlob(null);
       setStep("share");
       return;
     }
 
-    // preload sticker images for canvas bake-in
-    await Promise.all(reelStickerOverlays.map(s => new Promise(res => {
-      const img = new Image(); img.crossOrigin = "anonymous";
-      img.onload = () => { s._img = img; res(); };
-      img.onerror = () => res(); // skip on CORS fail
+    await Promise.all((reelStickerOverlays || []).map(s => new Promise(resolve => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => { s._img = img; resolve(); };
+      img.onerror = () => resolve();
       img.src = s.url;
     })));
-    // FIX: Pause and detach editVideoRef before starting export so Android Chrome
-    // doesn't try to keep decoding the same blob URL from two video elements at once.
-    if (editVideoRef.current) {
-      try { editVideoRef.current.pause(); } catch(_) {}
-    }
+
+    if (editVideoRef.current) { try { editVideoRef.current.pause(); } catch (_) {} }
     setExporting(true); setExportProgress(2);
-    let video, audioEl, _exportVidUrl;
+    let video = null, audioEl = null, recorder = null, _exportVidUrl = null, _audioObjectUrl = null;
     try {
-      const canvasCaptureSupported = !!(document.createElement("canvas").captureStream || document.createElement("canvas").webkitCaptureStream);
+      const _probeCanvas = document.createElement("canvas");
+      const _captureStream = _probeCanvas.captureStream || _probeCanvas.webkitCaptureStream;
+      if (!_captureStream) throw new Error("Video export is not supported on this browser");
+
       video = document.createElement("video");
-      // FIX: Use a separate blob URL for the export video so the edit-preview video
-      // (editVideoRef) retains exclusive ownership of recordedURL.  On Android Chrome,
-      // two video elements sharing the same blob URL can leave each other's decode
-      // buffer in a black/stalled state — using a dedicated URL for export prevents this.
+      video.preload = "auto"; video.muted = true; video.playsInline = true;
       _exportVidUrl = URL.createObjectURL(recordedBlob);
-      video.src = _exportVidUrl; video.muted = true; video.playsInline = true;
-      // FIX: preload="auto" tells the browser to fully buffer the video blob
-      // before we start recording. Without this, on slow/low-memory mobile
-      // devices the video stalls mid-playback — wall-clock elapsed keeps
-      // counting but currentTime freezes, causing MediaRecorder to capture
-      // only the buffered frames (e.g. 16 s instead of 23 s).
-      video.preload = "auto";
-      // NOTE: Do NOT set crossOrigin on blob URLs — it taints the canvas on mobile (black export)
-      // Wait for both metadata AND enough data to play through without stalling.
+      video.src = _exportVidUrl;
       await new Promise((resolve, reject) => {
-        video.onerror = () => reject(new Error("Could not read recorded video"));
-        // canplaythrough fires when the browser believes it can play to the end
-        // without buffering. Fall back through loadeddata → loadedmetadata if
-        // canplaythrough never fires (some Android WebViews skip it for blobs).
-        const onReady = () => { video.removeEventListener('canplaythrough', onReady); video.removeEventListener('loadeddata', onFallback); resolve(); };
-        const onFallback = () => { video.removeEventListener('canplaythrough', onReady); video.removeEventListener('loadeddata', onFallback); resolve(); };
-        video.addEventListener('canplaythrough', onReady, { once: true });
-        video.addEventListener('loadeddata', onFallback, { once: true });
-        // Hard safety timeout — if neither event fires in 6 s, proceed anyway
-        setTimeout(() => { video.removeEventListener('canplaythrough', onReady); video.removeEventListener('loadeddata', onFallback); resolve(); }, 6000);
-        video.load(); // trigger buffering immediately
+        let settled = false;
+        const timer = setTimeout(() => { if (!settled) { settled = true; reject(new Error("Video metadata timed out")); } }, 10000);
+        const done = () => { if (settled) return; settled = true; clearTimeout(timer); resolve(); };
+        video.onloadedmetadata = done;
+        video.onerror = () => { if (settled) return; settled = true; clearTimeout(timer); reject(new Error("Could not decode video")); };
+        video.load();
       });
+
       const vw = video.videoWidth || 720, vh = video.videoHeight || 1280;
-      // Guard against exporting before the editor's own metadata/trim state has settled
-      // (trimEnd defaults to 0 until onEditedMeta fires) — fall back to the real clip duration.
-      const safeDuration = video.duration && isFinite(video.duration) ? video.duration : (videoDuration || 0);
-      const effTrimEnd = trimEnd > 0 ? Math.min(trimEnd, safeDuration || trimEnd) : safeDuration;
-      const effTrimStart = Math.min(trimStart, Math.max(0, effTrimEnd - 0.2));
+      const safeDuration = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : (videoDuration || 0);
+      if (!safeDuration) throw new Error("Video duration unavailable");
+      const effTrimEnd = trimEnd > 0 ? Math.min(trimEnd, safeDuration) : safeDuration;
+      const effTrimStart = Math.max(0, Math.min(trimStart || 0, Math.max(0, effTrimEnd - 0.2)));
       const aspectDef = ASPECTS.find(a => a.id === aspect) || ASPECTS[0];
       let cropW = vw, cropH = vh;
       if (vw / vh > aspectDef.ratio) cropW = vh * aspectDef.ratio; else cropH = vw / aspectDef.ratio;
       const cropX = (vw - cropW) / 2, cropY = (vh - cropH) / 2;
       const outH = resolution === "1080p" ? 1080 : 720;
-      const outW = Math.round(outH * aspectDef.ratio);
-
-      if (!canvasCaptureSupported) throw new Error("captureStream unavailable");
-
+      const outW = Math.max(1, Math.round(outH * aspectDef.ratio));
       const canvas = document.createElement("canvas");
       canvas.width = outW; canvas.height = outH;
-      const ctx = canvas.getContext("2d");
-      const canvasStream = (canvas.captureStream || canvas.webkitCaptureStream).call(canvas, 30);
+      const ctx = canvas.getContext("2d", { alpha: false });
+      if (!ctx) throw new Error("Canvas unavailable");
+
+      const waitForDecodedFrame = targetTime => new Promise((resolve, reject) => {
+        let settled = false, rafId = null;
+        const cleanup = () => {
+          clearTimeout(timer);
+          if (rafId !== null && window.cancelAnimationFrame) cancelAnimationFrame(rafId);
+          video.removeEventListener("loadeddata", check); video.removeEventListener("canplay", check);
+          video.removeEventListener("playing", check); video.removeEventListener("timeupdate", check);
+        };
+        const finish = ok => {
+          if (settled) return;
+          settled = true; cleanup();
+          if (ok) resolve(); else reject(new Error("Video frame decode timed out"));
+        };
+        const onDecoded = () => finish(true);
+        const check = () => {
+          const ready = video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0 && Number.isFinite(video.currentTime) && video.currentTime >= Math.max(0, targetTime - 0.25);
+          if (ready) {
+            if (typeof video.requestVideoFrameCallback === "function") { try { video.requestVideoFrameCallback(onDecoded); return; } catch (_) {} }
+            finish(true); return;
+          }
+          rafId = window.requestAnimationFrame ? requestAnimationFrame(check) : setTimeout(check, 40);
+        };
+        const timer = setTimeout(() => finish(false), 8000);
+        video.addEventListener("loadeddata", check); video.addEventListener("canplay", check);
+        video.addEventListener("playing", check); video.addEventListener("timeupdate", check);
+        try { video.currentTime = targetTime; } catch (_) {}
+        const playPromise = video.play();
+        if (playPromise && playPromise.catch) playPromise.catch(() => {});
+        check();
+      });
+
+      const drawComposedFrame = () => {
+        if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return false;
+        ctx.save(); ctx.clearRect(0, 0, outW, outH); ctx.filter = currEff.filter;
+        ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
+        ctx.restore();
+        [...(textOverlays || []), ...(reviewTextOverlays || [])].forEach(o => {
+          ctx.save(); ctx.font = "bold " + Math.max(12, Math.round(outW * ((o.size || 22) / 390))) + "px sans-serif";
+          ctx.fillStyle = o.color || "#fff"; ctx.strokeStyle = "rgba(0,0,0,0.65)"; ctx.lineWidth = Math.max(2, outW * 0.004);
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          const px = (o.xPct / 100) * outW, py = (o.yPct / 100) * outH;
+          ctx.strokeText(o.text || "", px, py); ctx.fillText(o.text || "", px, py); ctx.restore();
+        });
+        [...(editEmojiOverlays || []), ...(reviewEmojiOverlays || [])].forEach(o => {
+          ctx.save(); ctx.font = Math.max(24, Math.round(outW * ((o.size || 64) / 390))) + "px sans-serif";
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText(o.emoji || "", (o.xPct / 100) * outW, (o.yPct / 100) * outH); ctx.restore();
+        });
+        (reelStickerOverlays || []).forEach(s => {
+          if (!s._img) return;
+          const sw = Math.round(outW * 0.20), px = (s.xPct / 100) * outW - sw / 2, py = (s.yPct / 100) * outH - sw / 2;
+          try { ctx.drawImage(s._img, px, py, sw, sw); } catch (_) {}
+        });
+        return true;
+      };
 
       let audioStream = null;
       const exportMusicStartSec = Math.max(0, Number(audioStartTimeRef.current || 0) / 1000);
       const exportMusicClipDurationSec = normalizeMusicClipDuration(audioClipDurationRef.current);
       if (audioFileRef.current || audioUrlRef.current) {
-        audioEl = document.createElement("audio");
-        audioEl.crossOrigin = "anonymous";
-        audioEl.src = audioUrlRef.current ? audioUrlRef.current : URL.createObjectURL(audioFileRef.current);
-        // Export exactly the clip selected in the music picker. Looping the
-        // source here made the 15/30 choice disappear from the final video.
-        audioEl.loop = false;
-        await new Promise(r => { audioEl.onloadedmetadata = r; audioEl.onerror = r; setTimeout(r, 4000); });
+        audioEl = document.createElement("audio"); audioEl.crossOrigin = "anonymous"; audioEl.preload = "auto";
+        if (audioUrlRef.current) audioEl.src = audioUrlRef.current;
+        else { _audioObjectUrl = URL.createObjectURL(audioFileRef.current); audioEl.src = _audioObjectUrl; }
+        await new Promise(resolve => { audioEl.onloadedmetadata = resolve; audioEl.onerror = resolve; setTimeout(resolve, 4000); });
         try {
           const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          const srcNode = audioCtx.createMediaElementSource(audioEl);
-          const dest = audioCtx.createMediaStreamDestination();
-          srcNode.connect(dest);
-          audioStream = dest.stream;
-          audioEl._audioCtx = audioCtx;
-        } catch(e) {
-          const capFn = audioEl.captureStream || audioEl.mozCaptureStream || audioEl.webkitCaptureStream;
-          if (capFn) { try { audioStream = capFn.call(audioEl); } catch(e2) {} }
+          const srcNode = audioCtx.createMediaElementSource(audioEl), dest = audioCtx.createMediaStreamDestination();
+          srcNode.connect(dest); audioStream = dest.stream; audioEl._audioCtx = audioCtx;
+        } catch (_) {
+          const cap = audioEl.captureStream || audioEl.mozCaptureStream || audioEl.webkitCaptureStream;
+          if (cap) { try { audioStream = cap.call(audioEl); } catch (_) {} }
         }
       } else {
-        const capFn = video.captureStream || video.mozCaptureStream || video.webkitCaptureStream;
-        if (capFn) {
-          const vs = capFn.call(video);
-          const aTracks = vs.getAudioTracks();
-          if (aTracks.length) audioStream = new MediaStream(aTracks);
-        }
+        const cap = video.captureStream || video.mozCaptureStream || video.webkitCaptureStream;
+        if (cap) { const originalStream = cap.call(video); if (originalStream.getAudioTracks().length) audioStream = new MediaStream(originalStream.getAudioTracks()); }
       }
 
-      const outStream = new MediaStream();
-      canvasStream.getVideoTracks().forEach(t => outStream.addTrack(t));
-      if (audioStream) audioStream.getAudioTracks().forEach(t => outStream.addTrack(t));
-
-      let recorder;
-      try { recorder = new MediaRecorder(outStream, { mimeType: "video/webm;codecs=vp8,opus" }); }
-      catch (e) { recorder = new MediaRecorder(outStream); }
-      const outChunks = [];
-      recorder.ondataavailable = e => { if (e.data && e.data.size > 0) outChunks.push(e.data); };
+      await waitForDecodedFrame(effTrimStart);
+      if (!drawComposedFrame()) throw new Error("Decoded frame unavailable");
+      const canvasStream = _captureStream.call(canvas, 30), outStream = new MediaStream();
+      canvasStream.getVideoTracks().forEach(track => outStream.addTrack(track));
+      if (audioStream) audioStream.getAudioTracks().forEach(track => outStream.addTrack(track));
+      const mimeType = ["video/webm;codecs=vp8,opus", "video/webm;codecs=vp8", "video/webm"].find(type => { try { return MediaRecorder.isTypeSupported(type); } catch (_) { return false; } });
+      recorder = mimeType ? new MediaRecorder(outStream, { mimeType }) : new MediaRecorder(outStream);
+      const outChunks = []; recorder.ondataavailable = e => { if (e.data && e.data.size > 0) outChunks.push(e.data); };
       const doneP = new Promise(resolve => { recorder.onstop = resolve; });
-
-      video.currentTime = effTrimStart;
-      await Promise.race([
-        new Promise(r => { video.onseeked = r; }),
-        new Promise(r => setTimeout(r, 2000)), // safety timeout in case "seeked" never fires
-      ]);
-      // Wait for decoded frame (readyState 2 = HAVE_CURRENT_DATA) before drawing
-      if (video.readyState < 2) {
-        await Promise.race([
-          new Promise(r => { video.addEventListener('loadeddata', r, { once: true }); video.addEventListener('canplay', r, { once: true }); }),
-          new Promise(r => setTimeout(r, 1500)),
-        ]);
-      }
-      await video.play().catch(() => {});
-      if (audioEl) {
-        const sourceDuration = Number(audioEl.duration);
-        const safeStart = Number.isFinite(sourceDuration) && sourceDuration > 0
-          ? Math.min(exportMusicStartSec, Math.max(0, sourceDuration - 0.05))
-          : exportMusicStartSec;
-        audioEl.currentTime = safeStart;
-        audioEl.ontimeupdate = () => {
-          if (audioEl.currentTime >= safeStart + exportMusicClipDurationSec - 0.05) {
-            audioEl.pause();
-          }
-        };
-        await audioEl.play().catch(() => {});
-      }
+      const durationToRecord = Math.max(0.2, effTrimEnd - effTrimStart);
       recorder.start(200);
 
-      const durationToRecord = Math.max(0.2, effTrimEnd - effTrimStart);
-      const startTs = performance.now();
-      // FIX: Track the highest currentTime we've ever seen during recording.
-      // When the video buffers, currentTime freezes but wall-clock elapsed keeps
-      // rising — the old "elapsed >= durationToRecord + 0.5" stop condition was
-      // cutting the recording short (e.g. stopping at 16 s when 23 s was selected).
-      // We now stop only when the video has actually played to effTrimEnd or ended.
-      // A generous wall-clock safety net (3× duration + 8 s) prevents infinite hangs.
-      let highWaterCurrentTime = effTrimStart;
-
-      await new Promise(resolve => {
-        function drawFrame() {
-          const elapsed = (performance.now() - startTs) / 1000;
-          if (video.currentTime > highWaterCurrentTime) highWaterCurrentTime = video.currentTime;
-          // Primary stop: video has reached the trim end or naturally ended.
-          // Secondary safety: wall-clock timeout is very generous (3× + 8 s) so a
-          // stalled/buffering video never hangs the export indefinitely.
-          const safetyTimeout = durationToRecord * 3 + 8;
-          if (video.currentTime >= effTrimEnd || video.ended || elapsed >= safetyTimeout) { resolve(); return; }
-          // Guard: skip frame if video hasn't decoded yet (avoids baking black frames)
-          if (video.readyState < 2) { requestAnimationFrame(drawFrame); return; }
-          ctx.save();
-          ctx.filter = currEff.filter;
-          ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
-          ctx.restore();
-          textOverlays.forEach(o => {
-            ctx.save();
-            ctx.font = "bold " + Math.round(outW * ((o.size || 22) / 390)) + "px sans-serif";
-            ctx.fillStyle = o.color;
-            ctx.strokeStyle = "rgba(0,0,0,0.6)";
-            ctx.lineWidth = Math.max(2, outW * 0.004);
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            const px = (o.xPct / 100) * outW, py = (o.yPct / 100) * outH;
-            ctx.strokeText(o.text, px, py);
-            ctx.fillText(o.text, px, py);
-            ctx.restore();
-          });
-          // draw sticker overlays
-          reelStickerOverlays.forEach(s => {
-            if (!s._img) return;
-            const sw = Math.round(outW * 0.13), sh = sw;
-            const px = (s.xPct / 100) * outW - sw/2, py = (s.yPct / 100) * outH - sh/2;
-            try { ctx.drawImage(s._img, px, py, sw, sh); } catch(e2) {}
-          });
-          setExportProgress(Math.min(95, Math.round((elapsed / durationToRecord) * 90) + 5));
-          requestAnimationFrame(drawFrame);
-        }
-        requestAnimationFrame(drawFrame);
-      });
-
-      recorder.stop();
-      video.pause();
-      if (audioEl) audioEl.pause();
-      await doneP;
-
-      const blob = new Blob(outChunks, { type: recorder.mimeType || "video/webm" });
-      if (!blob.size) {
-        // Export produced empty output — use original clip (no overlays baked, but no black screen)
-        console.warn("Reel export: 0-byte blob, falling back to original clip");
-        setExportedBlob(null);
-      } else {
-        setExportedBlob(blob);
+      if (audioEl) {
+        const sourceDuration = Number(audioEl.duration), safeStart = Number.isFinite(sourceDuration) && sourceDuration > 0 ? Math.min(exportMusicStartSec, Math.max(0, sourceDuration - 0.05)) : exportMusicStartSec;
+        try { audioEl.currentTime = safeStart; } catch (_) {}
+        audioEl.ontimeupdate = () => { if (audioEl.currentTime >= safeStart + exportMusicClipDurationSec - 0.05) audioEl.pause(); };
+        const audioPromise = audioEl.play(); if (audioPromise && audioPromise.catch) audioPromise.catch(() => {});
       }
-      setExportProgress(100);
-      showToast && showToast("Reel edited ✓", "#22C55E");
-      setStep("share");
+
+      let frameCount = 1, finished = false, frameResolve, frameReject;
+      const frameDone = new Promise((resolve, reject) => { frameResolve = resolve; frameReject = reject; });
+      const safetyTimer = setTimeout(() => {
+        if (finished) return; finished = true;
+        if (frameCount < 2) frameReject(new Error("Video playback stalled before a safe frame was recorded")); else frameResolve();
+      }, Math.max(12000, durationToRecord * 3 * 1000 + 10000));
+      const finishFrames = () => {
+        if (finished) return; finished = true; clearTimeout(safetyTimer);
+        if (frameCount < 2) frameReject(new Error("Video export produced no decoded frames")); else frameResolve();
+      };
+      const drawNextFrame = () => {
+        if (finished) return;
+        if (video.ended || video.currentTime >= effTrimEnd - 0.03) { finishFrames(); return; }
+        if (drawComposedFrame()) { frameCount += 1; setExportProgress(Math.min(95, Math.round(((video.currentTime - effTrimStart) / durationToRecord) * 90) + 5)); }
+        if (typeof video.requestVideoFrameCallback === "function") { try { video.requestVideoFrameCallback(drawNextFrame); return; } catch (_) {} }
+        requestAnimationFrame(drawNextFrame);
+      };
+      if (typeof video.requestVideoFrameCallback === "function") video.requestVideoFrameCallback(drawNextFrame); else requestAnimationFrame(drawNextFrame);
+      await frameDone;
+      recorder.stop(); video.pause(); if (audioEl) audioEl.pause();
+      await doneP;
+      const blob = new Blob(outChunks, { type: recorder.mimeType || "video/webm" });
+      if (!blob.size) throw new Error("Video export returned an empty file");
+      setExportedBlob(blob); setExportProgress(100); showToast && showToast("Reel edited ✓", "#22C55E"); setStep("share");
     } catch (e) {
       console.warn("Reel export fallback:", e && e.message);
-      // captureStream not supported on this browser — silently proceed with original clip
+      if (recorder && recorder.state !== "inactive") { try { recorder.stop(); } catch (_) {} }
       setExportedBlob(null);
+      showToast && showToast("Original video kept safely", "#FF9800");
       setStep("share");
     } finally {
       setExporting(false);
-      // ── CRITICAL: Release detached export video's hold on the blob URL ──
-      // On Android Chrome, if the same blob URL is "in use" by a detached video
-      // element, any new video element (the edit preview) using that URL shows a
-      // black screen.  Clearing src + calling load() releases the internal buffer
-      // so the edit-step video element can load it cleanly on re-entry.
-      if (video) { try { video.pause(); video.removeAttribute('src'); video.load(); } catch(_){} }
-      // Revoke the export-dedicated blob URL created above — editVideoRef keeps recordedURL
-      try { if (_exportVidUrl) { URL.revokeObjectURL(_exportVidUrl); _exportVidUrl = null; } } catch(_){}
-      if (audioEl) { try { audioEl.pause(); audioEl.src = ''; audioEl.load(); } catch(_){} }
+      if (video) { try { video.pause(); video.removeAttribute("src"); video.load(); } catch (_) {} }
+      if (_exportVidUrl) { try { URL.revokeObjectURL(_exportVidUrl); } catch (_) {} }
+      if (audioEl) { try { audioEl.pause(); if (audioEl._audioCtx && audioEl._audioCtx.close) audioEl._audioCtx.close(); audioEl.src = ""; audioEl.load(); } catch (_) {} }
+      if (_audioObjectUrl) { try { URL.revokeObjectURL(_audioObjectUrl); } catch (_) {} }
     }
   }
 
@@ -24948,7 +24911,12 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
                 style: { width: "100%", height: "100%", objectFit: "cover", display: "block", WebkitTapHighlightColor: "transparent", cursor: "pointer", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter, opacity: (editorVideoPoster || reviewPoster) && !shareVideoReady ? 0 : 1 }
               }),
             (editorVideoPoster || reviewPoster) && !shareVideoReady && React.createElement("img", { src: shareFallbackPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", zIndex: 1, filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })),
-          React.createElement("div", { style: { position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.55)", borderRadius: 20, padding: "5px 14px", whiteSpace: "nowrap" } },
+                     !exportedBlob && React.createElement("div", { style: { position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none" } },
+             [...(textOverlays || []), ...(reviewTextOverlays || [])].map(o => React.createElement("div", { key: "share-text-" + o.id, style: { position: "absolute", left: (o.xPct || 50) + "%", top: (o.yPct || 50) + "%", transform: "translate(-50%,-50%)", color: o.color || "#fff", fontSize: Math.max(12, Math.min(64, Number(o.size) || 22)), fontWeight: 800, textAlign: "center", whiteSpace: "pre-wrap", textShadow: "0 2px 7px rgba(0,0,0,0.9)", maxWidth: "92%" } }, o.text || "")),
+             [...(editEmojiOverlays || []), ...(reviewEmojiOverlays || [])].map(o => React.createElement("div", { key: "share-emoji-" + o.id, style: { position: "absolute", left: (o.xPct || 50) + "%", top: (o.yPct || 50) + "%", transform: "translate(-50%,-50%)", fontSize: Math.max(24, Math.min(120, Number(o.size) || 64)), lineHeight: 1, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.65))" } }, o.emoji || "")),
+             (reelStickerOverlays || []).map(s => React.createElement("img", { key: "share-sticker-" + s.id, src: s.url, alt: "", style: { position: "absolute", left: (s.xPct || 50) + "%", top: (s.yPct || 50) + "%", transform: "translate(-50%,-50%)", width: "22%", height: "22%", objectFit: "contain" } }))
+           ),
+React.createElement("div", { style: { position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.55)", borderRadius: 20, padding: "5px 14px", whiteSpace: "nowrap" } },
             React.createElement("span", { style: { color: "#fff", fontSize: 12, fontWeight: 600 } }, "Edit cover"))
         )
       ),
