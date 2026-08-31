@@ -22562,8 +22562,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const [editorVideoFrameReady, setEditorVideoFrameReady] = React.useState(false);
   const editorVideoRecoveryTimerRef = React.useRef(null);
   const editorVideoMetaURLRef = React.useRef(null);
+  const gallerySelectionRef = React.useRef(null);
 
-  // Gallery video selection waits for a real decoded frame before opening the editor.
+  // Gallery video poster preparation runs in the background after the editor opens.
   // This prevents Android Chrome from briefly painting the video surface black.
   function prepareGalleryVideo(file) {
     return new Promise((resolve, reject) => {
@@ -22642,8 +22643,11 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   }
 
   React.useEffect(() => {
-    setEditorVideoFrameReady(Boolean(isPhotoReel || !recordedURL || !editorVideoPoster));
-  }, [recordedURL, editorVideoPoster, isPhotoReel]);
+    // A picked video opens the editor immediately. Keep readiness false until
+    // its own video element decodes, without resetting it when the background
+    // poster becomes available.
+    if (isPhotoReel || !recordedURL) setEditorVideoFrameReady(true);
+  }, [recordedURL, isPhotoReel]);
 
   // Keep one stable audio element for the editor. Recreating Audio on every tap
   // loses Android's user-gesture permission and can produce a broken/noisy stream.
@@ -23438,34 +23442,36 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     return function() { urls.forEach(function(u) { if (u) URL.revokeObjectURL(u); }); };
   }, [galleryFiles]);
 
-  async function useGalleryFile(file) {
+  function useGalleryFile(file) {
     setExportedBlob(null);
     setTextOverlays([]); setReelStickerOverlays([]);
     const isPhoto = file.type.startsWith("image/");
-    let mediaUrl = null;
-    let poster = null;
-    try {
-      if (isPhoto) {
-        mediaUrl = URL.createObjectURL(file);
-      } else {
-        // Do not mount the editor until the selected video has a real first frame.
-        const prepared = await prepareGalleryVideo(file);
-        mediaUrl = prepared.url;
-        poster = prepared.poster;
-      }
-      if (recordedURL) { try { URL.revokeObjectURL(recordedURL); } catch (_) {} }
-      setIsPhotoReel(isPhoto);
-      setEditorVideoPoster(poster);
-      setEditorVideoFrameReady(isPhoto || !poster);
-      setRecordedBlob(file);
-      setRecordedURL(mediaUrl);
-      stopStream(); setRecordTime(0);
-      setStep("edit");
-      setShowPickGallery(false);
-      setGalleryFiles([]);
-    } catch (error) {
-      if (mediaUrl) { try { URL.revokeObjectURL(mediaUrl); } catch (_) {} }
-      showToast && showToast(error.message || "Could not open this video", "#FF1744");
+    const mediaUrl = URL.createObjectURL(file);
+    const selectionToken = {};
+    gallerySelectionRef.current = selectionToken;
+
+    if (recordedURL) { try { URL.revokeObjectURL(recordedURL); } catch (_) {} }
+    setIsPhotoReel(isPhoto);
+    setEditorVideoPoster(null);
+    setEditorVideoFrameReady(isPhoto);
+    setRecordedBlob(file);
+    setRecordedURL(mediaUrl);
+    stopStream(); setRecordTime(0);
+    // Open the editor in the same selection flow. Video poster extraction is
+    // deliberately non-blocking so the camera/reel landing screen is skipped.
+    setStep("edit");
+    setShowPickGallery(false);
+    setGalleryFiles([]);
+
+    if (!isPhoto) {
+      prepareGalleryVideo(file).then(prepared => {
+        try { URL.revokeObjectURL(prepared.url); } catch (_) {}
+        if (gallerySelectionRef.current !== selectionToken) return;
+        setEditorVideoPoster(prepared.poster);
+      }).catch(() => {
+        // The editor's video element remains the source of truth if poster
+        // extraction is unavailable on the device.
+      });
     }
   }
 
@@ -23486,6 +23492,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   }
 
   function retakeReel() {
+    gallerySelectionRef.current = null;
     setIsPhotoReel(false);
     setRecordedBlob(null);
     setReviewPoster(null);
@@ -23505,6 +23512,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   }
 
   function exitReelComposer(shouldClose = true) {
+    gallerySelectionRef.current = null;
     setShowReelDiscardDialog(false);
     setShowEditDiscardDialog(false);
     setDiscardDialogFromEditor(false);
