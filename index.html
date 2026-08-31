@@ -22513,6 +22513,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const [showShareSheet, setShowShareSheet] = React.useState(false);
   const [filterThumb, setFilterThumb] = React.useState(null);
   const [isPhotoReel, setIsPhotoReel] = React.useState(false);
+  // Keep a data URL for gallery photos; Android may invalidate a blob URL during navigation.
+  const [photoDataUrl, setPhotoDataUrl] = React.useState(null);
   const [shareVidPlaying, setShareVidPlaying] = React.useState(false);
   const [shareVidMuted, setShareVidMuted] = React.useState(false);
   const [shareVidTime, setShareVidTime] = React.useState(0);
@@ -23202,7 +23204,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       if (srcW < 10 || srcH < 10) { setReviewTool(null); return; }
       // Draw cropped image onto canvas
       const src = new Image();
-      await new Promise((res, rej) => { src.onload = res; src.onerror = rej; src.src = recordedURL; });
+      await new Promise((res, rej) => { src.onload = res; src.onerror = rej; src.src = photoDataUrl || recordedURL; });
       const canvas = document.createElement("canvas");
       canvas.width  = Math.round(srcW);
       canvas.height = Math.round(srcH);
@@ -23215,8 +23217,10 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       const newURL = URL.createObjectURL(newBlob);
       setRecordedBlob(newBlob);
       setRecordedURL(newURL);
+      setPhotoDataUrl(dataUrl);
       setReviewCrop({ left: 0, top: 0, right: 0, bottom: 0 });
-      URL.revokeObjectURL(oldURL);
+      // Let React paint the new data URL before cleaning the old object URL.
+      setTimeout(() => { try { URL.revokeObjectURL(oldURL); } catch (_) {} }, 1000);
     } catch(e) { /* ignore errors, just close */ }
     setReviewTool(null);
   }
@@ -23507,6 +23511,17 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     const mediaUrl = URL.createObjectURL(file);
     const selectionToken = {};
     gallerySelectionRef.current = selectionToken;
+    setPhotoDataUrl(null);
+    if (isPhoto) {
+      const photoReader = new FileReader();
+      photoReader.onload = () => {
+        if (gallerySelectionRef.current === selectionToken) {
+          setPhotoDataUrl(typeof photoReader.result === "string" ? photoReader.result : null);
+        }
+      };
+      photoReader.onerror = () => {};
+      photoReader.readAsDataURL(file);
+    }
     galleryPosterPromiseRef.current = null;
 
     if (recordedURL) { try { URL.revokeObjectURL(recordedURL); } catch (_) {} }
@@ -23562,6 +23577,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     gallerySelectionRef.current = null;
     galleryPosterPromiseRef.current = null;
     setIsPhotoReel(false);
+    setPhotoDataUrl(null);
     setRecordedBlob(null);
     setReviewPoster(null);
     setReviewVideoReady(false);
@@ -23629,6 +23645,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     setTextDraft("");
     setEditTool(null);
     setIsPhotoReel(false);
+    setPhotoDataUrl(null);
     setOrigAudioOn(false);
     setShareSrc(null);
     setFrameStrip([]);
@@ -24614,10 +24631,10 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       setExportedBlob(null);
       let _photoUrl = null;
       try {
-        _photoUrl = URL.createObjectURL(recordedBlob);
+        const _photoSource = photoDataUrl || (_photoUrl = URL.createObjectURL(recordedBlob));
         const _pImg = new Image();
         // NOTE: No crossOrigin on blob URLs — setting it taints canvas on mobile, causing black export
-        await new Promise((res, rej) => { _pImg.onload = res; _pImg.onerror = () => rej(new Error("Could not decode photo")); _pImg.src = _photoUrl; });
+        await new Promise((res, rej) => { _pImg.onload = res; _pImg.onerror = () => rej(new Error("Could not decode photo")); _pImg.src = _photoSource; });
         if (typeof _pImg.decode === "function") { try { await _pImg.decode(); } catch (_) {} }
         const _pW = _pImg.naturalWidth || 1080, _pH = _pImg.naturalHeight || 1920;
         const _pc = document.createElement("canvas");
@@ -24870,7 +24887,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   if (step === "share") {
     const shareFallbackPoster = editorVideoPoster || reviewPoster;
     // Photos always have the original gallery URL available as a last-resort preview.
-    const shareMediaSrc = isPhotoReel ? (shareSrc || recordedURL) : shareSrc;
+    const shareMediaSrc = isPhotoReel ? (shareSrc || photoDataUrl || recordedURL) : shareSrc;
     return React.createElement("div", { style: { position: "fixed", inset: 0, background: "#fff", zIndex: 500, display: "flex", flexDirection: "column", overflowY: "auto" } },
       showReelLocationPicker && React.createElement(LocationPickerOverlay, {
         onClose: () => setShowReelLocationPicker(false),
@@ -25590,7 +25607,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
         style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(142px, 19vh, 173px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: videoFilter === "none" ? "auto" : "filter" }
       },
         isPhotoReel
-          ? React.createElement("img", { src: recordedURL, onClick: togglePreviewPlay, style: { width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", margin: "0 auto", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
+          ? React.createElement("img", { src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, onClick: togglePreviewPlay, style: { width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", margin: "0 auto", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
           : React.createElement("video", {
               key: recordedURL,
                ref: editVideoRef, src: recordedURL, poster: editorVideoPoster || undefined, preload: "auto", playsInline: true, autoPlay: false, muted: true, loop: true,
@@ -26202,7 +26219,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
     // Video preview — live camera feed, or the recorded/picked clip once reviewing
     reviewing
       ? (isPhotoReel
-          ? React.createElement("img", { key: recordedURL, ref: reviewImgRef, src: recordedURL, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", background: "#000" } })
+          ? React.createElement("img", { key: photoDataUrl || recordedURL, ref: reviewImgRef, src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", background: "#000" } })
           : React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(106px, 14.3vh, 130px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: "filter" } },
               reviewFallbackPoster && !reviewVideoReady && React.createElement("img", { key: "review-poster-" + recordedURL, src: reviewFallbackPoster, alt: "", style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", zIndex: 0, pointerEvents: "none" } }),
               !cropApplying && React.createElement("video", { ref: reviewVideoRef, key: recordedURL, src: recordedURL, poster: reviewFallbackPoster || undefined, preload: "auto", autoPlay: false, muted: true, loop: true, playsInline: true, disableRemotePlayback: true,
@@ -26734,7 +26751,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
                 style: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 40, height: 40, borderRadius: "50%", background: "#fff", overflow: "hidden" }
               },
                 recordedURL && !isPhotoReel && React.createElement("video", { key: recordedURL, src: recordedURL, style: { width: "100%", height: "100%", objectFit: "cover" }, muted: true, playsInline: true }),
-                recordedURL && isPhotoReel && React.createElement("img", { key: recordedURL, src: recordedURL, style: { width: "100%", height: "100%", objectFit: "cover" } })
+                recordedURL && isPhotoReel && React.createElement("img", { key: photoDataUrl || recordedURL, src: photoDataUrl || recordedURL, style: { width: "100%", height: "100%", objectFit: "cover" } })
               )
             )
           : recording
