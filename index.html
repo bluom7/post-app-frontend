@@ -22374,7 +22374,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
 }
 
 
-function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGallery }) {
+function ReelCameraModal({ token, user, initialStream, initialCameraError, showToast, onClose, onUploaded, onOpenGallery }) {
   const MAX_REEL_SECONDS = 30; // backend hard limit — must match server.py MAX_POST_VIDEO_SECONDS
   const DEFAULT_MUSIC_CLIP_SECONDS = 15;
   const normalizeMusicClipDuration = value => {
@@ -22403,7 +22403,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const [brightnessVal, setBrightnessVal] = React.useState(100); // 50–200, 100 = normal
   const [showBrightnessPicker, setShowBrightnessPicker] = React.useState(false);
   const [facingMode, setFacingMode] = React.useState("environment");
-  const [cameraError, setCameraError] = React.useState(null);
+  const [cameraError, setCameraError] = React.useState(initialCameraError || null);
   const [audioLabel, setAudioLabel] = React.useState("Original Audio");
   const [audioArtist, setAudioArtist] = React.useState("");
   const [audioArtwork, setAudioArtwork] = React.useState("");
@@ -22506,6 +22506,11 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
   const [reviewTextColor, setReviewTextColor] = React.useState("#ffffff");
 
   const videoRef = React.useRef(null);
+  // A stream obtained by ReelsTab before this modal mounts is consumed only
+  // once. On a later facing-mode change, startCamera() must request the new
+  // camera instead of re-attaching the already-stopped prewarmed stream.
+  const initialCameraStreamRef = React.useRef(initialStream || null);
+  const initialCameraErrorRef = React.useRef(initialCameraError || null);
   const streamRef = React.useRef(null);
   const recorderRef = React.useRef(null);
   const chunksRef = React.useRef([]);
@@ -22748,6 +22753,17 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
     }, 1800);
   }
 
+  function attachCameraStream(stream) {
+    streamRef.current = stream;
+    const video = videoRef.current;
+    if (!video) return;
+    video.srcObject = stream;
+    video.muted = true;
+    video.playsInline = true;
+    const playPromise = video.play();
+    if (playPromise && playPromise.catch) playPromise.catch(() => {});
+  }
+
   React.useEffect(() => {
     // During recording + camera flip: flipCamera() already swapped the track directly.
     // Skip startCamera() and — critically — skip stopStream() in the cleanup so the
@@ -22756,7 +22772,17 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
       skipCameraRestartRef.current = false;
       return; // no-op cleanup: recording stream must NOT be stopped
     }
-    startCamera();
+    const prewarmedStream = initialCameraStreamRef.current;
+    initialCameraStreamRef.current = null;
+    if (prewarmedStream) {
+      attachCameraStream(prewarmedStream);
+    } else if (initialCameraErrorRef.current) {
+      // Keep the error visible after a failed prewarm. The user can retry
+      // manually through the existing Allow Camera button.
+      initialCameraErrorRef.current = null;
+    } else {
+      startCamera();
+    }
     return () => {
       // FIX: When flipCamera() is called during recording, it sets skipCameraRestartRef=true
       // BEFORE calling setFacingMode(). The useEffect cleanup runs BEFORE the new effect body,
@@ -22792,8 +22818,7 @@ function ReelCameraModal({ token, user, showToast, onClose, onUploaded, onOpenGa
         },
         audio: true,
       });
-      streamRef.current = stream;
-      if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play().catch(() => {}); }
+      attachCameraStream(stream);
     } catch(e) {
       setCameraError(e.name === "NotAllowedError" ? "Camera permission denied.\nPlease allow camera access." : "Camera error: " + e.message);
     }
@@ -27225,6 +27250,62 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
   var [activeIdx, setActiveIdx] = React.useState(0);
   var [showUpload, setShowUpload] = React.useState(false);
   var [showCamera, setShowCamera] = React.useState(false);
+  // Pre-open the camera from the + tap before mounting the camera modal.
+  // Mounting the modal first used to paint an opaque black screen while
+  // getUserMedia was still pending on Android.
+  var [cameraStream, setCameraStream] = React.useState(null);
+  var [cameraPrewarmError, setCameraPrewarmError] = React.useState(null);
+  var cameraOpeningRef = React.useRef(false);
+  var cameraRequestRef = React.useRef(0);
+  function openCamera() {
+    if (cameraOpeningRef.current) return;
+    cameraOpeningRef.current = true;
+    var requestId = ++cameraRequestRef.current;
+    setCameraPrewarmError(null);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      cameraOpeningRef.current = false;
+      setCameraPrewarmError("Camera is not supported in this browser.");
+      setShowCamera(true);
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: "environment",
+        width: { ideal: 1280, max: 1920 },
+        height: { ideal: 720, max: 1080 },
+        frameRate: { ideal: 30, max: 30 }
+      },
+      audio: true
+    }).then(function(stream) {
+      if (requestId !== cameraRequestRef.current) {
+        stream.getTracks().forEach(function(track) { track.stop(); });
+        return;
+      }
+      cameraOpeningRef.current = false;
+      setCameraStream(stream);
+      setShowCamera(true);
+    }).catch(function(error) {
+      if (requestId !== cameraRequestRef.current) return;
+      cameraOpeningRef.current = false;
+      setCameraPrewarmError(error && error.name === "NotAllowedError"
+        ? "Camera permission denied.\nPlease allow camera access."
+        : "Camera error: " + ((error && error.message) || "Unable to open camera."));
+      setShowCamera(true);
+    });
+  }
+  function closeCamera() {
+    ++cameraRequestRef.current;
+    cameraOpeningRef.current = false;
+    setCameraStream(null);
+    setCameraPrewarmError(null);
+    setShowCamera(false);
+  }
+  React.useEffect(function() {
+    return function() {
+      ++cameraRequestRef.current;
+      cameraOpeningRef.current = false;
+    };
+  }, []);
   var [showComments, setShowComments] = React.useState(false);
   var [activeReelId, setActiveReelId] = React.useState(null);
   var [comments, setComments] = React.useState([]);
@@ -27694,7 +27775,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
       React.createElement("div", { style: { fontWeight: 800, fontSize: 18, color: "#111", marginBottom: 8 } }, "No Reels Yet"),
       React.createElement("div", { style: { fontSize: 14, marginBottom: 20, color: "rgba(0,0,0,0.55)" } }, "Be the first to share a reel!")),
     showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: showToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); } }),
-    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: showToast, onClose: function() { setShowCamera(false); }, onOpenGallery: function() { setShowCamera(false); setShowUpload(true); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); setShowCamera(false); } }));
+    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, initialStream: cameraStream, initialCameraError: cameraPrewarmError, showToast: showToast, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); closeCamera(); } }));
 
   // Main render — TikTok-style full-screen scroll snap
   return React.createElement("div", { style: { position: "fixed", inset: 0, background: "#000", zIndex: 100, overflow: "hidden" } },
@@ -27767,7 +27848,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
     React.createElement("div", { style: { position: "fixed", top: 52, left: 0, right: 0, zIndex: 200, height: 52, background: "transparent", display: "flex", alignItems: "center", paddingLeft: 16, paddingRight: 4 } },
       React.createElement("div", { style: { flex: 1, fontWeight: 800, fontSize: 26, color: "#fff", textShadow: "0 1px 6px rgba(0,0,0,0.7)" } }, "Reels"),
       React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } },
-        React.createElement("button", { onClick: function() { setShowCamera(true); }, style: { background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", alignItems: "center" } },
+        React.createElement("button", { onClick: openCamera, style: { background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", alignItems: "center" } },
           React.createElement("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "2.2", strokeLinecap: "round" },
             React.createElement("line", { x1: "12", y1: "5", x2: "12", y2: "19" }),
             React.createElement("line", { x1: "5", y1: "12", x2: "19", y2: "12" }))),
@@ -28076,7 +28157,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
           React.createElement("span", { style: { color: "#fff", fontSize: 17, fontWeight: 700, textShadow: "0 1px 5px rgba(0,0,0,0.9)" } }, "Reels")))),
 
     showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: showToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); setShowUpload(false); } }),
-    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: showToast, onClose: function() { setShowCamera(false); }, onOpenGallery: function() { setShowCamera(false); setShowUpload(true); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); setShowCamera(false); } }),
+    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, initialStream: cameraStream, initialCameraError: cameraPrewarmError, showToast: showToast, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); closeCamera(); } }),
     React.createElement("style", null, "@keyframes reelHeartPop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); } 40% { opacity: 1; transform: translate(-50%,-50%) scale(1.3); } 70% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(0.8); } }"));
 }
 
