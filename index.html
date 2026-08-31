@@ -22486,6 +22486,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const [shareVidMuted, setShareVidMuted] = React.useState(false);
   const [shareVidTime, setShareVidTime] = React.useState(0);
   const [shareVidDuration, setShareVidDuration] = React.useState(0);
+  const [shareVideoReady, setShareVideoReady] = React.useState(false);
   const shareVidRef = React.useRef(null);
   const [shareSrc, setShareSrc] = React.useState(null);
   const prevShareSrcRef = React.useRef(null);
@@ -24213,11 +24214,22 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     } else {
       url = recordedURL; // last resort fallback
     }
+    setShareVideoReady(false);
     setShareSrc(url);
     return () => {
       if (prevShareSrcRef.current) { try { URL.revokeObjectURL(prevShareSrcRef.current); } catch(_){} prevShareSrcRef.current = null; }
     };
   }, [step, exportedBlob, recordedURL]);
+
+  // Share gets its own video element/URL. Keep the captured first frame visible
+  // until that new element has decoded a frame, avoiding Android black flashes.
+  React.useEffect(() => {
+    if (step !== "share" || isPhotoReel || !shareSrc) {
+      setShareVideoReady(Boolean(isPhotoReel || !shareSrc));
+      return;
+    }
+    setShareVideoReady(false);
+  }, [step, shareSrc, isPhotoReel]);
 
   // Trim tool opens: pause background edit video + music; seek trimVideoRef to start
   React.useEffect(() => {
@@ -24827,12 +24839,22 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
           shareSrc && (isPhotoReel
             ? React.createElement("img", { key: shareSrc, src: shareSrc, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
             : React.createElement("video", {
-                key: shareSrc, src: shareSrc, autoPlay: true, loop: true, playsInline: true, muted: true,
+                key: shareSrc, src: shareSrc, poster: editorVideoPoster || reviewPoster || undefined, autoPlay: true, loop: true, playsInline: true, muted: true,
+                onLoadedData: e => {
+                  const v = e.currentTarget;
+                  const reveal = () => setShareVideoReady(true);
+                  if (typeof v.requestVideoFrameCallback === "function") {
+                    try { v.requestVideoFrameCallback(reveal); return; } catch (_) {}
+                  }
+                  window.requestAnimationFrame ? window.requestAnimationFrame(reveal) : setTimeout(reveal, 60);
+                },
+                onPlaying: () => setShareVideoReady(true),
                 onCanPlay: e => { const v = e.target; v.play().catch(() => {}); },
-                onError: e => { const v = e.target; if (v.src) { const s = v.src; v.removeAttribute('src'); v.load(); v.src = s; v.load(); } },
+                onError: e => { const v = e.target; if (v.src) { const s = v.src; v.removeAttribute('src'); v.load(); v.src = s; } },
                 onClick: e => { const v = e.currentTarget; if (v.paused) { v.play().catch(()=>{}); } else v.pause(); },
-                style: { width: "100%", height: "100%", objectFit: "cover", display: "block", WebkitTapHighlightColor: "transparent", cursor: "pointer", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter }
-              })),
+                style: { width: "100%", height: "100%", objectFit: "cover", display: "block", WebkitTapHighlightColor: "transparent", cursor: "pointer", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter, opacity: (editorVideoPoster || reviewPoster) && !shareVideoReady ? 0 : 1 }
+              }),
+            (editorVideoPoster || reviewPoster) && !shareVideoReady && React.createElement("img", { src: editorVideoPoster || reviewPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", zIndex: 1, filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })),
           React.createElement("div", { style: { position: "absolute", bottom: 10, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.55)", borderRadius: 20, padding: "5px 14px", whiteSpace: "nowrap" } },
             React.createElement("span", { style: { color: "#fff", fontSize: 12, fontWeight: 600 } }, "Edit cover"))
         )
