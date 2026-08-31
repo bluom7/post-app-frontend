@@ -23506,8 +23506,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
     if (recordedURL) { try { URL.revokeObjectURL(recordedURL); } catch (_) {} }
     setIsPhotoReel(isPhoto);
-    // Gallery videos open paused so the ready state shows the play triangle.
-    initialEditorPauseRef.current = !isPhoto;
+    // Gallery video previews should keep moving through every edit surface.
+    // They are muted, so this never auto-starts a selected song.
+    initialEditorPauseRef.current = false;
     setPreviewPlaying(false);
     setEditorVideoPoster(null);
     setEditorVideoFrameReady(isPhoto);
@@ -25043,11 +25044,14 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     const returnToEditorFromTrim = () => {
       const fallbackPoster = trimPoster || editorVideoPoster || reviewPoster;
       if (fallbackPoster) setEditorVideoPoster(fallbackPoster);
-      // Let the new editor element decode its first frame before any playback.
-      initialEditorPauseRef.current = true;
+      // Resume the editor video after the trim decoder is released.
+      // Keep the poster until the replacement element has a real decoded frame.
+      initialEditorPauseRef.current = false;
+      trimShouldBePausedRef.current = false;
       setReturnToTrimAfterMusic(false);
       setTrimPoster(null);
       setEditorVideoFrameReady(false);
+      setPreviewPlaying(false);
       setStep("edit");
     };
     return React.createElement(ComposeVideoTrimOverlay, {
