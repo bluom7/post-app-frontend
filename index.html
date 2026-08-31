@@ -22564,6 +22564,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const editorVideoMetaURLRef = React.useRef(null);
   const gallerySelectionRef = React.useRef(null);
   const galleryPosterPromiseRef = React.useRef(null);
+  const initialEditorPauseRef = React.useRef(false);
 
   // Gallery video poster preparation runs in the background after the editor opens.
   // This prevents Android Chrome from briefly painting the video surface black.
@@ -23459,8 +23460,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
     if (recordedURL) { try { URL.revokeObjectURL(recordedURL); } catch (_) {} }
     setIsPhotoReel(isPhoto);
-    // Start every gallery selection in a neutral loading state so a previous
-    // video cannot make the new editor flash a pause indicator.
+    // Gallery videos open paused so the ready state shows the play triangle.
+    initialEditorPauseRef.current = !isPhoto;
     setPreviewPlaying(false);
     setEditorVideoPoster(null);
     setEditorVideoFrameReady(isPhoto);
@@ -24379,7 +24380,17 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     if (step !== "edit" || isPhotoReel || !editVideoRef.current) return;
     const poster = captureTrimPoster();
     if (poster) setEditorVideoPoster(poster);
-    restoreEditorVideoPlayback(false);
+    const keepInitialPreviewPaused = initialEditorPauseRef.current;
+    initialEditorPauseRef.current = false;
+    if (keepInitialPreviewPaused) {
+      const video = editVideoRef.current;
+      if (video) {
+        try { video.pause(); video.muted = true; video.currentTime = trimStart || 0; } catch (_) {}
+      }
+      setPreviewPlaying(false);
+    } else {
+      restoreEditorVideoPlayback(false);
+    }
     return () => {
       if (editorVideoRecoveryTimerRef.current) {
         clearTimeout(editorVideoRecoveryTimerRef.current);
@@ -25547,7 +25558,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
           ? React.createElement("img", { src: recordedURL, onClick: togglePreviewPlay, style: { width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", margin: "0 auto", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
           : React.createElement("video", {
               key: recordedURL,
-               ref: editVideoRef, src: recordedURL, poster: editorVideoPoster || undefined, preload: "auto", playsInline: true, autoPlay: true, muted: true, loop: true,
+               ref: editVideoRef, src: recordedURL, poster: editorVideoPoster || undefined, preload: "auto", playsInline: true, autoPlay: false, muted: true, loop: true,
               onLoadedMetadata: onEditedMeta,
                onLoadedData: e => {
                  const v = e.target;
@@ -25556,15 +25567,6 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
                    try { v.requestVideoFrameCallback(reveal); return; } catch (_) {}
                  }
                  window.requestAnimationFrame ? window.requestAnimationFrame(reveal) : setTimeout(reveal, 60);
-               },
-               onCanPlay: e => {
-                 const v = e.target;
-                 // canplay may fire again after a pause on Android. Only the
-                 // first ready event is allowed to perform the initial play.
-                 if (v._initialReviewPlayAttempted || !v.paused) return;
-                 v._initialReviewPlayAttempted = true;
-                 v.muted = true;
-                 v.play().then(() => setPreviewPlaying(true)).catch(() => { v._initialReviewPlayAttempted = false; });
                },
                onPlay: () => setPreviewPlaying(true),
                onPause: () => setPreviewPlaying(false),
@@ -25579,12 +25581,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
             !isPhotoReel && !editorVideoFrameReady && React.createElement("div", {
               style: { position: "absolute", inset: 0, zIndex: 3, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }
             },
-              React.createElement("div", { style: { position: "relative", width: 64, height: 64, display: "flex", alignItems: "center", justifyContent: "center" } },
-                React.createElement("div", { style: { position: "absolute", inset: 4, border: "3px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" } }),
-                React.createElement("svg", { width: 26, height: 26, viewBox: "0 0 24 24", fill: "#fff", "aria-hidden": "true", style: { position: "relative", filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.65))" } },
-                  React.createElement("polygon", { points: "8,5 19,12 8,19" })
-                )
-              )
+              React.createElement("div", { style: { width: 42, height: 42, border: "3px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" } })
             ),
       ),
 
