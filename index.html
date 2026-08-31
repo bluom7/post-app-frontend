@@ -24610,12 +24610,15 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     if (isPhotoReel) {
       // Bake text & sticker overlays onto the photo before sharing
       setExporting(true); setExportProgress(15);
+      // Never keep a previous/invalid export as the share source.
+      setExportedBlob(null);
       let _photoUrl = null;
       try {
         _photoUrl = URL.createObjectURL(recordedBlob);
         const _pImg = new Image();
         // NOTE: No crossOrigin on blob URLs — setting it taints canvas on mobile, causing black export
         await new Promise((res, rej) => { _pImg.onload = res; _pImg.onerror = () => rej(new Error("Could not decode photo")); _pImg.src = _photoUrl; });
+        if (typeof _pImg.decode === "function") { try { await _pImg.decode(); } catch (_) {} }
         const _pW = _pImg.naturalWidth || 1080, _pH = _pImg.naturalHeight || 1920;
         const _pc = document.createElement("canvas");
         _pc.width = _pW; _pc.height = _pH;
@@ -24658,7 +24661,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         const _pBlob = await _pResp.blob();
         setExportedBlob(_pBlob);
         setExportProgress(100);
-      } catch (_pe) { /* keep original on error */ }
+      } catch (_pe) { setExportedBlob(null); /* keep original photo and DOM overlays on error */ }
       finally { if (_photoUrl) { try { URL.revokeObjectURL(_photoUrl); } catch (_) {} } }
       setExporting(false); setStep("share"); return;
     }
@@ -24866,6 +24869,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   // ── Share step ──
   if (step === "share") {
     const shareFallbackPoster = editorVideoPoster || reviewPoster;
+    // Photos always have the original gallery URL available as a last-resort preview.
+    const shareMediaSrc = isPhotoReel ? (shareSrc || recordedURL) : shareSrc;
     return React.createElement("div", { style: { position: "fixed", inset: 0, background: "#fff", zIndex: 500, display: "flex", flexDirection: "column", overflowY: "auto" } },
       showReelLocationPicker && React.createElement(LocationPickerOverlay, {
         onClose: () => setShowReelLocationPicker(false),
@@ -24892,10 +24897,10 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       // Video preview centered
       React.createElement("div", { style: { display: "flex", justifyContent: "center", padding: "18px 16px 8px", flexShrink: 0 } },
         React.createElement("div", { style: { width: "52%", maxWidth: 200, borderRadius: 16, overflow: "hidden", position: "relative", background: "#000", aspectRatio: "9/16" } },
-          shareSrc && (isPhotoReel
-            ? React.createElement("img", { key: shareSrc, src: shareSrc, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
+          shareMediaSrc && (isPhotoReel
+            ? React.createElement("img", { key: shareMediaSrc, src: shareMediaSrc, onError: e => { if (recordedURL && e.currentTarget.src !== recordedURL) e.currentTarget.src = recordedURL; }, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
             : React.createElement("video", {
-                key: shareSrc, src: shareSrc, poster: shareFallbackPoster || undefined, autoPlay: true, loop: true, playsInline: true, muted: true,
+                key: shareMediaSrc, src: shareMediaSrc, poster: shareFallbackPoster || undefined, autoPlay: true, loop: true, playsInline: true, muted: true,
                 onLoadedData: e => {
                   const v = e.currentTarget;
                   const reveal = () => setShareVideoReady(true);
