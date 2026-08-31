@@ -22558,8 +22558,91 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const [showTimeline, setShowTimeline] = React.useState(false);
   const [trimPoster, setTrimPoster] = React.useState(null);
   const [editorVideoPoster, setEditorVideoPoster] = React.useState(null);
+  const [editorVideoFrameReady, setEditorVideoFrameReady] = React.useState(false);
   const editorVideoRecoveryTimerRef = React.useRef(null);
   const editorVideoMetaURLRef = React.useRef(null);
+
+  // Gallery video selection waits for a real decoded frame before opening the editor.
+  // This prevents Android Chrome from briefly painting the video surface black.
+  function prepareGalleryVideo(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const probe = document.createElement("video");
+      let settled = false;
+      let capturePending = false;
+      let retryTimer = null;
+      const cleanup = () => {
+        if (retryTimer) clearTimeout(retryTimer);
+        probe.onloadedmetadata = null;
+        probe.onloadeddata = null;
+        probe.oncanplay = null;
+        probe.onplaying = null;
+        probe.onerror = null;
+      };
+      const fail = message => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        try { probe.pause(); probe.removeAttribute("src"); probe.load(); } catch (_) {}
+        try { URL.revokeObjectURL(url); } catch (_) {}
+        reject(new Error(message || "Could not read video"));
+      };
+      const captureAfterDecode = () => {
+        if (settled || capturePending || probe.readyState < 2 || !probe.videoWidth || !probe.videoHeight) return;
+        capturePending = true;
+        const capture = () => {
+          capturePending = false;
+          if (settled) return;
+          try {
+            const maxWidth = 720;
+            const scale = Math.min(1, maxWidth / probe.videoWidth);
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(probe.videoWidth * scale));
+            canvas.height = Math.max(1, Math.round(probe.videoHeight * scale));
+            const context = canvas.getContext("2d");
+            if (!context) return fail("Could not prepare video preview");
+            context.drawImage(probe, 0, 0, canvas.width, canvas.height);
+            const poster = canvas.toDataURL("image/jpeg", 0.88);
+            if (!poster || poster.length < 1000) {
+              retryTimer = setTimeout(captureAfterDecode, 80);
+              return;
+            }
+            settled = true;
+            cleanup();
+            try { probe.pause(); probe.removeAttribute("src"); probe.load(); } catch (_) {}
+            resolve({ url, poster, duration: probe.duration });
+          } catch (_) {
+            retryTimer = setTimeout(captureAfterDecode, 80);
+          }
+        };
+        if (typeof probe.requestVideoFrameCallback === "function") {
+          try { probe.requestVideoFrameCallback(capture); return; } catch (_) {}
+        }
+        window.setTimeout(capture, 60);
+      };
+      probe.preload = "auto";
+      probe.muted = true;
+      probe.playsInline = true;
+      probe.onloadedmetadata = () => {
+        if (!Number.isFinite(probe.duration) || probe.duration <= 0) { fail("Could not read video length"); return; }
+        captureAfterDecode();
+      };
+      probe.onloadeddata = captureAfterDecode;
+      probe.oncanplay = captureAfterDecode;
+      probe.onplaying = captureAfterDecode;
+      probe.onerror = () => fail("Could not read video. Try another file.");
+      probe.src = url;
+      try {
+        const playback = probe.play();
+        if (playback && playback.catch) playback.catch(() => {});
+      } catch (_) {}
+      retryTimer = setTimeout(() => fail("Video preview timed out"), 6000);
+    });
+  }
+
+  React.useEffect(() => {
+    setEditorVideoFrameReady(Boolean(isPhotoReel || !recordedURL || !editorVideoPoster));
+  }, [recordedURL, editorVideoPoster, isPhotoReel]);
 
   // Keep one stable audio element for the editor. Recreating Audio on every tap
   // loses Android's user-gesture permission and can produce a broken/noisy stream.
@@ -23354,15 +23437,35 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     return function() { urls.forEach(function(u) { if (u) URL.revokeObjectURL(u); }); };
   }, [galleryFiles]);
 
-  function useGalleryFile(file) {
+  async function useGalleryFile(file) {
     setExportedBlob(null);
     setTextOverlays([]); setReelStickerOverlays([]);
-    setIsPhotoReel(file.type.startsWith('image/'));
-    setRecordedBlob(file); setRecordedURL(URL.createObjectURL(file));
-    stopStream(); setRecordTime(0);
-    setStep('edit');
-    setShowPickGallery(false);
-    setGalleryFiles([]);
+    const isPhoto = file.type.startsWith("image/");
+    let mediaUrl = null;
+    let poster = null;
+    try {
+      if (isPhoto) {
+        mediaUrl = URL.createObjectURL(file);
+      } else {
+        // Do not mount the editor until the selected video has a real first frame.
+        const prepared = await prepareGalleryVideo(file);
+        mediaUrl = prepared.url;
+        poster = prepared.poster;
+      }
+      if (recordedURL) { try { URL.revokeObjectURL(recordedURL); } catch (_) {} }
+      setIsPhotoReel(isPhoto);
+      setEditorVideoPoster(poster);
+      setEditorVideoFrameReady(isPhoto || !poster);
+      setRecordedBlob(file);
+      setRecordedURL(mediaUrl);
+      stopStream(); setRecordTime(0);
+      setStep("edit");
+      setShowPickGallery(false);
+      setGalleryFiles([]);
+    } catch (error) {
+      if (mediaUrl) { try { URL.revokeObjectURL(mediaUrl); } catch (_) {} }
+      showToast && showToast(error.message || "Could not open this video", "#FF1744");
+    }
   }
 
   function onGalleryPick(e) {
@@ -25389,6 +25492,14 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
               key: recordedURL,
                ref: editVideoRef, src: recordedURL, poster: editorVideoPoster || undefined, preload: "auto", playsInline: true, autoPlay: true, muted: true, loop: true,
               onLoadedMetadata: onEditedMeta,
+               onLoadedData: e => {
+                 const v = e.target;
+                 const reveal = () => setEditorVideoFrameReady(true);
+                 if (typeof v.requestVideoFrameCallback === "function") {
+                   try { v.requestVideoFrameCallback(reveal); return; } catch (_) {}
+                 }
+                 window.requestAnimationFrame ? window.requestAnimationFrame(reveal) : setTimeout(reveal, 60);
+               },
                onCanPlay: e => {
                  const v = e.target;
                  // canplay may fire again after a pause on Android. Only the
@@ -25405,8 +25516,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
                onError: () => { restoreEditorVideoPlayback(true); },
               onTimeUpdate: e => { if (editTool === "Trim") return; const v = e.target; if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v); },
               onClick: togglePreviewPlay,
-               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: "cover", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform" }
-            })
+               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: "cover", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform", opacity: editorVideoPoster && !editorVideoFrameReady ? 0 : 1 }
+            }),
+            editorVideoPoster && !editorVideoFrameReady && React.createElement("img", { src: editorVideoPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center center", display: "block", zIndex: 2, pointerEvents: "none" } })
       ),
 
       // Live draft preview: keep the exact text in sync with the bottom Text input while typing.
