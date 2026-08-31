@@ -22405,6 +22405,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const [facingMode, setFacingMode] = React.useState("environment");
   const [cameraError, setCameraError] = React.useState(initialCameraError || null);
   const [cameraReady, setCameraReady] = React.useState(!!initialStream);
+  const [cameraTransitionPoster, setCameraTransitionPoster] = React.useState(null);
   const [audioLabel, setAudioLabel] = React.useState("Original Audio");
   const [audioArtist, setAudioArtist] = React.useState("");
   const [audioArtwork, setAudioArtwork] = React.useState("");
@@ -22516,6 +22517,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const initialCameraErrorRef = React.useRef(initialCameraError || null);
   const streamRef = React.useRef(null);
   const cameraStartPromiseRef = React.useRef(null);
+  const cameraFlipInFlightRef = React.useRef(false);
   const recorderRef = React.useRef(null);
   const chunksRef = React.useRef([]);
   const timerRef = React.useRef(null);
@@ -22824,6 +22826,78 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
   }
 
+  // Keep the current frame visible while the next camera warms up.
+  function captureLiveCameraFrame() {
+    const video = videoRef.current;
+    if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return null;
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = 720; canvas.height = 1280;
+      const context = canvas.getContext("2d");
+      if (!context) return null;
+      const sourceAspect = video.videoWidth / video.videoHeight;
+      const targetAspect = canvas.width / canvas.height;
+      let sx = 0, sy = 0, sw = video.videoWidth, sh = video.videoHeight;
+      if (sourceAspect > targetAspect) { sw = video.videoHeight * targetAspect; sx = (video.videoWidth - sw) / 2; }
+      else if (sourceAspect < targetAspect) { sh = video.videoWidth / targetAspect; sy = (video.videoHeight - sh) / 2; }
+      if (facingModeRef.current === "user") { context.translate(canvas.width, 0); context.scale(-1, 1); }
+      context.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg", 0.86);
+    } catch (_) { return null; }
+  }
+
+  // Decode the candidate stream off-screen before swapping the visible video.
+  function waitForCameraFrame(stream) {
+    return new Promise((resolve, reject) => {
+      const probe = document.createElement("video");
+      let timeoutId = null;
+      let settled = false;
+      const events = ["loadeddata", "canplay", "playing"];
+      const cleanup = () => {
+        if (timeoutId) clearTimeout(timeoutId);
+        events.forEach(name => probe.removeEventListener(name, ready));
+      };
+      const fail = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        try { probe.pause(); probe.srcObject = null; } catch (_) {}
+        reject(new Error("Camera frame was not ready"));
+      };
+      const ready = () => {
+        if (settled || probe.readyState < 2 || !probe.videoWidth || !probe.videoHeight) return;
+        settled = true;
+        cleanup();
+        resolve(probe);
+      };
+      probe.muted = true; probe.playsInline = true; probe.autoplay = true; probe.preload = "auto"; probe.srcObject = stream;
+      events.forEach(name => probe.addEventListener(name, ready));
+      timeoutId = setTimeout(fail, 2500);
+      try { const playPromise = probe.play(); if (playPromise && playPromise.catch) playPromise.catch(() => {}); } catch (_) {}
+    });
+  }
+
+  // Wait until the visible video has decoded after srcObject replacement.
+  function waitForVisibleCameraFrame(video) {
+    return new Promise(resolve => {
+      let settled = false;
+      let timeoutId = null;
+      const events = ["loadeddata", "playing"];
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        if (timeoutId) clearTimeout(timeoutId);
+        events.forEach(name => video.removeEventListener(name, finish));
+        resolve();
+      };
+      events.forEach(name => video.addEventListener(name, finish));
+      timeoutId = setTimeout(finish, 1000);
+      if (typeof video.requestVideoFrameCallback === "function") {
+        try { video.requestVideoFrameCallback(finish); } catch (_) {}
+      }
+    });
+  }
+
   async function startCamera() {
     if (cameraStartPromiseRef.current) return cameraStartPromiseRef.current;
     setCameraError(null);
@@ -22859,33 +22933,63 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   }
 
   async function flipCamera() {
+    if (cameraFlipInFlightRef.current) return;
+    cameraFlipInFlightRef.current = true;
     setFlipSpin(true);
-    setTimeout(() => setFlipSpin(false), 500);
+    const transitionPoster = captureLiveCameraFrame();
+    if (transitionPoster) setCameraTransitionPoster(transitionPoster);
     const newFacing = facingMode === "environment" ? "user" : "environment";
-    if (recording) {
-      // ── During recording: only swap the preview video source.
-      // MediaRecorder reads from the canvas stream (canvasRecRef) so it is fully
-      // isolated from the camera — flipping never stops the recording.
-      try {
-        const newVidStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: newFacing, width: { ideal: 1280, max: 1920 }, height: { ideal: 720, max: 1080 }, frameRate: { ideal: 30, max: 30 } },
-          audio: false
-        });
-        // Release previous flip stream
-        if (flipVideoStreamRef.current) { flipVideoStreamRef.current.getTracks().forEach(t => t.stop()); }
-        flipVideoStreamRef.current = newVidStream;
-        // Point the preview <video> at the new camera; the canvas rAF loop picks it up next frame
-        if (videoRef.current) { videoRef.current.srcObject = newVidStream; videoRef.current.play().catch(() => {}); }
-        skipCameraRestartRef.current = true;
-        setFacingMode(newFacing);
-      } catch(e) {
-        showToast && showToast("Camera flip failed", "#FF1744");
-        setFlipSpin(false);
+    let nextStream = null;
+    let probe = null;
+    try {
+      // Keep the current visible stream alive while the next camera warms up.
+      nextStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: newFacing, width: { ideal: 1280, max: 1920 }, height: { ideal: 720, max: 1080 }, frameRate: { ideal: 30, max: 30 } },
+        audio: !recording
+      });
+      probe = await waitForCameraFrame(nextStream);
+      const visibleVideo = videoRef.current;
+      if (!visibleVideo) throw new Error("Camera view is unavailable");
+
+      if (recording) {
+        // MediaRecorder reads from the canvas stream, so this swaps only the
+        // live camera source without interrupting the recording.
+        if (flipVideoStreamRef.current) {
+          flipVideoStreamRef.current.getTracks().forEach(track => track.stop());
+        }
+        flipVideoStreamRef.current = nextStream;
+        nextStream = null;
+        visibleVideo.srcObject = flipVideoStreamRef.current;
+        visibleVideo.muted = true;
+        visibleVideo.play().catch(() => {});
+      } else {
+        const previousStream = streamRef.current;
+        visibleVideo.srcObject = nextStream;
+        visibleVideo.muted = true;
+        visibleVideo.playsInline = true;
+        visibleVideo.play().catch(() => {});
+        streamRef.current = nextStream;
+        nextStream = null;
+        if (previousStream) previousStream.getTracks().forEach(track => track.stop());
       }
-      return;
+
+      // Do not expose the new source until its first visible frame is decoded.
+      await waitForVisibleCameraFrame(visibleVideo);
+      setCameraReady(true);
+      setCameraTransitionPoster(null);
+      // The stream is already attached and decoded; skip the facingMode effect
+      // so it cannot stop the new stream and paint the loading fallback.
+      skipCameraRestartRef.current = true;
+      setFacingMode(newFacing);
+    } catch (e) {
+      if (nextStream) nextStream.getTracks().forEach(track => track.stop());
+      setCameraTransitionPoster(null);
+      showToast && showToast("Camera flip failed", "#FF1744");
+    } finally {
+      if (probe) { try { probe.pause(); probe.srcObject = null; } catch (_) {} }
+      cameraFlipInFlightRef.current = false;
+      setFlipSpin(false);
     }
-    stopStream();
-    setFacingMode(newFacing);
   }
 
   // ── Review-screen drag helpers ──
@@ -25921,7 +26025,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
           onCanPlay: () => setCameraReady(true),
           onPlaying: () => setCameraReady(true),
           style: { position: "absolute", top: 0, left: 0, right: 0, bottom: recording ? "18%" : "clamp(129px, 17.3vh, 157px)", width: "100%", height: recording ? "82%" : "calc(100% - clamp(129px, 17.3vh, 157px))", objectFit: "cover", borderRadius: "0 0 22px 22px", filter: videoFilter, transform: facingMode === "user" ? "scaleX(-1)" : "none", opacity: cameraReady ? 1 : 0, transition: "opacity 120ms ease", background: "transparent" }
-        })
+        }),
+       cameraTransitionPoster && React.createElement("img", { src: cameraTransitionPoster, alt: "", style: { position: "absolute", top: 0, left: 0, right: 0, bottom: recording ? "18%" : "clamp(129px, 17.3vh, 157px)", width: "100%", height: recording ? "82%" : "calc(100% - clamp(129px, 17.3vh, 157px))", objectFit: "cover", borderRadius: "0 0 22px 22px", zIndex: 2, pointerEvents: "none" } }),
      ),
     // Instagram-style black control sheet during recording. The saved video
     // composition stays portrait; this only changes the live camera layout.
