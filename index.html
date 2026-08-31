@@ -22427,6 +22427,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   // reviewMode = true  → full-screen review overlay is open
   // reviewMode = false → camera screen (pink circle thumbnail visible when clip exists)
   const [reviewMode, setReviewMode] = React.useState(false);
+  const [reviewVideoReady, setReviewVideoReady] = React.useState(false);
+  const [reviewPoster, setReviewPoster] = React.useState(null);
   const [totalSegmentTime, setTotalSegmentTime] = React.useState(0); // sum of all completed segment durations
 
   // Editor (post-record) state
@@ -22526,6 +22528,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const videoFrameVideoRef = React.useRef(null);     // video element owning that callback
   const canvasStreamRef = React.useRef(null);        // canvas stream used by the recorder
   const recordingFramesActiveRef = React.useRef(false);
+  const recordingPosterRef = React.useRef(null);
   const flipVideoStreamRef = React.useRef(null);     // video-only stream acquired during a recording flip
   const facingModeRef = React.useRef("environment"); // sync ref so rAF closure sees latest facingMode
   const recordTimeRef = React.useRef(0);           // sync mirror of recordTime for onstop closure
@@ -23086,6 +23089,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     const remaining = maxLength - totalSegmentTime;
     if (remaining <= 0) { showToast && showToast("Max recording time reached", "#888"); return; }
     chunksRef.current = [];
+    if (allSegmentsRef.current.length === 0) recordingPosterRef.current = null;
+    setReviewVideoReady(false);
     recordTimeRef.current = 0;
     stopRecordingFrameLoop();
     // Record a portrait composition that matches the camera preview. The
@@ -23123,6 +23128,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
           if (facingModeRef.current === "user") { ctx2d.translate(cvs.width, 0); ctx2d.scale(-1, 1); }
           ctx2d.drawImage(video, sx, sy, sw, sh, 0, 0, cvs.width, cvs.height);
           ctx2d.restore();
+          if (!recordingPosterRef.current) {
+            try { recordingPosterRef.current = cvs.toDataURL("image/jpeg", 0.88); } catch (_) {}
+          }
         }
       };
       recordingFramesActiveRef.current = true;
@@ -23180,6 +23188,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       const merged = new Blob(allSegmentsRef.current, { type: segBlob.type });
       setRecordedBlob(merged);
       setRecordedURL(prev => { if (prev) URL.revokeObjectURL(prev); return URL.createObjectURL(merged); });
+      if (recordingPosterRef.current) setReviewPoster(recordingPosterRef.current);
+      setReviewVideoReady(false);
       // Stop frame capture before restarting the camera preview.
       stopRecordingFrameLoop();
       if (flipVideoStreamRef.current) { flipVideoStreamRef.current.getTracks().forEach(t => t.stop()); flipVideoStreamRef.current = null; }
@@ -23246,6 +23256,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   function retakeReel() {
     setIsPhotoReel(false);
     setRecordedBlob(null);
+    setReviewPoster(null);
+    setReviewVideoReady(false);
     if (recordedURL) URL.revokeObjectURL(recordedURL);
     setRecordedURL(null);
     // FIX: Clear exported blob so the next share always uses the new recording
@@ -23436,6 +23448,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     setOrigAudioOn(false);
     setPreviewPlaying(false);
     setStep("camera");
+    setReviewVideoReady(false);
     setReviewMode(true);
     stopStream();
   }
@@ -25846,9 +25859,11 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       ? (isPhotoReel
           ? React.createElement("img", { key: recordedURL, ref: reviewImgRef, src: recordedURL, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", background: "#000" } })
           : React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(106px, 14.3vh, 130px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: "filter" } },
-              !cropApplying && React.createElement("video", { ref: reviewVideoRef, key: recordedURL, src: recordedURL, preload: "auto", autoPlay: false, muted: true, loop: true, playsInline: true, disableRemotePlayback: true,
+              reviewPoster && !reviewVideoReady && React.createElement("img", { key: "review-poster-" + recordedURL, src: reviewPoster, alt: "", style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", zIndex: 0, pointerEvents: "none" } }),
+              !cropApplying && React.createElement("video", { ref: reviewVideoRef, key: recordedURL, src: recordedURL, poster: reviewPoster || undefined, preload: "auto", autoPlay: false, muted: true, loop: true, playsInline: true, disableRemotePlayback: true,
                 onClick: togglePreviewPlay,
-                 onPlay: () => setPreviewPlaying(true),
+                 onLoadedData: () => setReviewVideoReady(true),
+                 onPlay: () => { setReviewVideoReady(true); setPreviewPlaying(true); },
                  onPause: () => setPreviewPlaying(false),
                 // FIX: Auto-retry on decode failure — Android Chrome sometimes blacks out a
                 // blob URL video on first load.  Removing src + re-setting it forces a fresh
@@ -25866,9 +25881,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
                     }, 300);
                   }
                 },
-                style: { position: "relative", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", cursor: "pointer", WebkitTapHighlightColor: "transparent", background: "#000", transform: "translateZ(0)", willChange: "transform" }
+                style: { position: "relative", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", cursor: "pointer", WebkitTapHighlightColor: "transparent", background: "transparent", opacity: reviewVideoReady ? 1 : 0, transition: "none", transform: "translateZ(0)", willChange: "transform", zIndex: 1 }
                }),
-              !cropApplying && !previewPlaying && React.createElement("div", {
+              !cropApplying && reviewVideoReady && !previewPlaying && React.createElement("div", {
                 style: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 100, height: 100, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 12 }
               },
                 React.createElement("svg", { width: 72, height: 72, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true", style: { filter: "drop-shadow(0 2px 5px rgba(0,0,0,0.65))" } },
@@ -26205,7 +26220,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     // ── Effects panel (horizontal scroll) ──
     !reviewing && !recording && showEffects && React.createElement("div", { className: "reel-camera-effects-scroll", style: { position: "absolute", bottom: 200, left: 0, right: 0, zIndex: 40, overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none", paddingLeft: 12, paddingBottom: 4 } },
       React.createElement("div", { style: { display: "flex", gap: 10, paddingRight: 12, width: "max-content" } },
-        EFFECTS.map(ef => React.createElement("div", { key: ef.id, onClick: () => { setEffect(ef.id); if (recordedBlob) { setShowEffects(false); stopStream(); setReviewMode(true); } }, style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" } },
+        EFFECTS.map(ef => React.createElement("div", { key: ef.id, onClick: () => { setEffect(ef.id); if (recordedBlob) { setShowEffects(false); stopStream(); setReviewVideoReady(false);
+    setReviewMode(true); } }, style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 6, cursor: "pointer" } },
           React.createElement("div", { style: { width: 54, height: 54, borderRadius: "50%", border: effect === ef.id ? "2.5px solid #fff" : "2px solid rgba(255,255,255,0.25)", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: "#111" } },
             effectThumb
               ? React.createElement("img", { src: effectThumb, style: { width: "100%", height: "100%", objectFit: "cover", filter: ef.filter, transform: facingMode === "user" ? "scaleX(-1)" : "none" } })
@@ -26337,7 +26353,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         (!reviewMode && recordedBlob && !recording)
           ? /* Clip-circle on camera — tap to OPEN full-screen review */
             React.createElement("div", {
-              onClick: () => { setReviewMode(true); stopStream(); },
+              onClick: () => { setReviewVideoReady(false);
+    setReviewMode(true); stopStream(); },
               style: { position: "relative", width: 54, height: 54, cursor: "pointer", WebkitTapHighlightColor: "transparent", flexShrink: 0 }
             },
               React.createElement("svg", { width: 54, height: 54, viewBox: "0 0 54 54", style: { position: "absolute", inset: 0, transform: "rotate(-90deg)" } },
@@ -26528,7 +26545,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = normalizeMusicClipDuration(clipDuration); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) { trimVideoRef.current.muted = true; } setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setPreviewPlaying(false); showToast && showToast("Song add hua ✓", "#22C55E"); stopStream(); setReviewMode(true); } }),
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = normalizeMusicClipDuration(clipDuration); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) { trimVideoRef.current.muted = true; } setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setPreviewPlaying(false); showToast && showToast("Song add hua ✓", "#22C55E"); stopStream(); setReviewVideoReady(false);
+    setReviewMode(true); } }),
     // CSS animations
     React.createElement("style", null, `
       .reel-camera-effects-scroll { scrollbar-width: none; -ms-overflow-style: none; }
