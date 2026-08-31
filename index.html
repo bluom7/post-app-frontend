@@ -24615,7 +24615,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         _photoUrl = URL.createObjectURL(recordedBlob);
         const _pImg = new Image();
         // NOTE: No crossOrigin on blob URLs — setting it taints canvas on mobile, causing black export
-        await new Promise((res) => { _pImg.onload = res; _pImg.onerror = () => res(); _pImg.src = _photoUrl; });
+        await new Promise((res, rej) => { _pImg.onload = res; _pImg.onerror = () => rej(new Error("Could not decode photo")); _pImg.src = _photoUrl; });
         const _pW = _pImg.naturalWidth || 1080, _pH = _pImg.naturalHeight || 1920;
         const _pc = document.createElement("canvas");
         _pc.width = _pW; _pc.height = _pH;
