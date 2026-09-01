@@ -24297,13 +24297,16 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     // Entering share step — create stable URL once
     if (prevShareSrcRef.current) { try { URL.revokeObjectURL(prevShareSrcRef.current); } catch(_){} prevShareSrcRef.current = null; }
     let url;
-    if (exportedBlob) {
+    if (isPhotoReel) {
+      // Keep photos on their stable data/original URL. A second object URL for
+      // the same File is the Android black-frame failure mode.
+      url = photoDataUrl || recordedURL;
+    } else if (exportedBlob) {
       url = URL.createObjectURL(exportedBlob);
       prevShareSrcRef.current = url; // we own this, must revoke later
     } else if (recordedBlob) {
-      // FIX: Create a dedicated URL even for the original clip so the share video
-      // never shares a blob URL with editVideoRef (prevents Android Chrome black frame
-      // when step transitions happen in the same paint frame).
+      // Create a dedicated URL for the original video so the share video never
+      // shares a blob URL with editVideoRef.
       url = URL.createObjectURL(recordedBlob);
       prevShareSrcRef.current = url; // we own this, must revoke later
     } else {
@@ -24625,76 +24628,28 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       }
     }
     if (isPhotoReel) {
-      // An untouched photo should go straight to share. Re-encoding it through
-      // canvas adds a failure point and can turn a valid gallery image black.
-      const photoNeedsExport = effect !== "none" ||
-        (textOverlays && textOverlays.length > 0) ||
-        (reviewTextOverlays && reviewTextOverlays.length > 0) ||
-        (editEmojiOverlays && editEmojiOverlays.length > 0) ||
-        (reviewEmojiOverlays && reviewEmojiOverlays.length > 0) ||
-        (reelStickerOverlays && reelStickerOverlays.length > 0);
-      if (!photoNeedsExport) {
-        setExportedBlob(null);
-        setExporting(false);
-        setStep("share");
+      // Photos stay as photos through the share step. Do not send them through
+      // canvas/export: on Android that path can produce a black image even
+      // though the same gallery file is visible in the editor.
+      let stablePhotoDataUrl = photoDataUrl;
+      if (!stablePhotoDataUrl && recordedBlob instanceof Blob) {
+        stablePhotoDataUrl = await new Promise(resolve => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : null);
+          reader.onerror = () => resolve(null);
+          reader.readAsDataURL(recordedBlob);
+        });
+        if (stablePhotoDataUrl) setPhotoDataUrl(stablePhotoDataUrl);
+      }
+      setExportedBlob(null);
+      setExportProgress(stablePhotoDataUrl || recordedURL ? 100 : 0);
+      setExporting(false);
+      if (!stablePhotoDataUrl && !recordedURL) {
+        setUploadError("Could not read photo. Please select it again.");
         return;
       }
-      // Bake text & sticker overlays onto the photo before sharing
-      setExporting(true); setExportProgress(15);
-      // Never keep a previous/invalid export as the share source.
-      setExportedBlob(null);
-      let _photoUrl = null;
-      try {
-        const _photoSource = photoDataUrl || (_photoUrl = URL.createObjectURL(recordedBlob));
-        const _pImg = new Image();
-        // NOTE: No crossOrigin on blob URLs — setting it taints canvas on mobile, causing black export
-        await new Promise((res, rej) => { _pImg.onload = res; _pImg.onerror = () => rej(new Error("Could not decode photo")); _pImg.src = _photoSource; });
-        if (typeof _pImg.decode === "function") { try { await _pImg.decode(); } catch (_) {} }
-        const _pW = _pImg.naturalWidth || 1080, _pH = _pImg.naturalHeight || 1920;
-        const _pc = document.createElement("canvas");
-        _pc.width = _pW; _pc.height = _pH;
-        const _pctx = _pc.getContext("2d");
-        _pctx.drawImage(_pImg, 0, 0, _pW, _pH);
-        // Bake sticker overlays
-        await Promise.all(reelStickerOverlays.map(s => new Promise(res => {
-          const si = new Image(); si.crossOrigin = "anonymous"; si.onload = () => {
-            const sw = Math.round(_pW * 0.2);
-            _pctx.drawImage(si, (s.xPct/100)*_pW - sw/2, (s.yPct/100)*_pH - sw/2, sw, sw);
-            res();
-          }; si.onerror = () => res(); si.src = s.url;
-        })));
-        // Bake text, emoji, and sticker overlays onto the photo.
-        const _photoTextOverlays = [...(textOverlays || []), ...(reviewTextOverlays || [])];
-        _photoTextOverlays.forEach(o => {
-          _pctx.save();
-          const _fs = Math.max(12, Math.round(_pW * ((o.size || 22) / 390)));
-          _pctx.font = (o.font === "Headline" ? "900 " : "bold ") + _fs + "px sans-serif";
-          _pctx.fillStyle = o.color || "#fff";
-          _pctx.strokeStyle = "rgba(0,0,0,0.7)";
-          _pctx.lineWidth = Math.max(2, _pW * 0.004);
-          _pctx.textAlign = "center"; _pctx.textBaseline = "middle";
-          const _px = (o.xPct / 100) * _pW, _py = (o.yPct / 100) * _pH;
-          _pctx.strokeText(o.text, _px, _py);
-          _pctx.fillText(o.text, _px, _py);
-          _pctx.restore();
-        });
-        [...(editEmojiOverlays || []), ...(reviewEmojiOverlays || [])].forEach(o => {
-          _pctx.save();
-          _pctx.font = Math.max(24, Math.round(_pW * ((o.size || 64) / 390))) + "px sans-serif";
-          _pctx.textAlign = "center"; _pctx.textBaseline = "middle";
-          _pctx.fillText(o.emoji || "", (o.xPct / 100) * _pW, (o.yPct / 100) * _pH);
-          _pctx.restore();
-        });
-        setExportProgress(80);
-        // Always create exportedBlob — photo must show on share screen (fixes black screen)
-        const _pDataUrl = _pc.toDataURL("image/jpeg", 0.92);
-        const _pResp = await fetch(_pDataUrl);
-        const _pBlob = await _pResp.blob();
-        setExportedBlob(_pBlob);
-        setExportProgress(100);
-      } catch (_pe) { setExportedBlob(null); /* keep original photo and DOM overlays on error */ }
-      finally { if (_photoUrl) { try { URL.revokeObjectURL(_photoUrl); } catch (_) {} } }
-      setExporting(false); setStep("share"); return;
+      setStep("share");
+      return;
     }
 
     // ── VIDEO EXPORT ────────────────────────────────────────────────────────────
@@ -24904,9 +24859,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     // Prefer the baked export when edits were successfully rendered. For an
     // unedited photo, use the FileReader data URL/original URL instead of a
     // second blob URL — Android Chrome can paint that duplicate URL black.
-    const shareMediaSrc = isPhotoReel
-      ? (exportedBlob ? (shareSrc || photoDataUrl || recordedURL) : (photoDataUrl || recordedURL || shareSrc))
-      : shareSrc;
+    const shareMediaSrc = isPhotoReel ? (photoDataUrl || recordedURL || shareSrc) : shareSrc;
     return React.createElement("div", { style: { position: "fixed", inset: 0, background: "#fff", zIndex: 500, display: "flex", flexDirection: "column", overflowY: "auto" } },
       showReelLocationPicker && React.createElement(LocationPickerOverlay, {
         onClose: () => setShowReelLocationPicker(false),
@@ -24934,7 +24887,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       React.createElement("div", { style: { display: "flex", justifyContent: "center", padding: "18px 16px 8px", flexShrink: 0 } },
         React.createElement("div", { style: { width: "52%", maxWidth: 200, borderRadius: 16, overflow: "hidden", position: "relative", background: "#000", aspectRatio: "9/16" } },
           shareMediaSrc && (isPhotoReel
-            ? React.createElement("img", { key: shareMediaSrc, src: shareMediaSrc, onError: e => { const fallback = photoDataUrl || recordedURL; if (fallback && e.currentTarget.src !== fallback) e.currentTarget.src = fallback; }, style: { width: "100%", height: "100%", objectFit: "contain", display: "block", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
+            ? React.createElement("img", { key: shareMediaSrc, src: shareMediaSrc, onError: e => { const fallbacks = [photoDataUrl, recordedURL, shareSrc].filter(Boolean); const fallback = fallbacks.find(src => src !== e.currentTarget.src); if (fallback) e.currentTarget.src = fallback; }, style: { width: "100%", height: "100%", objectFit: "contain", display: "block", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
             : React.createElement("video", {
                 key: shareMediaSrc, src: shareMediaSrc, poster: shareFallbackPoster || undefined, autoPlay: true, loop: true, playsInline: true, muted: true,
                 onLoadedData: e => {
