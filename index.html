@@ -25628,7 +25628,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       textOverlays.map(o => React.createElement("div", { key: o.id,
         style: { position: "absolute", left: (o.xPct || 50) + "%", top: (o.yPct || 50) + "%", transform: "translate(-50%,-50%)", zIndex: 10, cursor: "grab", touchAction: "none", userSelect: "none", WebkitUserSelect: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 },
         onPointerDown: e => { e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); startEditOverlayGesture(o.id, e); },
-        onPointerMove: e => { e.stopPropagation(); updateEditOverlayGesture(e); },
+        onPointerMove: e => { updateEditOverlayGesture(e); },
         onPointerUp: e => { e.stopPropagation(); endEditOverlayGesture(e); },
         onPointerCancel: e => { e.stopPropagation(); endEditOverlayGesture(e); },
         onTouchStart: e => { e.stopPropagation(); startEditOverlayTouch(o.id, e); },
