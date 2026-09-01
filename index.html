@@ -10038,6 +10038,12 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
                       return React.createElement('span', { key: i, style: { width: 1.5, minWidth: 1.5, height: h + 'px', background: 'rgba(255,255,255,0.8)', borderRadius: 1 } });
                     })
                   ),
+                  React.createElement('span', { 'aria-label': 'Song audio', style: { width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'transparent', color: '#fff' } },
+                    React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: '#fff', strokeWidth: 2.1, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
+                      React.createElement('path', { d: 'M11 5 6 9H3v6h3l5 4V5z' }),
+                      React.createElement('path', { d: 'm16 9 5 5m0-5-5 5' })
+                    )
+                  ),
                   React.createElement('span', { style: { position: 'relative', zIndex: 1, color: '#cfd0d4', fontSize: 9, fontWeight: 800, flexShrink: 0 } }, 'Change')
                 )
               : React.createElement('button', { onClick: onAudio, style: { transform: 'translateX(-' + timelineTrackScrollPx + 'px)', width: timelineTrackContentWidth, minWidth: timelineTrackContentWidth, height: 42, minHeight: 42, flex: '0 0 auto', padding: '0 16px 0 calc(50vw - 16px)', border: 'none', borderRadius: 3, background: '#303139', color: '#cfd0d4', fontSize: 14, cursor: 'pointer', boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 10, textAlign: 'left' } }, '+ Add audio'),
