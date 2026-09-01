@@ -22529,7 +22529,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const [dragStickerOverlayId, setDragStickerOverlayId] = React.useState(null);
   const [editEmojiPickerOpen, setEditEmojiPickerOpen] = React.useState(false);
   const [editEmojiPickerCat, setEditEmojiPickerCat] = React.useState(0);
-  const [editEmojiPickerTab, setEditEmojiPickerTab] = React.useState("emoji");
+  const [editEmojiPickerTab, setEditEmojiPickerTab] = React.useState("popular");
   const [editEmojiSearch, setEditEmojiSearch] = React.useState("");
   const [editEmojiOverlays, setEditEmojiOverlays] = React.useState([]); // [{id,emoji,xPct,yPct,size}]
   const [dragEmojiId, setDragEmojiId] = React.useState(null);
@@ -26036,7 +26036,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
             React.createElement("span", { style: { color: "#fff", fontSize: 10, fontWeight: 700, textShadow: "none" } }, "Text")
           ),
           React.createElement("button", {
-            onClick: () => { setEditEmojiPickerOpen(true); setEditEmojiPickerTab("emoji"); setEditEmojiSearch(""); setEditEmojiPickerCat(0); },
+            onClick: () => { setEditEmojiPickerOpen(true); setEditEmojiPickerTab("popular"); setEditEmojiSearch(""); setEditEmojiPickerCat(0); },
             style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 0, background: "none", border: "none", cursor: "pointer", WebkitTapHighlightColor: "transparent", padding: 0 }
           },
             React.createElement("div", { style: { width: 42, height: 36, borderRadius: 12, background: (editEmojiPickerOpen || editEmojiOverlays.length > 0) ? "rgba(53,57,70,0.98)" : "rgba(29,32,40,0.96)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s", boxShadow: "0 2px 8px rgba(0,0,0,0.38)" } },
