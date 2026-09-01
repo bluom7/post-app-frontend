@@ -22506,6 +22506,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const [editingOverlayId, setEditingOverlayId] = React.useState(null);
   const [videoDuration, setVideoDuration] = React.useState(0);
   const [recordedVideoAspect, setRecordedVideoAspect] = React.useState(null);
+  const [recordedPhotoAspect, setRecordedPhotoAspect] = React.useState(null);
   const [aspect, setAspect] = React.useState("original");
   const [resolution, setResolution] = React.useState("1080p");
   const [editTool, setEditTool] = React.useState(null);
@@ -23544,6 +23545,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   function useGalleryFile(file) {
     setExportedBlob(null);
     setRecordedVideoAspect(null);
+    setRecordedPhotoAspect(null);
     setTextOverlays([]); setReelStickerOverlays([]);
     const isPhoto = file.type.startsWith("image/");
     const mediaUrl = URL.createObjectURL(file);
@@ -25704,7 +25706,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
         style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(142px, 19vh, 173px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: videoFilter === "none" ? "auto" : "filter" }
       },
         isPhotoReel
-          ? React.createElement("img", { src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, onClick: togglePreviewPlay, style: { width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", margin: "0 auto", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
+          ? React.createElement("img", { src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, onLoad: e => { const w = Number(e.currentTarget.naturalWidth) || 0; const h = Number(e.currentTarget.naturalHeight) || 0; if (w > 0 && h > 0) setRecordedPhotoAspect(w / h); }, onClick: togglePreviewPlay, style: { width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: recordedPhotoAspect !== null && recordedPhotoAspect >= (9 / 16) ? "contain" : "cover", objectPosition: "center center", display: "block", margin: "0 auto", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
           : React.createElement("video", {
               key: recordedURL,
                ref: editVideoRef, src: recordedURL, poster: editorVideoPoster || undefined, preload: "auto", playsInline: true, autoPlay: true, muted: true, loop: true,
