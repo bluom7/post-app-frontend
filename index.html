@@ -25272,7 +25272,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
 
     const reelDur = Math.max(trimEnd - trimStart, 1);
     // Wide/short natural videos keep tools near Edit/Next; tall videos keep them on-video.
-    const toolsOnVideo = editorVideoObjectFit !== "contain";
+    const toolsOnVideo = isPhotoReel ? (recordedPhotoAspect === null || recordedPhotoAspect <= 1) : editorVideoObjectFit !== "contain";
     const toolDockBottom = toolsOnVideo ? "clamp(142px, 19vh, 173px)" : "clamp(76px, 9vh, 94px)";
 
     return React.createElement("div", { ref: previewAreaRef, style: { position: "fixed", inset: 0, background: "#000", zIndex: 500, overflow: "hidden" }, onPointerMove: onPreviewPointerMove, onPointerUp: endDragOverlay, onTouchMove: e => { e.preventDefault(); onPreviewPointerMove(e); }, onTouchEnd: endDragOverlay },
