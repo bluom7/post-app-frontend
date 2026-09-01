@@ -25273,6 +25273,9 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
     }
 
     const reelDur = Math.max(trimEnd - trimStart, 1);
+    // Wide/short natural videos keep tools near Edit/Next; tall videos keep them on-video.
+    const toolsOnVideo = editorVideoObjectFit !== "contain";
+    const toolDockBottom = toolsOnVideo ? "clamp(142px, 19vh, 173px)" : "clamp(76px, 9vh, 94px)";
 
     return React.createElement("div", { ref: previewAreaRef, style: { position: "fixed", inset: 0, background: "#000", zIndex: 500, overflow: "hidden" }, onPointerMove: onPreviewPointerMove, onPointerUp: endDragOverlay, onTouchMove: e => { e.preventDefault(); onPreviewPointerMove(e); }, onTouchEnd: endDragOverlay },
 
@@ -26074,8 +26077,8 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       ),
 
       // Keep the five editing tools at the visible video bottom, separate from Edit/Next.
-      !editTextEditorOpen && React.createElement("div", {
-        style: { position: "fixed", left: 8, right: 8, bottom: "clamp(142px, 19vh, 173px)", zIndex: 25, display: "flex", justifyContent: "space-around", alignItems: "flex-end", gap: 2, padding: "0 4px 4px", borderRadius: 0, background: "transparent", backdropFilter: "none", WebkitBackdropFilter: "none" }
+      toolsOnVideo && !editTextEditorOpen && React.createElement("div", {
+        style: { position: "fixed", left: 8, right: 8, bottom: toolDockBottom, zIndex: 25, display: "flex", justifyContent: "space-around", alignItems: "flex-end", gap: 2, padding: "0 4px 4px", borderRadius: 0, background: "transparent", backdropFilter: "none", WebkitBackdropFilter: "none" }
       },
         tabBtn("Audio",    iAudio,    "Audio"),
         tabBtn("Text",     iText,     "Text"),
@@ -26214,7 +26217,16 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
         })(),
 
         // Tool panel (expands upward when a tool is active)
-        panel && React.createElement("div",{style:{position:"fixed",left:12,right:12,bottom:"calc(clamp(142px, 19vh, 173px) + 70px)",zIndex:24,maxHeight:"min(52vh, 420px)",overflowY:"auto",background:editTool === "Filters" ? "transparent" : "rgba(30,30,30,0.92)",borderRadius:14,margin:0,borderTop:editTool === "Filters" ? "none" : "1px solid rgba(255,255,255,0.1)",backdropFilter:editTool === "Filters" ? "none" : "blur(8px)"}},panel),
+        panel && React.createElement("div",{style:{position:"fixed",left:12,right:12,bottom:"calc(" + toolDockBottom + " + 70px)",zIndex:24,maxHeight:"min(52vh, 420px)",overflowY:"auto",background:editTool === "Filters" ? "transparent" : "rgba(30,30,30,0.92)",borderRadius:14,margin:0,borderTop:editTool === "Filters" ? "none" : "1px solid rgba(255,255,255,0.1)",backdropFilter:editTool === "Filters" ? "none" : "blur(8px)"}},panel),
+
+        // Natural wide/short videos keep the tool row beside the action area.
+        !toolsOnVideo && !editTextEditorOpen && React.createElement("div", { style: { display: "flex", justifyContent: "space-around", alignItems: "flex-end", gap: 2, padding: "0 4px 6px", margin: "0 4px" } },
+          tabBtn("Audio",    iAudio,    "Audio"),
+          tabBtn("Text",     iText,     "Text"),
+          tabBtn("Voice",    iVoice,    "Voice"),
+          tabBtn("Stickers", iStickers, "Stickers"),
+          tabBtn("Filters",  iFilters,  "Effects")
+        ),
 
         // Bottom action buttons: Edit + Next →
         !editTextEditorOpen && React.createElement("div",{style:{display:"flex",justifyContent:"space-between",gap:0,padding:"6px 16px calc(6px + env(safe-area-inset-bottom))"}},
