@@ -9673,6 +9673,41 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     };
   }, [src, trimStart, trimEnd, safeDuration, musicUrl]);
 
+  // Start trim playback automatically, including after Android decoder delays.
+  React.useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !src) return;
+    let cancelled = false;
+    let attempts = 0;
+    let retryTimer = null;
+    const start = () => {
+      if (cancelled || videoRef.current !== video) return;
+      video.muted = true;
+      video.playsInline = true;
+      video.loop = false;
+      const promise = video.play();
+      if (promise && promise.then) {
+        promise.then(() => { if (!cancelled) setPlaying(true); }).catch(() => {
+          if (!cancelled && attempts++ < 8) retryTimer = setTimeout(start, 180);
+        });
+      } else {
+        setPlaying(true);
+      }
+    };
+    const onReady = () => start();
+    if (video.readyState >= 2) start();
+    else {
+      video.addEventListener('loadeddata', onReady, { once: true });
+      video.addEventListener('canplay', onReady, { once: true });
+    }
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      video.removeEventListener('loadeddata', onReady);
+      video.removeEventListener('canplay', onReady);
+    };
+  }, [src]);
+
   React.useEffect(() => {
     const move = event => {
       if (!dragSideRef.current || !timelineRef.current) return;
@@ -22577,6 +22612,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const audioClipDurationRef = React.useRef(15);
   const previewMusicAudioRef = React.useRef(null);
   const editVideoRef = React.useRef(null);
+  const shareVideoRef = React.useRef(null);
   const trimVideoRef = React.useRef(null); // Ref for Trim overlay's preview video
   const trimShouldBePausedRef = React.useRef(false); // useRef instead of DOM prop — survives Android Chrome seek/play cycles
   const trimVideoAreaRef = React.useRef(null); // Ref for Trim overlay's video container (for drag calc)
@@ -24338,6 +24374,39 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     setShareVideoReady(false);
   }, [step, shareSrc, isPhotoReel]);
 
+  // Share preview playback also retries after the dedicated blob URL mounts.
+  React.useEffect(() => {
+    if (step !== "share" || isPhotoReel || !shareSrc) return;
+    let cancelled = false;
+    let attempts = 0;
+    let retryTimer = null;
+    const start = () => {
+      if (cancelled) return;
+      const video = shareVideoRef.current;
+      if (!video) {
+        if (attempts++ < 10) retryTimer = setTimeout(start, 120);
+        return;
+      }
+      video.muted = true;
+      video.playsInline = true;
+      video.loop = true;
+      const promise = video.play();
+      if (promise && promise.then) {
+        promise.then(() => { if (!cancelled) setShareVideoReady(true); }).catch(() => {
+          if (!cancelled && attempts++ < 10) retryTimer = setTimeout(start, 180);
+        });
+      } else {
+        setShareVideoReady(true);
+      }
+    };
+    const frame = window.requestAnimationFrame ? window.requestAnimationFrame(start) : setTimeout(start, 0);
+    return () => {
+      cancelled = true;
+      if (window.cancelAnimationFrame && typeof frame === "number") window.cancelAnimationFrame(frame);
+      if (retryTimer) clearTimeout(retryTimer);
+    };
+  }, [step, shareSrc, isPhotoReel]);
+
   // Trim tool opens: pause background edit video + music; seek trimVideoRef to start
   React.useEffect(() => {
     if (editTool !== "Trim" || isPhotoReel) return;
@@ -24480,6 +24549,47 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       }
     };
   }, [step, recordedURL, showMusicPicker, editTextEditorOpen]);
+
+  // Re-assert editor playback after Trim/Share remounts, with Android-safe retries.
+  React.useEffect(() => {
+    if (step !== "edit" || isPhotoReel || !recordedURL) return;
+    let cancelled = false;
+    let attempts = 0;
+    let retryTimer = null;
+    const start = () => {
+      if (cancelled) return;
+      const video = editVideoRef.current;
+      if (!video) {
+        if (attempts++ < 12) retryTimer = setTimeout(start, 120);
+        return;
+      }
+      video.muted = true;
+      video.playsInline = true;
+      video.loop = true;
+      const promise = video.play();
+      if (promise && promise.then) {
+        promise.then(() => {
+          if (cancelled) return;
+          setEditorVideoFrameReady(true);
+          setPreviewPlaying(true);
+          if (origAudioOn && !audioUrlRef.current && !audioFileRef.current) {
+            try { video.muted = false; } catch (_) {}
+          }
+        }).catch(() => {
+          if (!cancelled && attempts++ < 12) retryTimer = setTimeout(start, 180);
+        });
+      } else {
+        setEditorVideoFrameReady(true);
+        setPreviewPlaying(true);
+      }
+    };
+    const frame = window.requestAnimationFrame ? window.requestAnimationFrame(start) : setTimeout(start, 0);
+    return () => {
+      cancelled = true;
+      if (window.cancelAnimationFrame && typeof frame === "number") window.cancelAnimationFrame(frame);
+      if (retryTimer) clearTimeout(retryTimer);
+    };
+  }, [step, recordedURL, isPhotoReel, editTool, showMusicPicker, editTextEditorOpen]);
 
   function startDragOverlay(id, e) { e.stopPropagation(); setDragOverlayId(id); }
 
@@ -24886,7 +24996,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
       // Header
       React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "14px 16px 12px", borderBottom: "1px solid #f0f0f0", flexShrink: 0 } },
-        React.createElement("button", { onClick: () => { setEditorVideoFrameReady(false); setStep("edit"); },
+        React.createElement("button", { onClick: () => { initialEditorPauseRef.current = false; setEditTool(null); setEditorVideoFrameReady(false); setStep("edit"); },
           style: { background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center" } },
           React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "#111", strokeWidth: 2.5, strokeLinecap: "round" },
             React.createElement("path", { d: "M19 12H5M12 5l-7 7 7 7" }))),
@@ -24899,7 +25009,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
             isPhotoReel
             ? React.createElement("img", { key: "share-media", src: shareMediaSrc, onError: e => { const fallbacks = [photoDataUrl, recordedURL, shareSrc].filter(Boolean); const fallback = fallbacks.find(src => src !== e.currentTarget.src); if (fallback) e.currentTarget.src = fallback; }, style: { width: "100%", height: "100%", objectFit: "contain", display: "block", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
             : React.createElement("video", {
-                key: "share-media", src: shareMediaSrc, poster: shareFallbackPoster || undefined, autoPlay: true, loop: true, playsInline: true, muted: true,
+                key: "share-media", ref: shareVideoRef, src: shareMediaSrc, poster: shareFallbackPoster || undefined, autoPlay: true, loop: true, playsInline: true, muted: true,
                 onLoadedData: e => {
                   const v = e.currentTarget;
                   const reveal = () => setShareVideoReady(true);
@@ -25025,6 +25135,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       setTrimPoster(null);
       setEditorVideoFrameReady(false);
       setPreviewPlaying(false);
+      setEditTool(null);
       setStep("edit");
     };
     return React.createElement(ComposeVideoTrimOverlay, {
@@ -25593,7 +25704,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
           ? React.createElement("img", { src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, onClick: togglePreviewPlay, style: { width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", margin: "0 auto", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
           : React.createElement("video", {
               key: recordedURL,
-               ref: editVideoRef, src: recordedURL, poster: editorVideoPoster || undefined, preload: "auto", playsInline: true, autoPlay: false, muted: true, loop: true,
+               ref: editVideoRef, src: recordedURL, poster: editorVideoPoster || undefined, preload: "auto", playsInline: true, autoPlay: true, muted: true, loop: true,
               onLoadedMetadata: onEditedMeta,
                onLoadedData: e => {
                  const v = e.target;
