@@ -23507,7 +23507,10 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   function useGalleryFile(file) {
     setExportedBlob(null);
     setTextOverlays([]); setReelStickerOverlays([]);
-    const isPhoto = file.type.startsWith("image/");
+    const isPhoto = file.type.startsWith("image/") || /\.(avif|gif|heic|heif|jpe?g|png|webp)$/i.test(file.name || "");
+    // Keep the original object URL only for the immediate editor paint. Once
+    // FileReader finishes, replace it with a stable data URL; Android Chrome
+    // can invalidate blob URLs exactly during edit -> share navigation.
     const mediaUrl = URL.createObjectURL(file);
     const selectionToken = {};
     gallerySelectionRef.current = selectionToken;
@@ -23516,7 +23519,17 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       const photoReader = new FileReader();
       photoReader.onload = () => {
         if (gallerySelectionRef.current === selectionToken) {
-          setPhotoDataUrl(typeof photoReader.result === "string" ? photoReader.result : null);
+          const dataUrl = typeof photoReader.result === "string" ? photoReader.result : null;
+          if (dataUrl) {
+            setPhotoDataUrl(dataUrl);
+            setRecordedURL(prev => {
+              if (prev === mediaUrl) {
+                setTimeout(() => { try { URL.revokeObjectURL(mediaUrl); } catch (_) {} }, 1000);
+                return dataUrl;
+              }
+              return prev;
+            });
+          }
         }
       };
       photoReader.onerror = () => {};
@@ -24298,8 +24311,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     if (prevShareSrcRef.current) { try { URL.revokeObjectURL(prevShareSrcRef.current); } catch(_){} prevShareSrcRef.current = null; }
     let url;
     if (isPhotoReel) {
-      // Keep photos on their stable data/original URL. A second object URL for
-      // the same File is the Android black-frame failure mode.
+      // Photos never get a second object URL in the share step.
       url = photoDataUrl || recordedURL;
     } else if (exportedBlob) {
       url = URL.createObjectURL(exportedBlob);
@@ -24859,7 +24871,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     // Prefer the baked export when edits were successfully rendered. For an
     // unedited photo, use the FileReader data URL/original URL instead of a
     // second blob URL — Android Chrome can paint that duplicate URL black.
-    const shareMediaSrc = isPhotoReel ? (photoDataUrl || recordedURL || shareSrc) : shareSrc;
+    const shareMediaSrc = isPhotoReel ? (photoDataUrl || recordedURL) : shareSrc;
     return React.createElement("div", { style: { position: "fixed", inset: 0, background: "#fff", zIndex: 500, display: "flex", flexDirection: "column", overflowY: "auto" } },
       showReelLocationPicker && React.createElement(LocationPickerOverlay, {
         onClose: () => setShowReelLocationPicker(false),
