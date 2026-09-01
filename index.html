@@ -9324,7 +9324,14 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const safeDuration = Math.max(Number(resolvedDuration || duration) || 0, 0.1);
   const selectedDuration = Math.max(0.1, trimEnd - trimStart);
   const timelineWidth = '100%';
+  const timelineRailInset = 15;
+  const timelineRailWidth = 70;
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const timelineTimeFromPoint = (clientX, rect) => {
+    const railLeft = rect.left + rect.width * timelineRailInset / 100;
+    const railWidth = rect.width * timelineRailWidth / 100;
+    return clamp(((clientX - railLeft) / railWidth) * safeDuration, 0, safeDuration);
+  };
   const formatTime = seconds => {
     const value = Math.max(0, Number(seconds) || 0);
     if (value >= 60) return Math.floor(value / 60) + ':' + String(Math.floor(value % 60)).padStart(2, '0');
@@ -9713,7 +9720,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       if (!dragSideRef.current || !timelineRef.current) return;
       const point = event.touches && event.touches[0] ? event.touches[0] : event;
       const rect = timelineRef.current.getBoundingClientRect();
-      const next = clamp(((point.clientX - rect.left) / rect.width) * safeDuration, 0, safeDuration);
+      const next = timelineTimeFromPoint(point.clientX, rect);
       if (dragSideRef.current === 'left') {
         const start = clamp(next, 0, Math.max(0, trimEnd - 1));
         setTrimStart(start);
@@ -9784,7 +9791,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const jumpToTimelinePoint = event => {
     if (dragSideRef.current || event.target !== event.currentTarget) return;
     const rect = timelineRef.current.getBoundingClientRect();
-    const next = clamp(((event.clientX - rect.left) / rect.width) * safeDuration, trimStart, trimEnd);
+    const next = clamp(timelineTimeFromPoint(event.clientX, rect), trimStart, trimEnd);
     if (videoRef.current) videoRef.current.currentTime = next;
     setCurrentTime(next);
   };
@@ -9848,7 +9855,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const selectedLeft = (trimStart / safeDuration) * 100;
   const activeInlineOverlay = inlineTextOverlays.find(overlay => overlay.id === selectedInlineOverlayId) || inlineTextOverlays[inlineTextOverlays.length - 1] || null;
   const selectedRight = ((safeDuration - trimEnd) / safeDuration) * 100;
-  const playhead = (clamp(currentTime, 0, safeDuration) / safeDuration) * 100;
+  const playhead = timelineRailInset + (clamp(currentTime, 0, safeDuration) / safeDuration) * timelineRailWidth;
   return React.createElement('div', { style: { position: 'fixed', inset: 0, zIndex: 2500, background: '#000', color: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden', userSelect: 'none' } },
     React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'max(18px, env(safe-area-inset-top)) 16px 12px', flexShrink: 0 } },
       React.createElement('button', { onClick: onCancel, style: { background: '#151515', border: '1px solid #202020', borderRadius: 8, color: '#fff', fontSize: 16, padding: '11px 20px', cursor: 'pointer' } }, 'Cancel'),
@@ -9911,17 +9918,17 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         ),
         React.createElement('div', { style: { textAlign: 'center', fontSize: 16, letterSpacing: 1.4, padding: '4px 0 12px', fontVariantNumeric: 'tabular-nums', color: '#f3f3f3' } }, formatTime(currentTime - trimStart) + ' / ' + formatTime(selectedDuration)),
       React.createElement('div', { style: { position: 'relative', width: timelineWidth, margin: '0 auto', boxSizing: 'border-box' } },
-        React.createElement('div', { ref: timelineRef, onPointerDown: jumpToTimelinePoint, style: { position: 'relative', height: 54, margin: '0 0 4px', width: '100%', touchAction: 'none' } },
+        React.createElement('div', { ref: timelineRef, onPointerDown: jumpToTimelinePoint, style: { position: 'relative', height: 40, margin: '0 0 4px', width: '100%', touchAction: 'none' } },
         React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, background: '#25262c', border: 'none', borderRadius: 3, boxSizing: 'border-box', overflow: 'hidden', pointerEvents: 'none' } },
-          React.createElement('div', { style: { position: 'absolute', inset: 0, display: 'flex', overflow: 'hidden', borderRadius: 3, background: '#25262c' } },
+          React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: timelineRailInset + '%', right: (100 - timelineRailInset - timelineRailWidth) + '%', display: 'flex', overflow: 'hidden', borderRadius: 3, background: '#25262c' } },
             Array.from({ length: thumbnailCount }).map((_, index) => React.createElement('div', { key: index, style: { flex: 1, minWidth: 0, height: '100%', backgroundColor: '#1a1a1a', backgroundImage: thumbnailFrames[index] ? 'url(' + thumbnailFrames[index] + ')' : 'linear-gradient(90deg, #151515, #252525)', backgroundSize: 'cover', backgroundPosition: 'center', borderRight: index < thumbnailCount - 1 ? '1px solid rgba(255,255,255,0.12)' : 'none' } }))
           )
         ),
-        React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, 'aria-label': 'Trim start', style: { position: 'absolute', top: 5, bottom: 5, left: 'calc(' + selectedLeft + '% - 6px)', width: 12, background: '#fff', border: '1px solid rgba(20,20,24,0.18)', borderRadius: 3, boxShadow: '0 1px 4px rgba(0,0,0,0.35)', cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
-          React.createElement('div', { style: { width: 2, height: 22, borderRadius: 2, background: '#1d1e23' } })
+        React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, 'aria-label': 'Trim start', style: { position: 'absolute', top: 3, bottom: 3, left: 'calc(' + (timelineRailInset + (selectedLeft * timelineRailWidth / 100)) + '% - 6px)', width: 12, background: '#fff', border: '1px solid rgba(20,20,24,0.18)', borderRadius: 3, boxShadow: '0 1px 4px rgba(0,0,0,0.35)', cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+          React.createElement('div', { style: { width: 2, height: 18, borderRadius: 2, background: '#1d1e23' } })
         ),
-        React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, 'aria-label': 'Trim end', style: { position: 'absolute', top: 5, bottom: 5, right: 'calc(' + selectedRight + '% - 6px)', width: 12, background: '#fff', border: '1px solid rgba(20,20,24,0.18)', borderRadius: 3, boxShadow: '0 1px 4px rgba(0,0,0,0.35)', cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
-          React.createElement('div', { style: { width: 2, height: 22, borderRadius: 2, background: '#1d1e23' } })
+        React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, 'aria-label': 'Trim end', style: { position: 'absolute', top: 3, bottom: 3, right: 'calc(' + (timelineRailInset + (selectedRight * timelineRailWidth / 100)) + '% - 6px)', width: 12, background: '#fff', border: '1px solid rgba(20,20,24,0.18)', borderRadius: 3, boxShadow: '0 1px 4px rgba(0,0,0,0.35)', cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+          React.createElement('div', { style: { width: 2, height: 18, borderRadius: 2, background: '#1d1e23' } })
         ),
         ),
         React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 4, width: '100%', margin: 0, boxSizing: 'border-box' } },
