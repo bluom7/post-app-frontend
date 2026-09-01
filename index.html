@@ -24779,13 +24779,14 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     // video frames. Android Chrome can expose a readyState=2 video whose current
     // surface is still black; recording that surface is the source of the old bug.
     const _isGalleryFile = recordedBlob instanceof File;
-    const _hasTextOv = (textOverlays && textOverlays.length > 0) || (reviewTextOverlays && reviewTextOverlays.length > 0);
+    // Text stays as one metadata overlay in the feed. It must not also be
+    // baked into the exported video, otherwise the feed renders a duplicate.
     const _hasStickerOv = reelStickerOverlays && reelStickerOverlays.length > 0;
     const _hasEmojiOv = (editEmojiOverlays && editEmojiOverlays.length > 0) || (reviewEmojiOverlays && reviewEmojiOverlays.length > 0);
     const _hasEffect = effect && effect !== "none";
     const _hasCrop = aspect && aspect !== "original";
     const _hasExtMusic = !!(audioFileRef.current || audioUrlRef.current);
-    const _needsBaking = _hasTextOv || _hasStickerOv || _hasEmojiOv || _hasEffect || _hasCrop || _hasExtMusic;
+    const _needsBaking = _hasStickerOv || _hasEmojiOv || _hasEffect || _hasCrop || _hasExtMusic;
 
     if (_isGalleryFile && !_needsBaking) {
       setExportedBlob(null);
@@ -24874,13 +24875,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         ctx.save(); ctx.clearRect(0, 0, outW, outH); ctx.filter = currEff.filter;
         ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
         ctx.restore();
-        [...(textOverlays || []), ...(reviewTextOverlays || [])].forEach(o => {
-          ctx.save(); ctx.font = "bold " + Math.max(12, Math.round(outW * ((o.size || 22) / 390))) + "px sans-serif";
-          ctx.fillStyle = o.color || "#fff"; ctx.strokeStyle = "rgba(0,0,0,0.65)"; ctx.lineWidth = Math.max(2, outW * 0.004);
-          ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          const px = (o.xPct / 100) * outW, py = (o.yPct / 100) * outH;
-          ctx.strokeText(o.text || "", px, py); ctx.fillText(o.text || "", px, py); ctx.restore();
-        });
+        // Text overlays are intentionally not drawn into the exported pixels.
+        // They are sent as metadata and rendered once by the Reels feed.
         [...(editEmojiOverlays || []), ...(reviewEmojiOverlays || [])].forEach(o => {
           ctx.save(); ctx.font = Math.max(24, Math.round(outW * ((o.size || 64) / 390))) + "px sans-serif";
           ctx.textAlign = "center"; ctx.textBaseline = "middle";
