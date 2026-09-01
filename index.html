@@ -25168,7 +25168,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       const active = editTool === id;
       return React.createElement("button", { key: id, onClick: () => { if (id !== "Trim") setEditTool(t => t === id ? null : id); },
         style: { background: "transparent", border: "none", borderRadius: 0, color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, cursor: "pointer", fontSize: 10, fontWeight: active ? 800 : 500, padding: "0 1px 3px", width: 60, minWidth: 60, height: 62, boxSizing: "border-box", WebkitTapHighlightColor: "transparent" } },
-        React.createElement("div", { style: { width: 54, height: 40, borderRadius: 10, background: active ? "rgba(53,57,70,0.98)" : "rgba(29,32,40,0.96)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s", boxShadow: "0 2px 8px rgba(0,0,0,0.35)" } }, iconEl),
+        React.createElement("div", { style: { width: 54, height: 40, borderRadius: 10, background: active ? "rgba(53,57,70,0.98)" : "rgba(29,32,40,0.96)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s" } }, iconEl),
         React.createElement("span", { style: { color: active ? "#fff" : "rgba(255,255,255,0.9)", fontSize: 10, fontWeight: 600, lineHeight: 1, textShadow: "0 1px 3px rgba(0,0,0,0.85)" } }, label)
       );
     }
@@ -26075,7 +26075,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
 
       // Keep the five editing tools at the visible video bottom, separate from Edit/Next.
       !editTextEditorOpen && React.createElement("div", {
-        style: { position: "fixed", left: 8, right: 8, bottom: "clamp(142px, 19vh, 173px)", zIndex: 25, display: "flex", justifyContent: "space-around", alignItems: "flex-end", gap: 2, padding: "0 4px 4px", borderRadius: 0, background: "linear-gradient(to top, rgba(0,0,0,0.42), transparent)", backdropFilter: "none", WebkitBackdropFilter: "none" }
+        style: { position: "fixed", left: 8, right: 8, bottom: "clamp(142px, 19vh, 173px)", zIndex: 25, display: "flex", justifyContent: "space-around", alignItems: "flex-end", gap: 2, padding: "0 4px 4px", borderRadius: 0, background: "transparent", backdropFilter: "none", WebkitBackdropFilter: "none" }
       },
         tabBtn("Audio",    iAudio,    "Audio"),
         tabBtn("Text",     iText,     "Text"),
@@ -26214,7 +26214,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
         })(),
 
         // Tool panel (expands upward when a tool is active)
-        panel && React.createElement("div",{style:{background:editTool === "Filters" ? "transparent" : "rgba(30,30,30,0.92)",borderRadius:14,margin:"0 12px 10px",borderTop:editTool === "Filters" ? "none" : "1px solid rgba(255,255,255,0.1)",backdropFilter:editTool === "Filters" ? "none" : "blur(8px)"}},panel),
+        panel && React.createElement("div",{style:{position:"fixed",left:12,right:12,bottom:"calc(clamp(142px, 19vh, 173px) + 70px)",zIndex:24,maxHeight:"min(52vh, 420px)",overflowY:"auto",background:editTool === "Filters" ? "transparent" : "rgba(30,30,30,0.92)",borderRadius:14,margin:0,borderTop:editTool === "Filters" ? "none" : "1px solid rgba(255,255,255,0.1)",backdropFilter:editTool === "Filters" ? "none" : "blur(8px)"}},panel),
 
         // Bottom action buttons: Edit + Next →
         !editTextEditorOpen && React.createElement("div",{style:{display:"flex",justifyContent:"space-between",gap:0,padding:"6px 16px calc(6px + env(safe-area-inset-bottom))"}},
