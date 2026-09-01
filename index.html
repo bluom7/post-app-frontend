@@ -10018,14 +10018,6 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         ),
         ),
         React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 4, width: '100%', margin: 0, boxSizing: 'border-box', overflow: 'hidden', position: 'relative', background: 'linear-gradient(to bottom, #303139 0, #303139 42px, #000 42px, #000 46px, #303139 46px, #303139 82px, #000 82px, #000 86px)' } },
-            !selectedMusic && React.createElement('button', { onClick: event => { event.preventDefault(); event.stopPropagation(); toggleOriginalAudio(); }, onTouchStart: event => { event.stopPropagation(); }, 'aria-label': originalAudioOn ? 'Mute original video audio' : 'Unmute original video audio', 'aria-pressed': originalAudioOn, style: { position: 'absolute', left: 8, top: 4, width: 34, height: 34, padding: 5, border: 'none', borderRadius: 17, background: 'rgba(0,0,0,0.48)', color: '#fff', cursor: 'pointer', zIndex: 6, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
-              React.createElement('svg', { width: 21, height: 21, viewBox: '0 0 24 24', fill: 'none', stroke: '#fff', strokeWidth: 1.9, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
-                React.createElement('path', { d: 'M11 5 6 9H3v6h3l5 4V5z' }),
-                originalAudioOn
-                  ? React.createElement(React.Fragment, null, React.createElement('path', { d: 'M15.5 8.5a5 5 0 0 1 0 7' }), React.createElement('path', { d: 'M18 6a8.5 8.5 0 0 1 0 12' }))
-                  : React.createElement('path', { d: 'm16 9 5 5m0-5-5 5' })
-              )
-            ),
             selectedMusic
               ? React.createElement('button', { onClick: onAudio, 'aria-label': 'Change selected song', style: { position: 'relative', transform: 'translateX(-' + timelineTrackScrollPx + 'px)', width: timelineTrackContentWidth, minWidth: timelineTrackContentWidth, height: 42, minHeight: 42, flex: '0 0 auto', padding: '4px 8px 4px calc(50vw - 8px)', border: 'none', borderRadius: 3, background: '#303139', color: '#fff', cursor: 'pointer', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: 6, textAlign: 'left', overflow: 'hidden' } },
                   selectedMusicArtwork ? React.createElement('img', { src: selectedMusicArtwork, alt: '', style: { width: 34, height: 34, borderRadius: 3, objectFit: 'cover', flexShrink: 0 } }) : React.createElement('div', { style: { width: 34, height: 34, borderRadius: 3, background: '#3a3b43', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 11, flexShrink: 0 } }, '♪'),
