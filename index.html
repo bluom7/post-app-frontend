@@ -26103,8 +26103,8 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
         // ── Timeline panel (CapCut-style) — visible when "Edit video" tapped ──
         (()=>{
           if (!showTimeline) return [
-            React.createElement("div", { key:"chev", style: { display: "flex", justifyContent: "center", paddingBottom: 2 } },
-              React.createElement("button", { onClick: () => setEditTool(t => t ? null : "Audio"),
+            !editTool && React.createElement("div", { key:"chev", style: { display: "flex", justifyContent: "center", paddingBottom: 2 } },
+              React.createElement("button", { onClick: () => setEditTool("Audio"),
                 style: { background: "none", border: "none", cursor: "pointer", padding: "2px 24px 6px", color: "rgba(255,255,255,0.45)" } },
                 React.createElement("svg",{width:24,height:13,viewBox:"0 0 24 13",fill:"none",stroke:"rgba(255,255,255,0.45)",strokeWidth:2.5,strokeLinecap:"round",strokeLinejoin:"round"},
                   React.createElement("path",{d:editTool ? "M2 2 L12 11 L22 2" : "M2 11 L12 2 L22 11"}))
@@ -26217,7 +26217,16 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
         })(),
 
         // Tool panel (expands upward when a tool is active)
-        panel && React.createElement("div",{style:{position:"fixed",left:12,right:12,bottom:"calc(" + toolDockBottom + " + 70px)",zIndex:24,maxHeight:"min(52vh, 420px)",overflowY:"auto",background:editTool === "Filters" ? "transparent" : "rgba(30,30,30,0.92)",borderRadius:14,margin:0,borderTop:editTool === "Filters" ? "none" : "1px solid rgba(255,255,255,0.1)",backdropFilter:editTool === "Filters" ? "none" : "blur(8px)"}},panel),
+        panel && React.createElement("div",{style:{position:"fixed",left:12,right:12,bottom:"calc(" + toolDockBottom + " + 70px)",zIndex:24,maxHeight:"min(52vh, 420px)",overflowY:"auto",background:editTool === "Filters" ? "transparent" : "rgba(30,30,30,0.92)",borderRadius:14,margin:0,borderTop:editTool === "Filters" ? "none" : "1px solid rgba(255,255,255,0.1)",backdropFilter:editTool === "Filters" ? "none" : "blur(8px)"}},
+          React.createElement("div", { style: { display: "flex", justifyContent: "center", alignItems: "center", height: 24, flexShrink: 0 } },
+            React.createElement("button", { onClick: () => setEditTool(null), "aria-label": "Close tool panel", style: { background: "none", border: "none", cursor: "pointer", padding: "4px 24px 3px", color: "rgba(255,255,255,0.62)" } },
+              React.createElement("svg", { width: 24, height: 13, viewBox: "0 0 24 13", fill: "none", stroke: "rgba(255,255,255,0.72)", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round" },
+                React.createElement("path", { d: "M2 2 L12 11 L22 2" })
+              )
+            )
+          ),
+          panel
+        ),
 
         // Natural wide/short videos keep the tool row beside the action area.
         !toolsOnVideo && !editTextEditorOpen && React.createElement("div", { style: { display: "flex", justifyContent: "space-around", alignItems: "flex-end", gap: 2, padding: "0 4px 6px", margin: "0 4px" } },
