@@ -24314,7 +24314,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     return () => {
       if (prevShareSrcRef.current) { try { URL.revokeObjectURL(prevShareSrcRef.current); } catch(_){} prevShareSrcRef.current = null; }
     };
-  }, [step, exportedBlob, recordedBlob, recordedURL]);
+  }, [step, exportedBlob, recordedBlob, recordedURL, isPhotoReel, photoDataUrl]);
 
   // Share gets its own video element/URL. Keep the captured first frame visible
   // until that new element has decoded a frame, avoiding Android black flashes.
@@ -24625,6 +24625,20 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       }
     }
     if (isPhotoReel) {
+      // An untouched photo should go straight to share. Re-encoding it through
+      // canvas adds a failure point and can turn a valid gallery image black.
+      const photoNeedsExport = effect !== "none" ||
+        (textOverlays && textOverlays.length > 0) ||
+        (reviewTextOverlays && reviewTextOverlays.length > 0) ||
+        (editEmojiOverlays && editEmojiOverlays.length > 0) ||
+        (reviewEmojiOverlays && reviewEmojiOverlays.length > 0) ||
+        (reelStickerOverlays && reelStickerOverlays.length > 0);
+      if (!photoNeedsExport) {
+        setExportedBlob(null);
+        setExporting(false);
+        setStep("share");
+        return;
+      }
       // Bake text & sticker overlays onto the photo before sharing
       setExporting(true); setExportProgress(15);
       // Never keep a previous/invalid export as the share source.
@@ -24887,7 +24901,12 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   if (step === "share") {
     const shareFallbackPoster = editorVideoPoster || reviewPoster;
     // Photos always have the original gallery URL available as a last-resort preview.
-    const shareMediaSrc = isPhotoReel ? (shareSrc || photoDataUrl || recordedURL) : shareSrc;
+    // Prefer the baked export when edits were successfully rendered. For an
+    // unedited photo, use the FileReader data URL/original URL instead of a
+    // second blob URL — Android Chrome can paint that duplicate URL black.
+    const shareMediaSrc = isPhotoReel
+      ? (exportedBlob ? (shareSrc || photoDataUrl || recordedURL) : (photoDataUrl || recordedURL || shareSrc))
+      : shareSrc;
     return React.createElement("div", { style: { position: "fixed", inset: 0, background: "#fff", zIndex: 500, display: "flex", flexDirection: "column", overflowY: "auto" } },
       showReelLocationPicker && React.createElement(LocationPickerOverlay, {
         onClose: () => setShowReelLocationPicker(false),
@@ -24915,7 +24934,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       React.createElement("div", { style: { display: "flex", justifyContent: "center", padding: "18px 16px 8px", flexShrink: 0 } },
         React.createElement("div", { style: { width: "52%", maxWidth: 200, borderRadius: 16, overflow: "hidden", position: "relative", background: "#000", aspectRatio: "9/16" } },
           shareMediaSrc && (isPhotoReel
-            ? React.createElement("img", { key: shareMediaSrc, src: shareMediaSrc, onError: e => { const fallback = photoDataUrl || recordedURL; if (fallback && e.currentTarget.src !== fallback) e.currentTarget.src = fallback; }, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
+            ? React.createElement("img", { key: shareMediaSrc, src: shareMediaSrc, onError: e => { const fallback = photoDataUrl || recordedURL; if (fallback && e.currentTarget.src !== fallback) e.currentTarget.src = fallback; }, style: { width: "100%", height: "100%", objectFit: "contain", display: "block", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
             : React.createElement("video", {
                 key: shareMediaSrc, src: shareMediaSrc, poster: shareFallbackPoster || undefined, autoPlay: true, loop: true, playsInline: true, muted: true,
                 onLoadedData: e => {
