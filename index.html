@@ -22470,6 +22470,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const [trimVideoEnded, setTrimVideoEnded] = React.useState(false);
   const [editingOverlayId, setEditingOverlayId] = React.useState(null);
   const [videoDuration, setVideoDuration] = React.useState(0);
+  const [recordedVideoAspect, setRecordedVideoAspect] = React.useState(null);
   const [aspect, setAspect] = React.useState("original");
   const [resolution, setResolution] = React.useState("1080p");
   const [editTool, setEditTool] = React.useState(null);
@@ -23506,6 +23507,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
   function useGalleryFile(file) {
     setExportedBlob(null);
+    setRecordedVideoAspect(null);
     setTextOverlays([]); setReelStickerOverlays([]);
     const isPhoto = file.type.startsWith("image/");
     const mediaUrl = URL.createObjectURL(file);
@@ -23905,6 +23907,10 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     ? "none"
     : "brightness(" + (brightnessVal / 100).toFixed(2) + ") " + (touchUp > 0 ? "brightness(" + (1 + touchUp * 0.0018).toFixed(3) + ") contrast(" + (1 - touchUp * 0.0013).toFixed(3) + ") saturate(" + (1 + touchUp * 0.0012).toFixed(3) + ") " : "") + currEff.filter;
   const progressPct = maxLength > 0 ? Math.min(100, ((totalSegmentTime + recordTime) / maxLength) * 100) : 0;
+  // Keep wide source clips natural; fill the frame for tall/recorded clips.
+  const editorVideoObjectFit = recordedVideoAspect === null
+    ? (recordedBlob instanceof File ? "contain" : "cover")
+    : (recordedVideoAspect < 1 ? "cover" : "contain");
 
   const THEMES = [
     { id: "classic", label: "Classic", effect: "none", textColor: "#ffffff" },
@@ -23926,6 +23932,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
   function onEditedMeta(e) {
     const d = e.target.duration || 0;
+    const naturalWidth = Number(e.target.videoWidth) || 0;
+    const naturalHeight = Number(e.target.videoHeight) || 0;
+    if (naturalWidth > 0 && naturalHeight > 0) setRecordedVideoAspect(naturalWidth / naturalHeight);
     const isNewSource = editorVideoMetaURLRef.current !== recordedURL;
     editorVideoMetaURLRef.current = recordedURL;
     setVideoDuration(d);
@@ -24903,9 +24912,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
                 onCanPlay: e => { const v = e.target; v.play().catch(() => {}); },
                 onError: e => { const v = e.target; setShareVideoReady(false); if (v.src) { const s = v.src; v.removeAttribute('src'); v.load(); v.src = s; } },
                 onClick: e => { const v = e.currentTarget; if (v.paused) { v.play().catch(()=>{}); } else v.pause(); },
-                style: { width: "100%", height: "100%", objectFit: recordedBlob instanceof File ? "contain" : "cover", display: "block", WebkitTapHighlightColor: "transparent", cursor: "pointer", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter, opacity: (editorVideoPoster || reviewPoster) && !shareVideoReady ? 0 : 1 }
+                style: { width: "100%", height: "100%", objectFit: editorVideoObjectFit, display: "block", WebkitTapHighlightColor: "transparent", cursor: "pointer", filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter, opacity: (editorVideoPoster || reviewPoster) && !shareVideoReady ? 0 : 1 }
               }),
-            (editorVideoPoster || reviewPoster) && !shareVideoReady && React.createElement("img", { key: "share-poster", src: shareFallbackPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: recordedBlob instanceof File ? "contain" : "cover", display: "block", pointerEvents: "none", zIndex: 1, filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
+            (editorVideoPoster || reviewPoster) && !shareVideoReady && React.createElement("img", { key: "share-poster", src: shareFallbackPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: editorVideoObjectFit, display: "block", pointerEvents: "none", zIndex: 1, filter: (VIDEO_EFFECTS.find(function(e){return e.id===effect;})||VIDEO_EFFECTS[0]).filter } })
           ],
                      !exportedBlob && React.createElement("div", { style: { position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none" } },
              [...(textOverlays || []), ...(reviewTextOverlays || [])].map(o => React.createElement("div", { key: "share-text-" + o.id, style: { position: "absolute", left: (o.xPct || 50) + "%", top: (o.yPct || 50) + "%", transform: "translate(-50%,-50%)", color: o.color || "#fff", fontSize: Math.max(12, Math.min(64, Number(o.size) || 22)), fontWeight: 800, textAlign: "center", whiteSpace: "pre-wrap", textShadow: "0 2px 7px rgba(0,0,0,0.9)", maxWidth: "92%" } }, o.text || "")),
@@ -25601,9 +25610,9 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
                onError: () => { restoreEditorVideoPlayback(true); },
               onTimeUpdate: e => { if (editTool === "Trim") return; const v = e.target; if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v); },
               onClick: togglePreviewPlay,
-               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: recordedBlob instanceof File ? "contain" : "cover", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform", opacity: editorVideoPoster && !editorVideoFrameReady ? 0 : 1 }
+               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: editorVideoObjectFit, objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform", opacity: editorVideoPoster && !editorVideoFrameReady ? 0 : 1 }
             }),
-            editorVideoPoster && !editorVideoFrameReady && React.createElement("img", { src: editorVideoPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: recordedBlob instanceof File ? "contain" : "cover", objectPosition: "center center", display: "block", zIndex: 2, pointerEvents: "none" } }),
+            editorVideoPoster && !editorVideoFrameReady && React.createElement("img", { src: editorVideoPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: editorVideoObjectFit, objectPosition: "center center", display: "block", zIndex: 2, pointerEvents: "none" } }),
             !isPhotoReel && !editorVideoFrameReady && React.createElement("div", {
               style: { position: "absolute", inset: 0, zIndex: 3, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }
             },
