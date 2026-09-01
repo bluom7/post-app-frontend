@@ -9304,6 +9304,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const [timelineZoom, setTimelineZoom] = React.useState(1);
   const timelineZoomRef = React.useRef(1);
   const timelinePinchRef = React.useRef(null);
+  const timelineScrollRef = React.useRef(null);
   const [inlineTextEditorOpen, setInlineTextEditorOpen] = React.useState(false);
   const [inlineTextDraft, setInlineTextDraft] = React.useState("");
   const [inlineTextColor, setInlineTextColor] = React.useState("#ffffff");
@@ -9360,6 +9361,47 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     if (!timelinePinchRef.current) return;
     timelinePinchRef.current = null;
     if (event && event.preventDefault) event.preventDefault();
+  };
+  const beginTimelineScroll = event => {
+    if (!event.touches || event.touches.length !== 1 || timelinePinchRef.current || dragSideRef.current) return;
+    timelineScrollRef.current = { startX: event.touches[0].clientX, startTime: currentTime, paused: false };
+  };
+  const updateTimelineScroll = event => {
+    const scroll = timelineScrollRef.current;
+    if (!scroll || timelinePinchRef.current || !event.touches || event.touches.length !== 1) return;
+    const deltaX = event.touches[0].clientX - scroll.startX;
+    if (Math.abs(deltaX) < 2) return;
+    const next = clamp(scroll.startTime - deltaX / timelinePixelsPerSecond, trimStart, trimEnd);
+    const video = videoRef.current;
+    if (!scroll.paused) {
+      if (video) video.pause();
+      if (audioRef.current) audioRef.current.pause();
+      setPlaying(false);
+      scroll.paused = true;
+    }
+    if (video) video.currentTime = next;
+    setCurrentTime(next);
+    event.preventDefault();
+    event.stopPropagation();
+  };
+  const endTimelineScroll = event => {
+    if (!event || !event.touches || event.touches.length === 0) timelineScrollRef.current = null;
+  };
+  const beginTimelineGesture = event => {
+    if (event.touches && event.touches.length >= 2) {
+      timelineScrollRef.current = null;
+      beginTimelinePinch(event);
+    } else {
+      beginTimelineScroll(event);
+    }
+  };
+  const updateTimelineGesture = event => {
+    if (timelinePinchRef.current) updateTimelinePinch(event);
+    else updateTimelineScroll(event);
+  };
+  const endTimelineGesture = event => {
+    endTimelinePinch(event);
+    endTimelineScroll(event);
   };
   const formatTime = seconds => {
     const value = Math.max(0, Number(seconds) || 0);
@@ -9946,7 +9988,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
           ),
         ),
         React.createElement('div', { style: { textAlign: 'center', fontSize: 16, letterSpacing: 1.4, padding: '4px 0 12px', fontVariantNumeric: 'tabular-nums', color: '#f3f3f3' } }, formatTime(currentTime - trimStart) + ' / ' + formatTime(selectedDuration)),
-      React.createElement('div', { onTouchStart: beginTimelinePinch, onTouchMove: updateTimelinePinch, onTouchEnd: endTimelinePinch, onTouchCancel: endTimelinePinch, style: { position: 'relative', width: timelineWidth, margin: '0 auto', boxSizing: 'border-box', touchAction: 'none' } },
+      React.createElement('div', { onTouchStart: beginTimelineGesture, onTouchMove: updateTimelineGesture, onTouchEnd: endTimelineGesture, onTouchCancel: endTimelineGesture, style: { position: 'relative', width: timelineWidth, margin: '0 auto', boxSizing: 'border-box', touchAction: 'none' } },
         React.createElement('div', { ref: timelineRef, onPointerDown: jumpToTimelinePoint, style: { position: 'relative', height: 44, margin: '0 0 4px', width: '100%', touchAction: 'none', overflow: 'hidden' } },
         React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, background: '#25262c', border: 'none', borderRadius: 3, boxSizing: 'border-box', overflow: 'hidden', pointerEvents: 'none' } },
           React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: '50%', width: (safeDuration * timelinePixelsPerSecond) + 'px', transform: 'translateX(-' + ((currentTime + timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)', display: 'flex', overflow: 'hidden', borderRadius: 3, background: '#25262c' } },
