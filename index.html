@@ -9301,6 +9301,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const audioRef = React.useRef(null);
   const [playing, setPlaying] = React.useState(false);
   const [originalAudioOn, setOriginalAudioOn] = React.useState(false);
+  const [musicAudioOn, setMusicAudioOn] = React.useState(true);
   const [currentTime, setCurrentTime] = React.useState(trimStart || 0);
   const [timelineZoom, setTimelineZoom] = React.useState(1);
   const timelineZoomRef = React.useRef(1);
@@ -9527,6 +9528,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     audio.preload = 'auto';
     audio.loop = false;
     audio.volume = 1;
+    audio.muted = !musicAudioOn;
     audio.src = musicUrl;
     audioRef.current = audio;
     const stopTogether = () => {
@@ -9548,6 +9550,9 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       if (audioRef.current === audio) audioRef.current = null;
     };
   }, [musicUrl, musicStartSec, trimStart]);
+  React.useEffect(() => {
+    if (audioRef.current) audioRef.current.muted = !musicAudioOn;
+  }, [musicAudioOn, musicUrl]);
   const [thumbnailFrames, setThumbnailFrames] = React.useState([]);
   const thumbnailCount = 12;
   React.useEffect(() => {
@@ -10019,21 +10024,23 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         ),
         React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 4, width: '100%', margin: 0, boxSizing: 'border-box', overflow: 'hidden', position: 'relative', background: 'linear-gradient(to bottom, #303139 0, #303139 42px, #000 42px, #000 46px, #303139 46px, #303139 82px, #000 82px, #000 86px)' } },
             selectedMusic
-              ? React.createElement('button', { onClick: onAudio, 'aria-label': 'Change selected song', style: { position: 'relative', transform: 'translateX(-' + timelineTrackScrollPx + 'px)', width: timelineTrackContentWidth, minWidth: timelineTrackContentWidth, height: 42, minHeight: 42, flex: '0 0 auto', padding: '4px 8px 4px calc(50vw - 8px)', border: 'none', borderRadius: 3, background: '#303139', color: '#fff', cursor: 'pointer', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: 6, textAlign: 'left', overflow: 'hidden' } },
-                  selectedMusicArtwork ? React.createElement('img', { src: selectedMusicArtwork, alt: '', style: { width: 34, height: 34, borderRadius: 3, objectFit: 'cover', flexShrink: 0 } }) : React.createElement('div', { style: { width: 34, height: 34, borderRadius: 3, background: '#3a3b43', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 11, flexShrink: 0 } }, '♪'),
-                  React.createElement('div', { style: { minWidth: 0, flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 2px 6px 0', overflow: 'hidden' } },
-                    React.createElement('div', { style: { fontSize: 10.5, lineHeight: '12px', fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, selectedMusic.music_title || 'Selected song'),
-                    React.createElement('div', { style: { fontSize: 8.5, lineHeight: '10px', color: 'rgba(255,255,255,0.68)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, selectedMusic.music_artist || 'Audio selected')
-                  ),
-                  React.createElement('div', { style: { position: 'absolute', left: 36, right: 42, bottom: 3, height: 5, display: 'flex', alignItems: 'flex-end', gap: 1, overflow: 'hidden', pointerEvents: 'none', opacity: 0.9 } },
-                    [2,4,3,5,2,4,3,5,4,2,5,3,4,2,5,3,4,5,2,4,3,5,2,4,3,5,4,2,5,3,4,2,5,3,4,5,2,4,3,5,2,4,3,5].map(function(h, i) {
-                      return React.createElement('span', { key: i, style: { width: 1.5, minWidth: 1.5, height: h + 'px', background: 'rgba(255,255,255,0.8)', borderRadius: 1 } });
-                    })
-                  ),
-                  React.createElement('span', { 'aria-label': 'Song audio', style: { width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'transparent', color: '#fff' } },
-                    React.createElement('svg', { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: '#fff', strokeWidth: 2.1, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
+              ? React.createElement('button', { onClick: onAudio, 'aria-label': 'Change selected song', style: { position: 'relative', transform: 'translateX(-' + timelineTrackScrollPx + 'px)', width: timelineTrackContentWidth, minWidth: timelineTrackContentWidth, height: 42, minHeight: 42, flex: '0 0 auto', padding: '4px 8px 4px calc(50vw - 30px)', border: 'none', borderRadius: 3, background: '#303139', color: '#fff', cursor: 'pointer', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: 6, textAlign: 'left', overflow: 'hidden' } },
+                  React.createElement('span', { role: 'button', tabIndex: 0, 'aria-label': musicAudioOn ? 'Mute song' : 'Unmute song', onClick: event => { event.preventDefault(); event.stopPropagation(); const next = !musicAudioOn; setMusicAudioOn(next); if (audioRef.current) audioRef.current.muted = !next; }, style: { width: 22, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'transparent', color: '#fff', cursor: 'pointer' } },
+                    React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: '#fff', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
                       React.createElement('path', { d: 'M11 5 6 9H3v6h3l5 4V5z' }),
-                      React.createElement('path', { d: 'm16 9 5 5m0-5-5 5' })
+                      musicAudioOn
+                        ? React.createElement(React.Fragment, null, React.createElement('path', { d: 'M15.5 8.5a5 5 0 0 1 0 7' }), React.createElement('path', { d: 'M18 6a8.5 8.5 0 0 1 0 12' }))
+                        : React.createElement('path', { d: 'm16 9 5 5m0-5-5 5' })
+                    )
+                  ),
+                  selectedMusicArtwork ? React.createElement('img', { src: selectedMusicArtwork, alt: '', style: { width: 34, height: 34, borderRadius: 3, objectFit: 'cover', flexShrink: 0 } }) : React.createElement('div', { style: { width: 34, height: 34, borderRadius: 3, background: '#3a3b43', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 11, flexShrink: 0 } }, '♪'),
+                  React.createElement('div', { style: { minWidth: 0, flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 2px', boxSizing: 'border-box', overflow: 'hidden' } },
+                    React.createElement('div', { style: { fontSize: 10.5, lineHeight: '12px', fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, selectedMusic.music_title || 'Selected song'),
+                    React.createElement('div', { style: { fontSize: 8.5, lineHeight: '10px', color: 'rgba(255,255,255,0.68)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, selectedMusic.music_artist || 'Audio selected'),
+                    React.createElement('div', { style: { display: 'flex', alignItems: 'flex-end', gap: 1, height: 5, marginTop: 2, width: '100%', overflow: 'hidden', pointerEvents: 'none', opacity: 0.9 } },
+                      [2,4,3,5,2,4,3,5,4,2,5,3,4,2,5,3,4,5,2,4,3,5,2,4,3,5,4,2,5,3,4,2,5,3,4,5,2,4,3,5,2,4,3,5].map(function(h, i) {
+                        return React.createElement('span', { key: i, style: { width: 1.5, minWidth: 1.5, height: h + 'px', background: 'rgba(255,255,255,0.8)', borderRadius: 1, flexShrink: 0 } });
+                      })
                     )
                   ),
                   React.createElement('span', { style: { position: 'relative', zIndex: 1, color: '#cfd0d4', fontSize: 9, fontWeight: 800, flexShrink: 0 } }, 'Change')
