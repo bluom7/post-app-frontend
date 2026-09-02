@@ -10032,64 +10032,9 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     if (inlineEditingOverlayId === id) closeInlineTextEditor();
   };
   const switchToEditor = () => {
-    // This handoff is used only by the trim screen down-arrow. Keep the
-    // current playing video element instead of switching to another frame.
-    if (typeof document === 'undefined' || !videoRef.current) { onDone(); return; }
-    const liveVideo = videoRef.current;
-    const sourceRect = liveVideo.getBoundingClientRect();
-    const transitionTime = liveVideo.currentTime || trimStart || 0;
-    const backdrop = document.createElement('div');
-    const stage = document.createElement('div');
-    backdrop.style.cssText = 'position:fixed;inset:0;z-index:10000;background:#000;pointer-events:none;overflow:hidden;';
-    stage.style.cssText = 'position:fixed;left:' + sourceRect.left + 'px;top:' + sourceRect.top + 'px;width:' + sourceRect.width + 'px;height:' + sourceRect.height + 'px;border-radius:14px;overflow:hidden;background:#000;transition:left 360ms cubic-bezier(0.22,1,0.36,1),top 360ms cubic-bezier(0.22,1,0.36,1),width 360ms cubic-bezier(0.22,1,0.36,1),height 360ms cubic-bezier(0.22,1,0.36,1),border-radius 360ms ease;';
-    liveVideo.style.width = '100%';
-    liveVideo.style.height = '100%';
-    liveVideo.style.objectFit = 'contain';
-    stage.appendChild(liveVideo);
-    backdrop.appendChild(stage);
-    document.body.appendChild(backdrop);
-    const frame = window.requestAnimationFrame || (fn => window.setTimeout(fn, 16));
+    // Let the parent unmount the trim video cleanly. Its editor playback effect
+    // then mounts a fresh video element and starts it reliably on Android.
     onDone();
-    frame(() => {
-      const editorStage = document.querySelector('[data-reel-editor-stage]');
-      const target = editorStage && editorStage.getBoundingClientRect();
-      if (target && target.width && target.height) {
-        stage.style.left = target.left + 'px';
-        stage.style.top = target.top + 'px';
-        stage.style.width = target.width + 'px';
-        stage.style.height = target.height + 'px';
-        stage.style.borderRadius = getComputedStyle(editorStage).borderRadius || '22px';
-        const editorVideo = editorStage.querySelector('[data-reel-editor-video]');
-        if (editorVideo) liveVideo.style.objectFit = getComputedStyle(editorVideo).objectFit || 'cover';
-      }
-    });
-    const releaseAt = Date.now() + 380;
-    const deadline = Date.now() + 1200;
-    const release = () => {
-      const editorStage = document.querySelector('[data-reel-editor-stage]');
-      if (editorStage && Date.now() >= releaseAt) {
-        const editorVideo = editorStage.querySelector('[data-reel-editor-video]');
-        if (editorVideo) {
-          editorVideo.style.display = 'none';
-          try { editorVideo.pause(); } catch (_) {}
-        }
-        const loadingOverlay = document.querySelector('[data-reel-editor-loading]');
-        if (loadingOverlay) loadingOverlay.style.display = 'none';
-        liveVideo.style.position = 'absolute';
-        liveVideo.style.inset = '0';
-        liveVideo.style.width = '100%';
-        liveVideo.style.height = '100%';
-        liveVideo.style.objectFit = editorVideo ? (getComputedStyle(editorVideo).objectFit || 'cover') : 'cover';
-        try { liveVideo.currentTime = transitionTime; } catch (_) {}
-        editorStage.insertBefore(liveVideo, editorStage.firstChild);
-        try { editVideoRef.current = liveVideo; } catch (_) {}
-        backdrop.remove();
-        return;
-      }
-      if (!editorStage && Date.now() >= deadline) { backdrop.remove(); return; }
-      frame(release);
-    };
-    release();
   };
 
   const selectedLeft = (trimStart / safeDuration) * 100;
