@@ -9326,6 +9326,8 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     const initial = Number(duration);
     return Number.isFinite(initial) && initial > 0 ? initial : 0;
   });
+  // Match the preview frame to the source video so contain never creates side bars.
+  const [videoAspectRatio, setVideoAspectRatio] = React.useState(null);
   React.useEffect(() => {
     const next = Number(duration);
     if (Number.isFinite(next) && next > 0) {
@@ -10046,9 +10048,15 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       React.createElement('button', { onClick: () => { finishInlineTextEditing(); onDone(); }, 'aria-label': 'Done', style: { minWidth: 76, height: 48, padding: '0 16px', background: '#fff', border: 'none', borderRadius: 8, color: '#111', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.22)' } }, 'Done')
     ),
     React.createElement('div', { style: { flex: 1, minHeight: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 24px 0' } },
-      React.createElement('div', { style: { width: 'min(72vw, 240px)', aspectRatio: '9 / 16', maxWidth: '92%', maxHeight: '90%', background: '#000', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateY(-6px)', flexShrink: 0 } },
+      React.createElement('div', { style: { width: 'min(72vw, 240px)', aspectRatio: videoAspectRatio ? String(videoAspectRatio) : '9 / 16', maxWidth: '92%', maxHeight: '90%', background: '#000', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateY(-6px)', flexShrink: 0 } },
        React.createElement('video', { ref: videoRef, src, poster: poster || undefined, playsInline: true, autoPlay: true, preload: 'auto', muted: !originalAudioOn, onLoadedMetadata: event => {
       const actualDuration = Number(event.currentTarget.duration);
+      const sourceWidth = Number(event.currentTarget.videoWidth);
+      const sourceHeight = Number(event.currentTarget.videoHeight);
+      if (sourceWidth > 0 && sourceHeight > 0) {
+        const nextAspectRatio = sourceWidth / sourceHeight;
+        setVideoAspectRatio(previous => Math.abs((previous || 0) - nextAspectRatio) > 0.001 ? nextAspectRatio : previous);
+      }
       if (!Number.isFinite(actualDuration) || actualDuration <= 0) return;
       setResolvedDuration(previous => Math.abs(previous - actualDuration) > 0.01 ? actualDuration : previous);
       const maxEnd = Math.min(actualDuration, MAX_REEL_SECONDS);
