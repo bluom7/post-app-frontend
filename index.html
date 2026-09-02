@@ -10194,11 +10194,11 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
                   onClick: openInlineTextEditor,
                   style: { transform: 'translateX(-' + timelineTrackScrollPx + 'px)', width: timelineTrackContentWidth, minWidth: timelineTrackContentWidth, height: 36, minHeight: 36, boxSizing: 'border-box', display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 10, padding: '0 16px 0 calc(50vw - 16px)', border: 'none', borderRadius: 3, cursor: 'pointer', background: '#303139', color: '#fff', fontSize: 14, fontWeight: 500, letterSpacing: 0.15, textAlign: 'left' }
                 }, React.createElement('span', { style: { color: '#fff', fontSize: 19, fontWeight: 600, lineHeight: 1 } }, '+'), React.createElement('span', { style: { color: '#fff', fontSize: 14, fontWeight: 500, letterSpacing: 0.15 } }, ' Add text')),
-            inlineTextEditorOpen && React.createElement('div', { style: { transform: 'translateX(-' + timelineTrackScrollPx + 'px)', width: timelineTrackContentWidth, minWidth: timelineTrackContentWidth, height: 36, minHeight: 36, boxSizing: 'border-box', display: 'flex', gap: 6, alignItems: 'center', marginTop: 3, padding: '3px 6px', background: '#303139', borderRadius: 3, overflow: 'hidden' } },
+            inlineTextEditorOpen && React.createElement('div', { style: { width: '100%', minWidth: 0, maxWidth: '100%', height: 36, minHeight: 36, boxSizing: 'border-box', display: 'flex', gap: 12, alignItems: 'center', marginTop: 3, padding: '3px 8px', background: '#303139', borderRadius: 3, overflow: 'hidden' } },
               React.createElement('input', {
                 type: 'text', value: inlineTextDraft, onChange: event => setInlineTextDraft(event.target.value),
                 placeholder: 'Text likhein…', maxLength: 80, autoFocus: true,
-                style: { flex: '1 1 auto', minWidth: 0, height: 30, boxSizing: 'border-box', background: 'rgba(255,255,255,0.18)', border: '1.5px solid #4361EE', borderRadius: 8, padding: '0 12px', color: '#fff', fontSize: 14, outline: 'none' },
+                style: { flex: '1 1 auto', minWidth: 0, width: 0, height: 30, boxSizing: 'border-box', background: 'transparent', border: 'none', borderRadius: 0, padding: '0 4px', color: '#fff', fontSize: 14, outline: 'none' },
                 onKeyDown: event => {
                   if (event.key === 'Enter' && inlineTextDraft.trim()) {
                     applyInlineText();
@@ -10213,7 +10213,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
                   setInlineTextEditorOpen(false);
                   setInlineTextPaletteOpen(false);
                 },
-                style: { height: 30, boxSizing: 'border-box', background: inlineTextDraft.trim() ? '#fff' : 'rgba(255,255,255,0.3)', border: 'none', borderRadius: 8, padding: '0 14px', color: '#111', fontWeight: 800, fontSize: 13, cursor: 'pointer', flexShrink: 0 }
+                style: { height: 30, minWidth: 56, boxSizing: 'border-box', marginLeft: 4, background: inlineTextDraft.trim() ? '#fff' : 'rgba(255,255,255,0.3)', border: 'none', borderRadius: 6, padding: '0 12px', color: '#111', fontWeight: 800, fontSize: 13, whiteSpace: 'nowrap', cursor: 'pointer', flex: '0 0 auto' }
               }, inlineEditingOverlayId ? 'Update' : 'Done')
             )
           ),
