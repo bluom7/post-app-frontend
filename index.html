@@ -10032,21 +10032,12 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     if (inlineEditingOverlayId === id) closeInlineTextEditor();
   };
   const switchToEditor = () => {
-    // Move the actual playing trim video into a temporary stage for this
-    // arrow-only handoff. No poster, clone, or browser snapshot is used.
+    // This handoff is used only by the trim screen down-arrow. Keep the
+    // current playing video element instead of switching to another frame.
     if (typeof document === 'undefined' || !videoRef.current) { onDone(); return; }
     const liveVideo = videoRef.current;
     const sourceRect = liveVideo.getBoundingClientRect();
     const transitionTime = liveVideo.currentTime || trimStart || 0;
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const sourceRatio = liveVideo.videoWidth > 0 && liveVideo.videoHeight > 0
-      ? liveVideo.videoWidth / liveVideo.videoHeight
-      : Math.max(sourceRect.width / Math.max(sourceRect.height, 1), 9 / 16);
-    const targetHeight = Math.min(viewportHeight, viewportWidth / sourceRatio);
-    const targetWidth = targetHeight * sourceRatio;
-    const targetLeft = (viewportWidth - targetWidth) / 2;
-    const targetTop = (viewportHeight - targetHeight) / 2;
     const backdrop = document.createElement('div');
     const stage = document.createElement('div');
     backdrop.style.cssText = 'position:fixed;inset:0;z-index:10000;background:#000;pointer-events:none;overflow:hidden;';
@@ -10054,30 +10045,46 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     liveVideo.style.width = '100%';
     liveVideo.style.height = '100%';
     liveVideo.style.objectFit = 'contain';
-    liveVideo.style.display = 'block';
     stage.appendChild(liveVideo);
     backdrop.appendChild(stage);
     document.body.appendChild(backdrop);
     const frame = window.requestAnimationFrame || (fn => window.setTimeout(fn, 16));
-    frame(() => {
-      stage.style.left = targetLeft + 'px';
-      stage.style.top = targetTop + 'px';
-      stage.style.width = targetWidth + 'px';
-      stage.style.height = targetHeight + 'px';
-      stage.style.borderRadius = '22px';
-    });
     onDone();
-    const releaseAt = Date.now() + 380;
-    const deadline = Date.now() + 900;
-    const release = () => {
-      const editorVideo = document.querySelector('[data-reel-editor-video]');
-      if (editorVideo) {
-        try { editorVideo.currentTime = transitionTime; } catch (_) {}
+    frame(() => {
+      const editorStage = document.querySelector('[data-reel-editor-stage]');
+      const target = editorStage && editorStage.getBoundingClientRect();
+      if (target && target.width && target.height) {
+        stage.style.left = target.left + 'px';
+        stage.style.top = target.top + 'px';
+        stage.style.width = target.width + 'px';
+        stage.style.height = target.height + 'px';
+        stage.style.borderRadius = getComputedStyle(editorStage).borderRadius || '22px';
       }
-      if (Date.now() >= releaseAt && (editorVideo && editorVideo.readyState >= 2 || Date.now() >= deadline)) {
+    });
+    const releaseAt = Date.now() + 380;
+    const deadline = Date.now() + 1200;
+    const release = () => {
+      const editorStage = document.querySelector('[data-reel-editor-stage]');
+      if (editorStage && Date.now() >= releaseAt) {
+        const editorVideo = editorStage.querySelector('[data-reel-editor-video]');
+        if (editorVideo) {
+          editorVideo.style.display = 'none';
+          try { editorVideo.pause(); } catch (_) {}
+        }
+        const loadingOverlay = document.querySelector('[data-reel-editor-loading]');
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
+        liveVideo.style.position = 'absolute';
+        liveVideo.style.inset = '0';
+        liveVideo.style.width = '100%';
+        liveVideo.style.height = '100%';
+        liveVideo.style.objectFit = 'contain';
+        try { liveVideo.currentTime = transitionTime; } catch (_) {}
+        editorStage.insertBefore(liveVideo, editorStage.firstChild);
+        try { editVideoRef.current = liveVideo; } catch (_) {}
         backdrop.remove();
         return;
       }
+      if (!editorStage && Date.now() >= deadline) { backdrop.remove(); return; }
       frame(release);
     };
     release();
@@ -26043,6 +26050,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       // Android Chrome skips CSS filter on hardware-decoded video elements;
       // a wrapper div creates a new compositing layer that the filter IS applied to.
       recordedURL && React.createElement("div", {
+        "data-reel-editor-stage": true,
         style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(142px, 19vh, 173px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: videoFilter === "none" ? "auto" : "filter" }
       },
         isPhotoReel
@@ -26070,6 +26078,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
             }),
             editorVideoPoster && !editorVideoFrameReady && React.createElement("img", { src: editorVideoPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: editorVideoObjectFit, objectPosition: "center center", display: "block", zIndex: 2, pointerEvents: "none" } }),
             !isPhotoReel && !editorVideoFrameReady && React.createElement("div", {
+              "data-reel-editor-loading": true,
               style: { position: "absolute", inset: 0, zIndex: 3, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }
             },
               React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 } },
