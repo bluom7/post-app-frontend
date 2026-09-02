@@ -9298,6 +9298,9 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const videoRef = React.useRef(null);
   const timelineRef = React.useRef(null);
   const dragSideRef = React.useRef(null);
+  // Keep the timeline viewport fixed while a trim handle is dragged.
+  const timelineDragRef = React.useRef(null);
+  const [timelineDragActive, setTimelineDragActive] = React.useState(false);
   const audioRef = React.useRef(null);
   const [playing, setPlaying] = React.useState(false);
   const [originalAudioOn, setOriginalAudioOn] = React.useState(false);
@@ -9333,12 +9336,15 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const timelineWidth = '100%';
   const timelinePixelsPerSecond = 24 * timelineZoom;
   const timelineLeadSeconds = 0;
-  const timelineTrackScrollPx = Math.min(currentTime * timelinePixelsPerSecond, 170);
+  const timelineRenderTime = timelineDragActive && timelineDragRef.current
+    ? timelineDragRef.current.referenceTime
+    : currentTime;
+  const timelineTrackScrollPx = Math.min(timelineRenderTime * timelinePixelsPerSecond, 170);
   const timelineTrackContentWidth = 'max(' + (safeDuration * timelinePixelsPerSecond) + 'px, calc(100% + 170px))';
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-  const timelineTimeFromPoint = (clientX, rect) => {
+  const timelineTimeFromPoint = (clientX, rect, referenceTime = currentTime) => {
     const playheadX = rect.left + rect.width / 2;
-    return clamp(currentTime + (clientX - playheadX) / timelinePixelsPerSecond, 0, safeDuration);
+    return clamp(referenceTime + (clientX - playheadX) / timelinePixelsPerSecond, 0, safeDuration);
   };
   const beginTimelinePinch = event => {
     if (!event.touches || event.touches.length < 2 || dragSideRef.current) return;
@@ -9839,9 +9845,27 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const beginTrimDrag = (event, side) => {
     event.preventDefault();
     event.stopPropagation();
+    // Android may dispatch pointer and touch starts for the same gesture.
+    // Keep the first anchor so the handle never jumps under the finger.
+    if (timelineDragRef.current) return;
+    const point = event.touches && event.touches[0] ? event.touches[0] : event;
+    const rect = timelineRef.current ? timelineRef.current.getBoundingClientRect() : null;
+    const referenceTime = currentTime;
+    const handleTime = side === 'left' ? trimStart : trimEnd;
+    const rawTime = rect ? timelineTimeFromPoint(point.clientX, rect, referenceTime) : handleTime;
+    timelineDragRef.current = {
+      side,
+      referenceTime,
+      grabOffsetSeconds: rawTime - handleTime,
+      pointerId: Number.isFinite(event.pointerId) ? event.pointerId : null
+    };
     dragSideRef.current = side;
     timelineScrollRef.current = null;
     timelinePinchRef.current = null;
+    setTimelineDragActive(true);
+    if (Number.isFinite(event.pointerId) && event.currentTarget && event.currentTarget.setPointerCapture) {
+      try { event.currentTarget.setPointerCapture(event.pointerId); } catch (_) {}
+    }
     const video = videoRef.current;
     if (video) video.pause();
     if (audioRef.current) audioRef.current.pause();
@@ -9850,11 +9874,16 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
 
   React.useEffect(() => {
     const move = event => {
-      if (!dragSideRef.current || !timelineRef.current) return;
+      const drag = timelineDragRef.current;
+      if (!drag || !dragSideRef.current || !timelineRef.current) return;
+      if (drag.pointerId !== null && Number.isFinite(event.pointerId) && event.pointerId !== drag.pointerId) return;
       const point = event.touches && event.touches[0] ? event.touches[0] : event;
+      if (!Number.isFinite(point.clientX)) return;
       const rect = timelineRef.current.getBoundingClientRect();
-      const next = timelineTimeFromPoint(point.clientX, rect);
-      if (dragSideRef.current === 'left') {
+      // Calculate from the locked viewport and preserve the initial grab offset.
+      const raw = timelineTimeFromPoint(point.clientX, rect, drag.referenceTime);
+      const next = raw - drag.grabOffsetSeconds;
+      if (drag.side === 'left') {
         const start = clamp(next, 0, Math.max(0, trimEnd - 1));
         setTrimStart(start);
         if (videoRef.current) videoRef.current.currentTime = start;
@@ -9864,19 +9893,31 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         if (videoRef.current) videoRef.current.currentTime = Math.min(currentTime, end);
       }
       event.preventDefault();
+      if (event.stopPropagation) event.stopPropagation();
     };
-    const stop = () => { dragSideRef.current = null; };
+    const stop = event => {
+      const drag = timelineDragRef.current;
+      if (!drag) return;
+      if (drag.pointerId !== null && Number.isFinite(event && event.pointerId) && event.pointerId !== drag.pointerId) return;
+      timelineDragRef.current = null;
+      dragSideRef.current = null;
+      setTimelineDragActive(false);
+    };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', stop);
+    window.addEventListener('pointercancel', stop);
     window.addEventListener('touchmove', move, { passive: false });
     window.addEventListener('touchend', stop);
+    window.addEventListener('touchcancel', stop);
     return () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', stop);
+       window.removeEventListener('pointercancel', stop);
       window.removeEventListener('touchmove', move);
       window.removeEventListener('touchend', stop);
+       window.removeEventListener('touchcancel', stop);
     };
-  }, [safeDuration, trimStart, trimEnd, currentTime]);
+   }, [safeDuration, trimStart, trimEnd, currentTime, timelinePixelsPerSecond]);
 
   const togglePlay = () => {
     const video = videoRef.current;
@@ -10053,7 +10094,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       React.createElement('div', { onTouchStart: beginTimelineGesture, onTouchMove: updateTimelineGesture, onTouchEnd: endTimelineGesture, onTouchCancel: endTimelineGesture, style: { position: 'relative', width: timelineWidth, margin: '0 auto', boxSizing: 'border-box', touchAction: 'none' } },
          React.createElement('div', { style: { position: 'relative', width: '100%', height: 28, margin: '0 0 1px', overflow: 'hidden', boxSizing: 'border-box', pointerEvents: 'none' } },
            React.createElement('div', { style: { position: 'absolute', top: 2, left: 0, right: 0, height: 0, borderTop: '1px solid rgba(255,255,255,0.16)', boxSizing: 'border-box', zIndex: 1 } }),
-           React.createElement('div', { style: { position: 'absolute', top: 1, left: '50%', width: (safeDuration * timelinePixelsPerSecond) + 'px', height: 27, transform: 'translateX(-' + ((currentTime + timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)' } },
+           React.createElement('div', { style: { position: 'absolute', top: 1, left: '50%', width: (safeDuration * timelinePixelsPerSecond) + 'px', height: 27, transform: 'translateX(-' + ((timelineRenderTime + timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)' } },
              Array.from({ length: Math.ceil(safeDuration / 5) + 1 }).map((_, markerIndex) => {
                const markerTime = markerIndex * 5;
                if (markerTime > safeDuration + 0.01) return null;
@@ -10068,12 +10109,12 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
          ),
         React.createElement('div', { ref: timelineRef, onPointerDown: jumpToTimelinePoint, style: { position: 'relative', height: 44, margin: '0 0 4px', width: '100%', touchAction: 'none', overflow: 'hidden' } },
         React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, background: '#25262c', border: 'none', borderRadius: 3, boxSizing: 'border-box', overflow: 'hidden', pointerEvents: 'none' } },
-          React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: '50%', width: (safeDuration * timelinePixelsPerSecond) + 'px', transform: 'translateX(-' + ((currentTime + timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)', display: 'flex', overflow: 'hidden', borderRadius: 3, background: '#25262c' } },
+          React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: '50%', width: (safeDuration * timelinePixelsPerSecond) + 'px', transform: 'translateX(-' + ((timelineRenderTime + timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)', display: 'flex', overflow: 'hidden', borderRadius: 3, background: '#25262c' } },
             Array.from({ length: thumbnailCount }).map((_, index) => React.createElement('div', { key: index, style: { flex: 1, minWidth: 0, height: '100%', backgroundColor: '#1a1a1a', backgroundImage: thumbnailFrames[index] ? 'url(' + thumbnailFrames[index] + ')' : 'linear-gradient(90deg, #151515, #252525)', backgroundSize: 'cover', backgroundPosition: 'center', borderRight: index < thumbnailCount - 1 ? '1px solid rgba(255,255,255,0.12)' : 'none' } }))
           )
         ),
-        trimStart > 0 && React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 'calc(50% - ' + ((trimStart - currentTime - timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)', background: '#25262c', zIndex: 2, pointerEvents: 'none' } }),
-        trimEnd < safeDuration && React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: 'calc(50% + ' + ((trimEnd - currentTime - timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)', right: 0, background: '#25262c', zIndex: 2, pointerEvents: 'none' } }),
+        trimStart > 0 && React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 'calc(50% - ' + ((trimStart - timelineRenderTime - timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)', background: '#25262c', zIndex: 2, pointerEvents: 'none' } }),
+        trimEnd < safeDuration && React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: 'calc(50% + ' + ((trimEnd - timelineRenderTime - timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)', right: 0, background: '#25262c', zIndex: 2, pointerEvents: 'none' } }),
         React.createElement('button', {
           onPointerDown: event => { event.preventDefault(); event.stopPropagation(); },
           onTouchStart: event => { event.preventDefault(); event.stopPropagation(); },
@@ -10090,10 +10131,10 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
               : React.createElement('path', { d: 'M17 8.5l5 5m0-5-5 5' })
           )
         ),
-        React.createElement('div', { onPointerDown: event => beginTrimDrag(event, 'left'), onTouchStart: event => beginTrimDrag(event, 'left'), 'aria-label': 'Trim start', style: { position: 'absolute', top: 11, bottom: 11, left: 'calc(50% + ' + ((trimStart - currentTime - timelineLeadSeconds) * timelinePixelsPerSecond) + 'px - 10px)', width: 20, background: '#fff', border: '1px solid rgba(20,20,24,0.18)', borderRadius: 6, boxShadow: '0 1px 4px rgba(0,0,0,0.35)', cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+        React.createElement('div', { onPointerDown: event => beginTrimDrag(event, 'left'), onTouchStart: event => beginTrimDrag(event, 'left'), 'aria-label': 'Trim start', style: { position: 'absolute', top: 11, bottom: 11, left: 'calc(50% + ' + ((trimStart - timelineRenderTime - timelineLeadSeconds) * timelinePixelsPerSecond) + 'px - 10px)', width: 20, background: '#fff', border: '1px solid rgba(20,20,24,0.18)', borderRadius: 6, boxShadow: '0 1px 4px rgba(0,0,0,0.35)', cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
           React.createElement('div', { style: { width: 2, height: 12, borderRadius: 2, background: '#1d1e23' } })
         ),
-        React.createElement('div', { onPointerDown: event => beginTrimDrag(event, 'right'), onTouchStart: event => beginTrimDrag(event, 'right'), 'aria-label': 'Trim end', style: { position: 'absolute', top: 11, bottom: 11, left: 'calc(50% + ' + ((trimEnd - currentTime - timelineLeadSeconds) * timelinePixelsPerSecond) + 'px - 10px)', width: 20, background: '#fff', border: '1px solid rgba(20,20,24,0.18)', borderRadius: 6, boxShadow: '0 1px 4px rgba(0,0,0,0.35)', cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+        React.createElement('div', { onPointerDown: event => beginTrimDrag(event, 'right'), onTouchStart: event => beginTrimDrag(event, 'right'), 'aria-label': 'Trim end', style: { position: 'absolute', top: 11, bottom: 11, left: 'calc(50% + ' + ((trimEnd - timelineRenderTime - timelineLeadSeconds) * timelinePixelsPerSecond) + 'px - 10px)', width: 20, background: '#fff', border: '1px solid rgba(20,20,24,0.18)', borderRadius: 6, boxShadow: '0 1px 4px rgba(0,0,0,0.35)', cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
           React.createElement('div', { style: { width: 2, height: 12, borderRadius: 2, background: '#1d1e23' } })
         ),
         React.createElement('button', {
