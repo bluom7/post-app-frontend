@@ -10045,6 +10045,22 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
             Array.from({ length: thumbnailCount }).map((_, index) => React.createElement('div', { key: index, style: { flex: 1, minWidth: 0, height: '100%', backgroundColor: '#1a1a1a', backgroundImage: thumbnailFrames[index] ? 'url(' + thumbnailFrames[index] + ')' : 'linear-gradient(90deg, #151515, #252525)', backgroundSize: 'cover', backgroundPosition: 'center', borderRight: index < thumbnailCount - 1 ? '1px solid rgba(255,255,255,0.12)' : 'none' } }))
           )
         ),
+        React.createElement('button', {
+          onPointerDown: event => { event.preventDefault(); event.stopPropagation(); },
+          onTouchStart: event => { event.preventDefault(); event.stopPropagation(); },
+          onClick: event => { event.preventDefault(); event.stopPropagation(); toggleOriginalAudio(); },
+          'aria-label': originalAudioOn ? 'Mute original video audio' : 'Unmute original video audio',
+          'aria-pressed': originalAudioOn,
+          style: { position: 'absolute', left: 7, top: 5, zIndex: 6, width: 34, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.22)', borderRadius: 7, background: 'rgba(37,38,44,0.92)', color: '#fff', cursor: 'pointer', touchAction: 'manipulation' }
+        },
+          React.createElement('svg', { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: '#fff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
+            React.createElement('path', { d: 'M3 9h4l7-5v16l-7-5H3z' }),
+            React.createElement('line', { x1: 7, y1: 9, x2: 7, y2: 15 }),
+            originalAudioOn
+              ? React.createElement(React.Fragment, null, React.createElement('path', { d: 'M17 8.5a5 5 0 0 1 0 7' }), React.createElement('path', { d: 'M19.5 6a8.5 8.5 0 0 1 0 12' }))
+              : React.createElement('path', { d: 'M17 8.5l5 5m0-5-5 5' })
+          )
+        ),
         React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'left'; }, 'aria-label': 'Trim start', style: { position: 'absolute', top: 3, bottom: 3, left: 'calc(50% + ' + ((trimStart - currentTime - timelineLeadSeconds) * timelinePixelsPerSecond) + 'px - 6px)', width: 12, background: '#fff', border: '1px solid rgba(20,20,24,0.18)', borderRadius: 3, boxShadow: '0 1px 4px rgba(0,0,0,0.35)', cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
           React.createElement('div', { style: { width: 2, height: 18, borderRadius: 2, background: '#1d1e23' } })
         ),
