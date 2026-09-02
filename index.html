@@ -10059,6 +10059,8 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         stage.style.width = target.width + 'px';
         stage.style.height = target.height + 'px';
         stage.style.borderRadius = getComputedStyle(editorStage).borderRadius || '22px';
+        const editorVideo = editorStage.querySelector('[data-reel-editor-video]');
+        if (editorVideo) liveVideo.style.objectFit = getComputedStyle(editorVideo).objectFit || 'cover';
       }
     });
     const releaseAt = Date.now() + 380;
@@ -10077,7 +10079,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         liveVideo.style.inset = '0';
         liveVideo.style.width = '100%';
         liveVideo.style.height = '100%';
-        liveVideo.style.objectFit = 'contain';
+        liveVideo.style.objectFit = editorVideo ? (getComputedStyle(editorVideo).objectFit || 'cover') : 'cover';
         try { liveVideo.currentTime = transitionTime; } catch (_) {}
         editorStage.insertBefore(liveVideo, editorStage.firstChild);
         try { editVideoRef.current = liveVideo; } catch (_) {}
