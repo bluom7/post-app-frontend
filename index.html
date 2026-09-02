@@ -10056,6 +10056,8 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
             Array.from({ length: thumbnailCount }).map((_, index) => React.createElement('div', { key: index, style: { flex: 1, minWidth: 0, height: '100%', backgroundColor: '#1a1a1a', backgroundImage: thumbnailFrames[index] ? 'url(' + thumbnailFrames[index] + ')' : 'linear-gradient(90deg, #151515, #252525)', backgroundSize: 'cover', backgroundPosition: 'center', borderRight: index < thumbnailCount - 1 ? '1px solid rgba(255,255,255,0.12)' : 'none' } }))
           )
         ),
+        trimStart > 0 && React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 'calc(50% - ' + ((trimStart - currentTime - timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)', background: '#25262c', zIndex: 2, pointerEvents: 'none' } }),
+        trimEnd < safeDuration && React.createElement('div', { style: { position: 'absolute', top: 0, bottom: 0, left: 'calc(50% + ' + ((trimEnd - currentTime - timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)', right: 0, background: '#25262c', zIndex: 2, pointerEvents: 'none' } }),
         React.createElement('button', {
           onPointerDown: event => { event.preventDefault(); event.stopPropagation(); },
           onTouchStart: event => { event.preventDefault(); event.stopPropagation(); },
