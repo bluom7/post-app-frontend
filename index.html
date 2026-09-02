@@ -24,6 +24,10 @@
 @keyframes badgePop { 0%{transform:scale(0)} 60%{transform:scale(1.3)} 100%{transform:scale(1)} }
 @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes spin { to { transform: rotate(360deg); } }
+@supports (view-transition-name: none) {
+  ::view-transition-group(reel-editor-media) { animation-duration: 360ms; animation-timing-function: cubic-bezier(0.22,1,0.36,1); }
+  ::view-transition-old(reel-editor-media), ::view-transition-new(reel-editor-media) { animation-duration: 360ms; animation-timing-function: cubic-bezier(0.22,1,0.36,1); }
+}
 @keyframes chatTypingDot { 0%,60%,100%{transform:translateY(0) scale(.9);opacity:.45;} 30%{transform:translateY(-12px) scale(1.35);opacity:1;} 45%{transform:translateY(-4px) scale(1.08);opacity:.9;} }
 @keyframes waveBar { 0%,100%{transform:scaleY(1)} 50%{transform:scaleY(1.6)} }
 @keyframes checkCircleDraw { to { stroke-dashoffset: 0; } }
@@ -9304,8 +9308,6 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const [timelineDragActive, setTimelineDragActive] = React.useState(false);
   const audioRef = React.useRef(null);
   const [playing, setPlaying] = React.useState(false);
-  const [switchingToEditor, setSwitchingToEditor] = React.useState(false);
-  const switchToEditorTimerRef = React.useRef(null);
   const [originalAudioOn, setOriginalAudioOn] = React.useState(false);
   const [musicAudioOn, setMusicAudioOn] = React.useState(true);
   const [currentTime, setCurrentTime] = React.useState(trimStart || 0);
@@ -10034,23 +10036,20 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     if (inlineEditingOverlayId === id) closeInlineTextEditor();
   };
   const switchToEditor = () => {
-    if (switchingToEditor) return;
-    setSwitchingToEditor(true);
-    switchToEditorTimerRef.current = window.setTimeout(() => {
-      switchToEditorTimerRef.current = null;
+    // Scope the transition to the trim arrow only; all editor controls remain unchanged.
+    if (typeof document !== 'undefined' && typeof document.startViewTransition === 'function') {
+      document.startViewTransition(() => onDone());
+    } else {
       onDone();
-    }, 1000);
+    }
   };
-  React.useEffect(() => () => {
-    if (switchToEditorTimerRef.current) window.clearTimeout(switchToEditorTimerRef.current);
-  }, []);
 
   const selectedLeft = (trimStart / safeDuration) * 100;
   const activeInlineOverlay = inlineTextOverlays.find(overlay => overlay.id === selectedInlineOverlayId) || inlineTextOverlays[inlineTextOverlays.length - 1] || null;
   const selectedRight = ((safeDuration - trimEnd) / safeDuration) * 100;
   const playhead = 50;
   return React.createElement('div', { style: { position: 'fixed', inset: 0, zIndex: 2500, background: '#000', color: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden', userSelect: 'none' } },
-    React.createElement('div', { style: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'max(18px, env(safe-area-inset-top)) 16px 12px', flexShrink: 0, opacity: switchingToEditor ? 0 : 1, transition: 'opacity 180ms ease-out', pointerEvents: switchingToEditor ? 'none' : 'auto' } },
+    React.createElement('div', { style: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'max(18px, env(safe-area-inset-top)) 16px 12px', flexShrink: 0 } },
       React.createElement('button', { onClick: switchToEditor, 'aria-label': 'Open editing page', style: { width: 52, height: 52, padding: 0, background: '#25282e', border: 'none', borderRadius: 12, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.28)' } },
         React.createElement('svg', { width: 28, height: 22, viewBox: '0 0 24 18', fill: 'none', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' },
           React.createElement('path', { d: 'M3 4 L12 13 L21 4' })
@@ -10073,7 +10072,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       React.createElement('button', { onClick: () => { finishInlineTextEditing(); onDone(); }, 'aria-label': 'Done', style: { minWidth: 76, height: 48, padding: '0 16px', background: '#fff', border: 'none', borderRadius: 8, color: '#111', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.22)' } }, 'Done')
     ),
     React.createElement('div', { style: { flex: 1, minHeight: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 24px 0' } },
-      React.createElement('div', { style: { width: 'min(72vw, 240px)', aspectRatio: videoAspectRatio ? String(videoAspectRatio) : '9 / 16', maxWidth: '92%', maxHeight: '90%', background: '#000', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'transform 1000ms cubic-bezier(0.22,1,0.36,1)', transform: switchingToEditor ? 'translateY(-6px) scale(1.4)' : 'translateY(-6px)', flexShrink: 0 } },
+      React.createElement('div', { style: { width: 'min(72vw, 240px)', aspectRatio: videoAspectRatio ? String(videoAspectRatio) : '9 / 16', maxWidth: '92%', maxHeight: '90%', background: '#000', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', viewTransitionName: 'reel-editor-media', transform: 'translateY(-6px)', flexShrink: 0 } },
        React.createElement('video', { ref: videoRef, src, poster: poster || undefined, playsInline: true, autoPlay: true, preload: 'auto', muted: !originalAudioOn, onLoadedMetadata: event => {
       const actualDuration = Number(event.currentTarget.duration);
       const sourceWidth = Number(event.currentTarget.videoWidth);
@@ -10111,7 +10110,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       ),
       React.createElement('input', { autoFocus: true, type: 'text', value: inlineTextDraft, onPointerDown: event => { if (inlineTextDraft.trim() && document.activeElement === event.currentTarget) { event.preventDefault(); finishInlineTextEditing(); } }, onChange: event => setInlineTextDraft(event.target.value), onKeyDown: event => { if (event.key === 'Enter') { event.preventDefault(); finishInlineTextEditing(); } }, placeholder: 'Type text…', maxLength: 80, 'aria-label': 'Text to overlay', style: { pointerEvents: 'auto', position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 'min(82vw, 360px)', boxSizing: 'border-box', border: 'none', background: 'transparent', color: inlineTextColor, caretColor: inlineTextColor, padding: 0, fontSize: inlineTextSize + 'px', fontWeight: 700, lineHeight: 1.2, textAlign: 'center', textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9)', outline: 'none' } }),
     ),
-    React.createElement('div', { style: { flexShrink: 0, padding: '8px 0 calc(18px + env(safe-area-inset-bottom))', opacity: switchingToEditor ? 0 : 1, transition: 'opacity 180ms ease-out', pointerEvents: switchingToEditor ? 'none' : 'auto' } },
+    React.createElement('div', { style: { flexShrink: 0, padding: '8px 0 calc(18px + env(safe-area-inset-bottom))' } },
       React.createElement('div', { style: { position: 'relative', top: -6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', height: 44, padding: '0 14px', boxSizing: 'border-box' } },
         React.createElement('button', { onClick: togglePlay, 'aria-label': playing ? 'Pause' : 'Play', style: { width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: 'none', borderRadius: '50%', color: '#62666d', padding: 0, cursor: 'pointer', flexShrink: 0 } },
           playing ? React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: '#62666d' }, React.createElement('rect', { x: 6, y: 5, width: 4, height: 14, rx: 1 }), React.createElement('rect', { x: 14, y: 5, width: 4, height: 14, rx: 1 })) : React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: '#62666d' }, React.createElement('polygon', { points: '7,4 20,12 7,20' }))
@@ -26005,7 +26004,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       // Android Chrome skips CSS filter on hardware-decoded video elements;
       // a wrapper div creates a new compositing layer that the filter IS applied to.
       recordedURL && React.createElement("div", {
-        style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(142px, 19vh, 173px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: videoFilter === "none" ? "auto" : "filter" }
+        style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(142px, 19vh, 173px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", viewTransitionName: "reel-editor-media", willChange: videoFilter === "none" ? "auto" : "filter" }
       },
         isPhotoReel
           ? React.createElement("img", { src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, onLoad: e => { const w = Number(e.currentTarget.naturalWidth) || 0; const h = Number(e.currentTarget.naturalHeight) || 0; if (w > 0 && h > 0) setRecordedPhotoAspect(w / h); }, onClick: togglePreviewPlay, style: { width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: recordedPhotoAspect !== null && recordedPhotoAspect > 1 ? "contain" : "cover", objectPosition: "center center", display: "block", margin: "0 auto", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
