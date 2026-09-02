@@ -1,16 +1,8 @@
 {
-  "name": "workspace",
-  "version": "0.0.0",
-  "license": "MIT",
-  "scripts": {
-    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) if [ \"${CI:-}\" = \"true\" ] || [ -n \"${RENDER:-}\" ]; then exit 0; fi; echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
-    "build": "echo 'Monorepo: use artifact-specific builds'",
-    "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
-  },
+  "name": "post-app-frontend",
+  "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@10.15.0",
-  "dependencies": {
-    "@replit/connectors-sdk": "^0.4.1"
+  "scripts": {
+    "build": "echo ok"
   }
 }
