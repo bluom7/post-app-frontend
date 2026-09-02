@@ -10036,9 +10036,24 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     if (inlineEditingOverlayId === id) closeInlineTextEditor();
   };
   const switchToEditor = () => {
-    // Scope the transition to the trim arrow only; all editor controls remain unchanged.
+    // Scope the shared-media handoff to the trim arrow. Wait for the editor
+    // video to have a decoded frame before the browser starts the morph,
+    // preventing a black frame while the media grows.
+    const waitForEditorVideo = () => new Promise(resolve => {
+      const deadline = Date.now() + 900;
+      const check = () => {
+        const editorVideo = document.querySelector('[data-reel-editor-video]');
+        if (editorVideo && editorVideo.readyState >= 2) { resolve(); return; }
+        if (Date.now() >= deadline) { resolve(); return; }
+        (window.requestAnimationFrame || window.setTimeout)(check, 16);
+      };
+      check();
+    });
     if (typeof document !== 'undefined' && typeof document.startViewTransition === 'function') {
-      document.startViewTransition(() => onDone());
+      document.startViewTransition(() => {
+        onDone();
+        return waitForEditorVideo();
+      });
     } else {
       onDone();
     }
@@ -26010,7 +26025,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
           ? React.createElement("img", { src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, onLoad: e => { const w = Number(e.currentTarget.naturalWidth) || 0; const h = Number(e.currentTarget.naturalHeight) || 0; if (w > 0 && h > 0) setRecordedPhotoAspect(w / h); }, onClick: togglePreviewPlay, style: { width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: recordedPhotoAspect !== null && recordedPhotoAspect > 1 ? "contain" : "cover", objectPosition: "center center", display: "block", margin: "0 auto", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
           : React.createElement("video", {
               key: recordedURL,
-               ref: editVideoRef, src: recordedURL, poster: editorVideoPoster || undefined, preload: "auto", playsInline: true, autoPlay: true, muted: true, loop: true,
+               ref: editVideoRef, 'data-reel-editor-video': true, src: recordedURL, poster: editorVideoPoster || undefined, preload: "auto", playsInline: true, autoPlay: true, muted: true, loop: true,
               onLoadedMetadata: onEditedMeta,
                onLoadedData: e => {
                  const v = e.target;
