@@ -10038,9 +10038,9 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
                   React.createElement('div', { style: { minWidth: 0, flex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 2px', boxSizing: 'border-box', overflow: 'hidden' } },
                     React.createElement('div', { style: { fontSize: 10.5, lineHeight: '12px', fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, selectedMusic.music_title || 'Selected song'),
                     React.createElement('div', { style: { fontSize: 8.5, lineHeight: '10px', color: 'rgba(255,255,255,0.68)', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, selectedMusic.music_artist || 'Audio selected'),
-                    React.createElement('div', { style: { display: 'flex', alignItems: 'flex-end', gap: 1, height: 5, marginTop: 2, width: '100%', overflow: 'hidden', pointerEvents: 'none', opacity: 0.9 } },
-                      [2,4,3,5,2,4,3,5,4,2,5,3,4,2,5,3,4,5,2,4,3,5,2,4,3,5,4,2,5,3,4,2,5,3,4,5,2,4,3,5,2,4,3,5].map(function(h, i) {
-                        return React.createElement('span', { key: i, style: { width: 1.5, minWidth: 1.5, height: h + 'px', background: 'rgba(255,255,255,0.8)', borderRadius: 1, flexShrink: 0 } });
+                    React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 1, height: 10, marginTop: 2, width: '100%', overflow: 'hidden', pointerEvents: 'none', opacity: 0.9 } },
+                      [2,4,7,5,3,8,6,4,9,5,3,7,10,6,4,8,5,3,9,6,4,7,10,5,3,8,6,4,9,5,2,7,10,6,3,8,5,4,9,6,3,7,10,5,2,6,9,4,3,8,5,7,4,9,6,3].map(function(h, i) {
+                        return React.createElement('span', { key: i, style: { flex: '1 1 0', minWidth: 1, height: h + 'px', background: 'rgba(255,255,255,0.82)', borderRadius: 1, transformOrigin: 'center', animation: 'waveBar ' + (0.52 + (i % 6) * 0.06).toFixed(2) + 's ease-in-out ' + ((i * 0.04) % 0.24).toFixed(2) + 's infinite' } });
                       })
                     )
                   ),
