@@ -25524,9 +25524,16 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
     const aspectDef = ASPECTS.find(a => a.id === aspect) || ASPECTS[0];
 
     // ── Tab helper ──
+    function openMusicPicker() {
+      // Open the song list directly from the Audio tab.
+      const _ev = editVideoRef.current;
+      if (_ev) { try { _ev.pause(); _ev.removeAttribute('src'); _ev.load(); } catch(_) {} }
+      setShowMusicPicker(true);
+    }
+
     function tabBtn(id, iconEl, label) {
       const active = editTool === id;
-      return React.createElement("button", { key: id, onClick: () => { if (id !== "Trim") setEditTool(t => t === id ? null : id); },
+      return React.createElement("button", { key: id, onClick: () => { if (id === "Audio") { openMusicPicker(); return; } if (id !== "Trim") setEditTool(t => t === id ? null : id); },
         style: { background: "transparent", border: "none", borderRadius: 0, color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", gap: 2, cursor: "pointer", fontSize: 10, fontWeight: active ? 800 : 500, padding: "0 1px 3px", width: 60, minWidth: 60, height: 62, boxSizing: "border-box", WebkitTapHighlightColor: "transparent" } },
         React.createElement("div", { style: { width: 54, height: 40, borderRadius: 14, background: active ? "rgba(52,55,64,0.66)" : "rgba(22,24,30,0.58)", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.18s" } }, iconEl),
         React.createElement("span", { style: { color: active ? "#fff" : "rgba(255,255,255,0.9)", fontSize: 10, fontWeight: 600, lineHeight: 1, textShadow: "0 1px 3px rgba(0,0,0,0.85)" } }, label)
@@ -25568,13 +25575,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       panel = React.createElement("div", { style: { padding: "12px 16px", display: "flex", flexDirection: "column", gap: 10 } },
         React.createElement("div", { style: { color: "rgba(255,255,255,0.55)", fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 } }, "Music"),
         React.createElement("div", { style: { display: "flex", gap: 8 } },
-          React.createElement("button", { onClick: () => {
-              // FIX: Pause and detach editVideoRef before opening music picker
-              // so its bgVideoRef doesn't compete with editVideoRef for recordedURL
-              const _ev = editVideoRef.current;
-              if (_ev) { try { _ev.pause(); _ev.removeAttribute('src'); _ev.load(); } catch(_) {} }
-              setShowMusicPicker(true);
-            },
+          React.createElement("button", { onClick: openMusicPicker,
             style: { flex: 1, background: "#fff", border: "none", borderRadius: 18, padding: "9px 12px", color: "#111", fontWeight: 700, fontSize: 13, cursor: "pointer" } }, "Add / Change"),
           React.createElement("button", { onClick: () => { audioUrlRef.current = null; audioFileRef.current = null; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = !origAudioOn; setAudioLabel("Original Audio"); setAudioArtist(""); setAudioArtwork(""); showToast && showToast("Original audio", "#888"); },
             style: { flex: 1, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 18, padding: "9px 12px", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" } }, "Original")
