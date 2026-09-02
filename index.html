@@ -23822,6 +23822,12 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     setRecordedBlob(file);
     setRecordedURL(mediaUrl);
     stopStream(); setRecordTime(0);
+    // Switch to the editor synchronously so the camera surface cannot flash.
+    if (window.ReactDOM && ReactDOM.flushSync) {
+      ReactDOM.flushSync(() => setStep("edit"));
+    } else {
+      setStep("edit");
+    }
     // Resolve the selected video's dimensions before mounting the editor. This
     // keeps the tool dock in its final mode from the first render, instead of
     // switching positions when video metadata arrives after the UI is visible.
