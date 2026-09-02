@@ -71,6 +71,7 @@ input, textarea, button { font-family: inherit; }
 video::-webkit-media-controls { display: none !important; }
 @keyframes _rpt_spin{to{transform:rotate(360deg)}}
 .group-media-scroll{scrollbar-width:none;-ms-overflow-style:none;} .group-media-scroll::-webkit-scrollbar{display:none;width:0;height:0;} .group-chat-search-scroll{scrollbar-width:none;-ms-overflow-style:none;} .group-chat-search-scroll::-webkit-scrollbar{display:none;width:0;height:0;}
+@keyframes swipeHintBob { 0%, 100% { opacity: 0.72; } 50% { opacity: 1; } }
 </style>
 <style id="post-mobile-compat">html,body,#root{min-height:100%;}body{min-height:100vh;min-height:100dvh;margin:0;overscroll-behavior-y:none;-webkit-text-size-adjust:100%;}button,input,textarea{font:inherit;}@supports(padding:max(0px)){body{padding-bottom:env(safe-area-inset-bottom);}}</style>
 <style>.assistant-rich-text h3{display:block;margin:18px 0 8px;color:#000!important;font-size:22px!important;font-weight:700!important;line-height:1.35!important;letter-spacing:0!important;}.assistant-actions{flex-wrap:wrap!important;height:auto!important;row-gap:8px!important;}.assistant-actions::after{content:"BluOm Ai can make mistakes.";display:block;flex-basis:100%;color:#687080;font-size:12px;line-height:1.4;margin-top:0;}.assistant-rich-text ol{list-style-position:inside;padding-left:0;margin:8px 0;}.assistant-rich-text ol li{padding-left:4px;}.assistant-rich-text ol li::marker{font-weight:700;font-size:22px;}.voice-waveform{flex:1;min-height:34px;height:34px;display:flex;align-items:center;justify-content:center;gap:2px;overflow:hidden;}.voice-waveform span{display:block;width:2px;min-height:3px;border-radius:3px;background:#1877F2;transition:height .08s linear;}.voice-recording-ready{flex:1;min-width:0;min-height:34px;display:flex;align-items:center;gap:9px;color:#111827;font-size:15px;font-weight:600;}.voice-recording-ready .voice-ready-dot{width:9px;height:9px;border-radius:50%;background:#D11A2A;box-shadow:0 0 0 4px rgba(209,26,42,.12);flex:none;}.voice-recording-ready .voice-ready-wave{display:flex;align-items:center;gap:2px;height:22px;flex:none;}.voice-recording-ready .voice-ready-wave span{display:block;width:2px;border-radius:3px;background:#1877F2;}</style></head>
@@ -25404,11 +25405,14 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
     function tabBtnWithArrow(id, iconEl, label) {
       return React.createElement("div", { key: id, style: { position: "relative", width: 60, minWidth: 60, height: 62, display: "flex", justifyContent: "center" } },
         !editTool && React.createElement("button", { onClick: () => setEditTool("Audio"), "aria-label": "Open editing tools",
-          style: { position: "absolute", left: "50%", bottom: "calc(100% + 4px)", transform: "translateX(-50%)", background: "none", border: "none", cursor: "pointer", padding: "0 10px 2px", height: 18, color: "rgba(255,255,255,0.45)" } },
+          style: { position: "absolute", left: "50%", bottom: "calc(100% + 18px)", transform: "translateX(-50%)", background: "none", border: "none", cursor: "pointer", padding: "0 10px 2px", height: 18, color: "rgba(255,255,255,0.45)" } },
           React.createElement("svg", { width: 24, height: 13, viewBox: "0 0 24 13", fill: "none", stroke: "rgba(255,255,255,0.45)", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round" },
             React.createElement("path", { d: "M2 11 L12 2 L22 11" })
           )
         ),
+        !editTool && React.createElement("span", {
+          style: { position: "absolute", left: "50%", bottom: "calc(100% + 2px)", transform: "translateX(-50%)", color: "rgba(255,255,255,0.82)", fontSize: 10, fontWeight: 400, lineHeight: 1, whiteSpace: "nowrap", letterSpacing: 0.2, textShadow: "0 1px 3px rgba(0,0,0,0.85)", animation: "swipeHintBob 1s ease-in-out infinite", pointerEvents: "none" }
+        }, "Swipe up to edit"),
         tabBtn(id, iconEl, label)
       );
     }
