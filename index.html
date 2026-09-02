@@ -25450,14 +25450,52 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       setPreviewPlaying(false);
       setEditTool(null);
       setStep("edit");
-      const resume = () => {
+
+      // Android may mount the editor video before its new blob decoder is
+      // ready. Retry the actual play call and only show the pause state after
+      // the browser confirms that playback is really running.
+      const startEditorPlayback = (attempt = 0) => {
         const video = editVideoRef.current;
-        if (!video) return;
-        try { video.currentTime = Math.max(0, Math.min(Number(handoffTime) || 0, video.duration || Number(handoffTime) || 0)); } catch (_) {}
-        try { const playPromise = video.play(); if (playPromise && playPromise.catch) playPromise.catch(() => {}); } catch (_) {}
+        if (!video || !video.isConnected || attempt > 20) return;
+        video.autoplay = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.loop = true;
+        if (attempt === 0) {
+          try { video.load(); } catch (_) {}
+        }
+        if (video.readyState < 2 || !video.videoWidth) {
+          setTimeout(() => startEditorPlayback(attempt + 1), 150);
+          return;
+        }
+        try {
+          const targetTime = Number(handoffTime) || 0;
+          video.currentTime = Math.max(0, Math.min(targetTime, video.duration || targetTime));
+        } catch (_) {}
+        try {
+          const playPromise = video.play();
+          if (playPromise && playPromise.then) {
+            playPromise.then(() => {
+              if (video.paused) {
+                setTimeout(() => startEditorPlayback(attempt + 1), 150);
+                return;
+              }
+              setEditorVideoFrameReady(true);
+              setPreviewPlaying(true);
+              if (origAudioOn && !audioUrlRef.current && !audioFileRef.current) {
+                try { video.muted = false; } catch (_) {}
+              }
+            }).catch(() => setTimeout(() => startEditorPlayback(attempt + 1), 150));
+          } else {
+            setEditorVideoFrameReady(true);
+            setPreviewPlaying(!video.paused);
+          }
+        } catch (_) {
+          setTimeout(() => startEditorPlayback(attempt + 1), 150);
+        }
       };
-      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(resume);
-      else setTimeout(resume, 0);
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => startEditorPlayback());
+      else setTimeout(() => startEditorPlayback(), 0);
     };
     return React.createElement(ComposeVideoTrimOverlay, {
       src: recordedURL,
