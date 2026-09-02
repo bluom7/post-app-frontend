@@ -10032,70 +10032,18 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     if (inlineEditingOverlayId === id) closeInlineTextEditor();
   };
   const switchToEditor = () => {
-    // Preserve the trim-to-editor transition, but mark the live video so the
-    // parent cleanup does not pause or detach it during the handoff.
-    if (typeof document === 'undefined' || !videoRef.current) { onDone(); return; }
-    const liveVideo = videoRef.current;
-    liveVideo.setAttribute('data-trim-editor-handoff', 'true');
-    const sourceRect = liveVideo.getBoundingClientRect();
-    const transitionTime = liveVideo.currentTime || trimStart || 0;
-    const backdrop = document.createElement('div');
-    const stage = document.createElement('div');
-    backdrop.style.cssText = 'position:fixed;inset:0;z-index:10000;background:#000;pointer-events:none;overflow:hidden;';
-    stage.style.cssText = 'position:fixed;left:' + sourceRect.left + 'px;top:' + sourceRect.top + 'px;width:' + sourceRect.width + 'px;height:' + sourceRect.height + 'px;border-radius:14px;overflow:hidden;background:#000;transition:left 360ms cubic-bezier(0.22,1,0.36,1),top 360ms cubic-bezier(0.22,1,0.36,1),width 360ms cubic-bezier(0.22,1,0.36,1),height 360ms cubic-bezier(0.22,1,0.36,1),border-radius 360ms ease;';
-    liveVideo.style.width = '100%';
-    liveVideo.style.height = '100%';
-    liveVideo.style.objectFit = 'contain';
-    stage.appendChild(liveVideo);
-    backdrop.appendChild(stage);
-    document.body.appendChild(backdrop);
-    const frame = window.requestAnimationFrame || (fn => window.setTimeout(fn, 16));
-    onDone();
-    frame(() => {
-      const editorStage = document.querySelector('[data-reel-editor-stage]');
-      const target = editorStage && editorStage.getBoundingClientRect();
-      if (target && target.width && target.height) {
-        stage.style.left = target.left + 'px';
-        stage.style.top = target.top + 'px';
-        stage.style.width = target.width + 'px';
-        stage.style.height = target.height + 'px';
-        stage.style.borderRadius = getComputedStyle(editorStage).borderRadius || '22px';
-        const editorVideo = editorStage.querySelector('[data-reel-editor-video]');
-        if (editorVideo) liveVideo.style.objectFit = getComputedStyle(editorVideo).objectFit || 'cover';
-      }
-    });
-    const releaseAt = Date.now() + 380;
-    const deadline = Date.now() + 1200;
-    const release = () => {
-      const editorStage = document.querySelector('[data-reel-editor-stage]');
-      if (editorStage && Date.now() >= releaseAt) {
-        const editorVideo = editorStage.querySelector('[data-reel-editor-video]');
-        if (editorVideo) {
-          editorVideo.style.display = 'none';
-          try { editorVideo.pause(); } catch (_) {}
-        }
-        const loadingOverlay = document.querySelector('[data-reel-editor-loading]');
-        if (loadingOverlay) loadingOverlay.style.display = 'none';
-        liveVideo.style.position = 'absolute';
-        liveVideo.style.inset = '0';
-        liveVideo.style.width = '100%';
-        liveVideo.style.height = '100%';
-        liveVideo.style.objectFit = editorVideo ? (getComputedStyle(editorVideo).objectFit || 'cover') : 'cover';
-        try { liveVideo.currentTime = transitionTime; } catch (_) {}
-        try {
-          const playPromise = liveVideo.play();
-          if (playPromise && playPromise.catch) playPromise.catch(() => {});
-        } catch (_) {}
-        liveVideo.removeAttribute('data-trim-editor-handoff');
-        editorStage.insertBefore(liveVideo, editorStage.firstChild);
-        try { editVideoRef.current = liveVideo; } catch (_) {}
-        backdrop.remove();
-        return;
-      }
-      if (!editorStage && Date.now() >= deadline) { backdrop.remove(); return; }
-      frame(release);
-    };
-    release();
+    // The trim arrow is a real state transition. Do not move the live trim
+    // video into a second fixed layer: Android Chrome can leave that layer
+    // visible and block the editor/share controls underneath it.
+    const trimVideo = videoRef.current;
+    const handoffTime = trimVideo && Number.isFinite(trimVideo.currentTime)
+      ? trimVideo.currentTime
+      : (trimStart || 0);
+    if (trimVideo) {
+      try { trimVideo.pause(); } catch (_) {}
+      try { trimVideo.removeAttribute('src'); trimVideo.load(); } catch (_) {}
+    }
+    if (typeof onDone === 'function') onDone(handoffTime);
   };
 
   const selectedLeft = (trimStart / safeDuration) * 100;
@@ -24159,13 +24107,22 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   }
 
   async function handlePost() {
-    const blobToUpload = exportedBlob || recordedBlob;
-    if (!blobToUpload) return;
+    let blobToUpload = exportedBlob || recordedBlob;
+    if (!blobToUpload && recordedURL) {
+      try {
+        const response = await fetch(recordedURL);
+        if (response.ok) blobToUpload = await response.blob();
+      } catch (_) {}
+    }
+    if (!blobToUpload) {
+      setUploadError("Could not read this video. Please select it again.");
+      return;
+    }
     // Photo reel: upload image and post without video processing
     if (isPhotoReel) {
       setUploading(true); setUploadProgress(5); setUploadError(null);
       try {
-        const photoSource = exportedBlob || recordedBlob;
+        const photoSource = exportedBlob || recordedBlob || blobToUpload;
         const photoFile = photoSource instanceof File ? photoSource : new File([photoSource], "photo.jpg", { type: photoSource.type || "image/jpeg" });
         const pfd = new FormData(); pfd.append("file", photoFile, photoFile.name);
         setUploadProgress(15);
@@ -25079,7 +25036,23 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   }
 
   async function handleExport() {
-    if (!recordedBlob || exporting) return;
+    if (exporting) return;
+    // The trim arrow can briefly outlive the trim video element on Android.
+    // Recover the selected object URL so Next always has a usable source.
+    let exportBlob = recordedBlob;
+    if (!exportBlob && recordedURL) {
+      try {
+        const response = await fetch(recordedURL);
+        if (response.ok) {
+          exportBlob = await response.blob();
+          if (exportBlob) setRecordedBlob(exportBlob);
+        }
+      } catch (_) {}
+    }
+    if (!exportBlob && !recordedURL) {
+      setUploadError("Could not read this video. Please select it again.");
+      return;
+    }
     if (!isPhotoReel) {
       const currentPoster = captureTrimPoster();
       if (currentPoster) {
@@ -25095,12 +25068,12 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       // canvas/export: on Android that path can produce a black image even
       // though the same gallery file is visible in the editor.
       let stablePhotoDataUrl = photoDataUrl;
-      if (!stablePhotoDataUrl && recordedBlob instanceof Blob) {
+      if (!stablePhotoDataUrl && exportBlob instanceof Blob) {
         stablePhotoDataUrl = await new Promise(resolve => {
           const reader = new FileReader();
           reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : null);
           reader.onerror = () => resolve(null);
-          reader.readAsDataURL(recordedBlob);
+          reader.readAsDataURL(exportBlob);
         });
         if (stablePhotoDataUrl) setPhotoDataUrl(stablePhotoDataUrl);
       }
@@ -25120,7 +25093,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     // does need processing uses one dedicated decoder and only records decoded
     // video frames. Android Chrome can expose a readyState=2 video whose current
     // surface is still black; recording that surface is the source of the old bug.
-    const _isGalleryFile = recordedBlob instanceof File;
+    const _hasOriginalBlob = exportBlob instanceof Blob;
     // Text stays as one metadata overlay in the feed. It must not also be
     // baked into the exported video, otherwise the feed renders a duplicate.
     const _hasStickerOv = reelStickerOverlays && reelStickerOverlays.length > 0;
@@ -25130,7 +25103,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     const _hasExtMusic = !!(audioFileRef.current || audioUrlRef.current);
     const _needsBaking = _hasStickerOv || _hasEmojiOv || _hasEffect || _hasCrop || _hasExtMusic;
 
-    if (_isGalleryFile && !_needsBaking) {
+    if (_hasOriginalBlob && !_needsBaking) {
       setExportedBlob(null);
       setStep("share");
       return;
@@ -25464,11 +25437,11 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
   if (step === "trim" && recordedURL && !isPhotoReel) {
     // Preserve the decoded trim frame while the editor video remounts. Android
     // can briefly lose the blob decoder during this trim -> edit transition.
-    const returnToEditorFromTrim = () => {
-      // Return to the live editor video after the trim view finishes.
-      setEditorVideoPoster(null);
-      // Resume the editor video after the trim decoder is released.
-      // Keep the poster until the replacement element has a real decoded frame.
+    const returnToEditorFromTrim = (handoffTime = trimStart || 0) => {
+      // Return to the editor by remounting its own video element. Keep the
+      // decoded trim poster until that element has produced a real frame.
+      const handoffPoster = trimPoster || editorVideoPoster || reviewPoster;
+      if (handoffPoster) setEditorVideoPoster(handoffPoster);
       initialEditorPauseRef.current = false;
       trimShouldBePausedRef.current = false;
       setReturnToTrimAfterMusic(false);
@@ -25477,6 +25450,14 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       setPreviewPlaying(false);
       setEditTool(null);
       setStep("edit");
+      const resume = () => {
+        const video = editVideoRef.current;
+        if (!video) return;
+        try { video.currentTime = Math.max(0, Math.min(Number(handoffTime) || 0, video.duration || Number(handoffTime) || 0)); } catch (_) {}
+        try { const playPromise = video.play(); if (playPromise && playPromise.catch) playPromise.catch(() => {}); } catch (_) {}
+      };
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(resume);
+      else setTimeout(resume, 0);
     };
     return React.createElement(ComposeVideoTrimOverlay, {
       src: recordedURL,
