@@ -9997,7 +9997,8 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       React.createElement('button', { onClick: () => { finishInlineTextEditing(); onDone(); }, style: { background: '#151515', border: '1px solid #202020', borderRadius: 8, color: '#fff', fontSize: 16, padding: '11px 20px', cursor: 'pointer' } }, 'Done')
     ),
     React.createElement('div', { style: { flex: 1, minHeight: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 24px 0' } },
-      React.createElement('video', { ref: videoRef, src, poster: poster || undefined, playsInline: true, autoPlay: true, preload: 'auto', muted: !originalAudioOn, onLoadedMetadata: event => {
+      React.createElement('div', { style: { width: 'min(72vw, 240px)', aspectRatio: '9 / 16', maxWidth: '92%', maxHeight: '90%', background: '#000', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateY(-6px)', flexShrink: 0 } },
+       React.createElement('video', { ref: videoRef, src, poster: poster || undefined, playsInline: true, autoPlay: true, preload: 'auto', muted: !originalAudioOn, onLoadedMetadata: event => {
       const actualDuration = Number(event.currentTarget.duration);
       if (!Number.isFinite(actualDuration) || actualDuration <= 0) return;
       setResolvedDuration(previous => Math.abs(previous - actualDuration) > 0.01 ? actualDuration : previous);
@@ -10016,7 +10017,8 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         event.currentTarget.currentTime = nextTime;
         setCurrentTime(nextTime);
       }
-    }, onClick: togglePlay, onPlay: () => setPlaying(true), onPause: () => setPlaying(false), style: { maxWidth: '92%', maxHeight: '90%', objectFit: 'contain', display: 'block', background: '#000', borderRadius: 14, overflow: 'hidden', transform: 'translateY(-6px)', cursor: 'pointer' } }),
+    }, onClick: togglePlay, onPlay: () => setPlaying(true), onPause: () => setPlaying(false), style: { width: '100%', height: '100%', maxWidth: 'none', maxHeight: 'none', objectFit: 'contain', objectPosition: 'center center', display: 'block', background: '#000', cursor: 'pointer' } })
+     ),
       inlineTextOverlays.filter(overlay => inlineEditingOverlayId !== overlay.id).map(overlay => React.createElement('div', { key: overlay.id, onPointerDown: event => overlayPointerDown(event, overlay), onPointerMove: overlayPointerMove, onPointerUp: overlayPointerUp, onPointerCancel: overlayPointerUp, onClick: event => { event.stopPropagation(); const tap = overlayLastGestureRef.current; overlayLastGestureRef.current = { id: null, moved: false }; if (tap && tap.id === overlay.id && tap.moved) return; editInlineText(overlay); }, style: { position: 'absolute', left: (overlay.xPct || 50) + '%', top: (overlay.yPct || 45) + '%', transform: 'translate(-50%,-50%) scale(' + (overlay.scale || 1) + ')', transformOrigin: 'center center', zIndex: 6, pointerEvents: 'auto', cursor: 'grab', touchAction: 'none', userSelect: 'none', color: overlay.color || '#fff', fontSize: (overlay.size || 32) + 'px', fontWeight: 700, textAlign: 'center', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: '82%', textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9)' } }, overlay.text)),
       // Draft text is edited directly over the video; never render a second copy near the bottom input.
     ),
