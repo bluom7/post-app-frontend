@@ -10035,8 +10035,12 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const playhead = 50;
   return React.createElement('div', { style: { position: 'fixed', inset: 0, zIndex: 2500, background: '#000', color: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden', userSelect: 'none' } },
     React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'max(18px, env(safe-area-inset-top)) 16px 12px', flexShrink: 0 } },
-      React.createElement('button', { onClick: onCancel, style: { background: '#151515', border: '1px solid #202020', borderRadius: 8, color: '#fff', fontSize: 16, padding: '11px 20px', cursor: 'pointer' } }, 'Cancel'),
-      React.createElement('button', { onClick: () => { finishInlineTextEditing(); onDone(); }, style: { background: '#151515', border: '1px solid #202020', borderRadius: 8, color: '#fff', fontSize: 16, padding: '11px 20px', cursor: 'pointer' } }, 'Done')
+      React.createElement('button', { onClick: onCancel, 'aria-label': 'Close trim editor', style: { width: 52, height: 52, padding: 0, background: '#25282e', border: 'none', borderRadius: 12, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.28)' } },
+        React.createElement('svg', { width: 28, height: 22, viewBox: '0 0 24 18', fill: 'none', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' },
+          React.createElement('path', { d: 'M3 4 L12 13 L21 4' })
+        )
+      ),
+      React.createElement('button', { onClick: () => { finishInlineTextEditing(); onDone(); }, style: { minWidth: 76, height: 48, padding: '0 16px', background: '#fff', border: 'none', borderRadius: 8, color: '#111', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.22)' } }, 'Done')
     ),
     React.createElement('div', { style: { flex: 1, minHeight: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 24px 0' } },
       React.createElement('div', { style: { width: 'min(72vw, 240px)', aspectRatio: '9 / 16', maxWidth: '92%', maxHeight: '90%', background: '#000', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateY(-6px)', flexShrink: 0 } },
