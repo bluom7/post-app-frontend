@@ -10076,8 +10076,14 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
           React.createElement('div', { style: { width: 2, height: 12, borderRadius: 2, background: '#1d1e23' } })
         ),
         React.createElement('div', { onPointerDown: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, onTouchStart: event => { event.preventDefault(); event.stopPropagation(); dragSideRef.current = 'right'; }, 'aria-label': 'Trim end', style: { position: 'absolute', top: 11, bottom: 11, left: 'calc(50% + ' + ((trimEnd - currentTime - timelineLeadSeconds) * timelinePixelsPerSecond) + 'px - 10px)', width: 20, background: '#fff', border: '1px solid rgba(20,20,24,0.18)', borderRadius: 6, boxShadow: '0 1px 4px rgba(0,0,0,0.35)', cursor: 'ew-resize', touchAction: 'none', zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' } },
-          React.createElement('div', { style: { width: 2, height: 18, borderRadius: 2, background: '#1d1e23' } })
+          React.createElement('div', { style: { width: 2, height: 12, borderRadius: 2, background: '#1d1e23' } })
         ),
+        React.createElement('button', {
+          onClick: event => { event.preventDefault(); event.stopPropagation(); },
+          'aria-label': 'Add another video',
+          title: 'Add another video',
+          style: { position: 'absolute', top: 8, right: 8, zIndex: 7, width: 28, height: 28, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: 'none', borderRadius: 7, color: '#111', fontSize: 25, fontWeight: 400, lineHeight: 1, cursor: 'pointer', boxShadow: '0 1px 3px rgba(0,0,0,0.35)' }
+        }, '+'),
         ),
         React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: 4, width: '100%', margin: 0, boxSizing: 'border-box', overflow: 'hidden', position: 'relative', background: 'linear-gradient(to bottom, #303139 0, #303139 42px, #000 42px, #000 46px, #303139 46px, #303139 82px, #000 82px, #000 86px)' } },
             selectedMusic
