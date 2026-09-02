@@ -9421,10 +9421,11 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     endTimelinePinch(event);
     endTimelineScroll(event);
   };
-  const formatTime = seconds => {
+  const formatTime = (seconds, padMinutes = false) => {
     const value = Math.max(0, Number(seconds) || 0);
-    if (value >= 60) return Math.floor(value / 60) + ':' + String(Math.floor(value % 60)).padStart(2, '0');
-    return value.toFixed(1);
+    const minutes = Math.floor(value / 60);
+    const minuteText = padMinutes && minutes > 0 ? String(minutes).padStart(2, '0') : String(minutes);
+    return minuteText + ':' + String(Math.floor(value % 60)).padStart(2, '0');
   };
 
   const overlayGestureRef = React.useRef(null);
@@ -10117,7 +10118,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         React.createElement('button', { onClick: togglePlay, 'aria-label': playing ? 'Pause' : 'Play', style: { width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: 'none', borderRadius: '50%', color: '#62666d', padding: 0, cursor: 'pointer', flexShrink: 0 } },
           playing ? React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: '#62666d' }, React.createElement('rect', { x: 6, y: 5, width: 4, height: 14, rx: 1 }), React.createElement('rect', { x: 14, y: 5, width: 4, height: 14, rx: 1 })) : React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: '#62666d' }, React.createElement('path', { d: 'M8.7 5.25L18.35 11.1c.8.48.8 1.32 0 1.8L8.7 18.75C7.93 19.22 7 18.68 7 17.78V6.22c0-.9.93-1.44 1.7-.97z', fill: '#62666d' }))
         ),
-        React.createElement('div', { style: { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', fontSize: 16, letterSpacing: 1.4, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', color: '#f3f3f3' } }, formatTime(currentTime - trimStart) + ' / ' + formatTime(selectedDuration)),
+        React.createElement('div', { style: { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', fontSize: 16, fontWeight: 700, letterSpacing: 0.2, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', color: '#fff', textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 1px 3px rgba(0,0,0,0.9)' } }, formatTime(currentTime - trimStart) + ' / ' + formatTime(selectedDuration, true)),
         React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 } },
           React.createElement('button', { onClick: () => seek(-10), 'aria-label': 'Back 10 seconds', style: { width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#cfd1d4', border: 'none', borderRadius: '50%', color: '#62666d', padding: 0, cursor: 'pointer' } },
             React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: '#62666d', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
