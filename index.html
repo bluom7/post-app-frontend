@@ -10036,7 +10036,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
       ),
       React.createElement('div', { onTouchStart: beginTimelineGesture, onTouchMove: updateTimelineGesture, onTouchEnd: endTimelineGesture, onTouchCancel: endTimelineGesture, style: { position: 'relative', width: timelineWidth, margin: '0 auto', boxSizing: 'border-box', touchAction: 'none' } },
          React.createElement('div', { style: { position: 'relative', width: '100%', height: 28, margin: '0 0 1px', overflow: 'hidden', boxSizing: 'border-box', pointerEvents: 'none' } },
-           React.createElement('div', { style: { position: 'absolute', top: 1, left: 0, right: 0, height: 1, background: 'rgba(255,255,255,0.16)' } }),
+           React.createElement('div', { style: { position: 'absolute', top: 2, left: 0, right: 0, height: 0, borderTop: '1px solid rgba(255,255,255,0.16)', boxSizing: 'border-box', zIndex: 1 } }),
            React.createElement('div', { style: { position: 'absolute', top: 1, left: '50%', width: (safeDuration * timelinePixelsPerSecond) + 'px', height: 27, transform: 'translateX(-' + ((currentTime + timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)' } },
              Array.from({ length: Math.ceil(safeDuration / 5) + 1 }).map((_, markerIndex) => {
                const markerTime = markerIndex * 5;
