@@ -10051,7 +10051,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
           onClick: event => { event.preventDefault(); event.stopPropagation(); toggleOriginalAudio(); },
           'aria-label': originalAudioOn ? 'Mute original video audio' : 'Unmute original video audio',
           'aria-pressed': originalAudioOn,
-          style: { position: 'absolute', left: 7, top: 5, zIndex: 6, width: 34, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.22)', borderRadius: 7, background: 'rgba(37,38,44,0.92)', color: '#fff', cursor: 'pointer', touchAction: 'manipulation' }
+          style: { position: 'absolute', left: 7, top: 5, zIndex: 6, width: 30, height: 34, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateX(-' + timelineTrackScrollPx + 'px)', border: 'none', borderRadius: 0, background: 'transparent', color: '#fff', cursor: 'pointer', touchAction: 'manipulation' }
         },
           React.createElement('svg', { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: '#fff', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
             React.createElement('path', { d: 'M3 9h4l7-5v16l-7-5H3z' }),
