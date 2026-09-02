@@ -25400,11 +25400,11 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       );
     }
 
-    // Keep the expand arrow anchored above the fifth tool instead of in its own row.
+    // Keep the expand arrow anchored above the Voice tool instead of in its own row.
     function tabBtnWithArrow(id, iconEl, label) {
       return React.createElement("div", { key: id, style: { position: "relative", width: 60, minWidth: 60, height: 62, display: "flex", justifyContent: "center" } },
         !editTool && React.createElement("button", { onClick: () => setEditTool("Audio"), "aria-label": "Open editing tools",
-          style: { position: "absolute", left: "50%", bottom: "calc(100% - 1px)", transform: "translateX(-50%)", background: "none", border: "none", cursor: "pointer", padding: "0 10px 2px", height: 18, color: "rgba(255,255,255,0.45)" } },
+          style: { position: "absolute", left: "50%", bottom: "calc(100% + 4px)", transform: "translateX(-50%)", background: "none", border: "none", cursor: "pointer", padding: "0 10px 2px", height: 18, color: "rgba(255,255,255,0.45)" } },
           React.createElement("svg", { width: 24, height: 13, viewBox: "0 0 24 13", fill: "none", stroke: "rgba(255,255,255,0.45)", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round" },
             React.createElement("path", { d: "M2 11 L12 2 L22 11" })
           )
@@ -26322,9 +26322,9 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       },
         tabBtn("Audio",    iAudio,    "Audio"),
         tabBtn("Text",     iText,     "Text"),
-        tabBtn("Voice",    iVoice,    "Voice"),
+        tabBtnWithArrow("Voice",    iVoice,    "Voice"),
         tabBtn("Stickers", iStickers, "Stickers"),
-        tabBtnWithArrow("Filters",  iFilters,  "Effects")
+        tabBtn("Filters",  iFilters,  "Effects")
       ),
 
       // ── Upload / export progress (below back arrow) ──
@@ -26466,9 +26466,9 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
         !toolsOnVideo && !editTextEditorOpen && React.createElement("div", { style: { display: "flex", justifyContent: "space-around", alignItems: "flex-end", gap: 2, padding: "0 4px", margin: "0 4px" } },
           tabBtn("Audio",    iAudio,    "Audio"),
           tabBtn("Text",     iText,     "Text"),
-          tabBtn("Voice",    iVoice,    "Voice"),
+          tabBtnWithArrow("Voice",    iVoice,    "Voice"),
           tabBtn("Stickers", iStickers, "Stickers"),
-          tabBtnWithArrow("Filters",  iFilters,  "Effects")
+          tabBtn("Filters",  iFilters,  "Effects")
         ),
 
         // Bottom action buttons: Edit + Next →
