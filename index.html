@@ -10040,26 +10040,21 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
           React.createElement('path', { d: 'M3 4 L12 13 L21 4' })
         )
       ),
-      React.createElement('div', { 'aria-label': 'Trim editor', style: { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', minWidth: 108, height: 50, padding: '0 10px', background: 'rgba(46,49,57,0.92)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.22)' } },
-        React.createElement('svg', { width: 88, height: 34, viewBox: '0 0 82 32', fill: 'none', role: 'img', 'aria-label': 'Trim' },
-          React.createElement('defs', null,
-            React.createElement('linearGradient', { id: 'trimPink', x1: '0', y1: '0', x2: '0.8', y2: '1' }, React.createElement('stop', { offset: '0%', stopColor: '#ff91a7' }), React.createElement('stop', { offset: '48%', stopColor: '#ff416c' }), React.createElement('stop', { offset: '100%', stopColor: '#b91447' })),
-            React.createElement('linearGradient', { id: 'trimYellow', x1: '0', y1: '0', x2: '0.8', y2: '1' }, React.createElement('stop', { offset: '0%', stopColor: '#fff39a' }), React.createElement('stop', { offset: '48%', stopColor: '#ffd329' }), React.createElement('stop', { offset: '100%', stopColor: '#d28d00' })),
-            React.createElement('linearGradient', { id: 'trimBlue', x1: '0', y1: '0', x2: '0.8', y2: '1' }, React.createElement('stop', { offset: '0%', stopColor: '#a1e1ff' }), React.createElement('stop', { offset: '48%', stopColor: '#35a9ff' }), React.createElement('stop', { offset: '100%', stopColor: '#126ac2' })),
-            React.createElement('linearGradient', { id: 'trimPurple', x1: '0', y1: '0', x2: '0.8', y2: '1' }, React.createElement('stop', { offset: '0%', stopColor: '#efa7ff' }), React.createElement('stop', { offset: '48%', stopColor: '#c14cff' }), React.createElement('stop', { offset: '100%', stopColor: '#7620b4' }))
-          ),
-          React.createElement('path', { d: 'M1 1 C1 0 2 0 3 0 H17 C18 0 19 1 19 2 V5 C19 6 18 7 17 7 H13 V27 C13 29 12 30 10 30 H7 C5 30 4 29 4 27 V7 H2 C1 7 0 6 0 5 V3 C0 2 0 1 1 1 Z', fill: 'url(#trimPink)', stroke: '#98133d', strokeWidth: 0.9 }),
-          React.createElement('path', { d: 'M21 28 V10 C21 8 22 7 24 7 H26 C28 7 29 8 29 10 C31 8 33 7 35 7 H36 C38 7 39 8 39 10 V13 C39 15 38 16 36 16 H34 C33 16 32 15 32 14 C31 13 30 13 29 14 V28 C29 30 28 31 26 31 H24 C22 31 21 30 21 28 Z', fill: 'url(#trimYellow)', stroke: '#a87100', strokeWidth: 0.9 }),
-          React.createElement('rect', { x: 42, y: 8, width: 7, height: 23, rx: 3.5, fill: 'url(#trimBlue)', stroke: '#146db9', strokeWidth: 0.9 }),
-          React.createElement('circle', { cx: 45.5, cy: 3.5, r: 3.5, fill: 'url(#trimBlue)', stroke: '#146db9', strokeWidth: 0.9 }),
-          React.createElement('path', { d: 'M52 28 V10 C52 8 53 7 55 7 H57 C59 7 60 8 60 10 C62 8 64 7 66 7 H67 C69 7 70 8 70 10 C72 8 74 7 76 7 H77 C79 7 80 8 80 10 V28 C80 30 79 31 77 31 H75 C73 31 72 30 72 28 V15 C72 14 71 13 70 13 C69 13 68 14 68 15 V28 C68 30 67 31 65 31 H63 C61 31 60 30 60 28 V15 C60 14 59 13 58 13 C57 13 56 14 56 15 V28 C56 30 55 31 53 31 C52 31 52 30 52 28 Z', fill: 'url(#trimPurple)', stroke: '#7620b4', strokeWidth: 0.9 }),
-          React.createElement('path', { d: 'M5 3 C7 2 10 2 12 2', stroke: 'rgba(255,255,255,0.82)', strokeWidth: 1.25, strokeLinecap: 'round' }),
-          React.createElement('path', { d: 'M24 10 C25 9 27 9 28 10', stroke: 'rgba(255,255,255,0.78)', strokeWidth: 1.1, strokeLinecap: 'round' }),
-          React.createElement('circle', { cx: 44.5, cy: 2.5, r: 0.9, fill: 'rgba(255,255,255,0.88)' }),
-          React.createElement('path', { d: 'M55 10 C56 9 58 9 59 10 M63 10 C64 9 66 9 67 10', stroke: 'rgba(255,255,255,0.8)', strokeWidth: 1.05, strokeLinecap: 'round' })
-        )
+      React.createElement('div', { 'aria-label': 'Try Edits', style: { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', minWidth: 136, height: 48, padding: '0 12px', background: '#1d2026', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.22)' } },
+        React.createElement('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', role: 'img', 'aria-label': 'Try Edits icon' },
+          React.createElement('rect', { x: 2.5, y: 2.5, width: 19, height: 19, rx: 4, stroke: 'rgba(255,255,255,0.9)', strokeWidth: 1.25 }),
+          React.createElement('path', { d: 'M7 5.5 V18.5', stroke: '#ff3f73', strokeWidth: 1.7, strokeLinecap: 'round' }),
+          React.createElement('path', { d: 'M10 6.5 V17.5', stroke: '#ffd329', strokeWidth: 1.7, strokeLinecap: 'round' }),
+          React.createElement('path', { d: 'M14 6.5 V17.5', stroke: '#35c978', strokeWidth: 1.7, strokeLinecap: 'round' }),
+          React.createElement('path', { d: 'M17 5.5 V18.5', stroke: '#35a9ff', strokeWidth: 1.7, strokeLinecap: 'round' })
+        ),
+        React.createElement('span', { style: { color: '#fff', fontSize: 16, fontWeight: 600, lineHeight: 1, letterSpacing: 0.1, whiteSpace: 'nowrap' } }, 'Try Edits')
       ),
-      React.createElement('button', { onClick: () => { finishInlineTextEditing(); onDone(); }, style: { minWidth: 76, height: 48, padding: '0 16px', background: '#fff', border: 'none', borderRadius: 8, color: '#111', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.22)' } }, 'Done')
+      React.createElement('button', { onClick: () => { finishInlineTextEditing(); onDone(); }, 'aria-label': 'Done', style: { width: 52, height: 52, padding: 0, background: '#fff', border: 'none', borderRadius: '50%', color: '#111', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.22)' } },
+        React.createElement('svg', { width: 29, height: 29, viewBox: '0 0 24 24', fill: 'none', stroke: '#111', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' },
+          React.createElement('path', { d: 'M3 12 H21 M13 4 L21 12 L13 20' })
+        )
+      )
     ),
     React.createElement('div', { style: { flex: 1, minHeight: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 24px 0' } },
       React.createElement('div', { style: { width: 'min(72vw, 240px)', aspectRatio: '9 / 16', maxWidth: '92%', maxHeight: '90%', background: '#000', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 14, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateY(-6px)', flexShrink: 0 } },
