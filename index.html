@@ -10038,10 +10038,10 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
          React.createElement('div', { style: { position: 'relative', width: '100%', height: 28, margin: '0 0 1px', overflow: 'hidden', boxSizing: 'border-box', pointerEvents: 'none' } },
            React.createElement('div', { style: { position: 'absolute', top: 1, left: '50%', width: (safeDuration * timelinePixelsPerSecond) + 'px', height: 27, transform: 'translateX(-' + ((currentTime + timelineLeadSeconds) * timelinePixelsPerSecond) + 'px)' } },
              React.createElement('div', { style: { position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'rgba(255,255,255,0.16)' } }),
-             Array.from({ length: Math.ceil(safeDuration / 5) + 1 }).map((_, markerIndex) => {
-               const markerTime = markerIndex * 5;
+             Array.from({ length: safeDuration <= 5 ? Math.ceil(safeDuration) : Math.ceil(safeDuration / 5) + 1 }).map((_, markerIndex) => {
+               const markerTime = safeDuration <= 5 ? markerIndex + 1 : (markerIndex === 0 ? 1 : markerIndex * 5);
                if (markerTime > safeDuration + 0.01) return null;
-               const showLabel = markerIndex % 2 === 1 || markerTime >= safeDuration - 0.01;
+               const showLabel = safeDuration <= 5 || markerIndex % 2 === 1 || markerTime >= safeDuration - 0.01;
                return React.createElement('div', { key: 'ruler-' + markerTime, style: { position: 'absolute', left: (markerTime * timelinePixelsPerSecond) + 'px', top: 7, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 22, height: 15 } },
                  showLabel
                    ? React.createElement('span', { style: { color: 'rgba(255,255,255,0.78)', fontSize: 10, fontWeight: 700, lineHeight: 1, whiteSpace: 'nowrap', textShadow: '0 1px 2px rgba(0,0,0,0.8)' } }, markerTime + 's')
