@@ -22636,7 +22636,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
   },
     // Match the trimming editor's centered 9:16 preview frame.
     React.createElement('div',{style:{height:'42vh',minHeight:300,maxHeight:430,flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',background:'#050608',overflow:'hidden',padding:'14px 0 20px',boxSizing:'border-box'}},
-      React.createElement('div',{style:{width:'min(56vw,180px)',aspectRatio:'9 / 16',maxWidth:'92%',maxHeight:'90%',background:'#000',border:'1px solid rgba(255,255,255,0.24)',borderRadius:14,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',transform:'translateY(-6px)',flexShrink:0}},
+      React.createElement('div',{style:{width:'min(72vw,240px)',aspectRatio:'9 / 16',maxWidth:'92%',maxHeight:'90%',background:'#000',border:'1px solid rgba(255,255,255,0.24)',borderRadius:14,overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center',transform:'translateY(-6px)',flexShrink:0}},
         videoSrc && (isPhoto
           ?React.createElement('img',{src:videoSrc,alt:'',style:{width:'100%',height:'100%',maxWidth:'none',maxHeight:'none',objectFit:'contain',objectPosition:'center center',display:'block',background:'#000'}})
           :React.createElement('video',{src:videoSrc,autoPlay:true,muted:true,loop:true,playsInline:true,preload:'metadata',style:{width:'100%',height:'100%',maxWidth:'none',maxHeight:'none',objectFit:'contain',objectPosition:'center center',display:'block',background:'#000'}}))
