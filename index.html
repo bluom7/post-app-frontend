@@ -22930,7 +22930,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
             settled = true;
             cleanup();
             try { probe.pause(); probe.removeAttribute("src"); probe.load(); } catch (_) {}
-            resolve({ url, poster, duration: probe.duration });
+            resolve({ url, poster, duration: probe.duration, aspect: probe.videoWidth > 0 && probe.videoHeight > 0 ? probe.videoWidth / probe.videoHeight : null });
           } catch (_) {
             retryTimer = setTimeout(captureAfterDecode, 80);
           }
@@ -23822,9 +23822,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     setRecordedBlob(file);
     setRecordedURL(mediaUrl);
     stopStream(); setRecordTime(0);
-    // Open the editor in the same selection flow. Video poster extraction is
-    // deliberately non-blocking so the camera/reel landing screen is skipped.
-    setStep("edit");
+    // Resolve the selected video's dimensions before mounting the editor. This
+    // keeps the tool dock in its final mode from the first render, instead of
+    // switching positions when video metadata arrives after the UI is visible.
     setShowPickGallery(false);
     setGalleryFiles([]);
 
@@ -23832,13 +23832,21 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       const posterPromise = prepareGalleryVideo(file).then(prepared => {
         try { URL.revokeObjectURL(prepared.url); } catch (_) {}
         if (gallerySelectionRef.current !== selectionToken) return prepared.poster;
+        const sourceAspect = Number(prepared.aspect);
+        if (Number.isFinite(sourceAspect) && sourceAspect > 0) setRecordedVideoAspect(sourceAspect);
         // The same decoded frame is the fallback for editor, review, share,
         // and every return path, so none of those surfaces starts from black.
         setEditorVideoPoster(prepared.poster);
         setReviewPoster(prepared.poster);
+        setStep("edit");
         return prepared.poster;
-      }).catch(() => null);
+      }).catch(() => {
+        if (gallerySelectionRef.current === selectionToken) setStep("edit");
+        return null;
+      });
       galleryPosterPromiseRef.current = posterPromise;
+    } else {
+      setStep("edit");
     }
   }
 
