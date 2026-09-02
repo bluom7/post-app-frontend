@@ -10037,7 +10037,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const playhead = 50;
   return React.createElement('div', { style: { position: 'fixed', inset: 0, zIndex: 2500, background: '#000', color: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden', userSelect: 'none' } },
     React.createElement('div', { style: { position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'max(18px, env(safe-area-inset-top)) 16px 12px', flexShrink: 0 } },
-      React.createElement('button', { onClick: onCancel, 'aria-label': 'Close trim editor', style: { width: 52, height: 52, padding: 0, background: '#25282e', border: 'none', borderRadius: 12, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.28)' } },
+      React.createElement('button', { onClick: onDone, 'aria-label': 'Open editing page', style: { width: 52, height: 52, padding: 0, background: '#25282e', border: 'none', borderRadius: 12, color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.28)' } },
         React.createElement('svg', { width: 28, height: 22, viewBox: '0 0 24 18', fill: 'none', stroke: '#fff', strokeWidth: 3, strokeLinecap: 'round', strokeLinejoin: 'round' },
           React.createElement('path', { d: 'M3 4 L12 13 L21 4' })
         )
