@@ -9307,6 +9307,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const timelineZoomRef = React.useRef(1);
   const timelinePinchRef = React.useRef(null);
   const timelineScrollRef = React.useRef(null);
+  const timelineManualBoundaryRef = React.useRef(false);
   const [inlineTextEditorOpen, setInlineTextEditorOpen] = React.useState(false);
   const [inlineTextDraft, setInlineTextDraft] = React.useState("");
   const [inlineTextColor, setInlineTextColor] = React.useState("#ffffff");
@@ -9368,6 +9369,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   };
   const beginTimelineScroll = event => {
     if (!event.touches || event.touches.length !== 1 || timelinePinchRef.current || dragSideRef.current) return;
+    timelineManualBoundaryRef.current = false;
     timelineScrollRef.current = { startX: event.touches[0].clientX, startTime: currentTime, paused: false };
   };
   const updateTimelineScroll = event => {
@@ -9376,6 +9378,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     const deltaX = event.touches[0].clientX - scroll.startX;
     if (Math.abs(deltaX) < 2) return;
     const next = clamp(scroll.startTime - deltaX / timelinePixelsPerSecond, trimStart, trimEnd);
+    timelineManualBoundaryRef.current = next >= trimEnd - 0.001;
     const video = videoRef.current;
     if (!scroll.paused) {
       if (video) video.pause();
@@ -9725,28 +9728,52 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     const video = videoRef.current;
     if (!video) return;
     video.muted = !originalAudioOn;
+    const restartTrimPlayback = shouldContinue => {
+      const start = clamp(trimStart, 0, safeDuration);
+      video.currentTime = start;
+      setCurrentTime(start);
+      const audio = audioRef.current;
+      if (audio) {
+        try { audio.currentTime = musicStartSec; } catch (_) {}
+        if (shouldContinue && musicUrl) {
+          const audioPromise = audio.play();
+          if (audioPromise && audioPromise.catch) audioPromise.catch(() => {});
+        } else {
+          audio.pause();
+        }
+      }
+      if (!shouldContinue) {
+        video.pause();
+        setPlaying(false);
+        return;
+      }
+      const videoPromise = video.play();
+      if (videoPromise && videoPromise.then) {
+        videoPromise.then(() => setPlaying(true)).catch(() => setPlaying(false));
+      } else {
+        setPlaying(true);
+      }
+    };
     const onTimeUpdate = () => {
       const next = video.currentTime || 0;
-      if (next >= trimEnd) {
-        video.currentTime = trimStart;
-        setCurrentTime(trimStart);
-        setPlaying(false);
-        video.pause();
-        if (audioRef.current) {
-          audioRef.current.pause();
-          try { audioRef.current.currentTime = musicStartSec; } catch (_) {}
-        }
+      // Keep a manually selected final frame in place instead of applying the playback loop.
+      if (timelineScrollRef.current || timelineManualBoundaryRef.current) {
+        setCurrentTime(clamp(next, trimStart, trimEnd));
+        return;
+      }
+      if (next >= trimEnd - 0.03) {
+        // Loop the selected trim range while playback is active.
+        restartTrimPlayback(!video.paused && !video.ended);
       } else {
         setCurrentTime(next);
       }
     };
     const onEnded = () => {
-      setPlaying(false);
-      setCurrentTime(trimStart);
-      if (audioRef.current) {
-        audioRef.current.pause();
-        try { audioRef.current.currentTime = musicStartSec; } catch (_) {}
+      if (timelineScrollRef.current || timelineManualBoundaryRef.current) {
+        setCurrentTime(trimEnd);
+        return;
       }
+      restartTrimPlayback(true);
     };
     video.addEventListener('timeupdate', onTimeUpdate);
     video.addEventListener('ended', onEnded);
@@ -9840,6 +9867,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
+    timelineManualBoundaryRef.current = false;
     const audio = audioRef.current;
     if (playing && !video.paused) {
       video.pause();
@@ -9874,6 +9902,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
     Promise.resolve(video.play()).then(() => setPlaying(true)).catch(() => setPlaying(false));
   };
   const seek = amount => {
+    timelineManualBoundaryRef.current = false;
     const video = videoRef.current;
     const next = clamp((video ? video.currentTime : currentTime) + amount, trimStart, trimEnd);
     if (video) video.currentTime = next;
@@ -9881,6 +9910,7 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
   };
   const jumpToTimelinePoint = event => {
     if (dragSideRef.current || event.target !== event.currentTarget) return;
+    timelineManualBoundaryRef.current = false;
     const rect = timelineRef.current.getBoundingClientRect();
     const next = clamp(timelineTimeFromPoint(event.clientX, rect), trimStart, trimEnd);
     if (videoRef.current) videoRef.current.currentTime = next;
