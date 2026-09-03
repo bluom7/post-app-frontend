@@ -27449,8 +27449,27 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
             try { if (!_ev.src || _ev.src !== recordedURL) _ev.src = recordedURL; _ev.load(); } catch(_) {}
           }
         },
-        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => { audioUrlRef.current = url; audioFileRef.current = null; audioStartTimeRef.current = startTime || 0; audioClipDurationRef.current = normalizeMusicClipDuration(clipDuration); if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = true; if (trimVideoRef.current) { trimVideoRef.current.muted = true; } setAudioLabel(label); setAudioArtist(artist||""); setAudioArtwork(artwork||""); setShowMusicPicker(false); setPreviewPlaying(false); showToast && showToast("Song add hua ✓", "#22C55E"); stopStream(); setReviewVideoReady(false);
-    setReviewMode(true); } }),
+        videoSrc: recordedURL, isPhoto: isPhotoReel, onSelect: (url, label, startTime, artwork, artist, clipDuration) => {
+            // Remove the previous song completely before installing the replacement.
+            clearPreviewMusicAudio(true);
+            audioUrlRef.current = url;
+            audioFileRef.current = null;
+            audioStartTimeRef.current = startTime || 0;
+            audioClipDurationRef.current = normalizeMusicClipDuration(clipDuration);
+            if (editVideoRef.current) { editVideoRef.current.pause(); editVideoRef.current.currentTime = trimStart || 0; editVideoRef.current.muted = true; }
+            if (trimVideoRef.current) { trimVideoRef.current.pause(); trimVideoRef.current.currentTime = trimStart || 0; trimVideoRef.current.muted = true; }
+            trimShouldBePausedRef.current = false;
+            setTrimVideoEnded(false);
+            setOrigAudioOn(false);
+            setAudioLabel(label);
+            setAudioArtist(artist || "");
+            setAudioArtwork(artwork || "");
+            setShowMusicPicker(false);
+            setPreviewPlaying(false);
+            showToast && showToast("Song add hua ✓", "#22C55E");
+            stopStream();
+            setReviewVideoReady(false);
+            setReviewMode(true); } }),
     // CSS animations
     React.createElement("style", null, `
       .reel-camera-effects-scroll { scrollbar-width: none; -ms-overflow-style: none; }
