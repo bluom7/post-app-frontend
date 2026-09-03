@@ -29444,6 +29444,8 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
   }
 
   const _reelEffFilter = (reel.video_effect && reel.video_effect !== 'none') ? ((VIDEO_EFFECTS.find(function(e){return e.id===reel.video_effect;})||VIDEO_EFFECTS[0]).filter) : 'none';
+  // Keep the audio control next to the play control and expose both only while paused.
+  const showPlaybackControls = (isPhotoReel && reel.music_url && !photoMusicPlaying) || (!isPhotoReel && !playing);
   return /*#__PURE__*/React.createElement("div", {
     ref: containerRef,
     style: { position: "absolute", inset: 0, background: "#000", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", WebkitTapHighlightColor: "transparent" },
@@ -29473,15 +29475,15 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
       /*#__PURE__*/React.createElement("div", { style: { width: 60, height: 60, borderRadius: "50%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" } },
         /*#__PURE__*/React.createElement("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "#fff" },
           /*#__PURE__*/React.createElement("polygon", { points: "5 3 19 12 5 21 5 3" })))),
-    // Instagram-style media audio control — always available on photos and videos
-    /*#__PURE__*/React.createElement("button", {
+    // Speaker control belongs beside the center play control and appears only while paused.
+    showPlaybackControls && /*#__PURE__*/React.createElement("button", {
       onClick: handleAudioClick,
       type: "button",
       "aria-label": audioEnabled ? "Mute audio" : "Unmute audio",
       "aria-pressed": audioEnabled,
       title: audioEnabled ? "Mute audio" : "Unmute audio",
       style: {
-        position: "absolute", bottom: 14, right: 14, width: 40, height: 40, padding: 0,
+        position: "absolute", left: "calc(50% + 44px)", top: "50%", transform: "translateY(-50%) scale(1)", width: 40, height: 40, padding: 0,
         borderRadius: "50%", background: "rgba(0,0,0,0.66)",
         border: "1px solid rgba(255,255,255,0.28)", cursor: "pointer",
         display: "flex", alignItems: "center", justifyContent: "center", zIndex: 8,
@@ -29493,21 +29495,21 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
       onPointerDown: handleAudioPointerDown,
       onPointerUp: e => {
         e.stopPropagation();
-        e.currentTarget.style.transform = "scale(1)";
+        e.currentTarget.style.transform = "translateY(-50%) scale(1)";
         e.currentTarget.style.background = "rgba(0,0,0,0.66)";
       },
       onPointerCancel: e => {
         e.stopPropagation();
-        e.currentTarget.style.transform = "scale(1)";
+        e.currentTarget.style.transform = "translateY(-50%) scale(1)";
         e.currentTarget.style.background = "rgba(0,0,0,0.66)";
       },
       onPointerEnter: e => {
         e.stopPropagation();
-        e.currentTarget.style.transform = "scale(1.06)";
+        e.currentTarget.style.transform = "translateY(-50%) scale(1.06)";
         e.currentTarget.style.background = "rgba(0,0,0,0.76)";
       },
       onPointerLeave: e => {
-        e.currentTarget.style.transform = "scale(1)";
+        e.currentTarget.style.transform = "translateY(-50%) scale(1)";
         e.currentTarget.style.background = "rgba(0,0,0,0.66)";
       },
       onFocus: e => { e.currentTarget.style.outline = "2px solid rgba(255,255,255,0.92)"; e.currentTarget.style.outlineOffset = "2px"; },
