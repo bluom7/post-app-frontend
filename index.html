@@ -35,8 +35,8 @@
 video, [data-media-stage], [data-media-control] { -webkit-tap-highlight-color: transparent; background: #000; }
 button, [role="button"], [onclick] { -webkit-tap-highlight-color: transparent; }
 .reel-share-caption::placeholder { color: #9ca3af; opacity: 1; }
-.reel-share-page { scrollbar-width: none; -ms-overflow-style: none; }
-.reel-share-page::-webkit-scrollbar { width: 0; height: 0; display: none; }
+.reel-share-page, .reel-share-page * { scrollbar-width: none !important; -ms-overflow-style: none !important; scrollbar-color: transparent transparent !important; }
+.reel-share-page::-webkit-scrollbar, .reel-share-page *::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; background: transparent !important; }
 .reel-camera-modal, .reel-camera-modal * { -webkit-tap-highlight-color: transparent !important; }
 @keyframes feedVideoShimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 .bell-shake { animation: bellShake 0.6s ease; }
@@ -22885,6 +22885,17 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const [showReelAudiencePicker, setShowReelAudiencePicker] = React.useState(false);
   const [showReelLocationPicker, setShowReelLocationPicker] = React.useState(false);
   const [showReelTagPicker, setShowReelTagPicker] = React.useState(false);
+  React.useEffect(() => {
+    if (step !== "share") return;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyOverflowX = document.body.style.overflowX;
+    document.body.style.overflow = "hidden";
+    document.body.style.overflowX = "hidden";
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.overflowX = previousBodyOverflowX;
+    };
+  }, [step]);
 
   // ── Review-screen overlay tabs (Crop / Text / Emoji) ──
   const [reviewTool, setReviewTool] = React.useState(null); // null | "Crop" | "Text" | "BigEmoji"
