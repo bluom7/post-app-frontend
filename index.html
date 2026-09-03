@@ -35,6 +35,8 @@
 video, [data-media-stage], [data-media-control] { -webkit-tap-highlight-color: transparent; background: #000; }
 button, [role="button"], [onclick] { -webkit-tap-highlight-color: transparent; }
 .reel-share-caption::placeholder { color: #9ca3af; opacity: 1; }
+.reel-share-page { scrollbar-width: none; -ms-overflow-style: none; }
+.reel-share-page::-webkit-scrollbar { width: 0; height: 0; display: none; }
 .reel-camera-modal, .reel-camera-modal * { -webkit-tap-highlight-color: transparent !important; }
 @keyframes feedVideoShimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 .bell-shake { animation: bellShake 0.6s ease; }
@@ -25358,7 +25360,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     // unedited photo, use the FileReader data URL/original URL instead of a
     // second blob URL — Android Chrome can paint that duplicate URL black.
     const shareMediaSrc = isPhotoReel ? (photoDataUrl || recordedURL || shareSrc) : shareSrc;
-    return React.createElement("div", { style: { position: "fixed", inset: 0, background: "#fff", zIndex: 500, display: "flex", flexDirection: "column", overflowY: "auto" } },
+    return React.createElement("div", { className: "reel-share-page", style: { position: "fixed", inset: 0, background: "#fff", zIndex: 500, display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none" } },
       showReelLocationPicker && React.createElement(LocationPickerOverlay, {
         onClose: () => setShowReelLocationPicker(false),
         onSelect: place => { setReelLocation(place); setShowReelLocationPicker(false); }
