@@ -22315,6 +22315,8 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
   var waveContRef=React.useRef(null);
   // Freeze viewport height so keyboard open/close doesn't resize the modal
   var _fixedH=React.useRef(typeof window!=='undefined'?window.innerHeight:800);
+  var _mediaPortrait=React.useState(false); var mediaPortrait=_mediaPortrait[0]; var setMediaPortrait=_mediaPortrait[1];
+  React.useEffect(function(){setMediaPortrait(false);},[videoSrc,isPhoto]);
 
   // waveform constants
   var NUM_BARS=120; var BAR_W=4; var BAR_GAP=3; var WAVEFORM_HEIGHT=64;
@@ -22524,9 +22526,9 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
     return React.createElement('div',{style:{position:'fixed',top:0,left:0,right:0,height:_fixedH.current+'px',zIndex:9999,display:'flex',flexDirection:'column',overflow:'hidden',background:'#000',WebkitTapHighlightColor:'transparent'}},
       // ── background: photo or video ──
       isPhoto
-        ? React.createElement('img',{src:videoSrc,onClick:toggleTrimPlay,style:{position:'absolute',top:0,left:0,right:0,bottom:0,width:'100%',height:'100%',objectFit:'contain',zIndex:0,display:'block',background:'#000',cursor:'pointer',WebkitTapHighlightColor:'transparent'},alt:''})
-        : React.createElement('video',{ref:bgVideoRef,muted:true,loop:true,playsInline:true,onClick:toggleTrimPlay,
-            style:{position:'absolute',top:0,left:0,right:0,bottom:0,width:'100%',height:'100%',objectFit:'contain',objectPosition:'center center',zIndex:0,display:'block',cursor:'pointer',WebkitTapHighlightColor:'transparent'}}),
+        ? React.createElement('img',{src:videoSrc,onClick:toggleTrimPlay,onLoad:function(e){var img=e.currentTarget;setMediaPortrait(img.naturalHeight>img.naturalWidth);},style:{position:'absolute',top:0,left:0,right:0,bottom:0,width:'100%',height:'100%',objectFit:'contain',objectPosition:mediaPortrait?'center top':'center center',zIndex:0,display:'block',background:'#000',cursor:'pointer',WebkitTapHighlightColor:'transparent'},alt:''})
+        : React.createElement('video',{ref:bgVideoRef,muted:true,loop:true,playsInline:true,onClick:toggleTrimPlay,onLoadedMetadata:function(e){var v=e.currentTarget;setMediaPortrait(v.videoHeight>v.videoWidth);},
+            style:{position:'absolute',top:0,left:0,right:0,bottom:0,width:'100%',height:'100%',objectFit:'contain',objectPosition:mediaPortrait?'center top':'center center',zIndex:0,display:'block',cursor:'pointer',WebkitTapHighlightColor:'transparent'}}),
       // ── gradient overlays for legibility ──
       React.createElement('div',{style:{position:'absolute',top:0,left:0,right:0,height:180,background:'linear-gradient(to bottom,rgba(0,0,0,0.7) 0%,transparent 100%)',zIndex:1,pointerEvents:'none'}}),
       React.createElement('div',{style:{position:'absolute',bottom:0,left:0,right:0,height:240,background:'linear-gradient(to top,rgba(0,0,0,0.92) 0%,transparent 100%)',zIndex:1,pointerEvents:'none'}}),
