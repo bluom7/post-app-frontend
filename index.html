@@ -22679,8 +22679,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
             style:{flexShrink:0,padding:'6px 16px',borderRadius:20,border:'none',cursor:'pointer',fontWeight:700,fontSize:13,
               background:activeCategory===cat?'#fff':'#242832',color:activeCategory===cat?'#111':'#fff'}},cat);
         })),
-      React.createElement('div',{style:{height:1,background:'#f0f0f0',flexShrink:0}}),
-      React.createElement('div',{style:{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',minHeight:0,position:'relative',background:'#202228'}},
+      React.createElement('div',{className:'music-picker-song-list',style:{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',minHeight:0,position:'relative',background:'#202228',scrollbarWidth:'none',msOverflowStyle:'none'}},
         loading
           ?React.createElement('div',{style:{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}},
               React.createElement('div',{style:{width:28,height:28,border:'3px solid #343943',borderTop:'3px solid #fff',borderRadius:'50%',animation:'rcSpin 0.8s linear infinite'}}))
@@ -22728,7 +22727,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
                 React.createElement('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none',stroke:'#fff',strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round'},
                   React.createElement('path',{d:'M5 12h14M12 5l7 7-7 7'})))))
         :null,
-      React.createElement('style',null,'@keyframes rcSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}')
+      React.createElement('style',null,'@keyframes rcSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}.music-picker-song-list::-webkit-scrollbar{display:none;width:0;height:0}')
     )
   );
 }
