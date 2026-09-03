@@ -22698,10 +22698,11 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
             ?React.createElement('div',{style:{textAlign:'center',color:'#9aa0ac',padding:40,fontSize:15}},'No songs found')
             :songs.map(function(song){
                 var isPlay=playingId===song.trackId;
+                var isSelected=!!(tappedSong&&tappedSong.trackId===song.trackId);
                 var art=(song.artworkUrl100||'').replace('100x100bb','60x60bb');
                 return React.createElement('div',{key:song.trackId,
                   onClick:function(){stopTrimAudio();if(listAudioRef.current){listAudioRef.current.pause();listAudioRef.current=null;setPlayingId(null);}var a2=new Audio();a2.crossOrigin='anonymous';a2.src=song.previewUrl;listAudioRef.current=a2;a2.play().catch(function(){});a2.onended=function(){setPlayingId(null);};setPlayingId(song.trackId);setTappedSong(song);},
-                  style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',cursor:'pointer'}},
+                  style:{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',cursor:'pointer',background:isSelected?'#343942':'transparent'}},
                   React.createElement('div',{style:{width:52,height:52,borderRadius:8,overflow:'hidden',flexShrink:0,background:'#222',display:'flex',alignItems:'center',justifyContent:'center'}},
                     art?React.createElement('img',{src:art,style:{width:'100%',height:'100%',objectFit:'cover'},alt:''}):
                     React.createElement('svg',{width:22,height:22,viewBox:'0 0 24 24',fill:'none',stroke:'#8b93a1',strokeWidth:2},
