@@ -25293,18 +25293,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         ctx.save(); ctx.clearRect(0, 0, outW, outH); ctx.filter = currEff.filter;
         ctx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, outW, outH);
         ctx.restore();
-        // Text overlays are intentionally not drawn into the exported pixels.
-        // They are sent as metadata and rendered once by the Reels feed.
-        [...(editEmojiOverlays || []), ...(reviewEmojiOverlays || [])].forEach(o => {
-          ctx.save(); ctx.font = Math.max(24, Math.round(outW * ((o.size || 64) / 390))) + "px sans-serif";
-          ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.fillText(o.emoji || "", (o.xPct / 100) * outW, (o.yPct / 100) * outH); ctx.restore();
-        });
-        (reelStickerOverlays || []).forEach(s => {
-          if (!s._img) return;
-          const sw = Math.round(outW * 0.20), px = (s.xPct / 100) * outW - sw / 2, py = (s.yPct / 100) * outH - sw / 2;
-          try { ctx.drawImage(s._img, px, py, sw, sw); } catch (_) {}
-        });
+        // Keep every overlay out of the exported media pixels. The feed renders
+        // text, emoji, and stickers as a separate layer so positions in the
+        // black letterbox area remain black and stay exactly where placed.
         return true;
       };
 
@@ -26216,10 +26207,10 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       // a wrapper div creates a new compositing layer that the filter IS applied to.
       recordedURL && React.createElement("div", {
         "data-reel-editor-stage": true,
-        style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(142px, 19vh, 173px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: videoFilter === "none" ? "auto" : "filter" }
+        style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: videoFilter === "none" ? "auto" : "filter" }
       },
         isPhotoReel
-          ? React.createElement("img", { src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, onLoad: e => { const w = Number(e.currentTarget.naturalWidth) || 0; const h = Number(e.currentTarget.naturalHeight) || 0; if (w > 0 && h > 0) setRecordedPhotoAspect(w / h); }, onClick: togglePreviewPlay, style: { width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: recordedPhotoAspect !== null && recordedPhotoAspect > 1 ? "contain" : "cover", objectPosition: "center center", display: "block", margin: "0 auto", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
+          ? React.createElement("img", { src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, onLoad: e => { const w = Number(e.currentTarget.naturalWidth) || 0; const h = Number(e.currentTarget.naturalHeight) || 0; if (w > 0 && h > 0) setRecordedPhotoAspect(w / h); }, onClick: togglePreviewPlay, style: { width: "100%", height: "auto", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", margin: "0 auto", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
           : React.createElement("video", {
               key: recordedURL,
                ref: editVideoRef, 'data-reel-editor-video': true, src: recordedURL, poster: editorVideoPoster || undefined, preload: "auto", playsInline: true, autoPlay: true, muted: true, loop: true,
@@ -26239,9 +26230,9 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
                onError: () => { restoreEditorVideoPlayback(true); },
               onTimeUpdate: e => { if (editTool === "Trim") return; const v = e.target; if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v); },
               onClick: togglePreviewPlay,
-               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: editorVideoObjectFit, objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform", opacity: editorVideoPoster && !editorVideoFrameReady ? 0 : 1 }
+               style: { width: "100%", height: "auto", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform", opacity: editorVideoPoster && !editorVideoFrameReady ? 0 : 1 }
             }),
-            editorVideoPoster && !editorVideoFrameReady && React.createElement("img", { src: editorVideoPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: editorVideoObjectFit, objectPosition: "center center", display: "block", zIndex: 2, pointerEvents: "none" } }),
+            editorVideoPoster && !editorVideoFrameReady && React.createElement("img", { src: editorVideoPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center center", display: "block", zIndex: 2, pointerEvents: "none" } }),
             !isPhotoReel && !editorVideoFrameReady && React.createElement("div", {
               "data-reel-editor-loading": true,
               style: { position: "absolute", inset: 0, zIndex: 3, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }
@@ -26851,8 +26842,8 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
     reviewing
       ? (isPhotoReel
           ? React.createElement("img", { key: photoDataUrl || recordedURL, ref: reviewImgRef, src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", background: "#000" } })
-          : React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(106px, 14.3vh, 130px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: "filter" } },
-              reviewFallbackPoster && !reviewVideoReady && React.createElement("img", { key: "review-poster-" + recordedURL, src: reviewFallbackPoster, alt: "", style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", zIndex: 0, pointerEvents: "none" } }),
+          : React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: "filter" } },
+              reviewFallbackPoster && !reviewVideoReady && React.createElement("img", { key: "review-poster-" + recordedURL, src: reviewFallbackPoster, alt: "", style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", zIndex: 0, pointerEvents: "none" } }),
               !cropApplying && React.createElement("video", { ref: reviewVideoRef, key: recordedURL, src: recordedURL, poster: reviewFallbackPoster || undefined, preload: "auto", autoPlay: false, muted: true, loop: true, playsInline: true, disableRemotePlayback: true,
                 onClick: togglePreviewPlay,
                  onLoadedData: () => setReviewVideoReady(true),
@@ -26877,7 +26868,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
                     }, 300);
                   }
                 },
-                style: { position: "relative", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", cursor: "pointer", WebkitTapHighlightColor: "transparent", background: "transparent", opacity: reviewVideoReady ? 1 : 0, transition: "none", transform: "translateZ(0)", willChange: "transform", zIndex: 1 }
+                style: { position: "relative", width: "100%", height: "auto", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "center", cursor: "pointer", WebkitTapHighlightColor: "transparent", background: "transparent", opacity: reviewVideoReady ? 1 : 0, transition: "none", transform: "translateZ(0)", willChange: "transform", zIndex: 1 }
                }),
               !cropApplying && reviewVideoReady && !previewPlaying && React.createElement("div", {
                 style: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 100, height: 100, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 12 }
@@ -29167,7 +29158,19 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
 
 var _REEL_FONT_MAP = { Bubble: { fontFamily: "'Arial Rounded MT Bold', Arial, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "none", textShadow: "0 3px 0 rgba(0,0,0,0.65)" }, "Slab Serif": { fontFamily: "'Roboto Slab', Georgia, serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 6px rgba(0,0,0,0.9)" }, Geometric: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 800, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 5px rgba(0,0,0,0.9)" }, Classic: { fontFamily: "Georgia, serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }, Headline: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.85)" }, Glow: { fontFamily: "Arial, sans-serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 0 20px currentColor, 0 0 40px currentColor, 0 2px 6px rgba(0,0,0,0.7)" }, Fancy: { fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 600, fontStyle: "italic", textTransform: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }, Pop: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "uppercase", textShadow: "2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000" } };
 function _calcContainRect(cEl, natW, natH) { if (!cEl || !natW || !natH) return null; var cw = cEl.offsetWidth, ch = cEl.offsetHeight; if (!cw || !ch) return null; var scale = Math.min(cw / natW, ch / natH); return { left: (cw - natW * scale) / 2, top: (ch - natH * scale) / 2, width: natW * scale, height: natH * scale }; }
-function _renderReelOverlays(data, rect) { var wrapStyle = rect ? { position: "absolute", left: rect.left, top: rect.top, width: rect.width, height: rect.height, pointerEvents: "none", zIndex: 4 } : { position: "absolute", inset: 0, pointerEvents: "none", zIndex: 4 }; return React.createElement("div", { style: wrapStyle }, (data.sticker_overlays && data.sticker_overlays.length > 0) && data.sticker_overlays.map(function(s) { return React.createElement("img", { key: s.id, src: s.url, alt: "", style: { position: "absolute", left: s.xPct + "%", top: s.yPct + "%", transform: "translate(-50%,-50%)", width: 80, height: 80, objectFit: "contain", pointerEvents: "none" } }); }), (data.emoji_overlays && data.emoji_overlays.length > 0) && data.emoji_overlays.map(function(e) { return React.createElement("div", { key: e.id, style: { position: "absolute", left: e.xPct + "%", top: e.yPct + "%", transform: "translate(-50%,-50%)", fontSize: (e.size || 64) + "px", lineHeight: 1, pointerEvents: "none", userSelect: "none" } }, e.emoji); }), (data.text_overlays && data.text_overlays.length > 0) && data.text_overlays.map(function(t) { var f = _REEL_FONT_MAP[t.font] || _REEL_FONT_MAP.Classic; var hasBg = t.bgColor && t.bgColor !== "transparent"; return React.createElement("div", { key: t.id, style: { position: "absolute", left: t.xPct + "%", top: t.yPct + "%", transform: "translate(-50%,-50%)", zIndex: 1, pointerEvents: "none" } }, React.createElement("span", { style: { color: t.color || "#fff", fontSize: (t.size || 22) + "px", fontWeight: f.fontWeight, fontFamily: f.fontFamily, fontStyle: f.fontStyle, textTransform: f.textTransform, textShadow: hasBg ? "none" : f.textShadow, background: hasBg ? t.bgColor : "transparent", padding: hasBg ? "5px 12px" : "0", borderRadius: hasBg ? "7px" : "0", whiteSpace: "nowrap", display: "inline-block" } }, t.text)); }) ); }
+function _overlayPct(item, modernKey, legacyKey, fallback) { var raw = item && item[modernKey]; if (raw === undefined || raw === null || raw === "") raw = item && item[legacyKey]; var value = Number(raw); return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : fallback; }
+function _renderReelOverlays(data, rect) {
+  data = data || {};
+  var wrapStyle = rect ? { position: "absolute", left: rect.left, top: rect.top, width: rect.width, height: rect.height, pointerEvents: "none", zIndex: 4 } : { position: "absolute", inset: 0, pointerEvents: "none", zIndex: 4 };
+  var stickers = Array.isArray(data.sticker_overlays) ? data.sticker_overlays : [];
+  var emojis = Array.isArray(data.emoji_overlays) ? data.emoji_overlays : [];
+  var texts = Array.isArray(data.text_overlays) && data.text_overlays.length ? data.text_overlays : (Array.isArray(data.video_text_overlays) ? data.video_text_overlays : []);
+  return React.createElement("div", { style: wrapStyle },
+    stickers.map(function(s) { var x = _overlayPct(s, "xPct", "x", 50), y = _overlayPct(s, "yPct", "y", 50); return React.createElement("img", { key: s.id, src: s.url, alt: "", style: { position: "absolute", left: x + "%", top: y + "%", transform: "translate(-50%,-50%)", width: 80, height: 80, objectFit: "contain", pointerEvents: "none" } }); }),
+    emojis.map(function(e) { var x = _overlayPct(e, "xPct", "x", 50), y = _overlayPct(e, "yPct", "y", 50); return React.createElement("div", { key: e.id, style: { position: "absolute", left: x + "%", top: y + "%", transform: "translate(-50%,-50%)", fontSize: (e.size || 64) + "px", lineHeight: 1, pointerEvents: "none", userSelect: "none" } }, e.emoji); }),
+    texts.map(function(t) { var x = _overlayPct(t, "xPct", "x", 50), y = _overlayPct(t, "yPct", "y", 50), f = _REEL_FONT_MAP[t.font] || _REEL_FONT_MAP.Classic, hasBg = t.bgColor && t.bgColor !== "transparent"; return React.createElement("div", { key: t.id, style: { position: "absolute", left: x + "%", top: y + "%", transform: "translate(-50%,-50%)", zIndex: 1, pointerEvents: "none" } }, React.createElement("span", { style: { color: t.color || "#fff", fontSize: (t.size || 22) + "px", fontWeight: f.fontWeight, fontFamily: f.fontFamily, fontStyle: f.fontStyle, textTransform: f.textTransform, textShadow: hasBg ? "none" : f.textShadow, background: hasBg ? t.bgColor : "transparent", padding: hasBg ? "5px 12px" : "0", borderRadius: hasBg ? "7px" : "0", whiteSpace: "nowrap", display: "inline-block" } }, t.text)); })
+  );
+}
 
 function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
   const isPhotoReel = !reel.video_url && !!reel.photo_url;
