@@ -22532,6 +22532,8 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
       // ── gradient overlays for legibility ──
       React.createElement('div',{style:{position:'absolute',top:0,left:0,right:0,height:180,background:'linear-gradient(to bottom,rgba(0,0,0,0.7) 0%,transparent 100%)',zIndex:1,pointerEvents:'none'}}),
       React.createElement('div',{style:{position:'absolute',bottom:0,left:0,right:0,height:240,background:'linear-gradient(to top,rgba(0,0,0,0.92) 0%,transparent 100%)',zIndex:1,pointerEvents:'none'}}),
+      // Portrait/long media: extend the bottom black strip upward by 15% of the viewport.
+      mediaPortrait && React.createElement('div',{style:{position:'absolute',bottom:0,left:0,right:0,height:'15%',background:'#000',zIndex:1,pointerEvents:'none'}}),
       // ── top bar: [spacer] [icon + name + artist stacked] [Done] ──
       React.createElement('div',{style:{position:'relative',zIndex:2,display:'flex',alignItems:'flex-start',padding:'16px 18px 10px',flexShrink:0}},
         // left spacer
