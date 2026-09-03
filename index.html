@@ -22718,7 +22718,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
                 );
               })),
       tappedSong
-        ?React.createElement('div',{style:{width:'calc(100% - 20px)',alignSelf:'center',background:'#5A5A5A',flexShrink:0,borderRadius:16,margin:'0 auto 10px',padding:0,overflow:'hidden',boxShadow:'0 2px 8px rgba(0,0,0,0.2)'}},
+        ?React.createElement('div',{style:{width:'calc(100% - 32px)',alignSelf:'center',background:'#5A5A5A',flexShrink:0,borderRadius:16,margin:'0 auto 15px',padding:0,overflow:'hidden',boxShadow:'0 2px 8px rgba(0,0,0,0.2)'}},
             React.createElement('div',{style:{display:'flex',alignItems:'center',gap:12,padding:'10px 12px'}},
               React.createElement('div',{style:{width:46,height:46,borderRadius:10,overflow:'hidden',flexShrink:0,background:'#333'}},
                 (tappedSong.artworkUrl100||'')?React.createElement('img',{src:(tappedSong.artworkUrl100||'').replace('100x100bb','60x60bb'),style:{width:'100%',height:'100%',objectFit:'cover'},alt:''}):null),
