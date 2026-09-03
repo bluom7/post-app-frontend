@@ -28282,6 +28282,14 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
 }
 // ── ReelsTab — TikTok-style smooth vertical scroll ───────────────────────────
 function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
+  // Reels stays quiet after successful actions. Keep only genuine failures
+  // visible so users are not interrupted by transient success/instruction toasts.
+  function reelToast(message, color) {
+    const text = String(message || '').toLowerCase();
+    const successLike = /(added|add hua|applied|posted|saved|shared|copied|muted|unmuted|blocked|unblocked|mentioned|deleted|discarded|draft|original audio|theme|frame|edited|report submitted|reposted|status updated)/.test(text);
+    if (!successLike && showToast) showToast(message, color);
+  }
+
   var [reels, setReels] = React.useState([]);
   var [loading, setLoading] = React.useState(true);
   var [hasMore, setHasMore] = React.useState(true);
@@ -28464,9 +28472,9 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
       .then(function() {
         var upd = function(prev) { return prev.filter(function(r) { return r.id !== rid; }); };
         if (gridViewerSource === "discover") setDiscoverReels(upd); else setSearchReels(upd);
-        showToast && showToast("Reel deleted", "#666");
+        reelToast && reelToast("Reel deleted", "#666");
       })
-      .catch(function() { showToast && showToast("Could not delete reel", "#FF1744"); });
+      .catch(function() { reelToast && reelToast("Could not delete reel", "#FF1744"); });
   }
 
   function fetchReels(sk, replace) {
@@ -28481,7 +28489,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
         setHasMore(!!d.has_more);
         skipRef.current = sk + newReels.length;
       })
-      .catch(function() { showToast && showToast("Could not load reels", "#FF1744"); })
+      .catch(function() { reelToast && reelToast("Could not load reels", "#FF1744"); })
       .finally(function() { loadingRef.current = false; setLoading(false); });
   }
 
@@ -28565,7 +28573,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
         if (!previous || !isLatestReelAction(rid, seq)) return;
         setReels(function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, previous) : r; }); });
         dispatchReelUpdate(rid, previous);
-        showToast && showToast("Couldn't update like", "#FF3B5C");
+        reelToast && reelToast("Couldn't update like", "#FF3B5C");
       });
   }
   function saveReel(rid) {
@@ -28586,7 +28594,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
       .catch(function() {
         if (!previous || !isLatestReelAction(rid, seq)) return;
         setReels(function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, previous) : r; }); });
-        showToast && showToast("Couldn't update saved reels", "#FF3B5C");
+        reelToast && reelToast("Couldn't update saved reels", "#FF3B5C");
       });
   }
   function followUser(userId) {
@@ -28658,7 +28666,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
         })
         .catch(function() {
           setComments(function(prev) { return prev.map(function(c) { if (c.id !== parentId) return c; return Object.assign({}, c, { replies: (c.replies || []).filter(function(r) { return r.id !== tempReply.id; }) }); }); });
-          showToast && showToast("Could not post reply", "#FF1744");
+          reelToast && reelToast("Could not post reply", "#FF1744");
         });
     } else {
       var tempId = "temp_" + Date.now();
@@ -28685,7 +28693,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
             return updated;
           });
           setReels(function(prev) { return prev.map(function(r) { return r.id === activeReelId ? Object.assign({}, r, { comment_count: Math.max(0, (r.comment_count || 1) - 1) }) : r; }); });
-          showToast && showToast("Could not post comment", "#FF1744");
+          reelToast && reelToast("Could not post comment", "#FF1744");
         });
     }
   }
@@ -28728,9 +28736,9 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
     api("/reels/" + rid, "DELETE", null, token)
       .then(function() {
         setReels(function(prev) { return prev.filter(function(r) { return r.id !== rid; }); });
-        showToast && showToast("Reel deleted", "#666");
+        reelToast && reelToast("Reel deleted", "#666");
       })
-      .catch(function() { showToast && showToast("Could not delete", "#FF1744"); });
+      .catch(function() { reelToast && reelToast("Could not delete", "#FF1744"); });
   }
   function fmtCount(n) {
     if (!n) return "0";
@@ -28770,8 +28778,8 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
         React.createElement("polygon", { points: "10 11 10 17 15.5 14", fill: "#111", stroke: "none" })),
       React.createElement("div", { style: { fontWeight: 800, fontSize: 18, color: "#111", marginBottom: 8 } }, "No Reels Yet"),
       React.createElement("div", { style: { fontSize: 14, marginBottom: 20, color: "rgba(0,0,0,0.55)" } }, "Be the first to share a reel!")),
-    showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: showToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); } }),
-    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: showToast, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); closeCamera(); } }));
+    showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: reelToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); } }),
+    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); closeCamera(); } }));
 
   // Main render — TikTok-style full-screen scroll snap
   return React.createElement("div", { style: { position: "fixed", inset: 0, background: "#000", zIndex: 100, overflow: "hidden" } },
@@ -28803,7 +28811,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
           isActive: idx === activeIdx,
           user: user,
           token: token,
-          showToast: showToast,
+          showToast: reelToast,
           onViewProfile: onViewProfile,
           onLike: likeReel,
           onSave: saveReel,
@@ -29130,7 +29138,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
         (gridViewerSource === "discover" ? discoverReels : searchReels).map(function(reel, idx) {
           return React.createElement(ReelItem, {
             key: reel.id, reel: reel, isActive: idx === gridViewerActiveIdx,
-            user: user, token: token, showToast: showToast,
+            user: user, token: token, showToast: reelToast,
             onViewProfile: function(uid) { setGridViewerOpen(false); onViewProfile && onViewProfile(uid); },
             onLike: gvLikeReel, onSave: gvSaveReel, onFollow: gvFollowUser,
             onOpenComments: openComments, onDelete: gvDeleteReel, fmtCount: fmtCount,
@@ -29152,8 +29160,8 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
             React.createElement("polyline", { points: "15 18 9 12 15 6" })),
           React.createElement("span", { style: { color: "#fff", fontSize: 17, fontWeight: 700, textShadow: "0 1px 5px rgba(0,0,0,0.9)" } }, "Reels")))),
 
-    showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: showToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); setShowUpload(false); } }),
-    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: showToast, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); closeCamera(); } }),
+    showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: reelToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); setShowUpload(false); } }),
+    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); closeCamera(); } }),
     React.createElement("style", null, "@keyframes reelHeartPop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); } 40% { opacity: 1; transform: translate(-50%,-50%) scale(1.3); } 70% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(0.8); } }"));
 }
 
