@@ -22316,6 +22316,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
   // Freeze viewport height so keyboard open/close doesn't resize the modal
   var _fixedH=React.useRef(typeof window!=='undefined'?window.innerHeight:800);
   var _mediaPortrait=React.useState(false); var mediaPortrait=_mediaPortrait[0]; var setMediaPortrait=_mediaPortrait[1];
+  var _durationMenu=React.useState(false); var durationMenuOpen=_durationMenu[0]; var setDurationMenuOpen=_durationMenu[1];
   React.useEffect(function(){setMediaPortrait(false);},[videoSrc,isPhoto]);
 
   // waveform constants
@@ -22552,16 +22553,17 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
           React.createElement('button',{onClick:handleUse,
             style:{background:'#fff',border:'none',borderRadius:6,cursor:'pointer',color:'#000',fontWeight:700,fontSize:17,padding:'6px 10px'}},
             'Done'),
-          React.createElement('div',{role:'group','aria-label':'Song clip duration',style:{marginTop:8,width:100,height:32,display:'flex',overflow:'hidden',border:'1px solid rgba(255,255,255,0.6)',borderRadius:18,background:'rgba(0,0,0,0.58)',pointerEvents:'auto'}},
-            [15,30].map(function(dur){return React.createElement('button',{key:dur,type:'button','aria-pressed':clipDuration===dur,
-              onPointerDown:function(e){chooseClipDuration(dur,e);},
-              onTouchStart:function(e){chooseClipDuration(dur,e);},
-              onPointerUp:function(e){e.preventDefault();e.stopPropagation();chooseClipDuration(dur,e);},
-              onTouchEnd:function(e){e.preventDefault();e.stopPropagation();chooseClipDuration(dur,e);},
-              onClick:function(e){e.preventDefault();e.stopPropagation();chooseClipDuration(dur,e);},
-              style:{flex:1,height:'100%',border:'none',borderRight:dur===15?'1px solid rgba(255,255,255,0.35)':'none',background:clipDuration===dur?'#fff':'transparent',color:clipDuration===dur?'#111':'#fff',cursor:'pointer',padding:0,fontSize:12,fontWeight:800,touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}},dur+' sec');})
-          )
-        )),
+          React.createElement('div',{style:{position:'relative',marginTop:8,display:'flex',justifyContent:'flex-end',zIndex:20}},
+              React.createElement('button',{type:'button','aria-label':'Choose clip duration','aria-expanded':durationMenuOpen,onClick:function(e){e.preventDefault();e.stopPropagation();setDurationMenuOpen(function(open){return !open;});},style:{position:'relative',width:46,height:46,padding:0,border:'2px solid #fff',borderRadius:'50%',background:'#fff',color:'#111',cursor:'pointer',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:1,boxShadow:'0 2px 8px rgba(0,0,0,0.35)',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}},
+                React.createElement('svg',{width:19,height:19,viewBox:'0 0 24 24',fill:'none',stroke:'#111','stroke-width':2.3,'stroke-linecap':'round','stroke-linejoin':'round','aria-hidden':true},
+                  React.createElement('circle',{cx:12,cy:12,r:8}),
+                  React.createElement('path',{d:'M12 7v5l3 2'})
+                ),
+                React.createElement('span',{style:{fontSize:8,fontWeight:800,lineHeight:1}},clipDuration+'s')
+              ),
+              durationMenuOpen && React.createElement('div',{role:'menu','aria-label':'Clip duration options',style:{position:'absolute',top:52,right:0,minWidth:128,padding:6,borderRadius:14,background:'rgba(25,25,25,0.97)',border:'1px solid rgba(255,255,255,0.28)',boxShadow:'0 8px 24px rgba(0,0,0,0.42)',display:'flex',flexDirection:'column',gap:4,zIndex:30}},
+                [15,30].map(function(dur){return React.createElement('button',{key:dur,type:'button',role:'menuitem','aria-pressed':clipDuration===dur,onClick:function(e){e.preventDefault();e.stopPropagation();chooseClipDuration(dur,e);setDurationMenuOpen(false);},style:{width:'100%',height:38,padding:'0 12px',border:'none',borderRadius:9,background:clipDuration===dur?'#fff':'transparent',color:clipDuration===dur?'#111':'#fff',fontSize:13,fontWeight:800,textAlign:'left',cursor:'pointer',touchAction:'manipulation',WebkitTapHighlightColor:'transparent'}},dur+' sec');})
+              )),
       // ── spacer (video fills this area) — tap to toggle song play/pause ──
       React.createElement('div',{onClick:toggleTrimPlay,style:{flex:1,position:'relative',zIndex:2,cursor:'pointer',WebkitTapHighlightColor:'transparent'}},
         // Match the Reels editor: a clear white play indicator, hidden while playing.
