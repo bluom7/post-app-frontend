@@ -34,7 +34,7 @@
 @keyframes musicIconSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 video, [data-media-stage], [data-media-control] { -webkit-tap-highlight-color: transparent; background: #000; }
 button, [role="button"], [onclick] { -webkit-tap-highlight-color: transparent; }
-.reel-share-caption::placeholder { color: #9ca3af; opacity: 1; }
+.reel-share-caption::placeholder { color: var(--muted); opacity: 1; }
 .reel-share-page, .reel-share-page * { scrollbar-width: none !important; -ms-overflow-style: none !important; scrollbar-color: transparent transparent !important; }
 .reel-share-page::-webkit-scrollbar, .reel-share-page *::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; background: transparent !important; }
 .reel-camera-modal, .reel-camera-modal * { -webkit-tap-highlight-color: transparent !important; }
@@ -25379,7 +25379,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     // unedited photo, use the FileReader data URL/original URL instead of a
     // second blob URL — Android Chrome can paint that duplicate URL black.
     const shareMediaSrc = isPhotoReel ? (photoDataUrl || recordedURL || shareSrc) : shareSrc;
-    return React.createElement("div", { className: "reel-share-page", style: { position: "fixed", inset: 0, background: "#fff", zIndex: 500, display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none" } },
+    return React.createElement("div", { className: "reel-share-page", style: { position: "fixed", inset: 0, background: "var(--bg)", zIndex: 500, display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none" } },
       showReelLocationPicker && React.createElement(LocationPickerOverlay, {
         onClose: () => setShowReelLocationPicker(false),
         onSelect: place => { setReelLocation(place); setShowReelLocationPicker(false); }
@@ -25394,31 +25394,31 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         onSelect: val => { setReelAudience(val); setShowReelAudiencePicker(false); }
       }),
 
-      showRenameAudio && React.createElement("div", { style: { position: "fixed", inset: 0, background: "#fff", zIndex: 1000, display: "flex", flexDirection: "column", overflowY: "auto" } },
+      showRenameAudio && React.createElement("div", { style: { position: "fixed", inset: 0, background: "var(--bg)", zIndex: 1000, display: "flex", flexDirection: "column", overflowY: "auto" } },
         React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "16px 18px 14px", flexShrink: 0 } },
           React.createElement("button", { onClick: closeRenameAudio, "aria-label": "Close audio name editor", style: { width: 38, height: 38, border: "none", background: "transparent", padding: 0, display: "flex", alignItems: "center", justifyContent: "flex-start", cursor: "pointer" } },
-            React.createElement("svg", { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "#111", strokeWidth: 2.4, strokeLinecap: "round" },
+            React.createElement("svg", { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "var(--text)", strokeWidth: 2.4, strokeLinecap: "round" },
               React.createElement("line", { x1: 5, y1: 5, x2: 19, y2: 19 }), React.createElement("line", { x1: 19, y1: 5, x2: 5, y2: 19 }))),
-          React.createElement("span", { style: { flex: 1, textAlign: "center", fontWeight: 800, fontSize: 22, color: "#111", letterSpacing: -0.3 } }, "Audio name"),
+          React.createElement("span", { style: { flex: 1, textAlign: "center", fontWeight: 800, fontSize: 22, color: "var(--text)", letterSpacing: -0.3 } }, "Audio name"),
           React.createElement("button", { onClick: saveRenameAudio, disabled: !renameAudioDraft.trim(), "aria-label": "Save audio name", style: { width: 38, height: 38, border: "none", background: "transparent", padding: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", cursor: renameAudioDraft.trim() ? "pointer" : "default", opacity: renameAudioDraft.trim() ? 1 : 0.35 } },
             React.createElement("svg", { width: 27, height: 27, viewBox: "0 0 24 24", fill: "none", stroke: "#3657d6", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round" },
               React.createElement("polyline", { points: "4 12 9 17 20 6" })))
         ),
-        React.createElement("div", { style: { margin: "2px 18px 0", border: "2px solid #111", borderRadius: 15, padding: "16px 18px 14px", position: "relative", flexShrink: 0 } },
-          React.createElement("div", { style: { fontSize: 15, color: "#222", marginBottom: 3 } }, "Audio name"),
-          React.createElement("input", { autoFocus: true, value: renameAudioDraft, maxLength: 50, onChange: e => setRenameAudioDraft(e.target.value), onKeyDown: e => { if (e.key === "Enter") saveRenameAudio(); }, style: { width: "calc(100% - 34px)", border: "none", outline: "none", padding: 0, background: "transparent", color: "#111", fontSize: 21, lineHeight: 1.25, fontFamily: "inherit" } }),
+        React.createElement("div", { style: { margin: "2px 18px 0", border: "2px solid var(--text)", borderRadius: 15, padding: "16px 18px 14px", position: "relative", flexShrink: 0 } },
+          React.createElement("div", { style: { fontSize: 15, color: "var(--text)", marginBottom: 3 } }, "Audio name"),
+          React.createElement("input", { autoFocus: true, value: renameAudioDraft, maxLength: 50, onChange: e => setRenameAudioDraft(e.target.value), onKeyDown: e => { if (e.key === "Enter") saveRenameAudio(); }, style: { width: "calc(100% - 34px)", border: "none", outline: "none", padding: 0, background: "transparent", color: "var(--text)", fontSize: 21, lineHeight: 1.25, fontFamily: "inherit" } }),
           React.createElement("div", { style: { position: "absolute", right: 17, top: "50%", transform: "translateY(-15%)", width: 19, height: 19, borderRadius: "50%", background: "#099653", display: "flex", alignItems: "center", justifyContent: "center" } },
             React.createElement("svg", { width: 13, height: 13, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("polyline", { points: "5 12 10 17 19 7" })))
         ),
-        React.createElement("div", { style: { margin: "10px 18px", color: "#222", fontSize: 16, lineHeight: 1.35 } }, "Give your audio a unique name. You can only rename your audio once.")
+        React.createElement("div", { style: { margin: "10px 18px", color: "var(--text)", fontSize: 16, lineHeight: 1.35 } }, "Give your audio a unique name. You can only rename your audio once.")
       ),
       // Header
-      React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "14px 16px 12px", borderBottom: "1px solid #f0f0f0", flexShrink: 0 } },
+      React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "14px 16px 12px", borderBottom: "1px solid var(--border)", flexShrink: 0 } },
         React.createElement("button", { onClick: () => { initialEditorPauseRef.current = false; setEditTool(null); setEditorVideoFrameReady(false); setStep("edit"); },
-          style: { width: 44, height: 44, borderRadius: 12, background: "#e5e7eb", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, WebkitTapHighlightColor: "transparent" } },
-          React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "#111", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round" },
+          style: { width: 44, height: 44, borderRadius: 12, background: "var(--input-bg)", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, WebkitTapHighlightColor: "transparent" } },
+          React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "var(--text)", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round" },
             React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
-        React.createElement("span", { style: { flex: 1, textAlign: "center", fontWeight: 800, fontSize: 17, color: "#111" } }, "New reel")
+        React.createElement("span", { style: { flex: 1, textAlign: "center", fontWeight: 800, fontSize: 17, color: "var(--text)" } }, "New reel")
       ),
       // Video preview centered
       React.createElement("div", { style: { display: "flex", justifyContent: "center", padding: "18px 16px 8px", flexShrink: 0 } },
@@ -25459,16 +25459,16 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
           className: "reel-share-caption",
           placeholder: "Write a caption and add hashtags...", value: caption, onChange: e => setCaption(e.target.value), maxLength: 2200,
           onFocus: () => { if (previewMusicAudioRef.current) { try { previewMusicAudioRef.current.pause(); } catch(_) {} } setPreviewPlaying(false); },
-          style: { width: "100%", minHeight: 56, background: "transparent", border: "none", outline: "none", color: "#111", fontSize: 18, resize: "none", lineHeight: 1.45, padding: 0, fontFamily: "inherit", overflow: "hidden", scrollbarWidth: "none", msOverflowStyle: "none" }
+          style: { width: "100%", minHeight: 56, background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 18, resize: "none", lineHeight: 1.45, padding: 0, fontFamily: "inherit", overflow: "hidden", scrollbarWidth: "none", msOverflowStyle: "none" }
         }),
         React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 8 } },
           React.createElement("button", { onClick: () => setCaption(p => p + (p && !p.endsWith(" ") ? " " : "") + "#"),
-            style: { display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", borderRadius: 8, border: "none", background: "#f1f3f5", color: "#333", fontSize: 14, fontWeight: 700, cursor: "pointer" } },
-            React.createElement("svg",{width:13,height:13,viewBox:"0 0 24 24",fill:"none",stroke:"#333",strokeWidth:2.5,strokeLinecap:"round"},React.createElement("line",{x1:4,y1:9,x2:20,y2:9}),React.createElement("line",{x1:4,y1:15,x2:20,y2:15}),React.createElement("line",{x1:10,y1:3,x2:8,y2:21}),React.createElement("line",{x1:16,y1:3,x2:14,y2:21})),
+            style: { display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", borderRadius: 8, border: "none", background: "var(--input-bg)", color: "var(--text)", fontSize: 14, fontWeight: 700, cursor: "pointer" } },
+            React.createElement("svg",{width:13,height:13,viewBox:"0 0 24 24",fill:"none",stroke:"var(--text)",strokeWidth:2.5,strokeLinecap:"round"},React.createElement("line",{x1:4,y1:9,x2:20,y2:9}),React.createElement("line",{x1:4,y1:15,x2:20,y2:15}),React.createElement("line",{x1:10,y1:3,x2:8,y2:21}),React.createElement("line",{x1:16,y1:3,x2:14,y2:21})),
             "Hashtags"),
           React.createElement("button", { onClick: () => setCaption(p => p + (p && !p.endsWith(" ") ? " " : "") + "📌 "),
-            style: { display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", borderRadius: 8, border: "none", background: "#f1f3f5", color: "#333", fontSize: 14, fontWeight: 700, cursor: "pointer" } },
-            React.createElement("svg",{width:13,height:13,viewBox:"0 0 24 24",fill:"none",stroke:"#333",strokeWidth:2.2,strokeLinecap:"round"},React.createElement("circle",{cx:11,cy:11,r:8}),React.createElement("line",{x1:21,y1:21,x2:"16.65",y2:"16.65"})),
+            style: { display: "flex", alignItems: "center", gap: 5, padding: "8px 14px", borderRadius: 8, border: "none", background: "var(--input-bg)", color: "var(--text)", fontSize: 14, fontWeight: 700, cursor: "pointer" } },
+            React.createElement("svg",{width:13,height:13,viewBox:"0 0 24 24",fill:"none",stroke:"var(--text)",strokeWidth:2.2,strokeLinecap:"round"},React.createElement("circle",{cx:11,cy:11,r:8}),React.createElement("line",{x1:21,y1:21,x2:"16.65",y2:"16.65"})),
             "Prompt")
         )
       ),
@@ -25477,7 +25477,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       React.createElement("div", { onClick: () => !uploading && setShowReelTagPicker(true),
         style: { display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", cursor: "pointer", flexShrink: 0 } },
         React.createElement("div",{style:{width:44,height:44,borderRadius:"50%",background:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
-          React.createElement("svg",{width:22,height:22,viewBox:"0 0 24 24",fill:"none",stroke:"#444",strokeWidth:2.6,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"}),React.createElement("circle",{cx:12,cy:7,r:4}))),
+          React.createElement("svg",{width:22,height:22,viewBox:"0 0 24 24",fill:"none",stroke:"var(--text)",strokeWidth:2.6,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"}),React.createElement("circle",{cx:12,cy:7,r:4}))),
         React.createElement("div",{style:{flex:1}},
           React.createElement("div",{style:{fontSize:17,fontWeight:700,color:"#111"}},"Tag people"),
           reelTaggedUsers.length > 0 && React.createElement("div",{style:{fontSize:12,color:"#888",marginTop:2}},reelTaggedUsers.map(h=>"@"+h.replace(/^@/,"")).join(", "))
@@ -25488,7 +25488,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       React.createElement("div", { onClick: () => !uploading && setShowReelLocationPicker(true),
         style: { display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", cursor: "pointer", flexShrink: 0 } },
         React.createElement("div",{style:{width:44,height:44,borderRadius:"50%",background:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
-          React.createElement("svg",{width:22,height:22,viewBox:"0 0 24 24",fill:"none",stroke:"#444",strokeWidth:2.6,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"}),React.createElement("circle",{cx:12,cy:10,r:3}))),
+          React.createElement("svg",{width:22,height:22,viewBox:"0 0 24 24",fill:"none",stroke:"var(--text)",strokeWidth:2.6,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:"M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"}),React.createElement("circle",{cx:12,cy:10,r:3}))),
         React.createElement("div",{style:{flex:1}},
           React.createElement("div",{style:{fontSize:17,fontWeight:700,color:reelLocation?COLORS.blue:"#111"}},reelLocation||"Add location")
         ),
@@ -25500,7 +25500,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       React.createElement("div", { onClick: () => !uploading && setShowReelAudiencePicker(true),
         style: { display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", cursor: "pointer", flexShrink: 0 } },
         React.createElement("div",{style:{width:44,height:44,borderRadius:"50%",background:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
-          React.createElement("svg",{width:22,height:22,viewBox:"0 0 24 24",fill:"none",stroke:"#444",strokeWidth:2.6,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("circle",{cx:12,cy:12,r:10}),React.createElement("line",{x1:2,y1:12,x2:22,y2:12}),React.createElement("path",{d:"M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"}))),
+          React.createElement("svg",{width:22,height:22,viewBox:"0 0 24 24",fill:"none",stroke:"var(--text)",strokeWidth:2.6,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("circle",{cx:12,cy:12,r:10}),React.createElement("line",{x1:2,y1:12,x2:22,y2:12}),React.createElement("path",{d:"M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"}))),
         React.createElement("div",{style:{flex:1}},
           React.createElement("div",{style:{fontSize:17,fontWeight:700,color:"#111"}},"Audience"),
           React.createElement("div",{style:{fontSize:12,color:"#888",marginTop:2}},
@@ -25511,14 +25511,14 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       // Rename audio
       React.createElement("div", { onClick: () => !uploading && !audioRenamed && openRenameAudio(), style: { display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", cursor: audioRenamed ? "default" : "pointer", flexShrink: 0, opacity: audioRenamed ? 0.78 : 1 } },
         React.createElement("div", { style: { width: 44, height: 44, borderRadius: "50%", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative" } },
-          React.createElement("span", { style: { position: "absolute", right: 5, top: 4, zIndex: 0, color: "#444", fontSize: 16, lineHeight: 1, fontWeight: 800 } }, "+"),
-          React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "#444", style: { position: "relative", zIndex: 1 } },
+          React.createElement("span", { style: { position: "absolute", right: 5, top: 4, zIndex: 0, color: "var(--text)", fontSize: 16, lineHeight: 1, fontWeight: 800 } }, "+"),
+          React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "var(--text)", style: { position: "relative", zIndex: 1 } },
             React.createElement("path", { d: "M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z" }))),
         React.createElement("div", { style: { flex: 1, minWidth: 0 } },
-          React.createElement("div", { style: { fontSize: 17, fontWeight: 700, color: "#111" } }, "Rename audio")
+          React.createElement("div", { style: { fontSize: 17, fontWeight: 700, color: "var(--text)" } }, "Rename audio")
         ),
-        React.createElement("div", { style: { maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#222", fontSize: 16, marginRight: 4 } }, audioLabel || "Original Audio"),
-        React.createElement("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "#777", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("polyline", { points: "9 18 15 12 9 6" }))
+        React.createElement("div", { style: { maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--text)", fontSize: 16, marginRight: 4 } }, audioLabel || "Original Audio"),
+        React.createElement("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "var(--muted)", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("polyline", { points: "9 18 15 12 9 6" }))
       ),
       // Upload error only (progress bar removed)
 
@@ -25542,7 +25542,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
           }
           showToast && showToast("Draft saved!", "#22C55E");
         },
-          style: { flex: 1, padding: "14px 0", borderRadius: 12, border: "1.5px solid #ddd", background: "transparent", color: "#333", fontWeight: 700, fontSize: 15, cursor: "pointer" } }, "Save draft"),
+          style: { flex: 1, padding: "14px 0", borderRadius: 12, border: "1.5px solid var(--border)", background: "transparent", color: "var(--text)", fontWeight: 700, fontSize: 15, cursor: "pointer" } }, "Save draft"),
         React.createElement("button", { onClick: handlePost, disabled: uploading,
           style: { flex: 1, padding: "14px 0", borderRadius: 12, border: "none", background: "#1877F2", color: "#fff", fontWeight: 700, fontSize: 15, cursor: uploading ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 } },
           uploading && React.createElement("div", { style: { width: 18, height: 18, borderRadius: "50%", border: "2.5px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", animation: "spin 0.75s linear infinite", flexShrink: 0 } }),
