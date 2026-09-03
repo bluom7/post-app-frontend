@@ -22635,7 +22635,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
     style:{position:'fixed',top:0,left:0,right:0,bottom:0,zIndex:9999,background:'#050608',display:'flex',flexDirection:'column',overflow:'hidden',WebkitTapHighlightColor:'transparent'}
   },
     // Keep the preview frame as the container for the compact Try Edits control.
-    React.createElement('div',{style:{height:'30vh',minHeight:290,maxHeight:310,flexShrink:0,display:'flex',alignItems:'flex-start',justifyContent:'center',position:'relative',background:'#050608',overflow:'hidden',padding:'8px 0 8px',boxSizing:'border-box'}},
+    React.createElement('div',{style:{height:'25vh',minHeight:250,maxHeight:260,flexShrink:0,display:'flex',alignItems:'flex-start',justifyContent:'center',position:'relative',background:'#050608',overflow:'hidden',padding:'8px 0 8px',boxSizing:'border-box'}},
       React.createElement('button',{type:'button','aria-label':'Close music picker',onClick:function(){if(listAudioRef.current)listAudioRef.current.pause();onClose();},style:{position:'absolute',zIndex:3,top:8,left:'max(16px, calc(50% - 140px))',width:36,height:36,padding:0,border:'none',borderRadius:'50%',background:'rgba(255,255,255,0.16)',color:'#fff',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}},
         React.createElement('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none',stroke:'#fff',strokeWidth:2.5,strokeLinecap:'round'},
           React.createElement('line',{x1:18,y1:6,x2:6,y2:18}),React.createElement('line',{x1:6,y1:6,x2:18,y2:18}))),
