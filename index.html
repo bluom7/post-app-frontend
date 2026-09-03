@@ -22786,6 +22786,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const [cameraReady, setCameraReady] = React.useState(!!initialStream);
   const [cameraTransitionPoster, setCameraTransitionPoster] = React.useState(null);
   const [audioLabel, setAudioLabel] = React.useState("Original Audio");
+  const [showRenameAudio, setShowRenameAudio] = React.useState(false);
+  const [renameAudioDraft, setRenameAudioDraft] = React.useState("");
+  const [audioRenamed, setAudioRenamed] = React.useState(false);
   const [audioArtist, setAudioArtist] = React.useState("");
   const [audioArtwork, setAudioArtwork] = React.useState("");
   const [activeBottomTab, setActiveBottomTab] = React.useState("reel");
@@ -23958,7 +23961,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     allSegmentsRef.current = [];
     setTotalSegmentTime(0);
     recordTimeRef.current = 0;
-    setAudioLabel("Original Audio"); setAudioArtist(""); setAudioArtwork("");
+    setAudioLabel("Original Audio"); setAudioArtist(""); setAudioArtwork(""); setAudioRenamed(false);
     setReviewMode(false);
     stopStream();
     startCamera();
@@ -23983,6 +23986,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     audioStartTimeRef.current = 0;
     audioClipDurationRef.current = DEFAULT_MUSIC_CLIP_SECONDS;
     setAudioLabel("Original Audio");
+    setAudioRenamed(false);
     setAudioArtist("");
     setAudioArtwork("");
     setExportedBlob(null);
@@ -24130,6 +24134,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     setTextDraft("");
     setEditTool(null);
     setAudioLabel("Original Audio");
+    setAudioRenamed(false);
     setAudioArtist("");
     setAudioArtwork("");
     audioUrlRef.current = null;
@@ -24258,6 +24263,25 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     } catch(e) {
       setUploadError(e.message); setUploading(false); setUploadProgress(0);
     }
+  }
+
+  function openRenameAudio() {
+    if (audioRenamed) return;
+    setRenameAudioDraft(audioLabel || "Original Audio");
+    setShowRenameAudio(true);
+  }
+
+  function closeRenameAudio() {
+    setShowRenameAudio(false);
+  }
+
+  function saveRenameAudio() {
+    const nextName = renameAudioDraft.trim().slice(0, 50);
+    if (!nextName) return;
+    setAudioLabel(nextName);
+    setAudioRenamed(true);
+    setShowRenameAudio(false);
+    showToast && showToast("Audio name updated ✓", "#22C55E");
   }
 
   const EFFECTS = [
@@ -25349,6 +25373,24 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
         onSelect: val => { setReelAudience(val); setShowReelAudiencePicker(false); }
       }),
 
+      showRenameAudio && React.createElement("div", { style: { position: "fixed", inset: 0, background: "#fff", zIndex: 1000, display: "flex", flexDirection: "column", overflowY: "auto" } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "16px 18px 14px", flexShrink: 0 } },
+          React.createElement("button", { onClick: closeRenameAudio, "aria-label": "Close audio name editor", style: { width: 38, height: 38, border: "none", background: "transparent", padding: 0, display: "flex", alignItems: "center", justifyContent: "flex-start", cursor: "pointer" } },
+            React.createElement("svg", { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "#111", strokeWidth: 2.4, strokeLinecap: "round" },
+              React.createElement("line", { x1: 5, y1: 5, x2: 19, y2: 19 }), React.createElement("line", { x1: 19, y1: 5, x2: 5, y2: 19 }))),
+          React.createElement("span", { style: { flex: 1, textAlign: "center", fontWeight: 800, fontSize: 22, color: "#111", letterSpacing: -0.3 } }, "Audio name"),
+          React.createElement("button", { onClick: saveRenameAudio, disabled: !renameAudioDraft.trim(), "aria-label": "Save audio name", style: { width: 38, height: 38, border: "none", background: "transparent", padding: 0, display: "flex", alignItems: "center", justifyContent: "flex-end", cursor: renameAudioDraft.trim() ? "pointer" : "default", opacity: renameAudioDraft.trim() ? 1 : 0.35 } },
+            React.createElement("svg", { width: 27, height: 27, viewBox: "0 0 24 24", fill: "none", stroke: "#3657d6", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round" },
+              React.createElement("polyline", { points: "4 12 9 17 20 6" })))
+        ),
+        React.createElement("div", { style: { margin: "2px 18px 0", border: "2px solid #111", borderRadius: 15, padding: "16px 18px 14px", position: "relative", flexShrink: 0 } },
+          React.createElement("div", { style: { fontSize: 15, color: "#222", marginBottom: 3 } }, "Audio name"),
+          React.createElement("input", { autoFocus: true, value: renameAudioDraft, maxLength: 50, onChange: e => setRenameAudioDraft(e.target.value), onKeyDown: e => { if (e.key === "Enter") saveRenameAudio(); }, style: { width: "calc(100% - 34px)", border: "none", outline: "none", padding: 0, background: "transparent", color: "#111", fontSize: 21, lineHeight: 1.25, fontFamily: "inherit" } }),
+          React.createElement("div", { style: { position: "absolute", right: 17, top: "50%", transform: "translateY(-15%)", width: 19, height: 19, borderRadius: "50%", background: "#099653", display: "flex", alignItems: "center", justifyContent: "center" } },
+            React.createElement("svg", { width: 13, height: 13, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("polyline", { points: "5 12 10 17 19 7" })))
+        ),
+        React.createElement("div", { style: { margin: "10px 18px", color: "#222", fontSize: 16, lineHeight: 1.35 } }, "Give your audio a unique name. You can only rename your audio once.")
+      ),
       // Header
       React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "14px 16px 12px", borderBottom: "1px solid #f0f0f0", flexShrink: 0 } },
         React.createElement("button", { onClick: () => { initialEditorPauseRef.current = false; setEditTool(null); setEditorVideoFrameReady(false); setStep("edit"); },
@@ -25444,6 +25486,17 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
             reelAudience.type==="public"?"Everyone":reelAudience.type==="friends"?"Friends only":reelAudience.type==="only_show"?"Selected ("+((reelAudience.users||[]).length)+" friends)":"Only me")
         ),
         React.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"#777",strokeWidth:2.8,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("polyline",{points:"9 18 15 12 9 6"}))
+      ),
+      // Rename audio
+      React.createElement("div", { onClick: () => !uploading && !audioRenamed && openRenameAudio(), style: { display: "flex", alignItems: "center", gap: 14, padding: "16px 16px", cursor: audioRenamed ? "default" : "pointer", flexShrink: 0, opacity: audioRenamed ? 0.78 : 1 } },
+        React.createElement("div", { style: { width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
+          React.createElement("svg", { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "#444", strokeWidth: 2.4, strokeLinecap: "round", strokeLinejoin: "round" },
+            React.createElement("path", { d: "M9 18V5l12-2v13" }), React.createElement("circle", { cx: 6, cy: 18, r: 3 }), React.createElement("circle", { cx: 18, cy: 16, r: 3 }))),
+        React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+          React.createElement("div", { style: { fontSize: 17, fontWeight: 700, color: "#111" } }, "Rename audio")
+        ),
+        React.createElement("div", { style: { maxWidth: 130, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#222", fontSize: 16, marginRight: 4 } }, audioLabel || "Original Audio"),
+        React.createElement("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "#777", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("polyline", { points: "9 18 15 12 9 6" }))
       ),
       // Upload error only (progress bar removed)
 
@@ -25619,7 +25672,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
         React.createElement("div", { style: { display: "flex", gap: 8 } },
           React.createElement("button", { onClick: openMusicPicker,
             style: { flex: 1, background: "#fff", border: "none", borderRadius: 18, padding: "9px 12px", color: "#111", fontWeight: 700, fontSize: 13, cursor: "pointer" } }, "Add / Change"),
-          React.createElement("button", { onClick: () => { audioUrlRef.current = null; audioFileRef.current = null; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = !origAudioOn; setAudioLabel("Original Audio"); setAudioArtist(""); setAudioArtwork(""); showToast && showToast("Original audio", "#888"); },
+          React.createElement("button", { onClick: () => { audioUrlRef.current = null; audioFileRef.current = null; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = !origAudioOn; setAudioLabel("Original Audio"); setAudioArtist(""); setAudioArtwork(""); setAudioRenamed(false); showToast && showToast("Original audio", "#888"); },
             style: { flex: 1, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 18, padding: "9px 12px", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" } }, "Original")
         )
       );
@@ -26039,7 +26092,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
                   ),
                   // X remove button
                   React.createElement("button", {
-                    onClick: function(e) { e.stopPropagation(); audioUrlRef.current = null; audioFileRef.current = null; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = !origAudioOn; setAudioLabel("Original Audio"); setAudioArtist(""); setAudioArtwork(""); },
+                    onClick: function(e) { e.stopPropagation(); audioUrlRef.current = null; audioFileRef.current = null; if (previewMusicAudioRef.current) { previewMusicAudioRef.current.pause(); previewMusicAudioRef.current = null; } if (editVideoRef.current) editVideoRef.current.muted = !origAudioOn; setAudioLabel("Original Audio"); setAudioArtist(""); setAudioArtwork(""); setAudioRenamed(false); },
                     style: { background: "none", border: "none", color: "rgba(255,255,255,0.85)", fontSize: 13, cursor: "pointer", padding: "0 6px", lineHeight: 1, flexShrink: 0 }
                   }, "✕"),
                   // Right handle
@@ -27467,6 +27520,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
             setTrimVideoEnded(false);
             setOrigAudioOn(false);
             setAudioLabel(label);
+            setAudioRenamed(false);
             setAudioArtist(artist || "");
             setAudioArtwork(artwork || "");
             setShowMusicPicker(false);
