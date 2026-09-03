@@ -22687,7 +22687,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
       React.createElement('div',{style:{display:'flex',gap:8,overflowX:'auto',padding:'0 16px 8px',flexShrink:0,scrollbarWidth:'none'}},
         CATS.map(function(cat){
           return React.createElement('button',{key:cat,onClick:function(){setActiveCategory(cat);setQuery('');},
-            style:{flexShrink:0,padding:'6px 16px',borderRadius:20,border:'none',cursor:'pointer',fontWeight:700,fontSize:13,
+            style:{flexShrink:0,padding:'6px 16px',borderRadius:9,border:'none',cursor:'pointer',fontWeight:700,fontSize:13,
               background:activeCategory===cat?'#fff':'#242832',color:activeCategory===cat?'#111':'#fff'}},cat);
         })),
       React.createElement('div',{className:'music-picker-song-list',style:{flex:1,overflowY:'auto',WebkitOverflowScrolling:'touch',minHeight:0,position:'relative',background:'#202228',scrollbarWidth:'none',msOverflowStyle:'none'}},
