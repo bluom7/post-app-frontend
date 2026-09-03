@@ -33,7 +33,7 @@
  @keyframes feedMetaTickerSwap { 0% { opacity: 0; transform: translateY(-100%); } 100% { opacity: 1; transform: translateY(0); } }
 @keyframes musicIconSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 video, [data-media-stage], [data-media-control] { -webkit-tap-highlight-color: transparent; background: #000; }
-button, [role="button"] { -webkit-tap-highlight-color: transparent; }
+button, [role="button"], [onclick] { -webkit-tap-highlight-color: transparent; }
 @keyframes feedVideoShimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 .bell-shake { animation: bellShake 0.6s ease; }
 button:focus:not([data-follow-control]) { outline: none !important; box-shadow: none !important; border: none !important; }
