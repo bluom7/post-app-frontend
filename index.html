@@ -27693,28 +27693,17 @@ function ReelUploadModal({ token, user, showToast, onClose, onUploaded, initialF
       return;
     }
     try {
-      // Step 1: Upload video file to Cloudinary via backend
+      // Step 1: Upload the selected video directly to Cloudinary using a
+      // short-lived signature from the backend. This keeps this gallery entry
+      // point consistent with the main ReelCameraModal and avoids the old
+      // browser -> backend -> Cloudinary double hop.
       setUploadProgress(10);
-      const formData = new FormData();
-      formData.append("file", videoFile, videoFile.name || "reel.mp4");
-      const reelUpCtrl = new AbortController();
-      const reelUpTimeout = setTimeout(() => reelUpCtrl.abort(), 120000);
-      let uploadResp;
-      try {
-        uploadResp = await fetch(API + "/reels/upload", {
-          method: "POST",
-          headers: { Authorization: "Bearer " + token },
-          body: formData,
-          signal: reelUpCtrl.signal,
-        });
-      } catch (fetchErr) {
-        throw new Error(fetchErr.name === "AbortError" ? "Upload timed out. Try a shorter or smaller video." : "Network error. Check your connection.");
-      } finally { clearTimeout(reelUpTimeout); }
-      if (!uploadResp.ok) {
-        const errData = await uploadResp.json().catch(() => ({}));
-        throw new Error(errData.detail || "Video upload failed");
-      }
-      const uploadData = await uploadResp.json();
+      const uploadData = await uploadReelVideoDirect(
+        videoFile,
+        token,
+        120000,
+        progress => setUploadProgress(progress)
+      );
       setUploadProgress(75);
       // Step 2: Create reel record with the Cloudinary video URL
       const reel = await api("/reels", "POST", {
