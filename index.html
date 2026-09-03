@@ -26733,7 +26733,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
           ),
           React.createElement("button",{
             onClick:e=>{ e.preventDefault(); e.stopPropagation(); if (!exporting && !uploading) handleExport(); }, disabled:exporting||uploading,
-            style:{flex:"0 0 96px",width:96,height:50,padding:0,borderRadius:8,background:exporting||uploading?"#8fb7ef":"#1877F2",border:"none",color:"#fff",fontWeight:700,fontSize:15,cursor:(exporting||uploading)?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6,letterSpacing:0.1}
+            style:{flex:exporting?"0 0 142px":"0 0 96px",width:exporting?142:96,height:exporting?56:50,padding:0,borderRadius:exporting?10:8,background:exporting||uploading?"#8fb7ef":"#1877F2",border:"none",color:"#fff",fontWeight:700,fontSize:15,cursor:(exporting||uploading)?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,letterSpacing:0.1}
           },
             exporting&&React.createElement("div",{style:{width:15,height:15,borderRadius:"50%",border:"2px solid rgba(255,255,255,0.35)",borderTopColor:"#fff",animation:"spin 0.7s linear infinite"}}),
             exporting?"Processing...":"Next →"
