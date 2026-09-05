@@ -29159,16 +29159,23 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
 var _REEL_FONT_MAP = { Bubble: { fontFamily: "'Arial Rounded MT Bold', Arial, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "none", textShadow: "0 3px 0 rgba(0,0,0,0.65)" }, "Slab Serif": { fontFamily: "'Roboto Slab', Georgia, serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 6px rgba(0,0,0,0.9)" }, Geometric: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 800, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 5px rgba(0,0,0,0.9)" }, Classic: { fontFamily: "Georgia, serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }, Headline: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.85)" }, Glow: { fontFamily: "Arial, sans-serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 0 20px currentColor, 0 0 40px currentColor, 0 2px 6px rgba(0,0,0,0.7)" }, Fancy: { fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 600, fontStyle: "italic", textTransform: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }, Pop: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "uppercase", textShadow: "2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000" } };
 function _calcContainRect(cEl, natW, natH) { if (!cEl || !natW || !natH) return null; var cw = cEl.offsetWidth, ch = cEl.offsetHeight; if (!cw || !ch) return null; var scale = Math.min(cw / natW, ch / natH); return { left: (cw - natW * scale) / 2, top: (ch - natH * scale) / 2, width: natW * scale, height: natH * scale }; }
 function _overlayPct(item, modernKey, legacyKey, fallback) { var raw = item && item[modernKey]; if (raw === undefined || raw === null || raw === "") raw = item && item[legacyKey]; var value = Number(raw); return Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : fallback; }
-function _renderReelOverlays(data, rect) {
+function _reelFeedY(yPct) {
+  var viewportH = (typeof window !== "undefined" && Number(window.innerHeight)) || 0;
+  var topBarH = 52;
+  var frameH = Math.max(1, viewportH - topBarH);
+  if (!viewportH) return yPct;
+  return Math.max(-20, Math.min(120, ((Number(yPct) / 100 * viewportH) - topBarH) / frameH * 100));
+}
+function _renderReelOverlays(data, rect, feedFrame) {
   data = data || {};
   var wrapStyle = rect ? { position: "absolute", left: rect.left, top: rect.top, width: rect.width, height: rect.height, pointerEvents: "none", zIndex: 4 } : { position: "absolute", inset: 0, pointerEvents: "none", zIndex: 4 };
   var stickers = Array.isArray(data.sticker_overlays) ? data.sticker_overlays : [];
   var emojis = Array.isArray(data.emoji_overlays) ? data.emoji_overlays : [];
   var texts = Array.isArray(data.text_overlays) && data.text_overlays.length ? data.text_overlays : (Array.isArray(data.video_text_overlays) ? data.video_text_overlays : []);
   return React.createElement("div", { style: wrapStyle },
-    stickers.map(function(s) { var x = _overlayPct(s, "xPct", "x", 50), y = _overlayPct(s, "yPct", "y", 50); return React.createElement("img", { key: s.id, src: s.url, alt: "", style: { position: "absolute", left: x + "%", top: y + "%", transform: "translate(-50%,-50%)", width: 80, height: 80, objectFit: "contain", pointerEvents: "none" } }); }),
-    emojis.map(function(e) { var x = _overlayPct(e, "xPct", "x", 50), y = _overlayPct(e, "yPct", "y", 50); return React.createElement("div", { key: e.id, style: { position: "absolute", left: x + "%", top: y + "%", transform: "translate(-50%,-50%)", fontSize: (e.size || 64) + "px", lineHeight: 1, pointerEvents: "none", userSelect: "none" } }, e.emoji); }),
-    texts.map(function(t) { var x = _overlayPct(t, "xPct", "x", 50), y = _overlayPct(t, "yPct", "y", 50), f = _REEL_FONT_MAP[t.font] || _REEL_FONT_MAP.Classic, hasBg = t.bgColor && t.bgColor !== "transparent"; return React.createElement("div", { key: t.id, style: { position: "absolute", left: x + "%", top: y + "%", transform: "translate(-50%,-50%)", zIndex: 1, pointerEvents: "none" } }, React.createElement("span", { style: { color: t.color || "#fff", fontSize: (t.size || 22) + "px", fontWeight: f.fontWeight, fontFamily: f.fontFamily, fontStyle: f.fontStyle, textTransform: f.textTransform, textShadow: hasBg ? "none" : f.textShadow, background: hasBg ? t.bgColor : "transparent", padding: hasBg ? "5px 12px" : "0", borderRadius: hasBg ? "7px" : "0", whiteSpace: "nowrap", display: "inline-block" } }, t.text)); })
+    stickers.map(function(s) { var x = _overlayPct(s, "xPct", "x", 50), y = _overlayPct(s, "yPct", "y", 50); if (feedFrame) y = _reelFeedY(y); return React.createElement("img", { key: s.id, src: s.url, alt: "", style: { position: "absolute", left: x + "%", top: y + "%", transform: "translate(-50%,-50%)", width: 80, height: 80, objectFit: "contain", pointerEvents: "none" } }); }),
+    emojis.map(function(e) { var x = _overlayPct(e, "xPct", "x", 50), y = _overlayPct(e, "yPct", "y", 50); if (feedFrame) y = _reelFeedY(y); return React.createElement("div", { key: e.id, style: { position: "absolute", left: x + "%", top: y + "%", transform: "translate(-50%,-50%)", fontSize: (e.size || 64) + "px", lineHeight: 1, pointerEvents: "none", userSelect: "none" } }, e.emoji); }),
+    texts.map(function(t) { var x = _overlayPct(t, "xPct", "x", 50), y = _overlayPct(t, "yPct", "y", 50); if (feedFrame) y = _reelFeedY(y); var f = _REEL_FONT_MAP[t.font] || _REEL_FONT_MAP.Classic, hasBg = t.bgColor && t.bgColor !== "transparent"; return React.createElement("div", { key: t.id, style: { position: "absolute", left: x + "%", top: y + "%", transform: "translate(-50%,-50%)", zIndex: 1, pointerEvents: "none" } }, React.createElement("span", { style: { color: t.color || "#fff", fontSize: (t.size || 22) + "px", fontWeight: f.fontWeight, fontFamily: f.fontFamily, fontStyle: f.fontStyle, textTransform: f.textTransform, textShadow: hasBg ? "none" : f.textShadow, background: hasBg ? t.bgColor : "transparent", padding: hasBg ? "5px 12px" : "0", borderRadius: hasBg ? "7px" : "0", whiteSpace: "nowrap", display: "inline-block" } }, t.text)); })
   );
 }
 
@@ -29460,7 +29467,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
           style: { width: "100%", height: "auto", flexShrink: 0, display: "block", WebkitTapHighlightColor: "transparent", filter: _reelEffFilter },
           loop: true, playsInline: true, muted: true, autoPlay: false, disableRemotePlayback: true, preload: "metadata"
         }),
-    _renderReelOverlays(reel),
+    _renderReelOverlays(reel, null, true),
     // Photo reel: play icon when paused (audio on but music stopped)
     isPhotoReel && reel.music_url && !photoMusicPlaying && /*#__PURE__*/React.createElement("div", {
       style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }
