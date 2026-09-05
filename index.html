@@ -29522,13 +29522,15 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
       onBlur: e => { e.currentTarget.style.outline = "none"; }
     },
       audioEnabled
-        ? /*#__PURE__*/React.createElement("svg", { width: 21, height: 21, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.25, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" },
-            /*#__PURE__*/React.createElement("path", { d: "M4 9v6h4l5 4V5L8 9H4Z", fill: "currentColor", stroke: "none" }),
-            /*#__PURE__*/React.createElement("path", { d: "M16 8.5a5 5 0 0 1 0 7" }),
-            /*#__PURE__*/React.createElement("path", { d: "M19 5.5a9 9 0 0 1 0 13" }))
-        : /*#__PURE__*/React.createElement("svg", { width: 21, height: 21, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.25, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" },
-            /*#__PURE__*/React.createElement("path", { d: "M4 9v6h4l5 4V5L8 9H4Z", fill: "currentColor", stroke: "none" }),
-            /*#__PURE__*/React.createElement("path", { d: "M16 8.5a5 5 0 0 1 0 7" }), React.createElement("path", { d: "M19 5.5a9 9 0 0 1 0 13" }), React.createElement("path", { d: "M5 5L19 19" }), React.createElement("path", { d: "M19 5L5 19" }))
+        ? /*#__PURE__*/React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" },
+            /*#__PURE__*/React.createElement("path", { d: "M3 9h4l7-5v16l-7-5H3z" }),
+            /*#__PURE__*/React.createElement("line", { x1: 7, y1: 9, x2: 7, y2: 15 }),
+            /*#__PURE__*/React.createElement("path", { d: "M17 8.5a5 5 0 0 1 0 7" }),
+            /*#__PURE__*/React.createElement("path", { d: "M19.5 6a8.5 8.5 0 0 1 0 12" }))
+        : /*#__PURE__*/React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" },
+            /*#__PURE__*/React.createElement("path", { d: "M3 9h4l7-5v16l-7-5H3z" }),
+            /*#__PURE__*/React.createElement("line", { x1: 7, y1: 9, x2: 7, y2: 15 }),
+            /*#__PURE__*/React.createElement("path", { d: "M17 8.5l5 5m0-5-5 5" }))
     ),
     // Timing text — shown when paused, e.g. "0:07 / 0:19"
     !isPhotoReel && /*#__PURE__*/React.createElement("div", {
