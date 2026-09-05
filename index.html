@@ -10089,72 +10089,27 @@ function ComposeVideoTrimOverlay({ src, duration, trimStart, trimEnd, setTrimSta
         )
       ),
       React.createElement('div', { 'aria-label': 'Its You', style: { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', minWidth: 112, height: 46, padding: '0 18px', background: '#1d2026', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.22)' } },
-        React.createElement('svg', { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', 'aria-hidden': true, style: { flexShrink: 0 } },
+        React.createElement('svg', { width: 22, height: 22, viewBox: '0 0 48 48', fill: 'none', 'aria-hidden': true, style: { flexShrink: 0 } },
           React.createElement('defs', null,
-            React.createElement('linearGradient', { id: 'tryEditsIconGradient', x1: '3', y1: '21', x2: '21', y2: '3', gradientUnits: 'userSpaceOnUse' },
-              React.createElement('stop', { offset: '0%', stopColor: '#8B5CF6' }),
-              React.createElement('stop', { offset: '48%', stopColor: '#EC4899' }),
-              React.createElement('stop', { offset: '100%', stopColor: '#FACC15' })
+            React.createElement('radialGradient', { id: 'itsYouYellowBallGradient', cx: '30%', cy: '22%', r: '78%' },
+              React.createElement('stop', { offset: '0%', stopColor: '#FFF59D' }),
+              React.createElement('stop', { offset: '32%', stopColor: '#FFE44D' }),
+              React.createElement('stop', { offset: '78%', stopColor: '#FFC400' }),
+              React.createElement('stop', { offset: '100%', stopColor: '#F59E0B' })
             )
           ),
-          React.createElement('rect', { x: 3, y: 3, width: 18, height: 18, rx: 5, stroke: 'url(#tryEditsIconGradient)', strokeWidth: 2 }),
-          React.createElement('path', { d: 'M16 6.5v11', stroke: '#fff', strokeWidth: 2, strokeLinecap: 'round' })
-        ),
-        React.createElement('span', { style: { color: '#fff', fontSize: 16, fontWeight: 600, lineHeight: 1, letterSpacing: 0.1, whiteSpace: 'nowrap' } }, 'Its You')
-      ),
-      React.createElement('button', { onClick: () => { finishInlineTextEditing(); onDone(); }, 'aria-label': 'Done', style: { minWidth: 76, height: 48, padding: '0 16px', background: '#fff', border: 'none', borderRadius: 8, color: '#111', fontSize: 16, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.22)' } }, 'Done')
-    ),
-    React.createElement('div', { style: { flex: 1, minHeight: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '8px 24px 0' } },
-      React.createElement('div', { style: { width: 'min(72vw, 240px)', aspectRatio: '9 / 16', maxWidth: '92%', maxHeight: '90%', background: '#000', border: '1px solid rgba(255,255,255,0.24)', borderRadius: 14, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateY(-6px)', flexShrink: 0 } },
-       React.createElement('video', { ref: videoRef, src, poster: poster || undefined, playsInline: true, autoPlay: true, preload: 'auto', muted: !originalAudioOn, onLoadedMetadata: event => {
-      const actualDuration = Number(event.currentTarget.duration);
-      const sourceWidth = Number(event.currentTarget.videoWidth);
-      const sourceHeight = Number(event.currentTarget.videoHeight);
-      if (sourceWidth > 0 && sourceHeight > 0) {
-        const nextAspectRatio = sourceWidth / sourceHeight;
-        setVideoAspectRatio(previous => Math.abs((previous || 0) - nextAspectRatio) > 0.001 ? nextAspectRatio : previous);
-      }
-      if (!Number.isFinite(actualDuration) || actualDuration <= 0) return;
-      setResolvedDuration(previous => Math.abs(previous - actualDuration) > 0.01 ? actualDuration : previous);
-      const maxEnd = Math.min(actualDuration, MAX_REEL_SECONDS);
-      const currentStart = Number(trimStart) || 0;
-      const currentEnd = Number(trimEnd);
-      const nextStart = clamp(currentStart, 0, Math.max(0, maxEnd - 0.1));
-      const nextEnd = !Number.isFinite(currentEnd) || currentEnd <= nextStart
-        ? maxEnd
-        : clamp(currentEnd, Math.min(maxEnd, nextStart + 0.1), maxEnd);
-      if (Math.abs(nextStart - currentStart) > 0.01) setTrimStart(nextStart);
-      if (!Number.isFinite(currentEnd) || currentEnd <= nextStart || Math.abs(nextEnd - currentEnd) > 0.01) setTrimEnd(nextEnd);
-      const current = Number(currentTime) || 0;
-      const nextTime = clamp(current, nextStart, nextEnd);
-      if (Math.abs(nextTime - current) > 0.01) {
-        event.currentTarget.currentTime = nextTime;
-        setCurrentTime(nextTime);
-      }
-    }, onClick: togglePlay, onPlay: () => setPlaying(true), onPause: () => setPlaying(false), style: { width: '100%', height: '100%', maxWidth: 'none', maxHeight: 'none', objectFit: 'contain', objectPosition: 'center center', display: 'block', background: '#000', cursor: 'pointer' } })
-     ),
-      inlineTextOverlays.filter(overlay => inlineEditingOverlayId !== overlay.id).map(overlay => React.createElement('div', { key: overlay.id, onPointerDown: event => overlayPointerDown(event, overlay), onPointerMove: overlayPointerMove, onPointerUp: overlayPointerUp, onPointerCancel: overlayPointerUp, onClick: event => { event.stopPropagation(); const tap = overlayLastGestureRef.current; overlayLastGestureRef.current = { id: null, moved: false }; if (tap && tap.id === overlay.id && tap.moved) return; editInlineText(overlay); }, style: { position: 'absolute', left: (overlay.xPct || 50) + '%', top: (overlay.yPct || 45) + '%', transform: 'translate(-50%,-50%) scale(' + (overlay.scale || 1) + ')', transformOrigin: 'center center', zIndex: 6, pointerEvents: 'auto', cursor: 'grab', touchAction: 'none', userSelect: 'none', color: overlay.color || '#fff', fontSize: (overlay.size || 32) + 'px', fontWeight: 700, textAlign: 'center', whiteSpace: 'pre-wrap', wordBreak: 'break-word', maxWidth: '82%', textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9)' } }, overlay.text)),
-      // Draft text is edited directly over the video; never render a second copy near the bottom input.
-    ),
-    inlineTextEditorOpen && React.createElement('div', { style: { position: 'absolute', inset: 0, zIndex: 20, pointerEvents: 'none' } },
-      React.createElement('button', { onClick: () => setInlineTextPaletteOpen(value => !value), 'aria-label': 'Text color', style: { pointerEvents: 'auto', position: 'absolute', left: '50%', top: 'max(18px, env(safe-area-inset-top))', transform: 'translateX(-50%)', width: 38, height: 38, border: '1px solid rgba(255,255,255,0.68)', borderRadius: 8, background: inlineTextColor, color: inlineTextColor === '#ffffff' ? '#111' : '#fff', fontSize: 20, fontWeight: 900, lineHeight: 1, cursor: 'pointer', boxShadow: '0 2px 12px rgba(0,0,0,0.45)' } }, 'A'),
-      inlineTextPaletteOpen && React.createElement('div', { style: { pointerEvents: 'auto', position: 'absolute', left: '50%', top: 'max(70px, calc(env(safe-area-inset-top) + 72px))', transform: 'translateX(-50%)', display: 'flex', gap: 9, alignItems: 'center', padding: '9px 12px', borderRadius: 24, background: 'transparent', border: 'none', backdropFilter: 'none', WebkitBackdropFilter: 'none', boxShadow: 'none' } },
-        ['#ffffff','#111111','#ffd600','#ff1744','#1877f2','#00c853','#ff9800','#e91e63'].map(color => React.createElement('button', { key: color, onClick: () => { setInlineTextColor(color); setInlineTextPaletteOpen(false); }, 'aria-label': 'Text color ' + color, style: { width: 30, height: 30, padding: 0, borderRadius: '50%', border: inlineTextColor === color ? '3px solid #fff' : '2px solid rgba(255,255,255,0.55)', background: color, cursor: 'pointer', boxShadow: inlineTextColor === color ? '0 0 0 2px rgba(0,0,0,0.55)' : 'none' } }))
-      ),
-      React.createElement('input', { autoFocus: true, type: 'text', value: inlineTextDraft, onPointerDown: event => { if (inlineTextDraft.trim() && document.activeElement === event.currentTarget) { event.preventDefault(); finishInlineTextEditing(); } }, onChange: event => setInlineTextDraft(event.target.value), onKeyDown: event => { if (event.key === 'Enter') { event.preventDefault(); finishInlineTextEditing(); } }, placeholder: 'Type text…', maxLength: 80, 'aria-label': 'Text to overlay', style: { pointerEvents: 'auto', position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', width: 'min(82vw, 360px)', boxSizing: 'border-box', border: 'none', background: 'transparent', color: inlineTextColor, caretColor: inlineTextColor, padding: 0, fontSize: inlineTextSize + 'px', fontWeight: 700, lineHeight: 1.2, textAlign: 'center', textShadow: '0 2px 10px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,0.9)', outline: 'none' } }),
-    ),
-    React.createElement('div', { style: { flexShrink: 0, padding: '8px 0 calc(18px + env(safe-area-inset-bottom))' } },
-      React.createElement('div', { style: { position: 'relative', top: -6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', height: 44, padding: '0 14px', boxSizing: 'border-box' } },
-        React.createElement('button', { onClick: togglePlay, 'aria-label': playing ? 'Pause' : 'Play', style: { width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: 'none', borderRadius: '50%', color: '#62666d', padding: 0, cursor: 'pointer', flexShrink: 0 } },
-          playing ? React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: '#62666d' }, React.createElement('rect', { x: 6, y: 5, width: 4, height: 14, rx: 1 }), React.createElement('rect', { x: 14, y: 5, width: 4, height: 14, rx: 1 })) : React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: '#62666d' }, React.createElement('path', { d: 'M8.7 5.25L18.35 11.1c.8.48.8 1.32 0 1.8L8.7 18.75C7.93 19.22 7 18.68 7 17.78V6.22c0-.9.93-1.44 1.7-.97z', fill: '#62666d' }))
-        ),
-        React.createElement('div', { style: { position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', fontSize: 16, fontWeight: 700, letterSpacing: 0.2, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums', color: '#fff', textShadow: '-1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 1px 3px rgba(0,0,0,0.9)' } }, formatTime(currentTime - trimStart) + ' / ' + formatTime(selectedDuration, true)),
-        React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 } },
-          React.createElement('button', { onClick: () => seek(-10), 'aria-label': 'Back 10 seconds', style: { width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#cfd1d4', border: 'none', borderRadius: '50%', color: '#62666d', padding: 0, cursor: 'pointer' } },
-            React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: '#62666d', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
-              React.createElement('path', { d: 'M9 14 4 9l5-5' }),
-              React.createElement('path', { d: 'M4 9h10.5a5.5 5.5 0 0 1 0 11H13' })
+          React.createElement('g', { transform: 'translate(24 24)' },
+            React.createElement('g', null,
+              React.createElement('animateTransform', { attributeName: 'transform', attributeType: 'XML', type: 'scale', values: '1;1.1;1', dur: '1.6s', repeatCount: 'indefinite' }),
+              React.createElement('ellipse', { cx: 0, cy: 18, rx: 12, ry: 2, fill: 'rgba(0,0,0,0.22)' }),
+              React.createElement('circle', { cx: 0, cy: -1, r: 17, fill: 'url(#itsYouYellowBallGradient)', stroke: '#E5A900', strokeWidth: 1.2 }),
+              React.createElement('path', { d: 'M-11 -8c2-4 5-6 9-7', stroke: '#FFFBE6', strokeWidth: 3.2, strokeLinecap: 'round', opacity: 0.82 }),
+              React.createElement('circle', { cx: -6, cy: -4, r: 1.8, fill: '#3D3428' }),
+              React.createElement('circle', { cx: 6, cy: -4, r: 1.8, fill: '#3D3428' }),
+              React.createElement('path', { d: 'M-9 3c3.2 6 14.8 6 18 0', stroke: '#3D3428', strokeWidth: 1.8, strokeLinecap: 'round' })
             )
+          )
+        ),
           ),
           React.createElement('button', { onClick: () => seek(10), 'aria-label': 'Forward 10 seconds', style: { width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#cfd1d4', border: 'none', borderRadius: '50%', color: '#62666d', padding: 0, cursor: 'pointer' } },
             React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: '#62666d', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true },
