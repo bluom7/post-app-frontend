@@ -4089,7 +4089,7 @@ function PostApp() {
       cursor: "pointer",
       display: "flex",
       alignItems: "center",
-      color: tab === "invite" ? "#FFD600" : "#666"
+      color: tab === "invite" ? "#FFD600" : "var(--text)"
     }
   }, /*#__PURE__*/React.createElement("svg", {
     width: "24",
@@ -4137,7 +4137,7 @@ function PostApp() {
       cursor: "pointer",
       display: "flex",
       alignItems: "center",
-      color: "#666",
+      color: "var(--text)",
       padding: "4px 2px"
     }
   }, /*#__PURE__*/React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4, alignItems: "center", justifyContent: "center", width: 24, height: 24 } },
@@ -4146,7 +4146,23 @@ function PostApp() {
       React.createElement("span", { style: { display: "block", width: 17, height: 4, background: "currentColor", borderRadius: 0 } })),
     React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 3 } },
       React.createElement("span", { style: { display: "block", width: 4, height: 4, background: "currentColor", borderRadius: 0 } }),
-      React.createElement("span", { style: { display: "block", width: 17, height: 4, background: "currentColor", borderRadius: 0 } })))), showQuickMenu && /*#__PURE__*/React.createElement(QuickMenuDropdown, {
+      React.createElement("span", { style: { display: "block", width: 17, height: 4, background: "currentColor", borderRadius: 0 } })))), title: "Menu",
+    style: {
+      background: "none",
+      border: "none",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      color: "var(--text)",
+      padding: "4px 2px"
+    }
+  }, /*#__PURE__*/React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4, alignItems: "center", justifyContent: "center", width: 24, height: 24 } },
+    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 3 } },
+      React.createElement("span", { style: { display: "block", width: 4, height: 4, background: "currentColor", borderRadius: 999 } }),
+      React.createElement("span", { style: { display: "block", width: 17, height: 4, background: "currentColor", borderRadius: 999 } })),
+    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 3 } },
+      React.createElement("span", { style: { display: "block", width: 4, height: 4, background: "currentColor", borderRadius: 999 } }),
+      React.createElement("span", { style: { display: "block", width: 17, height: 4, background: "currentColor", borderRadius: 999 } })))), showQuickMenu && /*#__PURE__*/React.createElement(QuickMenuDropdown, {
     token: token,
     user: user,
     setUser: setUser,
