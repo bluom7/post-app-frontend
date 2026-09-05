@@ -28154,9 +28154,12 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
           React.createElement("span", { style: { color: "#fff", fontSize: 11, fontWeight: 600, letterSpacing: 0.1 } }, reel.is_saved ? "Saved" : "Save")),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 2 } },
           React.createElement("button", { onClick: function(e) { e.stopPropagation(); setShowMenu(true); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", flexDirection: "column", gap: 4, alignItems: "center", justifyContent: "center", width: 24, height: 24 } },
-            React.createElement("span", { style: { display: "block", width: 20, height: 2, background: "#fff", borderRadius: 2 } }),
-            React.createElement("span", { style: { display: "block", width: 20, height: 2, background: "#fff", borderRadius: 2 } }),
-            React.createElement("span", { style: { display: "block", width: 20, height: 2, background: "#fff", borderRadius: 2 } }))),
+             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 3 } },
+               React.createElement("span", { style: { display: "block", width: 4, height: 4, background: "#fff", borderRadius: 0 } }),
+               React.createElement("span", { style: { display: "block", width: 16, height: 4, background: "#fff", borderRadius: 0 } })),
+             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 3 } },
+               React.createElement("span", { style: { display: "block", width: 4, height: 4, background: "#fff", borderRadius: 0 } }),
+               React.createElement("span", { style: { display: "block", width: 16, height: 4, background: "#fff", borderRadius: 0 } }))))
         (reel.music_title && reel.music_title !== "Original Audio") && React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginTop: 4 } },
           React.createElement("div", { style: { width: 30, height: 30, borderRadius: 6, overflow: "hidden", flexShrink: 0, boxShadow: "0 1px 6px rgba(0,0,0,0.55)", border: "1.5px solid rgba(255,255,255,0.30)", background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center" } },
             reel.music_artwork
