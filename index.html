@@ -26207,10 +26207,10 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       // a wrapper div creates a new compositing layer that the filter IS applied to.
       recordedURL && React.createElement("div", {
         "data-reel-editor-stage": true,
-        style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: videoFilter === "none" ? "auto" : "filter" }
+        style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(142px, 19vh, 173px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: videoFilter === "none" ? "auto" : "filter" }
       },
         isPhotoReel
-          ? React.createElement("img", { src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, onLoad: e => { const w = Number(e.currentTarget.naturalWidth) || 0; const h = Number(e.currentTarget.naturalHeight) || 0; if (w > 0 && h > 0) setRecordedPhotoAspect(w / h); }, onClick: togglePreviewPlay, style: { width: "100%", height: "auto", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", display: "block", margin: "0 auto", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
+          ? React.createElement("img", { src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, onLoad: e => { const w = Number(e.currentTarget.naturalWidth) || 0; const h = Number(e.currentTarget.naturalHeight) || 0; if (w > 0 && h > 0) setRecordedPhotoAspect(w / h); }, onClick: togglePreviewPlay, style: { width: "100%", height: "100%", maxWidth: "100%", maxHeight: "100%", objectFit: recordedPhotoAspect !== null && recordedPhotoAspect > 1 ? "contain" : "cover", objectPosition: "center center", display: "block", margin: "0 auto", cursor: "pointer", WebkitTapHighlightColor: "transparent" } })
           : React.createElement("video", {
               key: recordedURL,
                ref: editVideoRef, 'data-reel-editor-video': true, src: recordedURL, poster: editorVideoPoster || undefined, preload: "auto", playsInline: true, autoPlay: true, muted: true, loop: true,
@@ -26230,9 +26230,9 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
                onError: () => { restoreEditorVideoPlayback(true); },
               onTimeUpdate: e => { if (editTool === "Trim") return; const v = e.target; if (!trimShouldBePausedRef.current && trimEnd > 0 && v.currentTime >= trimEnd) finishPreviewPlayback(v); },
               onClick: togglePreviewPlay,
-               style: { width: "100%", height: "auto", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform", opacity: editorVideoPoster && !editorVideoFrameReady ? 0 : 1 }
+               style: { width: "100%", height: "100%", maxHeight: "none", objectFit: editorVideoObjectFit, objectPosition: "center center", cursor: "pointer", display: "block", WebkitTapHighlightColor: "transparent", outline: "none", background: "#000", transform: "translate3d(0,0,0)", backfaceVisibility: "hidden", willChange: "transform", opacity: editorVideoPoster && !editorVideoFrameReady ? 0 : 1 }
             }),
-            editorVideoPoster && !editorVideoFrameReady && React.createElement("img", { src: editorVideoPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center center", display: "block", zIndex: 2, pointerEvents: "none" } }),
+            editorVideoPoster && !editorVideoFrameReady && React.createElement("img", { src: editorVideoPoster, alt: "", "aria-hidden": true, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: editorVideoObjectFit, objectPosition: "center center", display: "block", zIndex: 2, pointerEvents: "none" } }),
             !isPhotoReel && !editorVideoFrameReady && React.createElement("div", {
               "data-reel-editor-loading": true,
               style: { position: "absolute", inset: 0, zIndex: 3, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }
@@ -26842,8 +26842,8 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
     reviewing
       ? (isPhotoReel
           ? React.createElement("img", { key: photoDataUrl || recordedURL, ref: reviewImgRef, src: photoDataUrl || recordedURL, onError: e => { if (photoDataUrl && e.currentTarget.src !== photoDataUrl) e.currentTarget.src = photoDataUrl; }, style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", background: "#000" } })
-          : React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: "filter" } },
-              reviewFallbackPoster && !reviewVideoReady && React.createElement("img", { key: "review-poster-" + recordedURL, src: reviewFallbackPoster, alt: "", style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", zIndex: 0, pointerEvents: "none" } }),
+          : React.createElement("div", { style: { position: "absolute", top: 0, left: 0, right: 0, bottom: "clamp(106px, 14.3vh, 130px)", display: "flex", alignItems: "flex-start", justifyContent: "center", overflow: "hidden", borderRadius: "0 0 22px 22px", filter: videoFilter, background: "#000", willChange: "filter" } },
+              reviewFallbackPoster && !reviewVideoReady && React.createElement("img", { key: "review-poster-" + recordedURL, src: reviewFallbackPoster, alt: "", style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", zIndex: 0, pointerEvents: "none" } }),
               !cropApplying && React.createElement("video", { ref: reviewVideoRef, key: recordedURL, src: recordedURL, poster: reviewFallbackPoster || undefined, preload: "auto", autoPlay: false, muted: true, loop: true, playsInline: true, disableRemotePlayback: true,
                 onClick: togglePreviewPlay,
                  onLoadedData: () => setReviewVideoReady(true),
@@ -26868,7 +26868,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
                     }, 300);
                   }
                 },
-                style: { position: "relative", width: "100%", height: "auto", maxWidth: "100%", maxHeight: "100%", objectFit: "contain", objectPosition: "center", cursor: "pointer", WebkitTapHighlightColor: "transparent", background: "transparent", opacity: reviewVideoReady ? 1 : 0, transition: "none", transform: "translateZ(0)", willChange: "transform", zIndex: 1 }
+                style: { position: "relative", width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", cursor: "pointer", WebkitTapHighlightColor: "transparent", background: "transparent", opacity: reviewVideoReady ? 1 : 0, transition: "none", transform: "translateZ(0)", willChange: "transform", zIndex: 1 }
                }),
               !cropApplying && reviewVideoReady && !previewPlaying && React.createElement("div", {
                 style: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 100, height: 100, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none", zIndex: 12 }
