@@ -28157,7 +28157,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
       lastTapRef.current = now;
     }
   }
-  var reelOverlayTextStyle = { color: "#fff", fontFamily: "-apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif", fontWeight: 700, letterSpacing: 0.25, lineHeight: 1.15, WebkitTextStroke: "1px #000", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(0,0,0,0.7)" };
+  var reelOverlayTextStyle = { color: "#fff", fontFamily: "Arial, Helvetica, sans-serif", fontStyle: "normal", fontStretch: "normal", fontWeight: 700, letterSpacing: 0.25, lineHeight: 1.15, WebkitTextStroke: "1px #000", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(0,0,0,0.7)" };
   return React.createElement(React.Fragment, null,
     React.createElement("div", { ref: itemRef, style: { height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden", flexShrink: 0, background: "#000", boxSizing: "border-box" } },
       React.createElement(ReelVideoPlayer, { reel: reel, onTap: handleVideoTap, paused: !isActive || showUpload || showCamera || !!showSearch, onNatDims: function(w, h) { setMediaAR(h > 0 ? w / h : null); } }),
