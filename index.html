@@ -6764,8 +6764,7 @@ function BentoPostCard({
             try { await api(`/posts/${post.id}/not-interested`, "POST", null, token); } catch(_) {}
             onNotInterested && onNotInterested(post.id);
           }},
-        { label: "Mention user", icon: menuIcons.mention, onClick: handleMentionClick },
-        { label: "Tag in new post", icon: menuIcons.tag, onClick: () => { onTagInPost && onTagInPost(post.user_handle); } },
+        { label: "Mention/tag in new post", icon: menuIcons.tag, onClick: () => { onTagInPost && onTagInPost(post.user_handle); } },
         { label: isMuted ? "Unmute user" : "Mute user", icon: isMuted ? menuIcons.unmute : menuIcons.mute, onClick: async () => {
             try {
               if (isMuted) {
@@ -28139,12 +28138,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
             try { await api("/reels/" + reel.id + "/not-interested", "POST", null, token); } catch(_) {}
             onNotInterested && onNotInterested(reel.id);
           }},
-        { label: "Mention user", icon: rMI.mention, onClick: function() {
-            setShowMenu(false);
-            if (onMention) onMention(reel.id, reel.user_handle);
-            else onOpenComments(reel.id);
-          }},
-        { label: "Tag in new post", icon: rMI.tag, onClick: function() {
+        { label: "Mention/tag in new post", icon: rMI.tag, onClick: function() {
             setShowMenu(false);
             onOpenCompose && onOpenCompose("@" + (reel.user_handle || "").replace(/^@/, "") + " ");
           }},
