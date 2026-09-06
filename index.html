@@ -3657,6 +3657,7 @@ function PostApp() {
   const [loginStatus, setLoginStatus] = useState("");
   const [loginKey, setLoginKey] = useState(0);
   const [joinWorldOpen, setJoinWorldOpen] = useState(false);
+  const [reelComposeText, setReelComposeText] = useState(null);
   const [worldLiveCount, setWorldLiveCount] = useState(0);
   const prevUnreadRef = React.useRef(0);
   // Stores which tab to open when screen becomes "app" (set by push notification click)
@@ -4222,7 +4223,9 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
     onViewProfile: onViewProfile,
     worldLiveCount: worldLiveCount,
     onOpenJoinWorld: () => setJoinWorldOpen(true),
-    onOpenReel: () => setTab("reels")
+    onOpenReel: () => setTab("reels"),
+    reelComposeText: reelComposeText,
+    onReelComposeHandled: () => setReelComposeText(null)
   }), tab === "discover" && /*#__PURE__*/React.createElement(DiscoverTab, {
     token: token,
     user: user,
@@ -4296,7 +4299,7 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
         } else { setActiveCall(null); showToast("Could not start call"); }
       } catch(e) { setActiveCall(null); showToast("Call failed: " + (e.message || "")); }
     }
-  }), tab === "reels" && /*#__PURE__*/React.createElement(ReelsTab, { token, user, showToast, onViewProfile, onBack: () => setTab("home"), setTab: setTab }), tab === "profile" && /*#__PURE__*/React.createElement(ProfileTab, {
+  }), tab === "reels" && /*#__PURE__*/React.createElement(ReelsTab, { token, user, showToast, onViewProfile, onBack: () => setTab("home"), setTab: setTab, onOpenCompose: text => { setReelComposeText(text); setTab("home"); } }), tab === "profile" && /*#__PURE__*/React.createElement(ProfileTab, {
     token: token,
     user: user,
     setUser: setUser,
@@ -5403,7 +5406,9 @@ function HomeTab({
   onViewProfile,
   worldLiveCount,
   onOpenJoinWorld,
-  onOpenReel
+  onOpenReel,
+  reelComposeText,
+  onReelComposeHandled
 }) {
   // Feed state
   const [posts, setPosts] = useState([]);
@@ -5411,6 +5416,12 @@ function HomeTab({
   const [loadError, setLoadError] = useState(null);
   const [showCompose, setShowCompose] = useState(false);
   const [composeInitialText, setComposeInitialText] = useState("");
+  React.useEffect(() => {
+    if (reelComposeText == null) return;
+    setComposeInitialText(reelComposeText);
+    setShowCompose(true);
+    onReelComposeHandled && onReelComposeHandled();
+  }, [reelComposeText, onReelComposeHandled]);
   const [followingIds, setFollowingIds] = useState(new Set());
   const [pendingFollowIds, setPendingFollowIds] = useState(new Set());
   const [newPostsQueue, setNewPostsQueue] = useState([]);
@@ -6753,6 +6764,8 @@ function BentoPostCard({
             try { await api(`/posts/${post.id}/not-interested`, "POST", null, token); } catch(_) {}
             onNotInterested && onNotInterested(post.id);
           }},
+        { label: "Mention user", icon: menuIcons.mention, onClick: handleMentionClick },
+        { label: "Tag in new post", icon: menuIcons.tag, onClick: () => { onTagInPost && onTagInPost(post.user_handle); } },
         { label: isMuted ? "Unmute user" : "Mute user", icon: isMuted ? menuIcons.unmute : menuIcons.mute, onClick: async () => {
             try {
               if (isMuted) {
@@ -27976,7 +27989,7 @@ function ReelMentionSheet({ reel, token, user, showToast, onClose, onMentioned }
 }
 
 // ── ReelItem — one full-screen reel card ─────────────────────────────────────
-function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLike, onSave, onShare, onFollow, onOpenComments, onDelete, fmtCount, showUpload, showCamera, showSearch, onNotInterested, onView }) {
+function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLike, onSave, onShare, onFollow, onOpenComments, onDelete, fmtCount, showUpload, showCamera, showSearch, onNotInterested, onMention, onOpenCompose, onView }) {
   var [showHeart, setShowHeart] = React.useState(false);
   var [mediaAR, setMediaAR] = React.useState(null);
   var itemRef = React.useRef(null);
@@ -28113,6 +28126,8 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
     block:  _ic(React.createElement("path",{d:"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9A7.902 7.902 0 014 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1A7.902 7.902 0 0120 12c0 4.42-3.58 8-8 8z"})),
     unblk:  _ic(React.createElement("path",{d:"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"})),
     report: _ic(React.createElement("path",{d:"M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"})),
+    mention: _ic(React.createElement("path",{d:"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10h5v-2h-5c-4.34 0-8-3.66-8-8s3.66-8 8-8 8 3.66 8 8v1.43c0 .79-.71 1.57-1.5 1.57s-1.5-.78-1.5-1.57V12c0-2.76-2.24-5-5-5s-5 2.24-5 5 2.24 5 5 5c1.38 0 2.64-.56 3.54-1.47.65.89 1.77 1.47 2.96 1.47 1.97 0 3.5-1.6 3.5-3.57V12c0-5.52-4.48-10-10-10zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"})),
+    tag: _ic(React.createElement("path",{d:"M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.23 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"})),
     trash:  React.createElement("svg",{width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:2.3,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("line",{x1:9,y1:4,x2:15,y2:4}),React.createElement("line",{x1:5,y1:7,x2:19,y2:7}),React.createElement("path",{d:"M7 7v11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7"})),
   };
 
@@ -28123,6 +28138,15 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
         { label: "Not interested", icon: rMI.notint, onClick: async function() {
             try { await api("/reels/" + reel.id + "/not-interested", "POST", null, token); } catch(_) {}
             onNotInterested && onNotInterested(reel.id);
+          }},
+        { label: "Mention user", icon: rMI.mention, onClick: function() {
+            setShowMenu(false);
+            if (onMention) onMention(reel.id, reel.user_handle);
+            else onOpenComments(reel.id);
+          }},
+        { label: "Tag in new post", icon: rMI.tag, onClick: function() {
+            setShowMenu(false);
+            onOpenCompose && onOpenCompose("@" + (reel.user_handle || "").replace(/^@/, "") + " ");
           }},
         { label: isMuted ? "Unmute user" : "Mute user", icon: isMuted ? rMI.unmute : rMI.mute, onClick: async function() {
             try {
@@ -28402,7 +28426,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   );
 }
 // ── ReelsTab — TikTok-style smooth vertical scroll ───────────────────────────
-function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
+function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpenCompose }) {
   // Reels stays quiet after successful actions. Keep only genuine failures
   // visible so users are not interrupted by transient success/instruction toasts.
   function reelToast(message, color) {
@@ -28818,6 +28842,10 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
         .catch(function() {});
     }, 5000);
   }
+  function mentionReelUser(rid, handle) {
+    openComments(rid);
+    setCommentText("@" + (handle || "").replace(/^@/, "") + " ");
+  }
   function postComment() {
     if ((!commentText.trim() && !commentGifUrl) || !activeReelId) return;
     var body = {};
@@ -28994,6 +29022,8 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
           showCamera: showCamera,
           showSearch: showSearch,
           onNotInterested: function(id) { setReels(function(prev) { return prev.filter(function(r) { return r.id !== id; }); }); },
+          onMention: mentionReelUser,
+          onOpenCompose: onOpenCompose,
           onView: function(rid) { setReels(function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, { view_count: (r.view_count || 0) + 1 }) : r; }); }); }
         });
       }),
@@ -29321,7 +29351,9 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
             onNotInterested: function(id) {
               var upd = function(prev) { return prev.filter(function(r) { return r.id !== id; }); };
               if (gridViewerSource === "discover") setDiscoverReels(upd); else setSearchReels(upd);
-            }
+            },
+            onMention: mentionReelUser,
+            onOpenCompose: onOpenCompose
           });
         })),
       React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, zIndex: 491, height: 56, background: "linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, transparent 100%)", display: "flex", alignItems: "center", pointerEvents: "none" } }),
