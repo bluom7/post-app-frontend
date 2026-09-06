@@ -27954,7 +27954,7 @@ function ReelMentionSheet({ reel, token, user, showToast, onClose, onMentioned }
 }
 
 // ── ReelItem — one full-screen reel card ─────────────────────────────────────
-function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLike, onSave, onFollow, onOpenComments, onDelete, fmtCount, showUpload, showCamera, showSearch, onNotInterested, onView }) {
+function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLike, onSave, onShare, onFollow, onOpenComments, onDelete, fmtCount, showUpload, showCamera, showSearch, onNotInterested, onView }) {
   var [showHeart, setShowHeart] = React.useState(false);
   var [mediaAR, setMediaAR] = React.useState(null);
   var itemRef = React.useRef(null);
@@ -28118,11 +28118,14 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
     return 16;
   }
   var userInfoBottom = getUserInfoBottom();
+  function markShared() {
+    onShare && onShare(reel.id);
+  }
   function shareReel() {
     var shareUrl = window.location.href;
     var shareData = { title: reel.user_name || reel.user_handle || "Post App reel", text: reel.caption || "", url: shareUrl };
     if (navigator.share) {
-      navigator.share(shareData).then(function() { showToast && showToast("Shared", "#22C55E"); }).catch(function(err) {
+      navigator.share(shareData).then(function() { markShared(); showToast && showToast("Shared", "#22C55E"); }).catch(function(err) {
         if (err && err.name === "AbortError") return;
         copyReelLink(shareUrl);
       });
@@ -28132,7 +28135,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   }
   function copyReelLink(url) {
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(url).then(function() { showToast && showToast("Link copied", "#22C55E"); }).catch(function() { fallbackCopyReelLink(url); });
+      navigator.clipboard.writeText(url).then(function() { markShared(); showToast && showToast("Link copied", "#22C55E"); }).catch(function() { fallbackCopyReelLink(url); });
     } else {
       fallbackCopyReelLink(url);
     }
@@ -28142,7 +28145,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
     input.value = url; input.setAttribute("readonly", "");
     input.style.position = "fixed"; input.style.opacity = "0";
     document.body.appendChild(input); input.select();
-    try { document.execCommand("copy"); showToast && showToast("Link copied", "#22C55E"); }
+    try { document.execCommand("copy"); markShared(); showToast && showToast("Link copied", "#22C55E"); }
     catch (_) { showToast && showToast("Copy link unavailable", "#FF3B5C"); }
     document.body.removeChild(input);
   }
@@ -28196,12 +28199,12 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
             React.createElement("svg", { width: 29, height: 29, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" },
               React.createElement("path", { d: "M21.05 2.85 15.25 20.8q-.2.7-.6 0l-3.7-7.05q-.1-.2-.35-.3L3.15 9.8q-.8-.4-.05-.9l17.55-6.35q.7-.25.4.3Z" }),
               React.createElement("path", { d: "M10.7 13.5 16 8.2" }))),
-          React.createElement("span", { style: Object.assign({}, reelOverlayTextStyle, { fontSize: 15 }) }, "")),
+          React.createElement("span", { style: Object.assign({}, reelOverlayTextStyle, { fontSize: 15 }) }, fmtCount(reel.share_count || 0))),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4 } },
           React.createElement("button", { onClick: function() { onSave(reel.id); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4 } },
             React.createElement("svg", { width: 29, height: 29, viewBox: "0 0 24 24", fill: reel.is_saved ? "#FFD600" : "none", stroke: reel.is_saved ? "#FFD600" : "#fff", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round" },
               React.createElement("path", { d: "M4 3h16v19l-8-5-8 5V3z" }))),
-          React.createElement("span", { style: Object.assign({}, reelOverlayTextStyle, { fontSize: 15 }) }, reel.is_saved ? "Saved" : "Save")),
+          React.createElement("span", { style: Object.assign({}, reelOverlayTextStyle, { fontSize: 15 }) }, fmtCount(reel.save_count || 0))),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 2 } },
           React.createElement("button", { onClick: function(e) { e.stopPropagation(); setShowMenu(true); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", flexDirection: "column", gap: 4, alignItems: "center", justifyContent: "center", width: 29, height: 30 } },
              React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 3 } },
@@ -28458,9 +28461,30 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
     api("/reels/" + rid + "/like", "POST", {}, token).catch(function() {});
   }
   function gvSaveReel(rid) {
-    var upd = function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, { is_saved: !r.is_saved }) : r; }); };
+    var upd = function(prev) { return prev.map(function(r) {
+      if (r.id !== rid) return r;
+      var nextSaved = !r.is_saved;
+      var currentCount = Number(r.save_count) || 0;
+      return Object.assign({}, r, { is_saved: nextSaved, save_count: Math.max(0, currentCount + (nextSaved ? 1 : -1)) });
+    }); };
     if (gridViewerSource === "discover") setDiscoverReels(upd); else setSearchReels(upd);
-    api("/reels/" + rid + "/save", "POST", {}, token).catch(function() {});
+    api("/reels/" + rid + "/save", "POST", {}, token).then(function(result) {
+      if (!result) return;
+      var reconcile = function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, {
+        is_saved: typeof result.saved === "boolean" ? result.saved : r.is_saved,
+        save_count: typeof result.save_count === "number" ? result.save_count : r.save_count
+      }) : r; }); };
+      if (gridViewerSource === "discover") setDiscoverReels(reconcile); else setSearchReels(reconcile);
+    }).catch(function() {});
+  }
+  function gvShareReel(rid) {
+    var upd = function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, { share_count: (Number(r.share_count) || 0) + 1 }) : r; }); };
+    if (gridViewerSource === "discover") setDiscoverReels(upd); else setSearchReels(upd);
+    api("/reels/" + rid + "/share", "POST", {}, token).then(function(result) {
+      if (!result || typeof result.share_count !== "number") return;
+      var reconcile = function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, { share_count: result.share_count }) : r; }); };
+      if (gridViewerSource === "discover") setDiscoverReels(reconcile); else setSearchReels(reconcile);
+    }).catch(function() {});
   }
   function gvFollowUser(userId) {
     var source = gridViewerSource === "discover" ? discoverReels : searchReels;
@@ -28623,20 +28647,48 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
     var seq = nextReelAction(rid);
     setReels(function(prev) { return prev.map(function(r) {
       if (r.id !== rid) return r;
-      previous = { is_saved: !!r.is_saved };
-      return Object.assign({}, r, { is_saved: !r.is_saved });
+      var wasSaved = !!r.is_saved;
+      var currentCount = Number(r.save_count) || 0;
+      var nextSaved = !wasSaved;
+      previous = { is_saved: wasSaved, save_count: currentCount };
+      return Object.assign({}, r, { is_saved: nextSaved, save_count: Math.max(0, currentCount + (nextSaved ? 1 : -1)) });
     }); });
     api("/reels/" + rid + "/save", "POST", {}, token)
       .then(function(result) {
         if (!isLatestReelAction(rid, seq) || !result) return;
         setReels(function(prev) { return prev.map(function(r) {
-          return r.id === rid && typeof result.saved === "boolean" ? Object.assign({}, r, { is_saved: result.saved }) : r;
+          return r.id === rid ? Object.assign({}, r, {
+            is_saved: typeof result.saved === "boolean" ? result.saved : r.is_saved,
+            save_count: typeof result.save_count === "number" ? result.save_count : r.save_count
+          }) : r;
         }); });
       })
       .catch(function() {
         if (!previous || !isLatestReelAction(rid, seq)) return;
         setReels(function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, previous) : r; }); });
         reelToast && reelToast("Couldn't update saved reels", "#FF3B5C");
+      });
+  }
+  function shareReelAction(rid) {
+    var previous = null;
+    var seq = nextReelAction("share:" + rid);
+    setReels(function(prev) { return prev.map(function(r) {
+      if (r.id !== rid) return r;
+      var currentCount = Number(r.share_count) || 0;
+      previous = { share_count: currentCount };
+      return Object.assign({}, r, { share_count: currentCount + 1 });
+    }); });
+    api("/reels/" + rid + "/share", "POST", {}, token)
+      .then(function(result) {
+        if (!isLatestReelAction("share:" + rid, seq) || !result) return;
+        setReels(function(prev) { return prev.map(function(r) {
+          return r.id === rid && typeof result.share_count === "number" ? Object.assign({}, r, { share_count: result.share_count }) : r;
+        }); });
+      })
+      .catch(function() {
+        if (!previous || !isLatestReelAction("share:" + rid, seq)) return;
+        setReels(function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, previous) : r; }); });
+        reelToast && reelToast("Couldn't update share count", "#FF3B5C");
       });
   }
   function followUser(userId) {
@@ -28857,6 +28909,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
           onViewProfile: onViewProfile,
           onLike: likeReel,
           onSave: saveReel,
+          onShare: shareReelAction,
           onFollow: followUser,
           onOpenComments: openComments,
           onDelete: deleteReel,
@@ -29182,7 +29235,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab }) {
             key: reel.id, reel: reel, isActive: idx === gridViewerActiveIdx,
             user: user, token: token, showToast: reelToast,
             onViewProfile: function(uid) { setGridViewerOpen(false); onViewProfile && onViewProfile(uid); },
-            onLike: gvLikeReel, onSave: gvSaveReel, onFollow: gvFollowUser,
+            onLike: gvLikeReel, onSave: gvSaveReel, onShare: gvShareReel, onFollow: gvFollowUser,
             onOpenComments: openComments, onDelete: gvDeleteReel, fmtCount: fmtCount,
             showUpload: false, showCamera: false,
             onView: function(rid) {
