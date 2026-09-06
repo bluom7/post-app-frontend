@@ -6643,7 +6643,6 @@ function BentoPostCard({
     onShare && onShare(post.id);
   };
   const handleMentionClick = () => {
-    setShowMenu(false);
     openCommentSheet();
     setCommentText("@" + (post.user_handle || "").replace(/^@/, "") + " ");
     onMention && onMention(post.id, post.user_handle);
@@ -6747,17 +6746,15 @@ function BentoPostCard({
       React.createElement("path",{d:"M7 7v11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7"})),
   };
   const menuItems = isOwn
-    ? [{ label: post.is_reel ? "Delete reel" : "Delete post", icon: menuIcons.trash, danger: true, onClick: () => { setShowMenu(false); onDelete(post.id); } }]
+    ? [{ label: post.is_reel ? "Delete reel" : "Delete post", icon: menuIcons.trash, danger: true, onClick: () => { onDelete(post.id); } }]
     : [
         { label: "Not interested", icon: menuIcons.notint, onClick: async () => {
-            setShowMenu(false);
             try { await api(`/posts/${post.id}/not-interested`, "POST", null, token); } catch(_) {}
             onNotInterested && onNotInterested(post.id);
           }},
         { label: "Mention user", icon: menuIcons.mention, onClick: handleMentionClick },
-        { label: "Tag in new post", icon: menuIcons.tag, onClick: () => { setShowMenu(false); onTagInPost && onTagInPost(post.user_handle); } },
+        { label: "Tag in new post", icon: menuIcons.tag, onClick: () => { onTagInPost && onTagInPost(post.user_handle); } },
         { label: isMuted ? "Unmute user" : "Mute user", icon: isMuted ? menuIcons.unmute : menuIcons.mute, onClick: async () => {
-            setShowMenu(false);
             try {
               if (isMuted) {
                 await api(`/users/${post.user_id}/unmute`, "POST", null, token);
@@ -6769,7 +6766,6 @@ function BentoPostCard({
             } catch(e) { showToast && showToast(e.message, COLORS.red); }
           }},
         { label: isBlocked ? "Unblock user" : "Block user", icon: isBlocked ? menuIcons.unblock : menuIcons.block, onClick: async () => {
-            setShowMenu(false);
             try {
               if (isBlocked) {
                 await api(`/users/${post.user_id}/unblock`, "POST", null, token);
@@ -6780,7 +6776,7 @@ function BentoPostCard({
               }
             } catch(e) { showToast && showToast(e.message, COLORS.red); }
           }},
-        { label: "Report", icon: menuIcons.report, danger: true, onClick: () => { setShowMenu(false); setShowReportModal(true); } }
+        { label: "Report", icon: menuIcons.report, danger: true, onClick: () => { setShowReportModal(true); } }
       ];
 
   const S = { btn: { background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 10, transition: "opacity .15s", fontSize: 13 } };
@@ -28103,28 +28099,25 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
 
   // ── Menu items (different for own vs others) ─────────────────────────────
   var reelMenuItems = isOwn
-    ? [{ label: "Delete reel", icon: rMI.trash, danger: true, onClick: function() { setShowMenu(false); onDelete && onDelete(reel.id); } }]
+    ? [{ label: "Delete reel", icon: rMI.trash, danger: true, onClick: function() { onDelete && onDelete(reel.id); } }]
     : [
         { label: "Not interested", icon: rMI.notint, onClick: async function() {
-            setShowMenu(false);
             try { await api("/reels/" + reel.id + "/not-interested", "POST", null, token); } catch(_) {}
             onNotInterested && onNotInterested(reel.id);
           }},
         { label: isMuted ? "Unmute user" : "Mute user", icon: isMuted ? rMI.unmute : rMI.mute, onClick: async function() {
-            setShowMenu(false);
             try {
               if (isMuted) { await api("/users/" + reel.user_id + "/unmute", "POST", null, token); setIsMuted(false); showToast && showToast("User unmuted", "#999"); }
               else { await api("/users/" + reel.user_id + "/mute", "POST", null, token); setIsMuted(true); showToast && showToast("User muted", "#999"); }
             } catch(e) { showToast && showToast(e.message || "Failed", "#FF3B5C"); }
           }},
         { label: isBlocked ? "Unblock user" : "Block user", icon: isBlocked ? rMI.unblk : rMI.block, onClick: async function() {
-            setShowMenu(false);
             try {
               if (isBlocked) { await api("/users/" + reel.user_id + "/unblock", "POST", null, token); setIsBlocked(false); showToast && showToast("User unblocked", "#999"); }
               else { await api("/users/" + reel.user_id + "/block", "POST", null, token); setIsBlocked(true); showToast && showToast("User blocked", "#999"); }
             } catch(e) { showToast && showToast(e.message || "Failed", "#FF3B5C"); }
           }},
-        { label: "Report", icon: rMI.report, danger: true, onClick: function() { setShowMenu(false); setShowReportModal(true); } }
+        { label: "Report", icon: rMI.report, danger: true, onClick: function() { setShowReportModal(true); } }
       ];
 
   function getUserInfoBottom() {
