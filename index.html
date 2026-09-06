@@ -28313,7 +28313,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
         reelMenuItems.map(function(item, i) {
           return React.createElement("button", {
             key: i, onClick: item.onClick,
-            style: { display: "flex", alignItems: "center", gap: 16, width: "100%", padding: "15px 22px", background: "none", border: "none", borderTop: "none", textAlign: "left", cursor: "pointer", fontSize: 17, fontWeight: 600, color: item.danger ? "#FF3B5C" : "var(--text)" },
+            style: { display: "flex", alignItems: "center", gap: 16, width: "100%", padding: "15px 22px", background: "none", border: "none", borderTop: "none", textAlign: "left", cursor: "pointer", fontSize: 18, fontWeight: 700, color: item.danger ? "#FF3B5C" : "var(--text)" },
             onTouchStart: function(e) { e.currentTarget.style.opacity = "0.6"; },
             onTouchEnd: function(e) { e.currentTarget.style.opacity = "1"; }
           },
