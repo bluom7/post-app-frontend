@@ -28158,7 +28158,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
           React.createElement("button", { onClick: function() { onLike(reel.id); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4 } },
             React.createElement("svg", { width: 29, height: 29, viewBox: "0 0 24 24", fill: reel.is_liked ? "#FF1744" : "none", stroke: reel.is_liked ? "#FF1744" : "#fff", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" },
               React.createElement("path", { d: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" }))),
-          React.createElement("span", { style: { color: "#fff", fontSize: 12, fontWeight: 600, letterSpacing: 0.1 } }, Number(reel.like_count) > 0 ? fmtCount(reel.like_count) : "Likes")),
+          React.createElement("span", { style: { color: "#fff", fontSize: Number(reel.like_count) > 0 ? 12 : 14, fontWeight: 600, letterSpacing: 0.1 } }, Number(reel.like_count) > 0 ? fmtCount(reel.like_count) : "Likes")),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 1 } },
           React.createElement("button", { onClick: function() { onOpenComments(reel.id); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4 } },
             React.createElement("svg", { width: 29, height: 29, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" },
