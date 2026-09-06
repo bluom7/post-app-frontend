@@ -6753,8 +6753,6 @@ function BentoPostCard({
             try { await api(`/posts/${post.id}/not-interested`, "POST", null, token); } catch(_) {}
             onNotInterested && onNotInterested(post.id);
           }},
-        { label: "Mention user", icon: menuIcons.mention, onClick: handleMentionClick },
-        { label: "Tag in new post", icon: menuIcons.tag, onClick: () => { onTagInPost && onTagInPost(post.user_handle); } },
         { label: isMuted ? "Unmute user" : "Mute user", icon: isMuted ? menuIcons.unmute : menuIcons.mute, onClick: async () => {
             try {
               if (isMuted) {
@@ -6779,7 +6777,6 @@ function BentoPostCard({
           }},
         { label: "Report", icon: menuIcons.report, danger: true, onClick: () => { setShowReportModal(true); } }
       ];
-
   const S = { btn: { background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", borderRadius: 10, transition: "opacity .15s", fontSize: 13 } };
 
   const reelVideoTopOverlay = post.video_url ? React.createElement("div", {
@@ -6979,17 +6976,29 @@ function BentoPostCard({
       /*#__PURE__*/React.createElement("div", { style: { marginTop: 4, color: "var(--muted)", fontSize: 13, fontWeight: 700, lineHeight: 1.4 } }, captionTimeAgo(post.created_at), " • See translation")
     ),
   ),
-    showMenu && React.createElement("div", { onClick: () => setShowMenu(false), style: { position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "flex-end" } },
+    showMenu && React.createElement("div", { onClick: () => setShowMenu(false), style: { position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-end" } },
       React.createElement("style", null, "@keyframes _bsUp{from{transform:translateY(100%)}to{transform:translateY(0)}}"),
-      React.createElement("div", { onClick: e => e.stopPropagation(), style: { width: "100%", maxWidth: 540, margin: "0 auto", background: "var(--card-bg)", borderRadius: "22px 22px 0 0", paddingBottom: 32, animation: "_bsUp 0.26s cubic-bezier(0.32,0.72,0,1)", willChange: "transform", overflowY: "auto", maxHeight: "70vh" } },
-        React.createElement("div", { style: { width: 36, height: 4, borderRadius: 3, background: "var(--border)", margin: "12px auto 8px", flexShrink: 0 } }),
+      React.createElement("div", { onClick: e => e.stopPropagation(), style: { width: "100%", maxWidth: 540, margin: "0 auto", background: "var(--card-bg)", borderRadius: "22px 22px 0 0", paddingBottom: 32, animation: "_bsUp 0.26s cubic-bezier(0.32,0.72,0,1)", overflowY: "auto", maxHeight: "70vh" } },
+        React.createElement("div", { style: { width: 36, height: 4, borderRadius: 3, background: "var(--border)", margin: "12px auto 8px" } }),
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "8px 22px 14px" } },
+          React.createElement("div", { style: { width: 44, height: 44, borderRadius: "50%", background: post.avatar_bg || "#FFD600", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", fontWeight: 800, fontSize: 17, color: "#111" } },
+            postAvatarPhoto
+              ? React.createElement("img", { src: postAvatarPhoto, alt: "", style: { width: "100%", height: "100%", objectFit: "cover" } })
+              : ((post.avatar_letter || (post.user_name || post.user_handle || "?").charAt(0) || "?").toString().charAt(0).toUpperCase())
+          ),
+          React.createElement("div", { style: { minWidth: 0, flex: 1 } },
+            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, minWidth: 0 } },
+              React.createElement("span", { style: { color: "var(--text)", fontWeight: 800, fontSize: 16, lineHeight: "20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, post.user_name || post.user_handle || "User"),
+              post.is_badge_verified && React.createElement(VerifiedBadge, { size: 16 })
+            ),
+            post.user_handle && React.createElement("div", { style: { color: "var(--muted)", fontSize: 13, lineHeight: "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + post.user_handle.replace(/^@/, ""))
+          )
+        ),
         menuItems.map((item, i) => React.createElement("button", {
           key: i, onClick: item.onClick,
-          style: { display: "flex", alignItems: "center", gap: 16, width: "100%", padding: "15px 22px", background: "none", border: "none", borderTop: i > 0 ? "1px solid var(--border)" : "none", textAlign: "left", cursor: "pointer", fontSize: 17, fontWeight: 600, color: item.danger ? "#FF3B5C" : "var(--text)", transition: "opacity .15s" },
-          onMouseDown: e => { e.currentTarget.style.opacity = "0.6"; },
-          onMouseUp:   e => { e.currentTarget.style.opacity = "1"; },
+          style: { display: "flex", alignItems: "center", gap: 16, width: "100%", padding: "15px 22px", background: "none", border: "none", borderTop: "none", textAlign: "left", cursor: "pointer", fontSize: 18, fontWeight: 700, color: item.danger ? "#FF3B5C" : "var(--text)" },
           onTouchStart: e => { e.currentTarget.style.opacity = "0.6"; },
-          onTouchEnd:   e => { e.currentTarget.style.opacity = "1"; }
+          onTouchEnd: e => { e.currentTarget.style.opacity = "1"; }
         },
           React.createElement("span", { style: { width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: item.danger ? "#FF3B5C" : "var(--text)" } }, item.icon),
           item.label
