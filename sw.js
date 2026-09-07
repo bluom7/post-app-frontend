@@ -107,16 +107,4 @@ self.addEventListener('notificationclick', function(event) {
 });
 
 self.addEventListener('install', function(event) { self.skipWaiting(); });
-self.addEventListener('activate', function(event) {
-    event.waitUntil((async function() {
-      try {
-        var cacheKeys = await caches.keys();
-        await Promise.all(cacheKeys.map(function(key) { return caches.delete(key); }));
-      } catch (_) {}
-      await clients.claim();
-      var windows = await clients.matchAll({ type: 'window', includeUncontrolled: true });
-      await Promise.all(windows.map(function(client) {
-        try { return client.navigate(client.url); } catch (_) { return Promise.resolve(); }
-      }));
-    })());
-    });
+self.addEventListener('activate', function(event) { event.waitUntil(clients.claim()); });
