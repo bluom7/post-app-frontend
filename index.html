@@ -4174,8 +4174,17 @@ function PostApp() {
 var _sc="var(--text)";
 var _fc="none";
 var _sw="2";
-var home=React.createElement("img",{src:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAQAAAADQ4RFAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAAAqo0jMgAAAAd0SU1FB+oJBwU0D8aS5AEAAAIuSURBVDjLhdJLbM1bFMfxz/+cU8ernqkIGoM6TYq4hHrcEBEjYkBIiBgwEAaECDe3JiZGFZKGEIYluUTiFcRroFUVV/rQEo/GRIQgxGPU0P7voNu/Pae9uvZkZWd9f7+91l5EBYchNmvx3XfNNsnoG5FIlBblXcZGO2CnWw67rNg2IzWr8KfpxvrgZ099vkups15YHaTS1nvupnaN7umwLdTnIbPVqzc3z3uBJueMNkK1C9J9IVilXa0poXih+SGbZqUIVS7J9EJk7dahygiQtUOrNtsVJQNgv4u9TkxwwlPrgmOJo+ostcK/jhj3qw/7PDIpCJjppjrzguYMV51XluQXlYfCCnfdUA7LNas1OSArPFRtTKJe4rgHlgWs1D/uq6RVjeGhk51abFXU5yMYaq82W6RBsVMa+aQydHJMg2W9/55gkTWaHFQMlvjMK38Z5g9XQifRAIc5bjkjJ6vKSzZ7os5r15NOBsYma9DhjlYbM2q1qLDJG18K9jB/Ud967Z0rWjzNiD32WKVRfZY2MiTod+oOUpGUJqcRZRCJw2x6kIn2yiEl5ZlD3icvSPeMPpPYxwm2UbmTupG2y1rHC9+a0T8manQt5ItN6F+QGgCKw+9EBS/4LeR/phj3h2KDR5QPdcoOCmT9yIdazVIqFieehXmZnPb86d2wQY0aH3UrMVROGl3G65STNtUebep/mUZBq1y1RbrERunyTYTYGLGvUorc9rc3v1m0weI/kKCPcDQh65UAAAAldEVYdGRhdGU6Y3JlYXRlADIwMjYtMDktMDdUMDU6NTI6MTUrMDA6MDCryLmPAAAAJXRFWHRkYXRlOm1vZGlmeQAyMDI2LTA5LTA3VDA1OjUyOjE1KzAwOjAw2pUBMwAAACh0RVh0ZGF0ZTp0aW1lc3RhbXAAMjAyNi0wOS0wN1QwNTo1MjoxNSswMDowMI2AIOwAAAAASUVORK5CYII=",width:26,height:26,style:{width:26,height:26,objectFit:"contain",display:"block"},alt:""});
-var friends=React.createElement("div",{style:{position:"relative",display:"flex",alignItems:"center",justifyContent:"center"}},React.createElement("img",{src:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABoAAAAaCAQAAAADQ4RFAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAAAqo0jMgAAAAd0SU1FB+oJBwYDOgJgPk8AAAKPSURBVDjLndNfiFVVFMfxzzn33HPODOPkzJRp0UyNRaGRRUOUgaRBQYJkL4kUSVYjRRCIgiBBCCJBRA9SFEQPRQTlRC85lYQwRIoV03WoEP8U1UyaIqnjn3vvOT7cM9Mduxa01tNee3/X+u219uZ/WCBBIJfpttZj5skcsN2QCwKQqSMQChtQSVRAXbZZbsgbhrV5UmSfDLk+KzxormMmizRSqVRis/2WiEUibdY4ZKWy2EO+UfGlH+20SCyRNKDY9b7zrKhIEWvzlo+0u8k+r5tvttt9aoceiSQsVN+gzciUZqGqL8zXZanQNr84q2KrWy1QN30sVXduRovOiMSu85vjSgKRI86ZK5OHReZxkX5ZE7TQCSf97lrd6qjpkzoqnKoUOmzUWleoytRdcKNHfe6UXTLrXSO2wEb7VRrE1NUX+97b7tRjjvt9Zqc+ZYkNJo3Z5Yg/rRBJpIG0aEVkna1OOqTsZqcMGtZh0BrHjPrL1e6QedWQegPK9HvBUuNGHVXS6zbtPtBludfscEImMs9TVtviXVKxe31tt0dcJRYpS/V6zpgznm4IKq7QbpMx91C20F7v6WvaTiXKBox435wZ0SsNe6dkli3KnveH0tTLQiAwrmJQZs90PDCp0+rQfRZ72cT0mP+2km+96XG9M+Z3QEdolYo9Spf5OJ/ILWmCAucJDRhxtklYs8DQhDF3CeWFZ1JhZLbDLavkCFQdNKBbrYjNssrPkZLzl5HWOHba3YbkxapDzeaohbBLbcKHqkWi075yMFLT+a9Ij59sL+Q1HncYqnhYp1pLr+q3zF6ZaNpDAg94xaiPW3Qw1+MJuWf82jTFXB5ILPOiW/6BBHJ1u73kh0sGn/9nF1rZRRoUxvVSJr0zAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDI2LTA5LTA3VDA2OjAzOjU4KzAwOjAwbQp9BwAAACV0RVh0ZGF0ZTptb2RpZnkAMjAyNi0wOS0wN1QwNjowMzo1OCswMDowMBxXxbsAAAAodEVYdGRhdGU6dGltZXN0YW1wADIwMjYtMDktMDdUMDY6MDM6NTgrMDA6MDBLQuRkAAAAAElFTkSuQmCC",width:26,height:26,style:{width:26,height:26,objectFit:"contain",display:"block"},alt:""}));
+var home=React.createElement("svg",{width:26,height:26,viewBox:"0 0 24 24",fill:"none",stroke:_sc,strokeWidth:_sw,strokeLinecap:"round",strokeLinejoin:"round"},
+  React.createElement("path",{d:"M3 10.5L12 3l9 7.5"}),
+  React.createElement("path",{d:"M5.5 9.5V20h13V9.5"}),
+  React.createElement("path",{d:"M9.5 20v-5.5h5V20"})
+);
+var friends=React.createElement("svg",{width:26,height:26,viewBox:"0 0 24 24",fill:"none",stroke:_sc,strokeWidth:_sw,strokeLinecap:"round",strokeLinejoin:"round"},
+  React.createElement("circle",{cx:"9",cy:"8",r:"3.5"}),
+  React.createElement("path",{d:"M3 20v-1.5a6 6 0 0 1 12 0V20"}),
+  React.createElement("path",{d:"M16 5.5a3.5 3.5 0 0 1 0 6.9"}),
+  React.createElement("path",{d:"M16 14.5a5 5 0 0 1 5 5V20"})
+);
 var discover=React.createElement("svg",{width:26,height:26,viewBox:"0 0 24 24",fill:"none",stroke:"var(--text)",strokeWidth:_sw,strokeLinecap:"round"},
   React.createElement("circle",{cx:"11",cy:"11",r:"8",fill:"none"}),
   React.createElement("line",{x1:"21",y1:"21",x2:"16.65",y2:"16.65"})
