@@ -45,7 +45,7 @@ var LOGIN_LOCATION_BOOTSTRAP = `<script>
 
 self.addEventListener('fetch', function(event) {
   if (event.request.mode !== 'navigate') return;
-  event.respondWith(fetch(event.request).then(async function(response) {
+  event.respondWith(fetch(event.request, {cache: "no-store"}).then(async function(response) {
     var contentType = response.headers.get('content-type') || '';
     if (contentType.indexOf('text/html') === -1) return response;
     var html = await response.text();
