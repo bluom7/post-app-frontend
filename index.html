@@ -7013,9 +7013,9 @@ function BentoPostCard({
               post.is_badge_verified && React.createElement(VerifiedBadge, { size: 16 })
             ),
             post.user_handle && React.createElement("div", { style: { color: "var(--muted)", fontSize: 13, lineHeight: "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + post.user_handle.replace(/^@/, ""))
-          )
+          ),
+          React.createElement("img", { src: AD_ICON_DATA_URL, alt: "AD", style: { width: 30, height: 30, borderRadius: 7, objectFit: "cover", display: "block", flexShrink: 0 } })
         ),
-        React.createElement("img", { src: AD_ICON_DATA_URL, alt: "AD", style: { width: 30, height: 30, borderRadius: 7, objectFit: "cover", display: "block", flexShrink: 0 } }),
         menuItems.map((item, i) => React.createElement("button", {
           key: i, onClick: item.onClick,
           style: { display: "flex", alignItems: "center", gap: 16, width: "100%", padding: "15px 22px", background: "none", border: "none", borderTop: "none", textAlign: "left", cursor: "pointer", fontSize: 18, fontWeight: 700, color: item.danger ? "#FF3B5C" : "var(--text)" },
@@ -28365,9 +28365,9 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
               reel.is_badge_verified && React.createElement(VerifiedBadge, { size: 16 })
             ),
             reel.user_handle && React.createElement("div", { style: { color: "var(--muted)", fontSize: 13, lineHeight: "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + reel.user_handle.replace(/^@/, ""))
-          )
+          ),
+          React.createElement("img", { src: AD_ICON_DATA_URL, alt: "AD", style: { width: 30, height: 30, borderRadius: 7, objectFit: "cover", display: "block", flexShrink: 0 } })
         ),
-        React.createElement("img", { src: AD_ICON_DATA_URL, alt: "AD", style: { width: 30, height: 30, borderRadius: 7, objectFit: "cover", display: "block", flexShrink: 0 } }),
         reelMenuItems.map(function(item, i) {
           return React.createElement("button", {
             key: i, onClick: item.onClick,
