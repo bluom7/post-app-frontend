@@ -4190,7 +4190,7 @@ var reels=React.createElement("svg",{width:26,height:26,viewBox:"0 0 24 24",fill
   React.createElement("path",{d:"M9.5 8.2 C9.5 7.6 10.15 7.25 10.65 7.58 L16.9 11.38 C17.37 11.69 17.37 12.31 16.9 12.62 L10.65 16.42 C10.15 16.75 9.5 16.4 9.5 15.8 Z",fill:"none",stroke:"var(--text)",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"})
 );
 var profile = user
-  ? React.createElement("div",{style:{width:26,height:26,borderRadius:6,overflow:"hidden",border:"1.5px solid "+(a?"#FFD600":"#999"),boxSizing:"border-box",flexShrink:0,background:"#e0e0e0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:900,color:"#333"}},
+  ? React.createElement("div",{style:{width:26,height:26,borderRadius:"50%",overflow:"hidden",border:"none",boxSizing:"border-box",flexShrink:0,background:"#e0e0e0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:900,color:"#333"}},
       user.avatar_photo
         ? React.createElement("img",{src:user.avatar_photo,style:{width:"100%",height:"100%",objectFit:"cover"},alt:""})
         : React.createElement("span",{style:{color:"#333"}},(user.avatar_letter||"?"))
