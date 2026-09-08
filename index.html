@@ -344,7 +344,7 @@ async function setupPushNotifications(tok) {
 }
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
-    navigator.serviceWorker.register('./sw.js?v=home-friends-sync-20260908-1', { updateViaCache: 'none' })
+    navigator.serviceWorker.register('./sw.js?v=home-friends-sync-20260908-2', { updateViaCache: 'none' })
       .then(function(r){ console.log('[SW] OK:', r.scope); })
       .catch(function(e){ console.log('[SW] Fail:', e.message); });
   });
