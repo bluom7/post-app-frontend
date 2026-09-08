@@ -39,6 +39,7 @@ function sendFile(res, filePath, fallbackToIndex = true) {
       res.writeHead(200, {
         'Content-Type': mime[ext] || 'application/octet-stream',
         'X-Content-Type-Options': 'nosniff',
+        ...(filePath === INDEX_FILE || path.basename(filePath) === 'sw.js' ? { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } : {}),
       });
       res.end(data);
       return;
