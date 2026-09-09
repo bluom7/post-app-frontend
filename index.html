@@ -28154,7 +28154,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
             showToast && showToast("Marked as interested", "#1877F2");
           }},
         { label: "Not interested", icon: rMI.notint, onClick: async function() {
-            try { await api("/reels/" + reel.id + "/not-interested", "POST", null, token); } catch(_) {}
+            try { await api("/reels/feedback", "POST", { reel_id: reel.id, action: "not_interested" }, token); } catch(_) {}
             onNotInterested && onNotInterested(reel.id);
           }},
         { label: "Mention/tag in new post", icon: rMI.tag, onClick: function() {
@@ -28448,6 +28448,41 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
     )
   );
 }
+// ── Reels onboarding — stores explicit interests for the ranking model ────────
+function ReelsOnboardingCard({ token, user, onSaved, onSkip }) {
+  var options = (typeof CATEGORIES !== "undefined" && Array.isArray(CATEGORIES) ? CATEGORIES : ["general"]).slice(0, 40);
+  var initial = Array.isArray(user && user.onboarding_categories) ? user.onboarding_categories : [];
+  var [selected, setSelected] = React.useState(initial.map(function(x) { return String(x).toLowerCase(); }));
+  var [saving, setSaving] = React.useState(false);
+  function toggle(value) {
+    var key = String(value).toLowerCase();
+    setSelected(function(prev) {
+      return prev.indexOf(key) >= 0 ? prev.filter(function(item) { return item !== key; }) : (prev.length >= 5 ? prev : prev.concat([key]));
+    });
+  }
+  function save() {
+    if (!selected.length || saving) return;
+    setSaving(true);
+    api("/reels/onboarding", "POST", { categories: selected }, token)
+      .then(function() { onSaved && onSaved(selected); })
+      .catch(function() { setSaving(false); });
+  }
+  return React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 2500, background: "rgba(0,0,0,.48)", display: "flex", alignItems: "center", justifyContent: "center", padding: 18, boxSizing: "border-box" } },
+    React.createElement("div", { style: { width: "100%", maxWidth: 430, maxHeight: "85vh", overflow: "auto", background: "var(--card-bg)", borderRadius: 22, padding: 22, boxSizing: "border-box", boxShadow: "0 18px 60px rgba(0,0,0,.25)" } },
+      React.createElement("div", { style: { fontSize: 22, fontWeight: 900, color: "var(--text)" } }, "Personalize your Reels"),
+      React.createElement("div", { style: { marginTop: 7, marginBottom: 18, color: "var(--muted)", fontSize: 14, lineHeight: 1.45 } }, "Choose up to 5 interests. Your watch time and actions will keep improving this feed."),
+      React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 8 } }, options.map(function(option) {
+        var key = String(option).toLowerCase(); var active = selected.indexOf(key) >= 0;
+        return React.createElement("button", { key: option, onClick: function() { toggle(option); }, style: { border: active ? "1.5px solid #1877F2" : "1px solid var(--border)", background: active ? "#E8F1FF" : "var(--input-bg)", color: active ? "#1877F2" : "var(--text)", borderRadius: 18, padding: "8px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer" } }, option);
+      })),
+      React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 22 } },
+        React.createElement("button", { onClick: onSkip, disabled: saving, style: { border: 0, background: "transparent", color: "var(--muted)", padding: "10px 12px", cursor: "pointer" } }, "Skip"),
+        React.createElement("button", { onClick: save, disabled: saving || !selected.length, style: { border: 0, borderRadius: 10, background: selected.length ? "#1877F2" : "var(--border)", color: "#fff", padding: "10px 18px", fontWeight: 800, cursor: selected.length ? "pointer" : "not-allowed" } }, saving ? "Saving…" : "Continue")
+      )
+    )
+  );
+}
+
 // ── ReelsTab — TikTok-style smooth vertical scroll ───────────────────────────
 function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpenCompose }) {
   // Reels stays quiet after successful actions. Keep only genuine failures
@@ -28461,6 +28496,12 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
   var [reels, setReels] = React.useState([]);
   var [loading, setLoading] = React.useState(true);
   var [hasMore, setHasMore] = React.useState(true);
+  var [showReelsOnboarding, setShowReelsOnboarding] = React.useState(false);
+  React.useEffect(function() {
+    if (!user || !token) return;
+    var saved = Array.isArray(user.onboarding_categories) ? user.onboarding_categories : [];
+    if (!saved.length) setShowReelsOnboarding(true);
+  }, [user && user.id, token]);
   // Sync reel count updates from home feed (when reels appear there)
   useReelSync(setReels);
   React.useEffect(function(){
@@ -29033,6 +29074,8 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
     if (n >= 1000) return (n / 1000).toFixed(1) + "K";
     return String(n);
   }
+
+  if (showReelsOnboarding) return React.createElement(ReelsOnboardingCard, { token: token, user: user, onSaved: function() { setShowReelsOnboarding(false); fetchReels(0, true); }, onSkip: function() { setShowReelsOnboarding(false); } });
 
   // Loading state
 
