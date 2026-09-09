@@ -29495,10 +29495,11 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
   const videoRef = React.useRef(null);
   const musicRef = React.useRef(null);
   const containerRef = React.useRef(null);
-  const [playing, setPlaying] = React.useState(true);
+  const [playing, setPlaying] = React.useState(false);
   const [audioEnabled, setAudioEnabled] = React.useState(true); // media icon: ON by default
   const audioEnabledRef = React.useRef(true); // starts true — audio on from the beginning
   const [photoMusicPlaying, setPhotoMusicPlaying] = React.useState(false);
+  const [mediaError, setMediaError] = React.useState(false);
   const [reelNatW, setReelNatW] = React.useState(0);
   const [reelNatH, setReelNatH] = React.useState(0);
   const musicStartTime = Math.max(0, Number(reel.music_start_time) || 0);
@@ -29514,9 +29515,13 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
   const createMusicAudio = () => {
     if (!reel.music_url) return null;
     const a = new Audio(reel.music_url);
+    a.preload = "auto";
     a.loop = false;
     a.currentTime = musicStartTime;
     a.onloadedmetadata = () => { try { a.currentTime = musicStartTime; } catch (_) {} };
+    a.onerror = () => {
+      if (musicRef.current === a) setPhotoMusicPlaying(false);
+    };
     a.onended = () => {
       if (musicRef.current === a) { musicRef.current = null; setPhotoMusicPlaying(false); }
     };
@@ -29525,7 +29530,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
   };
   const startMusicClip = () => {
     const a = musicRef.current || createMusicAudio();
-    if (!a) return;
+    if (!a) return Promise.resolve(false);
     clearMusicClipTimer();
     musicClipTimerRef.current = setTimeout(() => {
       if (musicRef.current === a) {
@@ -29535,7 +29540,15 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
         setPhotoMusicPlaying(false);
       }
     }, musicClipDuration * 1000);
-    a.play().catch(() => {});
+    let playback;
+    try { playback = a.play(); } catch (_) { playback = null; }
+    return Promise.resolve(playback).then(() => {
+      if (musicRef.current === a) setPhotoMusicPlaying(true);
+      return true;
+    }).catch(() => {
+      if (musicRef.current === a) setPhotoMusicPlaying(false);
+      return false;
+    });
   };
   const timingRef = React.useRef(null);
   const rafRef = React.useRef(null);
@@ -29575,36 +29588,54 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
     }
   }
 
+  // Start only after the media element is ready, and sync UI with the real
+  // play() promise so a rejected playback attempt never leaves a fake state.
+  const attemptVideoPlayback = () => {
+    if (isPhotoReel || paused || mediaError) return Promise.resolve(false);
+    const v = videoRef.current;
+    if (!v) return Promise.resolve(false);
+    v.loop = true;
+    if (reel.music_url) v.muted = true;
+    else v.muted = !audioEnabledRef.current;
+    let playback;
+    try { playback = v.play(); } catch (_) { playback = null; }
+    return Promise.resolve(playback).catch(() => {
+      if (reel.music_url || v.muted) throw new Error("video-play-blocked");
+      v.muted = true;
+      audioEnabledRef.current = false;
+      setAudioEnabled(false);
+      return v.play();
+    }).then(() => {
+      setPlaying(true);
+      if (reel.music_url && audioEnabledRef.current) startMusicClip();
+      return true;
+    }).catch(() => {
+      setPlaying(false);
+      return false;
+    });
+  };
+
   // Video reels: init on reel change — auto-play WITH audio (fallback to muted)
   React.useEffect(() => {
     if (isPhotoReel) return;
     const v = videoRef.current;
     if (!v) return;
-    v.currentTime = 0;
+    setMediaError(false);
+    setPlaying(false);
+    try { v.currentTime = 0; } catch (_) {}
     if (progressBarRef.current) progressBarRef.current.style.width = '0%';
-    // Try with audio first; if browser blocks, fall back to muted
-    if (!paused) {
-      if (reel.music_url) {
-        // Has song: start video muted, start music track
-        v.muted = true;
-        v.play().catch(() => {});
-        if (!musicRef.current) createMusicAudio();
-        startMusicClip();
-      } else {
-        // Original video audio: try unmuted, fallback muted
-        v.muted = false;
-        v.play().catch(() => {
-          // Android may reject unmuted autoplay; sync the control state with the fallback.
-          v.muted = true;
-          audioEnabledRef.current = false;
-          setAudioEnabled(false);
-          v.play().catch(() => {});
-        });
-      }
-    } else {
-      v.muted = true;
-    }
-    return () => { clearMusicClipTimer(); v.pause(); if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; } };
+    const startWhenReady = () => { if (!paused) attemptVideoPlayback(); };
+    v.addEventListener("loadeddata", startWhenReady);
+    v.addEventListener("canplay", startWhenReady);
+    if (v.readyState >= 2) startWhenReady();
+    return () => {
+      v.removeEventListener("loadeddata", startWhenReady);
+      v.removeEventListener("canplay", startWhenReady);
+      clearMusicClipTimer();
+      v.pause();
+      if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; }
+      setPhotoMusicPlaying(false);
+    };
   }, [reel.id]);
 
   // Video reels: respond to paused prop (tab switch, upload modal, etc.)
@@ -29616,8 +29647,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
       v.pause(); setPlaying(false);
       if (musicRef.current) musicRef.current.pause();
     } else {
-      v.play().catch(() => {}); setPlaying(true);
-      applyAudioState(audioEnabledRef.current);
+      attemptVideoPlayback();
     }
   }, [paused]);
 
@@ -29627,10 +29657,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
     if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; }
     if (!paused) {
       const a = createMusicAudio();
-      if (a) {
-        startMusicClip();
-        a.play().then(() => setPhotoMusicPlaying(true)).catch(() => setPhotoMusicPlaying(false));
-      }
+      if (a) startMusicClip();
     } else {
       setPhotoMusicPlaying(false);
     }
@@ -29709,10 +29736,9 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
     const v = videoRef.current;
     if (!v) return;
     if (v.paused) {
-      // RESUME: restore audio state
-      v.play().catch(() => {});
-      setPlaying(true);
-      applyAudioState(audioEnabledRef.current);
+      // RESUME from a real user gesture so video and selected song can start together.
+      attemptVideoPlayback();
+      if (reel.music_url && audioEnabledRef.current) startMusicClip();
     } else {
       // PAUSE
       v.pause();
@@ -29774,20 +29800,24 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
       : /*#__PURE__*/React.createElement("video", {
           ref: videoRef,
           src: reel.video_url,
-          onLoadedMetadata: function(e){var w=e.target.videoWidth,h=e.target.videoHeight;setReelNatW(w);setReelNatH(h);onNatDims&&onNatDims(w,h);},
+          onLoadedMetadata: function(e){var w=e.target.videoWidth,h=e.target.videoHeight;setReelNatW(w);setReelNatH(h);onNatDims&&onNatDims(w,h); if(!paused) attemptVideoPlayback();},
+          onCanPlay: function(){ if(!paused) attemptVideoPlayback(); },
+          onPlaying: function(){ setMediaError(false); setPlaying(true); },
+          onPause: function(){ if(!paused) setPlaying(false); },
+          onError: function(){ setPlaying(false); setMediaError(true); },
           style: { width: "100%", height: "auto", flexShrink: 0, display: "block", WebkitTapHighlightColor: "transparent", filter: _reelEffFilter },
-          loop: true, playsInline: true, muted: true, autoPlay: false, disableRemotePlayback: true, preload: "metadata"
+          loop: true, playsInline: true, muted: true, autoPlay: true, disableRemotePlayback: true, preload: "auto"
         }),
     _renderReelOverlays(reel, null, true, true),
     // Photo reel: play icon when paused (audio on but music stopped)
-    isPhotoReel && reel.music_url && !photoMusicPlaying && /*#__PURE__*/React.createElement("div", {
+    isPhotoReel && reel.music_url && !mediaError && !photoMusicPlaying && /*#__PURE__*/React.createElement("div", {
       style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }
     },
       /*#__PURE__*/React.createElement("div", { style: { width: 60, height: 60, borderRadius: "50%", background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center" } },
         /*#__PURE__*/React.createElement("svg", { width: 32, height: 32, viewBox: "0 0 24 24", fill: "#fff" },
           /*#__PURE__*/React.createElement("path", { d: "M7.1 4.75c-.93-.56-2.1.11-2.1 1.2v12.1c0 1.09 1.17 1.76 2.1 1.2l10.2-6.05c.93-.55.93-1.9 0-2.45L7.1 4.75Z" })))),
     // Video reel: play icon when paused
-    !isPhotoReel && !playing && /*#__PURE__*/React.createElement("div", {
+    !isPhotoReel && !mediaError && !playing && /*#__PURE__*/React.createElement("div", {
       style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }
     },
       /*#__PURE__*/React.createElement("div", { style: { width: 60, height: 60, borderRadius: "50%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" } },
