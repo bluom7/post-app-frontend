@@ -29792,7 +29792,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
   const showPlaybackControls = (reel.music_url && !photoMusicPlaying) || (!isPhotoReel && !playing);
   return /*#__PURE__*/React.createElement("div", {
     ref: containerRef,
-    style: { position: "absolute", inset: 0, background: "#000", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", WebkitTapHighlightColor: "transparent" },
+    style: { position: "absolute", inset: 0, background: "#000", display: "flex", alignItems: "flex-end", justifyContent: "center", overflow: "hidden", WebkitTapHighlightColor: "transparent" },
     onClick: () => { handleTap(); }
   },
     isPhotoReel
