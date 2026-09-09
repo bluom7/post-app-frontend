@@ -28668,26 +28668,56 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
       .catch(function() { reelToast && reelToast("Could not delete reel", "#FF1744"); });
   }
 
+  // The algorithm feed is primary. Legacy pagination remains a safety net so
+  // a temporary algorithm error can never turn an existing feed into an empty
+  // state for the user.
+  var legacyFeedRef = React.useRef(false);
   function fetchReels(page, replace) {
     if (loadingRef.current) return;
     loadingRef.current = true;
     setLoading(true);
     var requestedPage = Math.max(0, Number(page) || 0);
-    api("/reels/feed?page=" + requestedPage + "&limit=10", "GET", null, token)
+    var useLegacy = legacyFeedRef.current;
+    var requestPath = useLegacy
+      ? "/reels?skip=" + requestedPage + "&limit=10"
+      : "/reels/feed?page=" + requestedPage + "&limit=10";
+
+    function legacyRequest() {
+      legacyFeedRef.current = true;
+      return api("/reels?skip=0&limit=10", "GET", null, token)
+        .then(function(fallback) {
+          return Object.assign({}, fallback, { ab_group: "A", algorithm: "legacy_fallback" });
+        });
+    }
+
+    api(requestPath, "GET", null, token)
       .then(function(d) {
-        var newReels = d.reels || [];
-        algorithmGroupRef.current = d.ab_group || "A";
+        var hasValidReels = d && Array.isArray(d.reels) && d.reels.length > 0;
+        if (!useLegacy && requestedPage === 0 && !hasValidReels) return legacyRequest();
+        return d;
+      })
+      .catch(function(error) {
+        if (!useLegacy && requestedPage === 0) return legacyRequest();
+        throw error;
+      })
+      .then(function(d) {
+        var newReels = Array.isArray(d && d.reels) ? d.reels : [];
+        algorithmGroupRef.current = d && d.ab_group || "A";
         setReels(function(prev) { return replace ? newReels : prev.concat(newReels); });
-        hasMoreRef.current = !!d.has_more;
-        setHasMore(!!d.has_more);
-        // The algorithm uses page numbers, not the old skip offset.
-        skipRef.current = requestedPage + 1;
+        hasMoreRef.current = !!(d && d.has_more);
+        setHasMore(!!(d && d.has_more));
+        // Algorithm pages advance by one; legacy pages advance by item count.
+        skipRef.current = legacyFeedRef.current
+          ? requestedPage + newReels.length
+          : requestedPage + 1;
       })
       .catch(function() { reelToast && reelToast("Could not load reels", "#FF1744"); })
       .finally(function() { loadingRef.current = false; setLoading(false); });
   }
 
-  React.useEffect(function() { fetchReels(0, true); }, []);
+  React.useEffect(function() {
+    if (token) fetchReels(0, true);
+  }, [token]);
   React.useEffect(function() {
     if (!showComments) {
       if (commentPollRef.current) { clearInterval(commentPollRef.current); commentPollRef.current = null; }
