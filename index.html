@@ -28498,6 +28498,8 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
   var scrollRef = React.useRef(null);
   var skipRef = React.useRef(0);
   var hasMoreRef = React.useRef(true);
+  // Algorithm group returned by the backend feed endpoint.
+  var algorithmGroupRef = React.useRef("A");
   var loadingRef = React.useRef(false);
   var [showSearch, setShowSearch] = React.useState(false);
   var [searchInputFocused, setSearchInputFocused] = React.useState(false);
@@ -28666,17 +28668,20 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
       .catch(function() { reelToast && reelToast("Could not delete reel", "#FF1744"); });
   }
 
-  function fetchReels(sk, replace) {
+  function fetchReels(page, replace) {
     if (loadingRef.current) return;
     loadingRef.current = true;
     setLoading(true);
-    api("/reels?skip=" + sk + "&limit=10", "GET", null, token)
+    var requestedPage = Math.max(0, Number(page) || 0);
+    api("/reels/feed?page=" + requestedPage + "&limit=10", "GET", null, token)
       .then(function(d) {
         var newReels = d.reels || [];
+        algorithmGroupRef.current = d.ab_group || "A";
         setReels(function(prev) { return replace ? newReels : prev.concat(newReels); });
         hasMoreRef.current = !!d.has_more;
         setHasMore(!!d.has_more);
-        skipRef.current = sk + newReels.length;
+        // The algorithm uses page numbers, not the old skip offset.
+        skipRef.current = requestedPage + 1;
       })
       .catch(function() { reelToast && reelToast("Could not load reels", "#FF1744"); })
       .finally(function() { loadingRef.current = false; setLoading(false); });
@@ -28689,16 +28694,43 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
     }
   }, [showComments]);
 
-  // Track view for first reel on initial load
-  React.useEffect(function() {
-    if (reels.length > 0 && token) {
-      var first = reels[0];
-      if (first && first.id) {
-        api('/reels/' + first.id + '/view', 'POST', {}, token).catch(function() {});
-        setReels(function(prev) { return prev.map(function(r, i) { return i === 0 ? Object.assign({}, r, { view_count: (r.view_count || 0) + 1 }) : r; }); });
-      }
+  // Send one scored view event when the active reel is left. This keeps
+  // watch time/completion accurate without inflating view_count on every scroll tick.
+  var activeReelSessionRef = React.useRef(null);
+  function beginActiveReel(reel) {
+    if (!reel || !reel.id || !token) return;
+    activeReelSessionRef.current = { id: String(reel.id), reel: reel, startedAt: Date.now() };
+  }
+  function finishActiveReel(reason) {
+    var session = activeReelSessionRef.current;
+    if (!session || !session.reel || !session.id || !token) return;
+    activeReelSessionRef.current = null;
+    var watchSeconds = Math.max(0, (Date.now() - session.startedAt) / 1000);
+    var duration = Number(session.reel.duration || session.reel.video_duration || 0);
+    var completionRatio = duration > 0 ? Math.min(1, watchSeconds / duration) : (watchSeconds >= 3 ? 1 : 0);
+    var payload = {
+      watch_seconds: Number(watchSeconds.toFixed(3)),
+      completion_ratio: Number(completionRatio.toFixed(4)),
+      category: session.reel.category || "general",
+      reason: reason || "swipe"
+    };
+    api("/reels/" + encodeURIComponent(session.id) + "/view", "POST", payload, token).catch(function() {});
+    if (completionRatio >= 0.95) {
+      api("/reels/ab-metric", "POST", { group: algorithmGroupRef.current || "A", event: "watch_complete" }, token).catch(function() {});
     }
-  }, [reels.length > 0 ? reels[0] && reels[0].id : null]);
+    setReels(function(prev) { return prev.map(function(r) { return r.id === session.id ? Object.assign({}, r, { view_count: (r.view_count || 0) + 1 }) : r; }); });
+  }
+
+  React.useEffect(function() {
+    if (!reels.length || !token) return;
+    var firstActive = reels[Math.min(activeIdx, reels.length - 1)];
+    var current = activeReelSessionRef.current;
+    if (!current || current.id !== String(firstActive.id)) beginActiveReel(firstActive);
+  }, [reels.length, token]);
+
+  React.useEffect(function() {
+    return function() { finishActiveReel("leave_reels"); };
+  }, []);
 
   var _feedViewedIdRef = React.useRef(null);
   function onScroll() {
@@ -28706,16 +28738,16 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
     if (!el) return;
     var vh = el.clientHeight;
     if (vh === 0) return;
-    var idx = Math.round(el.scrollTop / vh);
+    var idx = Math.max(0, Math.min(reels.length - 1, Math.round(el.scrollTop / vh)));
     setActiveIdx(idx);
-    // Record view for newly active reel
     var activeReel = reels[idx];
-    if (activeReel && activeReel.id && _feedViewedIdRef.current !== activeReel.id) {
+    var currentSession = activeReelSessionRef.current;
+    if (activeReel && activeReel.id && (!currentSession || currentSession.id !== String(activeReel.id))) {
+      finishActiveReel("swipe");
+      beginActiveReel(activeReel);
       _feedViewedIdRef.current = activeReel.id;
-      api('/reels/' + activeReel.id + '/view', 'POST', {}, token).catch(function() {});
-      setReels(function(prev) { return prev.map(function(r) { return r.id === activeReel.id ? Object.assign({}, r, { view_count: (r.view_count || 0) + 1 }) : r; }); });
     }
-    // Load more when 2 reels from the end
+    // Load the next algorithm page when two viewport-heights remain.
     var remaining = el.scrollHeight - el.scrollTop - vh;
     if (!loadingRef.current && hasMoreRef.current && remaining < vh * 2.5) {
       fetchReels(skipRef.current, false);
@@ -28735,6 +28767,8 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
     return reelActionSeqRef.current[rid] === seq;
   }
   function likeReel(rid) {
+    var actionReel = reels.find(function(r) { return r.id === rid; });
+    var actionIsLike = actionReel ? !actionReel.is_liked : true;
     var previous = null;
     var seq = nextReelAction(rid);
     setReels(function(prev) {
@@ -28751,6 +28785,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
     api("/reels/" + rid + "/like", "POST", {}, token)
       .then(function(result) {
         if (!isLatestReelAction(rid, seq) || !result) return;
+        api("/reels/ab-metric", "POST", { group: algorithmGroupRef.current || "A", event: actionIsLike ? "like" : "unlike" }, token).catch(function() {});
         setReels(function(prev) { return prev.map(function(r) {
           return r.id === rid ? Object.assign({}, r, {
             is_liked: typeof result.liked === "boolean" ? result.liked : r.is_liked,
@@ -28801,6 +28836,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
       previous = { share_count: currentCount };
       return Object.assign({}, r, { share_count: currentCount + 1 });
     }); });
+    api("/reels/ab-metric", "POST", { group: algorithmGroupRef.current || "A", event: "share" }, token).catch(function() {});
     api("/reels/" + rid + "/share", "POST", {}, token)
       .then(function(result) {
         if (!isLatestReelAction("share:" + rid, seq) || !result) return;
@@ -29042,7 +29078,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
           showUpload: showUpload,
           showCamera: showCamera,
           showSearch: showSearch,
-          onNotInterested: function(id) { setReels(function(prev) { return prev.filter(function(r) { return r.id !== id; }); }); },
+          onNotInterested: function(id) { api("/reels/feedback", "POST", { reel_id: id, action: "not_interested" }, token).catch(function() {}); setReels(function(prev) { return prev.filter(function(r) { return r.id !== id; }); }); },
           onMention: mentionReelUser,
           onOpenCompose: onOpenCompose,
           onView: function() {},
