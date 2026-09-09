@@ -29517,7 +29517,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
     const a = new Audio(reel.music_url);
     a.preload = "auto";
     a.loop = false;
-    a.currentTime = musicStartTime;
+    try { a.currentTime = musicStartTime; } catch (_) {}
     a.onloadedmetadata = () => { try { a.currentTime = musicStartTime; } catch (_) {} };
     a.onerror = () => {
       if (musicRef.current === a) setPhotoMusicPlaying(false);
@@ -29789,7 +29789,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
 
   const _reelEffFilter = (reel.video_effect && reel.video_effect !== 'none') ? ((VIDEO_EFFECTS.find(function(e){return e.id===reel.video_effect;})||VIDEO_EFFECTS[0]).filter) : 'none';
   // Keep the audio control next to the play control and expose both only while paused.
-  const showPlaybackControls = (isPhotoReel && reel.music_url && !photoMusicPlaying) || (!isPhotoReel && !playing);
+  const showPlaybackControls = (reel.music_url && !photoMusicPlaying) || (!isPhotoReel && !playing);
   return /*#__PURE__*/React.createElement("div", {
     ref: containerRef,
     style: { position: "absolute", inset: 0, background: "#000", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", WebkitTapHighlightColor: "transparent" },
