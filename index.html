@@ -3692,17 +3692,26 @@ function PostApp() {
   const prevUnreadRef = React.useRef(0);
   // Stores which tab to open when screen becomes "app" (set by push notification click)
   const pendingTabRef = React.useRef(null);
-  // Ref tracks viewUser inside popstate handler (avoids stale closure)
+  // Refs keep profile navigation race-safe and prevent stale requests from opening the wrong user.
   const viewUserRef = React.useRef(null);
+  const profileRequestRef = React.useRef(0);
   React.useEffect(() => { viewUserRef.current = viewUser; }, [viewUser]);
-  const onViewProfile = (uid, profileData) => {
+  const onViewProfile = async (uid, profileData) => {
     const realId = profileData?.id || uid;
-    if (realId && realId !== user?.id) {
-      setViewUser(realId);
-      setViewUserProfile(profileData || null);
-      // Push history entry so phone back button can close this overlay
-      history.pushState({ viewingProfile: realId }, "");
+    if (!realId) return;
+    const requestId = ++profileRequestRef.current;
+    let fullProfile = null;
+    try {
+      // Fetch the complete profile before mounting the overlay.
+      fullProfile = await api(`/users/${realId}`, "GET", null, token);
+    } catch (_) {
+      // UserProfileScreen will retry; never mount partial reel metadata as a fake profile.
     }
+    if (requestId !== profileRequestRef.current) return;
+    setViewUserProfile(fullProfile);
+    setViewUser(realId);
+    // Push history only after the profile data is ready to render.
+    history.pushState({ viewingProfile: realId }, "");
   };
   const showToast = (msg, color = COLORS.yellow) => {
     setToast({
@@ -4378,7 +4387,7 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
     initialProfile: viewUserProfile,
     token: token,
     currentUser: user,
-    onClose: () => { setViewUser(null); setViewUserProfile(null); },
+    onClose: () => { profileRequestRef.current += 1; setViewUser(null); setViewUserProfile(null); },
     showToast: showToast,
     onGoMessages: profileUser => {
       setOpenChatUser(profileUser);
@@ -28293,18 +28302,8 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
 
   function openReelProfile() {
     if (!onViewProfile || followTargetId == null) return;
-    const handle = String(reel.user_handle || reel.user_name || "user").replace(/^@/, "");
-    onViewProfile(followTargetId, {
-      id: followTargetId,
-      name: reel.user_name || handle,
-      handle: "@" + handle,
-      username: handle,
-      avatar_bg: reel.avatar_bg,
-      avatar_letter: reel.avatar_letter,
-      avatar_photo: reel.avatar_photo,
-      is_badge_verified: !!reel.is_badge_verified,
-      stats: {posts: 0, followers: 0, following: 0}
-    });
+    // Let the app fetch the complete user record; do not show reel metadata as a fake profile.
+    onViewProfile(followTargetId);
   }
   function getUserInfoBottom() {
     if (!mediaAR || !itemRef.current) return 80;
