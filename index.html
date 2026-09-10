@@ -28058,7 +28058,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   };
   var reelCaption = reel.caption || reel.content || "";
   var reelCaptionPreview = reelCaption.split(/\r?\n/)[0].trim();
-  var captionNeedsMore = reelCaption.length > 70 || /\r?\n/.test(reelCaption);
+  var captionNeedsMore = reelCaption.length > 45 || /\r?\n/.test(reelCaption);
   var songMarqueeRef = React.useRef(null);
   var [songMarqueeDuration, setSongMarqueeDuration] = React.useState(SONG_MARQUEE_DURATION_SEC);
   React.useEffect(function() {
@@ -28369,7 +28369,8 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
       React.createElement("div", { style: { width: 36, height: 4, borderRadius: 3, background: "var(--muted)", opacity: 0.65, margin: "0 auto 18px" } }),
       React.createElement("div", { style: { fontSize: 15, lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere", paddingBottom: 12 } }, reelCaption),
       React.createElement("div", { style: { fontSize: 13, color: "var(--muted)", marginTop: 4 } }, reelCaptionDate(reel.created_at)),
-      React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: "var(--text)", marginTop: 18 } }, "See translation")
+      React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: "var(--text)", marginTop: 18 } }, "See translation"),
+      React.createElement("button", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(false); }, style: { display: "block", marginTop: 18, padding: "8px 14px", border: "1px solid var(--border)", borderRadius: 18, background: "transparent", color: "var(--text)", fontSize: 13, fontWeight: 700, cursor: "pointer" } }, "less")
     )
   ),
   showMenu && React.createElement("div", { onClick: function() { setShowMenu(false); }, style: { position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-end" } },
