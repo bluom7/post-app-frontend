@@ -3692,25 +3692,14 @@ function PostApp() {
   const prevUnreadRef = React.useRef(0);
   // Stores which tab to open when screen becomes "app" (set by push notification click)
   const pendingTabRef = React.useRef(null);
-  // Refs keep profile navigation race-safe and prevent stale requests from opening the wrong user.
+  // Profile opens immediately with its own loading state; the screen fills with the full API response.
   const viewUserRef = React.useRef(null);
-  const profileRequestRef = React.useRef(0);
   React.useEffect(() => { viewUserRef.current = viewUser; }, [viewUser]);
-  const onViewProfile = async (uid, profileData) => {
+  const onViewProfile = (uid, profileData) => {
     const realId = profileData?.id || uid;
     if (!realId) return;
-    const requestId = ++profileRequestRef.current;
-    let fullProfile = null;
-    try {
-      // Fetch the complete profile before mounting the overlay.
-      fullProfile = await api(`/users/${realId}`, "GET", null, token);
-    } catch (_) {
-      // UserProfileScreen will retry; never mount partial reel metadata as a fake profile.
-    }
-    if (requestId !== profileRequestRef.current) return;
-    setViewUserProfile(fullProfile);
+    setViewUserProfile(null);
     setViewUser(realId);
-    // Push history only after the profile data is ready to render.
     history.pushState({ viewingProfile: realId }, "");
   };
   const showToast = (msg, color = COLORS.yellow) => {
@@ -4387,7 +4376,7 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
     initialProfile: viewUserProfile,
     token: token,
     currentUser: user,
-    onClose: () => { profileRequestRef.current += 1; setViewUser(null); setViewUserProfile(null); },
+    onClose: () => { setViewUser(null); setViewUserProfile(null); },
     showToast: showToast,
     onGoMessages: profileUser => {
       setOpenChatUser(profileUser);
@@ -12997,7 +12986,7 @@ function UserProfileScreen({
       width: 24,
       height: 24,
       border: "3px solid var(--border)",
-      borderTop: "3px solid " + COLORS.yellow,
+      borderTop: "3px solid #1877F2",
       borderRadius: "50%",
       animation: "spin 0.8s linear infinite"
     }
