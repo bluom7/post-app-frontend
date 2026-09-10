@@ -6593,18 +6593,29 @@ function BentoPostCard({
       const parsedDate = new Date(ts);
       const timestamp = parsedDate.getTime();
       if (!Number.isFinite(timestamp)) return "";
-      const diff = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-      if (diff < 60) return "just now";
+
+      const now = new Date();
+      const diff = Math.max(0, Math.floor((now.getTime() - timestamp) / 1000));
+      const dateLabel = parsedDate.toLocaleDateString("en-IN", { day: "numeric", month: "long" });
+      const oneYearAgo = new Date(now);
+      oneYearAgo.setFullYear(now.getFullYear() - 1);
+      const dateWithYear = parsedDate <= oneYearAgo
+        ? parsedDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+        : dateLabel;
+      const relativeLabel = (value, singular, plural) => value + " " + (value === 1 ? singular : plural) + " ago";
+
+      if (diff < 60) return dateLabel + " · just now";
       const minutes = Math.floor(diff / 60);
-      if (minutes < 60) return minutes + " " + (minutes === 1 ? "minute" : "minutes") + " ago";
+      if (minutes < 60) return dateLabel + " · " + relativeLabel(minutes, "minute", "minutes");
       const hours = Math.floor(diff / 3600);
-      if (hours < 24) return hours + " " + (hours === 1 ? "hour" : "hours") + " ago";
+      if (hours < 24) return dateLabel + " · " + relativeLabel(hours, "hour", "hours");
       const days = Math.floor(diff / 86400);
-      if (days < 7) return days + " " + (days === 1 ? "day" : "days") + " ago";
-      if (days < 30) { const weeks = Math.max(1, Math.floor(days / 7)); return weeks + " " + (weeks === 1 ? "week" : "weeks") + " ago"; }
-      const showYear = (Date.now() - timestamp) >= (365 * 24 * 60 * 60 * 1000);
-    const options = showYear ? { day: "numeric", month: "long", year: "numeric" } : { day: "numeric", month: "long" };
-      return parsedDate.toLocaleDateString("en-IN", options);
+      if (days < 7) return dateLabel + " · " + relativeLabel(days, "day", "days");
+      if (days < 30) {
+        const weeks = Math.max(1, Math.floor(days / 7));
+        return dateLabel + " · " + relativeLabel(weeks, "week", "weeks");
+      }
+      return dateWithYear;
     };
 
   const handleHeartClick = () => {
