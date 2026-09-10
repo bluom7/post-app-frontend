@@ -28348,8 +28348,9 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
               captionNeedsMore && React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(false); }, style: { color: "rgba(255,255,255,0.72)", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-block", marginTop: 2 } }, "less"))
           : captionNeedsMore
             ? React.createElement("div", { style: { display: "inline-flex", alignItems: "baseline", minWidth: 0, maxWidth: "100%", whiteSpace: "nowrap", verticalAlign: "bottom" } },
-                React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: "21px", textShadow: "0 1px 6px rgba(0,0,0,0.7)", flex: "0 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, reelCaptionPreview),
-                React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(true); }, style: { color: "rgba(255,255,255,0.72)", fontSize: 13, fontWeight: 700, cursor: "pointer", flex: "0 0 auto", marginLeft: 4 } }, "more"))
+                React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: "21px", textShadow: "0 1px 6px rgba(0,0,0,0.7)", flex: "0 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "clip", whiteSpace: "nowrap" } }, reelCaptionPreview),
+                React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: "21px", flex: "0 0 auto", marginLeft: 1 } }, "..."),
+                React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(true); }, style: { color: "rgba(255,255,255,0.72)", fontSize: 13, fontWeight: 700, cursor: "pointer", flex: "0 0 auto", marginLeft: 2 } }, "more"))
             : React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: 1.5, textShadow: "0 1px 6px rgba(0,0,0,0.7)", display: "block", whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, reelCaption),
         React.createElement("div", { style: { marginTop: 3, color: "rgba(255,255,255,0.78)", fontSize: 12, lineHeight: 1.35, fontWeight: 600, textShadow: "0 1px 4px rgba(0,0,0,0.65)" } },
           reelCaptionTimeAgo(reel.created_at),
