@@ -28385,7 +28385,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
                       : ((reel.avatar_letter || (reel.user_name || reel.user_handle || "?").charAt(0) || "?").toString().charAt(0).toUpperCase())
                   ),
                   React.createElement("div", { style: { minWidth: 0, flex: 1 } },
-                    React.createElement("div", { style: { fontWeight: 800, fontSize: 16, lineHeight: "20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, reel.user_name || reel.user_handle || "User"),
+                    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, minWidth: 0 } }, React.createElement("span", { style: { fontWeight: 800, fontSize: 16, lineHeight: "20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, reel.user_name || reel.user_handle || "User"), reel.is_badge_verified && React.createElement(VerifiedBadge, { size: 16 })),
                     reel.user_handle && React.createElement("div", { style: { color: "#666", fontSize: 13, lineHeight: "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + reel.user_handle.replace(/^@/, ""))
                   ),
                   followTargetId != null && String(followTargetId) !== "" && !isOwn && React.createElement("button", {
