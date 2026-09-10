@@ -12843,7 +12843,8 @@ function UserProfileScreen({
 }) {
   const [profile, setProfile] = useState(initialProfile || null);
   const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Render the reel author immediately; the complete profile replaces this preview.
+  const [loading, setLoading] = useState(!initialProfile);
   const [friendStatus, setFriendStatus] = useState("none"); // none | pending_out | pending_in | friends
   const [followStatus, setFollowStatus] = useState("none"); // none | pending | following
   const [actLoading, setActLoading] = useState(false);
@@ -12871,27 +12872,45 @@ function UserProfileScreen({
   }, [userId, currentUser && currentUser.id]);
 
   useEffect(() => {
+    let cancelled = false;
     if (initialProfile) {
       setProfile(initialProfile);
       setStats(initialProfile.stats || {posts: 0, followers: 0, following: 0});
     }
-    setLoading(true);
+    // Do not wait for the global backend warm-up here. The profile endpoint
+    // should be requested immediately after tapping a reel author.
+    setLoading(!initialProfile);
     (async () => {
-    if (!_warmupDone) await Promise.race([warmupReady, new Promise(r => setTimeout(r, 30000))]);
-    Promise.all([api(`/users/${userId}`, "GET", null, token), api("/friends", "GET", null, token), api(`/posts?user_id=${userId}`, "GET", null, token), api("/users/me/follow-requests", "GET", null, token)]).then(([prof, friendData, postsData, frData]) => {
-      setProfile(prof);
-      setStats(prof.stats || {posts: 0, followers: 0, following: 0});
-      const isFr = (friendData.friends || []).some(f => f.id === userId);
-      const isPendOut = (friendData.pending_outgoing || []).some(r => r.to_id === userId);
-      const isPendIn = (friendData.pending_incoming || []).some(r => r.from_id === userId);
-      setFriendStatus(isFr ? "friends" : isPendOut ? "pending_out" : isPendIn ? "pending_in" : "none");
-      const isFollowing = (prof.followers || []).includes(currentUser.id);
-      const isPendingFollow = (frData && frData.outgoing || []).some(r => r.to_id === userId);
-      setFollowStatus(isFollowing ? "following" : isPendingFollow ? "pending" : "none");
-      setPosts((postsData.posts || []).filter(p => p.user_id === userId));
-    }).catch(() => {}).finally(() => setLoading(false));
+      try {
+        const prof = await api(`/users/${userId}`, "GET", null, token);
+        if (cancelled) return;
+        setProfile(prof);
+        setStats(prof.stats || {posts: 0, followers: 0, following: 0});
+        setLoading(false);
+
+        // Secondary panels must not block the real profile from rendering.
+        const [friendData, postsData, frData] = await Promise.all([
+          api("/friends", "GET", null, token).catch(() => ({})),
+          api(`/posts?user_id=${userId}`, "GET", null, token).catch(() => ({posts: []})),
+          api("/users/me/follow-requests", "GET", null, token).catch(() => ({outgoing: []}))
+        ]);
+        if (cancelled) return;
+        const currentId = currentUser && currentUser.id;
+        const isFr = (friendData.friends || []).some(f => f.id === userId);
+        const isPendOut = (friendData.pending_outgoing || []).some(r => r.to_id === userId);
+        const isPendIn = (friendData.pending_incoming || []).some(r => r.from_id === userId);
+        setFriendStatus(isFr ? "friends" : isPendOut ? "pending_out" : isPendIn ? "pending_in" : "none");
+        const isFollowing = !!currentId && (prof.followers || []).includes(currentId);
+        const isPendingFollow = (frData.outgoing || []).some(r => r.to_id === userId);
+        setFollowStatus(isFollowing ? "following" : isPendingFollow ? "pending" : "none");
+        setPosts((postsData.posts || []).filter(p => p.user_id === userId));
+      } catch (_) {
+        // Keep the reel preview visible if the profile request fails.
+        if (!cancelled) setLoading(false);
+      }
     })();
-  }, [userId, initialProfile]);
+    return () => { cancelled = true; };
+  }, [userId, initialProfile, token, currentUser && currentUser.id]);
   const fmtNum = n => n >= 1000 ? (n / 1000).toFixed(1) + "K" : n || 0;
   const toggleFollow = async () => {
     if (followLoading) return;
@@ -28272,6 +28291,21 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
         { label: "Report", icon: rMI.report, danger: true, onClick: function() { setShowReportModal(true); } }
       ];
 
+  function openReelProfile() {
+    if (!onViewProfile || followTargetId == null) return;
+    const handle = String(reel.user_handle || reel.user_name || "user").replace(/^@/, "");
+    onViewProfile(followTargetId, {
+      id: followTargetId,
+      name: reel.user_name || handle,
+      handle: "@" + handle,
+      username: handle,
+      avatar_bg: reel.avatar_bg,
+      avatar_letter: reel.avatar_letter,
+      avatar_photo: reel.avatar_photo,
+      is_badge_verified: !!reel.is_badge_verified,
+      stats: {posts: 0, followers: 0, following: 0}
+    });
+  }
   function getUserInfoBottom() {
     if (!mediaAR || !itemRef.current) return 80;
     var el = itemRef.current;
@@ -28412,11 +28446,11 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
     ),
     React.createElement("div", { style: { position: "absolute", left: 0, right: 70, bottom: 16, padding: "0 16px", zIndex: 5 } },
       React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 8 } },
-        React.createElement("div", { onClick: function() { onViewProfile && onViewProfile(reel.user_id); }, style: { width: 36, height: 36, marginTop: 1, borderRadius: "50%", background: reel.avatar_bg || "#FFD600", flexShrink: 0, border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15, color: "#111", overflow: "hidden", cursor: "pointer", boxShadow: "0 1px 5px rgba(0,0,0,0.45)" } },
+        React.createElement("div", { onClick: openReelProfile, style: { width: 36, height: 36, marginTop: 1, borderRadius: "50%", background: reel.avatar_bg || "#FFD600", flexShrink: 0, border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15, color: "#111", overflow: "hidden", cursor: "pointer", boxShadow: "0 1px 5px rgba(0,0,0,0.45)" } },
           reel.avatar_photo ? React.createElement("img", { src: reel.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" } }) : (reel.avatar_letter || "?")),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 3, flex: 1, minWidth: 0 } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, minWidth: 0 } },
-              React.createElement("span", { onClick: function() { onViewProfile && onViewProfile(reel.user_id); }, style: { color: "#fff", fontWeight: 700, fontSize: 16, lineHeight: "20px", fontStyle: "normal", fontStretch: "normal", cursor: "pointer", textShadow: "0 1px 4px rgba(0,0,0,0.6)", letterSpacing: "-0.1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (reel.user_handle || reel.user_name || "user").replace(/^@/, "")),
+              React.createElement("span", { onClick: openReelProfile, style: { color: "#fff", fontWeight: 700, fontSize: 16, lineHeight: "20px", fontStyle: "normal", fontStretch: "normal", cursor: "pointer", textShadow: "0 1px 4px rgba(0,0,0,0.6)", letterSpacing: "-0.1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (reel.user_handle || reel.user_name || "user").replace(/^@/, "")),
               reel.is_badge_verified && React.createElement(VerifiedBadge, { size: 16, color: "#fff" })
             ),
           (reel.audio_label || reel.music_title) && React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, overflow: "hidden" } },
