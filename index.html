@@ -28386,7 +28386,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
                     reel.user_handle && React.createElement("div", { style: { color: "#666", fontSize: 13, lineHeight: "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + reel.user_handle.replace(/^@/, ""))
                   )
                 ),
-                React.createElement("div", { style: { fontSize: 15, lineHeight: 1.55, whiteSpace: "pre-wrap", overflowWrap: "anywhere", marginBottom: 14 } }, reelCaption),
+                React.createElement("div", { style: { fontSize: 15, lineHeight: 1.55, whiteSpace: "pre-wrap", overflowWrap: "break-word", wordBreak: "normal", textAlign: "left", marginBottom: 14 } }, reelCaption),
                 React.createElement("div", { style: { color: "#111", fontSize: 14, lineHeight: 1.5, fontWeight: 800, letterSpacing: "0.2px", fontStretch: "expanded", WebkitTextStroke: "0.15px currentColor" } }, React.createElement("div", { style: { display: "block", marginBottom: 4 } }, reelCaptionTimeAgo(reel.created_at)), React.createElement("div", { style: { display: "block" } }, "See translation"))
               )
             )
