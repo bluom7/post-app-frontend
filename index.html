@@ -28048,17 +28048,6 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
     var days = Math.floor(diff / 86400);
     return days + " " + (days === 1 ? "day" : "days") + " ago";
   };
-  var reelCaptionDate = function(ts) {
-    if (!ts) return "";
-    var date = new Date(ts);
-    if (!Number.isFinite(date.getTime())) return "";
-    var options = { month: "long", day: "numeric" };
-    if (date.getFullYear() !== new Date().getFullYear()) options.year = "numeric";
-    return date.toLocaleDateString(undefined, options);
-  };
-  var reelCaption = reel.caption || reel.content || "";
-  var reelCaptionPreview = reelCaption.split(/\r?\n/)[0].trim();
-  var captionNeedsMore = reelCaption.length > 45 || /\r?\n/.test(reelCaption);
   var songMarqueeRef = React.useRef(null);
   var [songMarqueeDuration, setSongMarqueeDuration] = React.useState(SONG_MARQUEE_DURATION_SEC);
   React.useEffect(function() {
@@ -28205,7 +28194,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   }
   function shareReel() {
     var shareUrl = window.location.href;
-    var shareData = { title: reel.user_name || reel.user_handle || "Post App reel", text: reelCaption, url: shareUrl };
+    var shareData = { title: reel.user_name || reel.user_handle || "Post App reel", text: reel.caption || "", url: shareUrl };
     if (navigator.share) {
       navigator.share(shareData).then(function() { markShared(); showToast && showToast("Shared", "#22C55E"); }).catch(function(err) {
         if (err && err.name === "AbortError") return;
@@ -28348,31 +28337,20 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
               React.createElement("path", { d: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" })),
             React.createElement("span", { style: { color: "rgba(255,255,255,0.85)", fontSize: 11, fontWeight: 600, marginTop: 3, textShadow: "0 1px 4px rgba(0,0,0,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, reel.location))),
         followTargetId != null && String(followTargetId) !== "" && !isOwn && React.createElement("button", { onClick: handleFollowClick, "aria-label": localFollowing ? "Following" : "Follow", "data-follow-control": true, style: { background: "transparent", border: "1px solid rgba(255,255,255,0.95)", color: "#fff", borderRadius: 8, width: localFollowing ? 90 : 69, minWidth: localFollowing ? 90 : 69, height: 34, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", fontSize: 15, lineHeight: 1, fontWeight: 800, cursor: "pointer", opacity: 1, flexShrink: 0, visibility: "visible", position: "relative", zIndex: 6, boxShadow: "none", textShadow: "none" } }, React.createElement("span", { style: { display: "inline-block", whiteSpace: "nowrap", fontStyle: "normal", fontStretch: "normal", letterSpacing: localFollowing ? "0.15px" : "0.5px", transform: "scaleX(1.05)", transformOrigin: "center", WebkitTextStroke: "1.2px #000", paintOrder: "stroke fill" } }, localFollowing ? "Following" : "Follow"))),
-      reelCaption ? React.createElement("div", { style: { marginBottom: 6, maxWidth: "100%" } },
-        captionNeedsMore
-          ? React.createElement("div", { style: { display: "flex", alignItems: "baseline", minWidth: 0, maxWidth: "100%", whiteSpace: "nowrap" } },
-              React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: "21px", textShadow: "0 1px 6px rgba(0,0,0,0.7)", flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, reelCaptionPreview),
-              React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(true); }, style: { color: "rgba(255,255,255,0.78)", fontSize: 13, fontWeight: 700, cursor: "pointer", flex: "0 0 auto", marginLeft: 4 } }, "more"))
-          : React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: 1.5, textShadow: "0 1px 6px rgba(0,0,0,0.7)", display: "block", whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, reelCaption),
+      reel.caption ? React.createElement("div", { style: { marginBottom: 6, maxWidth: "100%" } },
+        captionExpanded
+          ? React.createElement(React.Fragment, null,
+              React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: 1.5, textShadow: "0 1px 6px rgba(0,0,0,0.7)", display: "block", whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, reel.caption),
+              reel.caption.length > 70 && React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(false); }, style: { color: "rgba(255,255,255,0.72)", fontSize: 13, fontWeight: 700, cursor: "pointer", display: "inline-block", marginTop: 2 } }, "less"))
+          : reel.caption.length > 70
+            ? React.createElement("div", { style: { display: "flex", alignItems: "baseline", minWidth: 0, maxWidth: "100%", whiteSpace: "nowrap" } },
+                React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: "21px", textShadow: "0 1px 6px rgba(0,0,0,0.7)", flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, reel.caption),
+                React.createElement("span", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(true); }, style: { color: "rgba(255,255,255,0.72)", fontSize: 13, fontWeight: 700, cursor: "pointer", flex: "0 0 auto", marginLeft: 4 } }, "more"))
+            : React.createElement("span", { style: { color: "#fff", fontSize: 14, lineHeight: 1.5, textShadow: "0 1px 6px rgba(0,0,0,0.7)", display: "block", whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, reel.caption),
         React.createElement("div", { style: { marginTop: 3, color: "rgba(255,255,255,0.78)", fontSize: 12, lineHeight: 1.35, fontWeight: 600, textShadow: "0 1px 4px rgba(0,0,0,0.65)" } },
           reelCaptionTimeAgo(reel.created_at),
           reelCaptionTimeAgo(reel.created_at) ? " • See translation" : "See translation")
       ) : null)),
-  captionExpanded && React.createElement("div", {
-    onClick: function() { setCaptionExpanded(false); },
-    style: { position: "absolute", inset: 0, zIndex: 30, background: "rgba(0,0,0,0.28)", display: "flex", alignItems: "flex-end" }
-  },
-    React.createElement("div", {
-      onClick: function(e) { e.stopPropagation(); },
-      style: { width: "100%", maxHeight: "62vh", background: "var(--card-bg)", color: "var(--text)", borderRadius: "22px 22px 0 0", padding: "10px 20px calc(18px + env(safe-area-inset-bottom, 0px))", boxSizing: "border-box", overflowY: "auto" }
-    },
-      React.createElement("div", { style: { width: 36, height: 4, borderRadius: 3, background: "var(--muted)", opacity: 0.65, margin: "0 auto 18px" } }),
-      React.createElement("div", { style: { fontSize: 15, lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere", paddingBottom: 12 } }, reelCaption),
-      React.createElement("div", { style: { fontSize: 13, color: "var(--muted)", marginTop: 4 } }, reelCaptionDate(reel.created_at)),
-      React.createElement("div", { style: { fontSize: 14, fontWeight: 700, color: "var(--text)", marginTop: 18 } }, "See translation"),
-      React.createElement("button", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(false); }, style: { display: "block", marginTop: 18, padding: "8px 14px", border: "1px solid var(--border)", borderRadius: 18, background: "transparent", color: "var(--text)", fontSize: 13, fontWeight: 700, cursor: "pointer" } }, "less")
-    )
-  ),
   showMenu && React.createElement("div", { onClick: function() { setShowMenu(false); }, style: { position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-end" } },
       React.createElement("style", null, "@keyframes _bsUp{from{transform:translateY(100%)}to{transform:translateY(0)}}"),
       React.createElement("div", { onClick: function(e) { e.stopPropagation(); }, style: { width: "100%", maxWidth: 540, margin: "0 auto", background: "var(--card-bg)", borderRadius: "22px 22px 0 0", paddingBottom: 32, animation: "_bsUp 0.26s cubic-bezier(0.32,0.72,0,1)", overflowY: "auto", maxHeight: "70vh" } },
