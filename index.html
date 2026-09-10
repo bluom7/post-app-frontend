@@ -28095,21 +28095,31 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   // Keep the follow control mounted and visible while the parent reconciles
   // the async follow request. The server flag may briefly lag behind the tap.
   var [localFollowing, setLocalFollowing] = React.useState(!!reel.is_following);
+  var [localPending, setLocalPending] = React.useState(!!reel.is_follow_pending);
   var followOverrideRef = React.useRef(null);
   React.useEffect(function() {
     var serverFollowing = !!reel.is_following;
-    if (followOverrideRef.current === null) {
+    var serverPending = !!reel.is_follow_pending;
+    var override = followOverrideRef.current;
+    if (override === null) {
       setLocalFollowing(serverFollowing);
-    } else if (followOverrideRef.current === serverFollowing) {
+      setLocalPending(serverPending);
+    } else if (override.following === serverFollowing && override.pending === serverPending) {
+      followOverrideRef.current = null;
+    } else if (serverPending) {
+      // A private account can turn an optimistic follow into a request.
+      setLocalFollowing(serverFollowing);
+      setLocalPending(serverPending);
       followOverrideRef.current = null;
     }
-  }, [reel.is_following]);
+  }, [reel.is_following, reel.is_follow_pending]);
   var handleFollowClick = function(e) {
     e.stopPropagation();
     if (followTargetId == null || String(followTargetId) === "") return;
-    var nextFollowing = !localFollowing;
-    followOverrideRef.current = nextFollowing;
+    var nextFollowing = !localFollowing && !localPending;
+    followOverrideRef.current = { following: nextFollowing, pending: false };
     setLocalFollowing(nextFollowing);
+    setLocalPending(false);
     onFollow && onFollow(followTargetId);
   };
 
@@ -28390,9 +28400,10 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
                   ),
                   followTargetId != null && String(followTargetId) !== "" && !isOwn && React.createElement("button", {
                   onClick: handleFollowClick,
-                  "aria-label": localFollowing ? "Following" : "Follow",
-                  style: { background: "#fff", border: "1px solid #111", color: "#111", borderRadius: 8, width: localFollowing ? 90 : 69, minWidth: localFollowing ? 90 : 69, height: 34, padding: "0 10px", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", fontSize: 15, lineHeight: 1, fontWeight: 800, cursor: "pointer", flexShrink: 0 }
-                }, React.createElement("span", { style: { display: "inline-block", whiteSpace: "nowrap", letterSpacing: localFollowing ? "0.15px" : "0.5px" } }, localFollowing ? "Following" : "Follow"))
+                  "aria-label": localPending ? "Requested" : localFollowing ? "Following" : "Follow",
+                  "data-follow-control": true,
+                  style: { background: "#EFF0F2", color: "#111", border: "none", borderRadius: 6, padding: "7px 14px", fontSize: 15, fontWeight: 650, minWidth: 78, justifyContent: "center", lineHeight: "20px", letterSpacing: "0.3px", cursor: "pointer", flexShrink: 0, transition: "all .15s" }
+                }, localPending ? "Requested" : localFollowing ? "Following" : "Follow")
                 ),
                 React.createElement("div", { style: { fontSize: 15, lineHeight: 1.55, whiteSpace: "pre-wrap", overflowWrap: "break-word", wordBreak: "normal", textAlign: "left", marginBottom: 14 } }, reelCaptionSheetText),
                 React.createElement("div", { style: { color: "#111", fontSize: 14, lineHeight: 1.5, fontWeight: 800, letterSpacing: "0.2px", fontStretch: "expanded", WebkitTextStroke: "0.15px currentColor" } }, React.createElement("div", { style: { display: "block", marginBottom: 4 } }, reelCaptionTimeAgo(reel.created_at)), React.createElement("div", { style: { display: "block" } }, "See translation"))
