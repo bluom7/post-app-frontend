@@ -28818,6 +28818,12 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
       })
       .then(function(d) {
         var newReels = Array.isArray(d && d.reels) ? d.reels : [];
+        // Keep the mounted Reels tab aligned with app-level follow state while
+        // older cached responses are still in circulation.
+        var currentFollowing = new Set((user && Array.isArray(user.following) ? user.following : []).map(function(id) { return String(id); }));
+        newReels = newReels.map(function(reel) {
+          return Object.assign({}, reel, { is_following: !!reel.is_following || currentFollowing.has(String(reel.user_id)) });
+        });
         algorithmGroupRef.current = d && d.ab_group || "A";
         setReels(function(prev) {
           var merged = replace ? newReels : prev.concat(newReels);
