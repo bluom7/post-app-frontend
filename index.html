@@ -28389,6 +28389,11 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
                     reel.user_handle && React.createElement("div", { style: { color: "#666", fontSize: 13, lineHeight: "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + reel.user_handle.replace(/^@/, ""))
                   )
                 ),
+                followTargetId != null && String(followTargetId) !== "" && !isOwn && React.createElement("button", {
+                  onClick: handleFollowClick,
+                  "aria-label": localFollowing ? "Following" : "Follow",
+                  style: { background: "#fff", border: "1px solid #111", color: "#111", borderRadius: 8, width: localFollowing ? 90 : 69, minWidth: localFollowing ? 90 : 69, height: 34, padding: "0 10px", display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", fontSize: 15, lineHeight: 1, fontWeight: 800, cursor: "pointer", flexShrink: 0 }
+                }, React.createElement("span", { style: { display: "inline-block", whiteSpace: "nowrap", letterSpacing: localFollowing ? "0.15px" : "0.5px" } }, localFollowing ? "Following" : "Follow")),
                 React.createElement("div", { style: { fontSize: 15, lineHeight: 1.55, whiteSpace: "pre-wrap", overflowWrap: "break-word", wordBreak: "normal", textAlign: "left", marginBottom: 14 } }, reelCaptionSheetText),
                 React.createElement("div", { style: { color: "#111", fontSize: 14, lineHeight: 1.5, fontWeight: 800, letterSpacing: "0.2px", fontStretch: "expanded", WebkitTextStroke: "0.15px currentColor" } }, React.createElement("div", { style: { display: "block", marginBottom: 4 } }, reelCaptionTimeAgo(reel.created_at)), React.createElement("div", { style: { display: "block" } }, "See translation"))
               )
