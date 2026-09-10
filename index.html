@@ -28076,7 +28076,6 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
       return dateLabel + " · " + relativeLabel(weeks, "week", "weeks");
     }
     return dateWithYear;
-  }
   };
   // Share-composer reels can arrive as content, while algorithm-feed reels use caption.
   var reelCaption = reel.caption || reel.content || "";
