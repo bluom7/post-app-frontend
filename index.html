@@ -1370,7 +1370,17 @@ const LANG_MAP = {
   ru: "ru",
   bn: "bn",
   id: "id",
-  tr: "tr"
+  tr: "tr",
+  mr: "mr",
+  ta: "ta",
+  te: "te",
+  gu: "gu",
+  pa: "pa",
+  ko: "ko",
+  it: "it",
+  nl: "nl",
+  pl: "pl",
+  vi: "vi"
 };
 async function translateText(text, targetLang, withTone = false) {
   if (!text || !text.trim()) return {
@@ -28077,6 +28087,11 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   var itemRef = React.useRef(null);
   var lastTapRef = React.useRef(null);
   var [captionExpanded, setCaptionExpanded] = React.useState(false);
+  var [captionTranslation, setCaptionTranslation] = React.useState("");
+  var [captionTranslationLoading, setCaptionTranslationLoading] = React.useState(false);
+  var [captionTranslationTarget, setCaptionTranslationTarget] = React.useState("hi");
+  var [captionShowingOriginal, setCaptionShowingOriginal] = React.useState(false);
+  var captionTranslationRequestRef = React.useRef(0);
   var [showMenu, setShowMenu] = React.useState(false);
   var [showAudioSheet, setShowAudioSheet] = React.useState(false);
   var [isBlocked, setIsBlocked] = React.useState(false);
@@ -28143,9 +28158,78 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   };
   // Share-composer reels can arrive as content, while algorithm-feed reels use caption.
   var reelCaption = reel.caption || reel.content || "";
+  React.useEffect(function() {
+    captionTranslationRequestRef.current += 1;
+    setCaptionTranslation("");
+    setCaptionTranslationLoading(false);
+    setCaptionShowingOriginal(false);
+    setCaptionTranslationTarget("hi");
+  }, [reel.id, reelCaption]);
   // Keep adjacent hashtags readable and on the same horizontal line in the details sheet.
   // Keep every hashtag on its own line while preserving user-entered prompt line breaks.
   var reelCaptionSheetText = reelCaption.replace(/([^\n])\s*(?=#)/g, "$1\n");
+  var reelCaptionTranslationSheetText = (captionTranslation || "").replace(/([^\n])\s*(?=#)/g, "$1\n");
+  var reelCaptionDisplayText = captionShowingOriginal || !captionTranslation ? reelCaptionSheetText : reelCaptionTranslationSheetText;
+  var reelTranslationLanguages = [
+    { value: "hi", label: "Hindi" },
+    { value: "en", label: "English" },
+    { value: "bn", label: "Bengali" },
+    { value: "zh", label: "Chinese" },
+    { value: "ur", label: "Urdu" },
+    { value: "fr", label: "French" },
+    { value: "ja", label: "Japanese" },
+    { value: "es", label: "Spanish" },
+    { value: "ar", label: "Arabic" },
+    { value: "pt", label: "Portuguese" },
+    { value: "de", label: "German" },
+    { value: "ru", label: "Russian" },
+    { value: "id", label: "Indonesian" },
+    { value: "tr", label: "Turkish" },
+    { value: "mr", label: "Marathi" },
+    { value: "ta", label: "Tamil" },
+    { value: "te", label: "Telugu" },
+    { value: "gu", label: "Gujarati" },
+    { value: "pa", label: "Punjabi" },
+    { value: "ko", label: "Korean" },
+    { value: "it", label: "Italian" },
+    { value: "nl", label: "Dutch" },
+    { value: "vi", label: "Vietnamese" }
+  ];
+  var requestReelTranslation = function(target) {
+    if (captionTranslationLoading || !reelCaptionSheetText.trim()) return;
+    var requestId = captionTranslationRequestRef.current + 1;
+    captionTranslationRequestRef.current = requestId;
+    setCaptionTranslationLoading(true);
+    translateText(reelCaptionSheetText, target).then(function(result) {
+      if (captionTranslationRequestRef.current !== requestId) return;
+      setCaptionTranslation(result && result.translated ? result.translated : reelCaptionSheetText);
+      setCaptionShowingOriginal(false);
+    }).catch(function() {
+      if (captionTranslationRequestRef.current !== requestId) return;
+      setCaptionTranslation(reelCaptionSheetText);
+      setCaptionShowingOriginal(false);
+    }).finally(function() {
+      if (captionTranslationRequestRef.current === requestId) setCaptionTranslationLoading(false);
+    });
+  };
+  var translateReelCaption = function(e) {
+    if (e) e.stopPropagation();
+    if (captionTranslationLoading) return;
+    if (captionTranslation) {
+      setCaptionShowingOriginal(function(current) { return !current; });
+      return;
+    }
+    requestReelTranslation(captionTranslationTarget);
+  };
+  var changeReelTranslationTarget = function(e) {
+    e.stopPropagation();
+    var nextTarget = e.target.value;
+    if (!nextTarget || nextTarget === captionTranslationTarget) return;
+    setCaptionTranslationTarget(nextTarget);
+    setCaptionTranslation("");
+    setCaptionShowingOriginal(false);
+    requestReelTranslation(nextTarget);
+  };
   var reelCaptionPreview = reelCaption.split(/\r?\n/)[0].trim();
   var captionNeedsMore = reelCaption.length > 45 || /\r?\n/.test(reelCaption);
   var songMarqueeRef = React.useRef(null);
@@ -28455,7 +28539,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
       reelCaption ? React.createElement("div", { style: { marginBottom: 6, maxWidth: "100%" } },
         captionExpanded
           ? React.createElement("div", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(false); }, style: { position: "fixed", inset: 0, zIndex: 1200, background: "rgba(0,0,0,0.34)", display: "flex", alignItems: "flex-end", justifyContent: "center" } },
-              React.createElement("div", { onClick: function(e) { e.stopPropagation(); setCaptionExpanded(false); }, style: { width: "100%", maxWidth: 540, background: "#fff", color: "#111", borderRadius: "22px 22px 0 0", padding: "12px 20px 26px", boxSizing: "border-box", maxHeight: "70vh", overflowY: "auto", boxShadow: "0 -6px 24px rgba(0,0,0,0.18)" } },
+              React.createElement("div", { onClick: function(e) { e.stopPropagation(); }, style: { width: "100%", maxWidth: 540, background: "#fff", color: "#111", borderRadius: "22px 22px 0 0", padding: "12px 20px 26px", boxSizing: "border-box", maxHeight: "70vh", overflowY: "auto", boxShadow: "0 -6px 24px rgba(0,0,0,0.18)" } },
                 React.createElement("div", { style: { width: 38, height: 4, borderRadius: 4, background: "#cfcfcf", margin: "0 auto 16px" } }),
                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginBottom: 16 } },
                   React.createElement("div", { style: { width: 44, height: 44, borderRadius: "50%", background: reel.avatar_bg || "#FFD600", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", fontWeight: 800, fontSize: 17, color: "#111" } },
@@ -28474,8 +28558,16 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
                   style: { background: "#EFF0F2", color: "#111", border: "none", borderRadius: 6, padding: "7px 14px", fontSize: 15, fontWeight: 650, minWidth: 78, justifyContent: "center", lineHeight: "20px", letterSpacing: "0.3px", cursor: "pointer", flexShrink: 0, transition: "all .15s" }
                 }, localPending ? "Requested" : localFollowing ? "Following" : "Follow")
                 ),
-                React.createElement("div", { style: { fontSize: 15, lineHeight: 1.55, whiteSpace: "pre-wrap", overflowWrap: "break-word", wordBreak: "normal", textAlign: "left", marginBottom: 14 } }, reelCaptionSheetText),
-                React.createElement("div", { style: { color: "#111", fontSize: 14, lineHeight: 1.5, fontWeight: 800, letterSpacing: "0.2px", fontStretch: "expanded", WebkitTextStroke: "0.15px currentColor" } }, React.createElement("div", { style: { display: "block", marginBottom: 4 } }, reelCaptionTimeAgo(reel.created_at)), React.createElement("div", { style: { display: "block" } }, "See translation"))
+                React.createElement("div", { style: { fontSize: 15, lineHeight: 1.55, whiteSpace: "pre-wrap", overflowWrap: "break-word", wordBreak: "normal", textAlign: "left", marginBottom: 14 } }, reelCaptionDisplayText),
+                React.createElement("div", { style: { color: "#111", fontSize: 14, lineHeight: 1.5, fontWeight: 800, letterSpacing: "0.2px", fontStretch: "expanded", WebkitTextStroke: "0.15px currentColor" } },
+                  React.createElement("div", { style: { display: "block", marginBottom: 6 } }, reelCaptionTimeAgo(reel.created_at)),
+                  React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } },
+                    React.createElement("button", { type: "button", onClick: translateReelCaption, disabled: captionTranslationLoading, style: { background: "none", border: "none", padding: 0, color: "#111", fontSize: 14, fontWeight: 800, cursor: captionTranslationLoading ? "wait" : "pointer", WebkitTapHighlightColor: "transparent" } }, captionTranslationLoading ? "Loading..." : (captionTranslation && !captionShowingOriginal ? "See original" : "See translation")),
+                    React.createElement("select", { value: captionTranslationTarget, onChange: changeReelTranslationTarget, onClick: function(e) { e.stopPropagation(); }, "aria-label": "Translation language", style: { border: "1px solid #d5d5d5", borderRadius: 6, background: "#fff", color: "#111", padding: "4px 7px", fontSize: 12, fontWeight: 700, maxWidth: 150 } },
+                      reelTranslationLanguages.map(function(language) { return React.createElement("option", { key: language.value, value: language.value }, language.label); })
+                    )
+                  )
+                )
               )
             )
           : captionNeedsMore
