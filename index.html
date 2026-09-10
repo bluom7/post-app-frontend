@@ -28048,16 +28048,35 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   var reelAudioSubtitle = hasCustomSong ? (reel.music_artist || "Audio") : "Audio";
   var reelCaptionTimeAgo = function(ts) {
     if (!ts) return "";
-    var parsed = new Date(ts).getTime();
-    if (!Number.isFinite(parsed)) return "";
-    var diff = Math.max(0, Math.floor((Date.now() - parsed) / 1000));
-    if (diff < 60) return "just now";
+    var parsedDate = new Date(ts);
+    var timestamp = parsedDate.getTime();
+    if (!Number.isFinite(timestamp)) return "";
+
+    var now = new Date();
+    var diff = Math.max(0, Math.floor((now.getTime() - timestamp) / 1000));
+    var dateLabel = parsedDate.toLocaleDateString("en-IN", { day: "numeric", month: "long" });
+    var oneYearAgo = new Date(now);
+    oneYearAgo.setFullYear(now.getFullYear() - 1);
+    var dateWithYear = parsedDate <= oneYearAgo
+      ? parsedDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+      : dateLabel;
+    var relativeLabel = function(value, singular, plural) {
+      return value + " " + (value === 1 ? singular : plural) + " ago";
+    };
+
+    if (diff < 60) return dateLabel + " · just now";
     var minutes = Math.floor(diff / 60);
-    if (minutes < 60) return minutes + " " + (minutes === 1 ? "minute" : "minutes") + " ago";
+    if (minutes < 60) return dateLabel + " · " + relativeLabel(minutes, "minute", "minutes");
     var hours = Math.floor(diff / 3600);
-    if (hours < 24) return hours + " " + (hours === 1 ? "hour" : "hours") + " ago";
+    if (hours < 24) return dateLabel + " · " + relativeLabel(hours, "hour", "hours");
     var days = Math.floor(diff / 86400);
-    return days + " " + (days === 1 ? "day" : "days") + " ago";
+    if (days < 7) return dateLabel + " · " + relativeLabel(days, "day", "days");
+    if (days < 30) {
+      var weeks = Math.max(1, Math.floor(days / 7));
+      return dateLabel + " · " + relativeLabel(weeks, "week", "weeks");
+    }
+    return dateWithYear;
+  }
   };
   // Share-composer reels can arrive as content, while algorithm-feed reels use caption.
   var reelCaption = reel.caption || reel.content || "";
