@@ -28520,7 +28520,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
         )
       )
     ),
-    React.createElement("div", { style: { position: "absolute", left: 0, right: 70, bottom: 16, padding: "0 16px", zIndex: 5 } },
+    React.createElement("div", { style: { position: "absolute", left: 0, right: 70, bottom: hasReelHashtag ? 40 : 16, padding: "0 16px", zIndex: 5 } },
       React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 8 } },
         React.createElement("div", { onClick: openReelProfile, style: { width: 36, height: 36, marginTop: 1, borderRadius: "50%", background: reel.avatar_bg || "#FFD600", flexShrink: 0, border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15, color: "#111", overflow: "hidden", cursor: "pointer", boxShadow: "0 1px 5px rgba(0,0,0,0.45)", WebkitTapHighlightColor: "transparent", touchAction: "manipulation", outline: "none" } },
           reel.avatar_photo ? React.createElement("img", { src: reel.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" } }) : (reel.avatar_letter || "?")),
