@@ -28081,7 +28081,7 @@ function ReelMentionSheet({ reel, token, user, showToast, onClose, onMentioned }
 }
 
 // ── ReelItem — one full-screen reel card ─────────────────────────────────────
-function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLike, onSave, onShare, onFollow, onOpenComments, onDelete, fmtCount, showUpload, showCamera, showSearch, onNotInterested, onMention, onOpenCompose, onView, externalViewTracking }) {
+function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLike, onSave, onShare, onFollow, onOpenComments, onDelete, fmtCount, showUpload, showCamera, showSearch, onNotInterested, onMention, onOpenCompose, onView, externalViewTracking, isReelsFeed }) {
   var [showHeart, setShowHeart] = React.useState(false);
   var [mediaAR, setMediaAR] = React.useState(null);
   var itemRef = React.useRef(null);
@@ -28157,7 +28157,11 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
     return dateWithYear;
   };
   // Share-composer reels can arrive as content, while algorithm-feed reels use caption.
-  var reelCaption = reel.caption || reel.content || "";
+  var reelBaseCaption = String(reel.caption || reel.content || "");
+  var reelAutoCaption = "Turn your moments into reels and let your story reach the right audience. 🎬✨ #Reels #Trending #Explore";
+  var reelCaption = isReelsFeed && !/(^|\s)#[^\s#]+/.test(reelBaseCaption)
+    ? (reelBaseCaption.trim() ? reelBaseCaption.replace(/\s+$/, "") + "\n" + reelAutoCaption : reelAutoCaption)
+    : reelBaseCaption;
   var hasReelHashtag = /(^|\s)#[^\s#]+/.test(reelCaption);
   React.useEffect(function() {
     captionTranslationRequestRef.current += 1;
@@ -29362,7 +29366,8 @@ function ReelsTab({ token, user, showToast, onViewProfile, onBack, setTab, onOpe
           onMention: mentionReelUser,
           onOpenCompose: onOpenCompose,
           onView: function() {},
-          externalViewTracking: true
+          externalViewTracking: true,
+          isReelsFeed: true
         });
       }),
       loading && React.createElement("div", { style: { height: "100%", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", scrollSnapAlign: "start", background: "#000" } },
