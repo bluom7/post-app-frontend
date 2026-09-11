@@ -28158,7 +28158,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   };
   // Share-composer reels can arrive as content, while algorithm-feed reels use caption.
   var reelBaseCaption = String(reel.caption || reel.content || "");
-  var reelAutoCaption = "Turn your moments into reels and let your story reach the right audience. 🎬✨ #Reels #Trending #Explore";
+  var reelAutoCaption = "あなたの瞬間をリールに変えて、あなたのストーリーをぴったりの視聴者に届けましょう。🎬✨ #リール #トレンド #おすすめ";
   var reelCaption = isReelsFeed && !/(^|\s)#[^\s#]+/.test(reelBaseCaption)
     ? (reelBaseCaption.trim() ? reelBaseCaption.replace(/\s+$/, "") + "\n" + reelAutoCaption : reelAutoCaption)
     : reelBaseCaption;
