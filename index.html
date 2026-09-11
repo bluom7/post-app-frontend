@@ -2587,8 +2587,8 @@ function VerificationStatusButton({ token, showToast }) {
 }
 
 // ─── VerificationModal ────────────────────────────────────────────────────────
-const VERIFY_CATEGORIES = CATEGORY_LIST.map(c => c.value);
 function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
+  const [screen, setScreen] = React.useState("benefits");
   const [fullName, setFullName] = React.useState("");
   const [category, setCategory] = React.useState("Public Figure");
   const [idProofUrl, setIdProofUrl] = React.useState("");
@@ -2607,42 +2607,92 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
     finally { setLoading(false); }
   };
 
+  const icon = (symbol) => React.createElement("span", {
+    style: { width: 30, height: 30, borderRadius: 10, display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#1877F2", fontSize: 22, fontWeight: 700, flexShrink: 0 }
+  }, symbol);
+
+  const benefit = (symbol, title, description) => React.createElement("div", {
+    style: { display: "flex", gap: 14, alignItems: "center", padding: "18px 0", borderBottom: "1px solid #EAEAEA" }
+  }, icon(symbol), React.createElement("div", { style: { minWidth: 0 } },
+    React.createElement("div", { style: { color: "#171717", fontSize: 16, fontWeight: 700, lineHeight: 1.3 } }, title),
+    description && React.createElement("div", { style: { color: "#737373", fontSize: 13, lineHeight: 1.45, marginTop: 4 } }, description)
+  ));
+
+  const tab = (label, value) => React.createElement("button", {
+    onClick: () => setScreen(value),
+    style: { flex: 1, border: "none", borderBottom: screen === value ? "2px solid #171717" : "2px solid transparent", background: "transparent", color: screen === value ? "#171717" : "#8A8A8A", padding: "15px 4px 13px", fontSize: 14, fontWeight: screen === value ? 800 : 600, cursor: "pointer" }
+  }, label);
+
+  const inputStyle = { width: "100%", height: 52, padding: "0 15px", borderRadius: 12, border: "1px solid #DEDEDE", background: "#FFFFFF", color: "#171717", fontSize: 15, outline: "none", boxSizing: "border-box", boxShadow: "0 2px 8px rgba(20,20,20,0.03)" };
+  const labelStyle = { display: "block", color: "#2D2D2D", fontSize: 14, fontWeight: 700, marginBottom: 8 };
+  const helperStyle = { color: "#777777", fontSize: 12, lineHeight: 1.45, marginTop: 7 };
+
   return React.createElement("div", {
-    style: { position: "fixed", inset: 0, height: "100dvh", background: "var(--bg)", zIndex: 9999, overflowY: "auto", boxSizing: "border-box" }
+    style: { position: "fixed", inset: 0, height: "100dvh", background: "#FFFFFF", color: "#171717", zIndex: 9999, overflowY: "auto", boxSizing: "border-box" }
   },
-    React.createElement("div", {
-      style: { background: "var(--bg)", padding: "24px 20px 40px", width: "100%", maxWidth: 540, minHeight: "100%", margin: "0 auto", boxSizing: "border-box" }
-    },
-      React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 } },
-        React.createElement("span", { style: { fontWeight: 900, fontSize: 17 } }, React.createElement("span",null,React.createElement("span",{style:{color:"#1877F2",fontWeight:900}},"✓ "),"Apply for Verification")),
-        React.createElement("button", { onClick: onClose, style: { background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "var(--muted)" } }, "×")
+    React.createElement("div", { style: { width: "100%", maxWidth: 560, minHeight: "100%", margin: "0 auto", boxSizing: "border-box", padding: "0 20px 44px" } },
+      React.createElement("div", { style: { position: "sticky", top: 0, zIndex: 2, background: "rgba(255,255,255,0.97)", paddingTop: 18 } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 38 } },
+          React.createElement("button", { onClick: onClose, "aria-label": "Close verification", style: { width: 36, height: 36, border: "none", borderRadius: 18, background: "#F5F5F5", color: "#171717", fontSize: 22, lineHeight: 1, cursor: "pointer" } }, "×"),
+          React.createElement("div", { style: { fontSize: 17, fontWeight: 800, letterSpacing: "-0.2px" } }, "Verification"),
+          React.createElement("div", { style: { width: 36, height: 36 } })
+        ),
+        React.createElement("div", { style: { display: "flex", gap: 18, borderBottom: "1px solid #E8E8E8", marginTop: 12 } },
+          tab("Why verify", "benefits"), tab("Apply", "apply")
+        )
       ),
-      
-      React.createElement("div", { style: { marginBottom: 14 } },
-        React.createElement("label", { style: { fontSize: 13, fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: 6 } }, "Full Legal Name *"),
-        React.createElement("input", { value: fullName, onChange: e => setFullName(e.target.value), placeholder: "As on your ID document", style: { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--input-bg)", color: "var(--text)", fontSize: 14, outline: "none", boxSizing: "border-box" } })
-      ),
-      React.createElement("div", { style: { marginBottom: 14 } },
-        React.createElement("label", { style: { fontSize: 13, fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: 6 } }, "Category *"),
-        React.createElement(CategoryPicker, {
-          value: category,
-          onChange: setCategory,
-          inputStyle: { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--input-bg)", color: "var(--text)", fontSize: 14, boxSizing: "border-box" }
-        })
-      ),
-      React.createElement("div", { style: { marginBottom: 14 } },
-        React.createElement("label", { style: { fontSize: 13, fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: 6 } }, "ID Proof Link (optional)"),
-        React.createElement("input", { value: idProofUrl, onChange: e => setIdProofUrl(e.target.value), placeholder: "Govt. ID scan link, Wikipedia page, etc.", style: { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--input-bg)", color: "var(--text)", fontSize: 14, outline: "none", boxSizing: "border-box" } })
-      ),
-      React.createElement("div", { style: { marginBottom: 22 } },
-        React.createElement("label", { style: { fontSize: 13, fontWeight: 700, color: "var(--muted)", display: "block", marginBottom: 6 } }, "Social Media / News Links (optional)"),
-        React.createElement("textarea", { value: socialLinks, onChange: e => setSocialLinks(e.target.value), placeholder: "Instagram, Twitter, news article URLs — one per line", rows: 3, style: { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--input-bg)", color: "var(--text)", fontSize: 14, outline: "none", resize: "none", boxSizing: "border-box" } })
-      ),
-      React.createElement("button", {
-        onClick: handleSubmit,
-        disabled: loading,
-        style: { width: "100%", padding: "14px", borderRadius: 14, background: COLORS.blue, color: "#fff", fontWeight: 800, fontSize: 16, border: "none", cursor: loading ? "default" : "pointer", opacity: loading ? 0.7 : 1 }
-      }, loading ? "Submitting..." : "Submit Verification Request")
+      screen === "benefits" ? React.createElement("div", { style: { paddingTop: 28 } },
+        React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 25 } },
+          React.createElement("span", { style: { width: 26, height: 7, borderRadius: 8, background: "#F4BD16" } }),
+          React.createElement("span", { style: { width: 26, height: 7, borderRadius: 8, background: "#16A568" } }),
+          React.createElement("span", { style: { width: 26, height: 7, borderRadius: 8, background: "#EF476F" } }),
+          React.createElement("span", { style: { width: 26, height: 7, borderRadius: 8, background: "#1877F2" } })
+        ),
+        React.createElement("h1", { style: { margin: 0, color: "#111111", fontSize: 34, lineHeight: 1.08, letterSpacing: "-1px" } }, "Get verified"),
+        React.createElement("p", { style: { margin: "14px 0 26px", color: "#707070", fontSize: 16, lineHeight: 1.55, maxWidth: 480 } }, "A verified badge helps people recognise that your account is authentic. Here is what changes once your request is approved."),
+        React.createElement("div", { style: { borderTop: "1px solid #EAEAEA" } },
+          benefit("✓", "Verified badge on your profile", "Make your authentic account easy to identify."),
+          benefit("♢", "Fewer impersonation reports against you", "Give your audience a clear signal they can trust."),
+          benefit("◯", "Your replies rank higher in busy threads", "Your voice gets more visibility in conversations."),
+          benefit("▥", "Profile insights and audience analytics", "Understand how people discover and engage with you."),
+          benefit("ϟ", "Faster response from creator support", "Get help more quickly when you need it."),
+          benefit("✦", "Early access to new POST App features", "Be among the first to try selected new features.")
+        ),
+        React.createElement("button", { onClick: () => setScreen("apply"), style: { marginTop: 30, width: "100%", minHeight: 54, border: "none", borderRadius: 14, background: "#171717", color: "#FFFFFF", fontSize: 16, fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 18px rgba(0,0,0,0.12)" } }, "Apply for verification"),
+        React.createElement("p", { style: { textAlign: "center", color: "#909090", fontSize: 12, lineHeight: 1.5, margin: "13px 18px 0" } }, "Your information is reviewed by the POST App team.")
+      ) : React.createElement("div", { style: { paddingTop: 28 } },
+        React.createElement("div", { style: { marginBottom: 25 } },
+          React.createElement("h1", { style: { margin: 0, color: "#111111", fontSize: 30, lineHeight: 1.12, letterSpacing: "-0.7px" } }, "Apply for verification"),
+          React.createElement("p", { style: { margin: "10px 0 0", color: "#707070", fontSize: 15, lineHeight: 1.5 } }, "Share a few details so we can review your account accurately.")
+        ),
+        status === "pending" && React.createElement("div", { style: { padding: "13px 14px", marginBottom: 20, borderRadius: 12, background: "#FFF8E5", color: "#795B00", fontSize: 13, lineHeight: 1.45 } }, "Your previous request is currently under review."),
+        status === "rejected" && React.createElement("div", { style: { padding: "13px 14px", marginBottom: 20, borderRadius: 12, background: "#FFF1F1", color: "#A32929", fontSize: 13, lineHeight: 1.45 } }, "You can submit updated information for another review."),
+        React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 22 } },
+          React.createElement("div", null,
+            React.createElement("label", { style: labelStyle }, "Full legal name", React.createElement("span", { style: { color: "#1877F2" } }, " *")),
+            React.createElement("input", { value: fullName, onChange: e => setFullName(e.target.value), placeholder: "Enter your name as shown on your ID", style: inputStyle, autoComplete: "name" }),
+            React.createElement("div", { style: helperStyle }, "Use the same name that appears on your official identity document.")
+          ),
+          React.createElement("div", null,
+            React.createElement("label", { style: labelStyle }, "Verification category", React.createElement("span", { style: { color: "#1877F2" } }, " *")),
+            React.createElement(CategoryPicker, { value: category, onChange: setCategory, inputStyle: { ...inputStyle, height: 52 } }),
+            React.createElement("div", { style: helperStyle }, "Choose the category that best describes your public presence.")
+          ),
+          React.createElement("div", null,
+            React.createElement("label", { style: labelStyle }, "Identity or public profile link"),
+            React.createElement("input", { value: idProofUrl, onChange: e => setIdProofUrl(e.target.value), placeholder: "Government ID, website, Wikipedia, etc.", style: inputStyle, inputMode: "url" }),
+            React.createElement("div", { style: helperStyle }, "Optional. Add one publicly accessible link that supports your identity or notability.")
+          ),
+          React.createElement("div", null,
+            React.createElement("label", { style: labelStyle }, "Social media or news links"),
+            React.createElement("textarea", { value: socialLinks, onChange: e => setSocialLinks(e.target.value), placeholder: "Instagram, X, YouTube, news article URLs — one per line", rows: 4, style: { ...inputStyle, height: 112, padding: "14px 15px", resize: "vertical", lineHeight: 1.45 } }),
+            React.createElement("div", { style: helperStyle }, "Optional. Add relevant links that help us understand your public presence.")
+          )
+        ),
+        React.createElement("div", { style: { marginTop: 26, padding: "14px 15px", borderRadius: 12, background: "#F7F9FC", color: "#646464", fontSize: 12, lineHeight: 1.5 } }, "Please submit accurate information. The POST App team may contact you if more details are needed."),
+        React.createElement("button", { onClick: handleSubmit, disabled: loading, style: { width: "100%", minHeight: 54, marginTop: 18, borderRadius: 14, background: loading ? "#8ABAF5" : "#1877F2", color: "#FFFFFF", fontWeight: 800, fontSize: 16, border: "none", cursor: loading ? "default" : "pointer", boxShadow: "0 8px 18px rgba(24,119,242,0.2)" } }, loading ? "Submitting..." : "Submit verification request"),
+        React.createElement("button", { onClick: () => setScreen("benefits"), style: { display: "block", margin: "14px auto 0", border: "none", background: "transparent", color: "#707070", fontSize: 13, fontWeight: 700, cursor: "pointer" } }, "← Back to benefits")
+      )
     )
   );
 }
