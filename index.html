@@ -3813,7 +3813,7 @@ function PostApp() {
   };
   const onViewAccountInfo = (uid, profileData) => {
     const realId = profileData?.id || uid;
-    if (!realId) return;
+    if (!realId || !profileData?.is_badge_verified) return;
     setViewUser(null);
     setViewUserProfile(null);
     setAccountInfoUser({ id: realId, profile: profileData || null });
@@ -6921,10 +6921,10 @@ function BentoPostCard({
   const menuItems = isOwn
     ? [{ label: post.is_reel ? "Delete reel" : "Delete post", icon: menuIcons.trash, danger: true, onClick: () => { onDelete(post.id); } }]
     : [
-        { label: "About this account", icon: menuIcons.about, onClick: () => {
+        ...(post.is_badge_verified ? [{ label: "About this account", icon: menuIcons.about, onClick: () => {
             setShowMenu(false);
-            onViewAccountInfo && onViewAccountInfo(post.user_id);
-          }},
+            onViewAccountInfo && onViewAccountInfo(post.user_id, post);
+          }}] : []),
         { label: "Interested", icon: menuIcons.interested, onClick: () => {
             setShowMenu(false);
             showToast && showToast("Marked as interested", "#1877F2");
@@ -28631,10 +28631,10 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   var reelMenuItems = isOwn
     ? [{ label: "Delete reel", icon: rMI.trash, danger: true, onClick: function() { onDelete && onDelete(reel.id); } }]
     : [
-        { label: "About this account", icon: rMI.about, onClick: function() {
+        ...(reel.is_badge_verified ? [{ label: "About this account", icon: rMI.about, onClick: function() {
             setShowMenu(false);
-            onViewAccountInfo && onViewAccountInfo(reel.user_id);
-          }},
+            onViewAccountInfo && onViewAccountInfo(reel.user_id, reel);
+          }}] : []),
         { label: "Interested", icon: rMI.interested, onClick: async function() {
             setShowMenu(false);
             try {
