@@ -7185,7 +7185,8 @@ function BentoPostCard({
         },
           React.createElement("span", { style: { width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#536471" } }, item.icon),
           item.label
-        ))
+        )),
+        isOwn && React.createElement("div", { style: { padding: "2px 22px 16px 66px", color: "#536471", fontFamily: "'Roboto Slab', Georgia, serif", fontSize: 15, fontWeight: 600, lineHeight: 1.45, letterSpacing: 0.1 } }, "Are you sure you want to delete this Post?")
       )
     ),
       showVerifiedInfo && React.createElement(VerifiedInfoModal, {
@@ -28924,7 +28925,8 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
             React.createElement("span", { style: { width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#536471" } }, item.icon),
             item.label
           );
-        })
+        }),
+        isOwn && React.createElement("div", { style: { padding: "2px 22px 16px 66px", color: "#536471", fontFamily: "'Roboto Slab', Georgia, serif", fontSize: 15, fontWeight: 600, lineHeight: 1.45, letterSpacing: 0.1 } }, "Are you sure you want to delete this Post?")
       )
     ),
     showReportModal && React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 1000, background: "var(--bg)", display: "flex", flexDirection: "column", maxWidth: 540, margin: "0 auto", boxSizing: "border-box" } },
