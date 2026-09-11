@@ -28168,11 +28168,14 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onLik
   if (reel && reel.user_id != null) followTargetIdRef.current = reel.user_id;
   var followTargetId = followTargetIdRef.current;
   var isOwn = reel.is_own || (user && followTargetId != null && String(followTargetId) === String(user.id));
-  var songMarqueeText = (reel.music_title || reel.audio_label || "") + (reel.music_artist ? " · " + reel.music_artist : "");
-  // A custom song has its own artwork; otherwise video reels use the uploader avatar as the original-audio tile.
-  var hasCustomSong = !!(reel.music_url || reel.music_preview_url || (reel.music_title && reel.music_title !== "Original Audio") || (reel.audio_label && reel.audio_label !== "Original Audio"));
-  var showOriginalAudioProfileTile = !!reel.video_url && !hasCustomSong;
-  var reelAudioTile = showOriginalAudioProfileTile
+  // A custom song has its own artwork; direct video uploads use the uploader as original audio.
+    var hasCustomSong = !!(reel.music_url || reel.music_preview_url || (reel.music_title && reel.music_title !== "Original Audio") || (reel.audio_label && reel.audio_label !== "Original Audio"));
+    var showOriginalAudioProfileTile = !!reel.video_url && !hasCustomSong;
+    var originalAudioOwner = String(reel.user_name || reel.user_handle || "").trim();
+    var songMarqueeText = showOriginalAudioProfileTile
+      ? (originalAudioOwner ? originalAudioOwner + " · " : "") + "Original Audio"
+      : (reel.music_title || reel.audio_label || "") + (reel.music_artist ? " · " + reel.music_artist : "");
+      var reelAudioTile = showOriginalAudioProfileTile
     ? (reel.avatar_photo
       ? React.createElement("img", { src: reel.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" }, alt: "" })
       : (reel.avatar_letter || "?"))
