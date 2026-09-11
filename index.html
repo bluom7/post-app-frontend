@@ -20402,7 +20402,31 @@ function AccountRecoveryScreen({
    }, []);
    const [settingsLanguage, setSettingsLanguage] = useState(user.language || "en");
    const [showSettingsLanguagePicker, setShowSettingsLanguagePicker] = useState(false);
-   const settingsLanguageOptions = LANGUAGES.map(function(item) { return { value: item[0], label: item[1] }; });
+   const settingsLanguageOptions = [
+     { value: "hi", label: "Hindi" },
+     { value: "en", label: "English" },
+     { value: "bn", label: "Bengali" },
+     { value: "zh", label: "Chinese" },
+     { value: "ur", label: "Urdu" },
+     { value: "fr", label: "French" },
+     { value: "ja", label: "Japanese" },
+     { value: "es", label: "Spanish" },
+     { value: "ar", label: "Arabic" },
+     { value: "pt", label: "Portuguese" },
+     { value: "de", label: "German" },
+     { value: "ru", label: "Russian" },
+     { value: "id", label: "Indonesian" },
+     { value: "tr", label: "Turkish" },
+     { value: "mr", label: "Marathi" },
+     { value: "ta", label: "Tamil" },
+     { value: "te", label: "Telugu" },
+     { value: "gu", label: "Gujarati" },
+     { value: "pa", label: "Punjabi" },
+     { value: "ko", label: "Korean" },
+     { value: "it", label: "Italian" },
+     { value: "nl", label: "Dutch" },
+     { value: "vi", label: "Vietnamese" }
+   ];
    useEffect(function() {
      if (!showSettingsLanguagePicker) return;
      const previousOverflow = document.body.style.overflow;
