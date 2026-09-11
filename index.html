@@ -2632,7 +2632,7 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
     const base = { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "#111111", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true, style: { flexShrink: 0, marginTop: 1 } };
     const path = (d, extra) => React.createElement("path", { d, ...(extra || {}) });
     const shapes = {
-      badge: [path("M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.78 4.78 4 4 0 0 1-6.74 0 4 4 0 0 1-4.78-4.78 4 4 0 0 1 0-6.75Z"), path("m9 12 2 2 4-4")],
+      badge: [path("M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.78 4.78 4 4 0 0 1-6.74 0 4 4 0 0 1-4.78-4.78 4 4 0 0 1 0-6.75Z", { transform: "translate(1.7 1.7) scale(0.86)" }), path("m9 12 2 2 4-4", { transform: "translate(1.7 1.7) scale(0.86)" })],
       shield: [path("M12 3.5 19 6v5.2c0 4.3-2.7 7.5-7 9.3-4.3-1.8-7-5-7-9.3V6l7-2.5Z"), path("m9.5 12 1.8 1.8 3.4-3.6")],
       bubble: [path("M5 18.5 4 21l3.8-1.8A8.2 8.2 0 1 0 5 18.5Z")],
       chart: [path("M5 19V5"), path("M5 19h15"), path("M8.5 15v-3"), path("M12.5 15V8"), path("M16.5 15v-5")],
