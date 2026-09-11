@@ -30125,11 +30125,11 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
     // Timing text — shown when paused, e.g. "0:07 / 0:19"
     !isPhotoReel && /*#__PURE__*/React.createElement("div", {
       ref: timingRef,
-      style: { position: "absolute", bottom: 8, left: 14, color: "#fff", fontSize: 12, fontWeight: 600, letterSpacing: 0.2, zIndex: 7, pointerEvents: "none", opacity: playing ? 0 : 1, transition: "opacity 0.18s", textShadow: "0 1px 4px rgba(0,0,0,0.7)", fontVariantNumeric: "tabular-nums" }
+      style: { position: "absolute", bottom: 23, left: 14, color: "#fff", fontSize: 13, fontWeight: 600, letterSpacing: 0.2, zIndex: 7, pointerEvents: "none", opacity: playing ? 0 : 1, transition: "opacity 0.18s", textShadow: "0 1px 4px rgba(0,0,0,0.7)", fontVariantNumeric: "tabular-nums" }
     }, "0:00 / 0:00"),
     // Video progress bar — 60fps RAF smooth, gray track, white fill, at very bottom
     !isPhotoReel && /*#__PURE__*/React.createElement("div", {
-      style: { position: "absolute", bottom: 20, left: 0, right: 0, height: 3, background: "rgba(255,255,255,0.30)", zIndex: 6, pointerEvents: "none" }
+      style: { position: "absolute", bottom: 20, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.30)", zIndex: 6, pointerEvents: "none" }
     },
       /*#__PURE__*/React.createElement("div", {
         ref: progressBarRef,
