@@ -2619,9 +2619,7 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
     setLoading(true);
     try {
       const apiCategory = { Individual: "Public Figure", Business: "Business Owner", Government: "Politician" }[accountType] || "Public Figure";
-      const details = [username.trim() ? "Username: " + username.trim() : "", "Account type: " + accountType, "Reason: " + verificationReason.trim(), supportingLinks.trim() ? "Supporting links:
-" + supportingLinks.trim() : ""].filter(Boolean).join("
-");
+      const details = [username.trim() ? "Username: " + username.trim() : "", "Account type: " + accountType, "Reason: " + verificationReason.trim(), supportingLinks.trim() ? "Supporting links:\n" + supportingLinks.trim() : ""].filter(Boolean).join("\n");
       const res = await api("/verification/request", "POST", { full_name: fullName.trim(), category: apiCategory, id_proof_url: idProofUrl, social_links: details }, token);
       if (res.flagged) showToast("Request submitted — flagged for extra review due to a similar verified account name.", COLORS.yellow);
       else showToast("Verification request submitted! We'll review within 2-3 days.", COLORS.green);
