@@ -1388,10 +1388,6 @@ async function translateText(text, targetLang, withTone = false) {
     tone_hint: null
   };
   const tl = LANG_MAP[targetLang] || targetLang;
-  if (tl === "en") return {
-    translated: text,
-    tone_hint: null
-  };
   const key = tl + "||" + text;
   if (_translateCache[key] && !withTone) return {
     translated: _translateCache[key],
