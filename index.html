@@ -8587,10 +8587,8 @@ function TagPeopleOverlay(props) {
                     ),
                       u.handle && e("div", { style:{ fontSize:12, color:"var(--muted)", marginTop:1 } }, "@"+(u.handle||"").replace(/^@/,""))
                     ),
-                    e("div", { style:{ width:24, height:24, borderRadius:6, border:"2px solid "+(isSel?COLORS.blue:"var(--border)"), background:isSel?COLORS.blue:"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 } },
-                      isSel && e("svg", { width:14, height:14, viewBox:"0 0 24 24", fill:"none", stroke:"#fff", strokeWidth:"3", strokeLinecap:"round", strokeLinejoin:"round" },
-                        e("polyline", { points:"20 6 9 17 4 12" })
-                      )
+                    e("div", { style:{ width:22, height:22, borderRadius:"50%", border:"2px solid "+(isSel?COLORS.blue:"var(--border)"), display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, background:"transparent" } },
+                      isSel && e("div", { style:{ width:12, height:12, borderRadius:"50%", background:COLORS.blue } })
                     )
                   );
                 })
