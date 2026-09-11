@@ -2684,7 +2684,7 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
           benefit("bolt", "Faster response from creator support"),
           benefit("sparkle", "Early access to new POST App features")
         ),
-        React.createElement("button", { onClick: () => setScreen("apply"), style: { marginTop: 30, marginLeft: "auto", display: "block", padding: "16px 26px", minHeight: 62, border: "none", borderRadius: 32, background: "#0D9FF3", color: "#FFFFFF", fontSize: 16, fontWeight: 800, letterSpacing: "0.25px", cursor: "pointer", boxShadow: "0 3px 0 rgba(0,0,0,0.08)" } }, "Apply for verification")
+        React.createElement("button", { onClick: () => setScreen("apply"), style: { marginTop: 30, marginLeft: "auto", display: "block", width: "274px", maxWidth: "100%", padding: "16px 26px", minHeight: 62, border: "none", borderRadius: 32, background: "#0D9FF3", color: "#FFFFFF", fontSize: 16, fontWeight: 800, letterSpacing: "0.25px", cursor: "pointer", boxShadow: "0 3px 0 rgba(0,0,0,0.08)" } }, "Apply for verification")
        ) : React.createElement("div", { style: { marginTop: 0, border: "none", borderRadius: 20, background: "#FFFFFF", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "0 2px 5px rgba(0,0,0,0.03)" } },
         React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 26 } },
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#F4BD16" } }),
@@ -2730,7 +2730,7 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
             React.createElement("textarea", { value: supportingLinks, onChange: e => setSupportingLinks(e.target.value), placeholder: "News coverage, official website, other verified profiles", rows: 3, style: { ...inputStyle, height: 94, padding: "16px 17px", borderRadius: 18, background: "#F3F3F3", border: "1px solid #D8D8D8", resize: "vertical", lineHeight: 1.45, fontSize: 17, letterSpacing: "0.35px" } })
           )
         ),
-        React.createElement("button", { onClick: handleSubmit, disabled: loading, style: { width: "100%", minHeight: 64, marginTop: 30, borderRadius: 34, background: loading ? "#83C7F5" : "#0D9FF3", color: "#FFFFFF", fontWeight: 800, fontSize: 17, letterSpacing: "0.25px", border: "none", cursor: loading ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 } },
+        React.createElement("button", { onClick: handleSubmit, disabled: loading, style: { width: "274px", maxWidth: "100%", minHeight: 62, marginTop: 30, marginLeft: "auto", borderRadius: 34, background: loading ? "#83C7F5" : "#0D9FF3", color: "#FFFFFF", fontWeight: 800, fontSize: 17, letterSpacing: "0.25px", border: "none", cursor: loading ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 } },
           React.createElement("svg", { width: 21, height: 21, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "m22 2-7 20-4-9-9-4Z" }), React.createElement("path", { d: "M22 2 11 13" })),
           loading ? "Sending application..." : "Send application"
         )
