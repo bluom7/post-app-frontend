@@ -2656,8 +2656,10 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
   const helperStyle = { color: "#777777", fontSize: 12, lineHeight: 1.45, marginTop: 7 };
 
   return React.createElement("div", {
-    style: { position: "fixed", inset: 0, height: "100dvh", background: "#FFFFFF", color: "#171717", zIndex: 9999, overflowY: "auto", boxSizing: "border-box" }
+    className: "verification-modal-scroll",
+    style: { position: "fixed", inset: 0, height: "100dvh", background: "#FFFFFF", color: "#171717", zIndex: 9999, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none", msOverflowStyle: "none", boxSizing: "border-box" }
   },
+    React.createElement("style", null, ".verification-modal-scroll::-webkit-scrollbar{display:none;width:0;height:0}.verification-modal-scroll{scrollbar-width:none;-ms-overflow-style:none}"),
     React.createElement("div", { style: { width: "100%", maxWidth: 560, minHeight: "100%", margin: "0 auto", boxSizing: "border-box", padding: "0 0 44px" } },
       React.createElement("div", { style: { position: "relative", background: "#FFFFFF", padding: "10px 20px 0", boxSizing: "border-box" } },
         React.createElement("div", { style: { position: "relative", display: "flex", alignItems: "center", minHeight: 58 } },
