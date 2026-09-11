@@ -2607,20 +2607,27 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
     finally { setLoading(false); }
   };
 
-  const icon = (symbol) => React.createElement("span", {
-    style: { width: 30, height: 30, borderRadius: 10, display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#1877F2", fontSize: 22, fontWeight: 700, flexShrink: 0 }
-  }, symbol);
+  const icon = (type) => {
+    const base = { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "#111111", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true, style: { flexShrink: 0, marginTop: 1 } };
+    const path = (d, extra) => React.createElement("path", { d, ...(extra || {}) });
+    const shapes = {
+      badge: [React.createElement("circle", { key: "c", cx: 12, cy: 12, r: 8.5 }), path("m9 12 2 2 4-4")],
+      shield: [path("M12 3.5 19 6v5.2c0 4.3-2.7 7.5-7 9.3-4.3-1.8-7-5-7-9.3V6l7-2.5Z"), path("m9.5 12 1.8 1.8 3.4-3.6")],
+      bubble: [path("M5 18.5 4 21l3.8-1.8A8.2 8.2 0 1 0 5 18.5Z")],
+      chart: [path("M5 19V5"), path("M5 19h15"), path("M8.5 15v-3"), path("M12.5 15V8"), path("M16.5 15v-5")],
+      bolt: [path("m13.5 2.8-8 10.4h6.1l-1.1 8 8-10.4h-6.1l1.1-8Z")],
+      sparkle: [path("m12 3 1.4 4.6L18 9l-4.6 1.4L12 15l-1.4-4.6L6 9l4.6-1.4L12 3Z"), path("m19 15 .7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15Z")]
+    };
+    return React.createElement("svg", base, ...(shapes[type] || shapes.badge));
+  };
 
-  const benefit = (symbol, title, description) => React.createElement("div", {
-    style: { display: "flex", gap: 14, alignItems: "center", padding: "18px 0", borderBottom: "1px solid #EAEAEA" }
-  }, icon(symbol), React.createElement("div", { style: { minWidth: 0 } },
-    React.createElement("div", { style: { color: "#171717", fontSize: 16, fontWeight: 700, lineHeight: 1.3 } }, title),
-    description && React.createElement("div", { style: { color: "#737373", fontSize: 13, lineHeight: 1.45, marginTop: 4 } }, description)
-  ));
+  const benefit = (type, title) => React.createElement("div", {
+    style: { display: "flex", gap: 16, alignItems: "flex-start", padding: "18px 0", borderBottom: "1px solid #E6E6E6" }
+  }, icon(type), React.createElement("div", { style: { minWidth: 0, color: "#171717", fontSize: 17, fontWeight: 600, lineHeight: 1.45, letterSpacing: "0.55px", paddingTop: 1 } }, title));
 
   const tab = (label, value) => React.createElement("button", {
     onClick: () => setScreen(value),
-    style: { flex: 1, border: "none", borderBottom: screen === value ? "2px solid #171717" : "2px solid transparent", background: "transparent", color: screen === value ? "#171717" : "#8A8A8A", padding: "15px 4px 13px", fontSize: 14, fontWeight: screen === value ? 800 : 600, cursor: "pointer" }
+    style: { width: value === "benefits" ? 109 : 58, border: "none", borderBottom: screen === value ? "3px solid #171717" : "3px solid transparent", background: "transparent", color: screen === value ? "#171717" : "#8A8A8A", padding: "14px 0 12px", fontSize: 17, fontWeight: screen === value ? 800 : 600, letterSpacing: "0.25px", cursor: "pointer" }
   }, label);
 
   const inputStyle = { width: "100%", height: 52, padding: "0 15px", borderRadius: 12, border: "1px solid #DEDEDE", background: "#FFFFFF", color: "#171717", fontSize: 15, outline: "none", boxSizing: "border-box", boxShadow: "0 2px 8px rgba(20,20,20,0.03)" };
@@ -2630,37 +2637,36 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
   return React.createElement("div", {
     style: { position: "fixed", inset: 0, height: "100dvh", background: "#FFFFFF", color: "#171717", zIndex: 9999, overflowY: "auto", boxSizing: "border-box" }
   },
-    React.createElement("div", { style: { width: "100%", maxWidth: 560, minHeight: "100%", margin: "0 auto", boxSizing: "border-box", padding: "0 20px 44px" } },
-      React.createElement("div", { style: { position: "sticky", top: 0, zIndex: 2, background: "rgba(255,255,255,0.97)", paddingTop: 18 } },
-        React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 38 } },
-          React.createElement("button", { onClick: onClose, "aria-label": "Close verification", style: { width: 36, height: 36, border: "none", borderRadius: 18, background: "#F5F5F5", color: "#171717", fontSize: 22, lineHeight: 1, cursor: "pointer" } }, "×"),
-          React.createElement("div", { style: { fontSize: 17, fontWeight: 800, letterSpacing: "-0.2px" } }, "Verification"),
-          React.createElement("div", { style: { width: 36, height: 36 } })
+    React.createElement("div", { style: { width: "100%", maxWidth: 560, minHeight: "100%", margin: "0 auto", boxSizing: "border-box", padding: "0 0 44px" } },
+      React.createElement("div", { style: { background: "#FFFFFF", padding: "18px 23px 0", boxSizing: "border-box" } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 63 } },
+          React.createElement("button", { onClick: onClose, "aria-label": "Close verification", style: { width: 35, height: 35, border: "none", background: "transparent", color: "#111111", fontSize: 30, lineHeight: 1, padding: 0, cursor: "pointer" } }, "×"),
+          React.createElement("div", { style: { color: "#111111", fontSize: 20, lineHeight: 1.12, fontWeight: 700, textAlign: "center", letterSpacing: "-0.45px" } }, "VerificationApplicationPage", React.createElement("br"), ".jsx"),
+          React.createElement("button", { onClick: onClose, "aria-label": "More options", style: { width: 35, height: 35, border: "none", background: "transparent", color: "#111111", fontSize: 28, lineHeight: 1, padding: 0, cursor: "pointer" } }, "⋮")
         ),
-        React.createElement("div", { style: { display: "flex", gap: 18, borderBottom: "1px solid #E8E8E8", marginTop: 12 } },
+        React.createElement("div", { style: { display: "flex", alignItems: "stretch", gap: 32, borderBottom: "1px solid #E8E8E8" } },
           tab("Why verify", "benefits"), tab("Apply", "apply")
         )
       ),
-      screen === "benefits" ? React.createElement("div", { style: { paddingTop: 28 } },
-        React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 25 } },
-          React.createElement("span", { style: { width: 26, height: 7, borderRadius: 8, background: "#F4BD16" } }),
-          React.createElement("span", { style: { width: 26, height: 7, borderRadius: 8, background: "#16A568" } }),
-          React.createElement("span", { style: { width: 26, height: 7, borderRadius: 8, background: "#EF476F" } }),
-          React.createElement("span", { style: { width: 26, height: 7, borderRadius: 8, background: "#1877F2" } })
+      screen === "benefits" ? React.createElement("div", { style: { marginTop: 24, border: "1px solid #DFDFDF", borderRadius: 20, background: "#FFFFFF", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "0 2px 5px rgba(0,0,0,0.03)" } },
+        React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 27 } },
+          React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#F4BD16" } }),
+          React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#16A568" } }),
+          React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#EF476F" } }),
+          React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#1877F2" } })
         ),
-        React.createElement("h1", { style: { margin: 0, color: "#111111", fontSize: 34, lineHeight: 1.08, letterSpacing: "-1px" } }, "Get verified"),
-        React.createElement("p", { style: { margin: "14px 0 26px", color: "#707070", fontSize: 16, lineHeight: 1.55, maxWidth: 480 } }, "A verified badge helps people recognise that your account is authentic. Here is what changes once your request is approved."),
-        React.createElement("div", { style: { borderTop: "1px solid #EAEAEA" } },
-          benefit("✓", "Verified badge on your profile", "Make your authentic account easy to identify."),
-          benefit("♢", "Fewer impersonation reports against you", "Give your audience a clear signal they can trust."),
-          benefit("◯", "Your replies rank higher in busy threads", "Your voice gets more visibility in conversations."),
-          benefit("▥", "Profile insights and audience analytics", "Understand how people discover and engage with you."),
-          benefit("ϟ", "Faster response from creator support", "Get help more quickly when you need it."),
-          benefit("✦", "Early access to new POST App features", "Be among the first to try selected new features.")
+        React.createElement("h1", { style: { margin: 0, color: "#111111", fontSize: 35, lineHeight: 1.08, letterSpacing: "-0.8px", fontWeight: 800 } }, "Get verified"),
+        React.createElement("p", { style: { margin: "16px 0 25px", color: "#777777", fontSize: 17, lineHeight: 1.5, letterSpacing: "0.55px", maxWidth: 420 } }, "A verified badge tells people this account is authentic. Here’s what changes once you’re approved."),
+        React.createElement("div", { style: { borderTop: "1px solid #E6E6E6" } },
+          benefit("badge", "Verified badge on your profile"),
+          benefit("shield", "Fewer impersonation reports against you"),
+          benefit("bubble", "Your replies rank higher in busy threads"),
+          benefit("chart", "Profile insights and audience analytics"),
+          benefit("bolt", "Faster response from creator support"),
+          benefit("sparkle", "Early access to new POST App features")
         ),
-        React.createElement("button", { onClick: () => setScreen("apply"), style: { marginTop: 30, width: "100%", minHeight: 54, border: "none", borderRadius: 14, background: "#171717", color: "#FFFFFF", fontSize: 16, fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 18px rgba(0,0,0,0.12)" } }, "Apply for verification"),
-        React.createElement("p", { style: { textAlign: "center", color: "#909090", fontSize: 12, lineHeight: 1.5, margin: "13px 18px 0" } }, "Your information is reviewed by the POST App team.")
-      ) : React.createElement("div", { style: { paddingTop: 28 } },
+        React.createElement("button", { onClick: () => setScreen("apply"), style: { marginTop: 30, padding: "16px 26px", minHeight: 62, border: "none", borderRadius: 32, background: "#080808", color: "#FFFFFF", fontSize: 16, fontWeight: 800, letterSpacing: "0.25px", cursor: "pointer", boxShadow: "0 3px 0 rgba(0,0,0,0.08)" } }, "Apply for verification")
+ : React.createElement("div", { style: { padding: "28px 20px 0" } },
         React.createElement("div", { style: { marginBottom: 25 } },
           React.createElement("h1", { style: { margin: 0, color: "#111111", fontSize: 30, lineHeight: 1.12, letterSpacing: "-0.7px" } }, "Apply for verification"),
           React.createElement("p", { style: { margin: "10px 0 0", color: "#707070", fontSize: 15, lineHeight: 1.5 } }, "Share a few details so we can review your account accurately.")
