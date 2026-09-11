@@ -3708,6 +3708,7 @@ function PostApp() {
   const onViewProfile = (uid, profileData) => {
     const realId = profileData?.id || uid;
     if (!realId) return;
+    if (tab === "reels") setTab("home");
     setViewUserProfile(null);
     setViewUser(realId);
     history.pushState({ viewingProfile: realId }, "");
