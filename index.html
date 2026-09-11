@@ -3812,7 +3812,8 @@ function PostApp() {
     history.pushState({ viewingProfile: realId }, "");
   };
   const onViewAccountInfo = (uid, profileData) => {
-    const realId = profileData?.id || uid;
+    // uid is the post/reel owner's user id; never use the content id first.
+    const realId = uid || profileData?.user_id || profileData?.author_id || profileData?.owner_id || profileData?.id;
     if (!realId || !profileData?.is_badge_verified) return;
     setViewUser(null);
     setViewUserProfile(null);
@@ -12990,7 +12991,14 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
     };
     const accountLocation = value => {
       if (!value) return "Not available";
-      if (typeof value === "object") return value.country || value.country_name || value.name || value.city || "Not available";
+      if (typeof value === "object") {
+        const parts = [
+          value.city || value.town || value.village,
+          value.state || value.region || value.region_name,
+          value.country || value.country_name
+        ].map(part => String(part || "").trim()).filter(Boolean);
+        return parts.join(", ") || value.name || "Not available";
+      }
       return String(value).trim() || "Not available";
     };
     const icon = kind => {
@@ -13011,7 +13019,18 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
     const verifiedAt = profile && (profile.badge_verified_at || profile.verified_at);
     const avatar = profile && (profile.avatar_photo || profile.avatar_url);
     const avatarLetter = (profile && (profile.avatar_letter || displayName.slice(0, 1).toUpperCase())) || "?";
-    const location = accountLocation(profile && (profile.location_country || profile.country || profile.location));
+    const profileLocation = profile && (
+      profile.location ||
+      profile.account_based_in ||
+      profile.account_location ||
+      profile.location_details ||
+      ((profile.city || profile.state || profile.region || profile.country) ? {
+        city: profile.city,
+        state: profile.state || profile.region,
+        country: profile.country
+      } : null)
+    );
+    const location = accountLocation(profileLocation);
     const isOfficial = !!(profile && profile.is_official);
     const introText = isOfficial
       ? "This is the official account of Post App. We’re showing information about this account to help keep our community authentic."
