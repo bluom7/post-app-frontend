@@ -8575,13 +8575,16 @@ function TagPeopleOverlay(props) {
                 filtered.map(function(u) {
                   var isSel = selected.has(u.handle);
                   return e("div", { key:u.id, onClick:function() { toggle(u.handle); }, style:{ display:"flex", alignItems:"center", gap:12, padding:"10px 16px", cursor:"pointer", background:isSel?"var(--input-bg)":"transparent" } },
-                    e("div", { style:{ width:46, height:46, borderRadius:14, background:normalizeColor(u.avatar_bg)||COLORS.yellow, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:19, overflow:"hidden", flexShrink:0 } },
+                    e("div", { style:{ width:46, height:46, borderRadius:"50%", background:normalizeColor(u.avatar_bg)||COLORS.yellow, display:"flex", alignItems:"center", justifyContent:"center", fontWeight:900, fontSize:19, overflow:"hidden", flexShrink:0 } },
                       u.avatar_photo
                         ? e("img", { src:u.avatar_photo, style:{ width:"100%", height:"100%", objectFit:"cover" } })
                         : (u.avatar_letter || (u.name||"?")[0].toUpperCase())
                     ),
                     e("div", { style:{ flex:1, minWidth:0 } },
-                      e("div", { style:{ fontWeight:700, fontSize:15, color:"var(--text)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" } }, u.name || u.handle),
+                      e("div", { style:{ display:"flex", alignItems:"center", gap:5, minWidth:0 } },
+                      e("span", { style:{ flex:"0 1 auto", minWidth:0, fontWeight:700, fontSize:15, color:"var(--text)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" } }, u.name || u.handle),
+                      u.is_badge_verified && e(VerifiedBadge, { size:15 })
+                    ),
                       u.handle && e("div", { style:{ fontSize:12, color:"var(--muted)", marginTop:1 } }, "@"+(u.handle||"").replace(/^@/,""))
                     ),
                     e("div", { style:{ width:24, height:24, borderRadius:6, border:"2px solid "+(isSel?COLORS.blue:"var(--border)"), background:isSel?COLORS.blue:"transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 } },
