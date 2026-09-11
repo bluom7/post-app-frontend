@@ -12914,6 +12914,10 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
     const avatar = profile && (profile.avatar_photo || profile.avatar_url);
     const avatarLetter = (profile && (profile.avatar_letter || displayName.slice(0, 1).toUpperCase())) || "?";
     const location = accountLocation(profile && (profile.location_country || profile.country || profile.location));
+    const isOfficial = !!(profile && profile.is_official);
+    const introText = isOfficial
+      ? "This is the official account of Post App. We’re showing information about this account to help keep our community authentic."
+      : "To help keep our community authentic, we’re showing information about profiles on Post App. See why this information is important.";
 
     return React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 10000, background: "var(--bg, #fff)", color: "var(--text, #111)", display: "flex", flexDirection: "column", overflow: "hidden" } },
       React.createElement("div", { style: { height: 62, flexShrink: 0, display: "flex", alignItems: "center", gap: 18, padding: "0 18px", borderBottom: "1px solid var(--border, #e8e8e8)", background: "var(--bg, #fff)" } },
@@ -12927,7 +12931,10 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
             React.createElement("div", { style: { width: 94, height: 94, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: (profile && profile.avatar_bg) || "#e9eef5", color: "var(--text, #111)", fontSize: 36, fontWeight: 800, border: "1px solid var(--border, #e0e0e0)" } }, avatar ? React.createElement("img", { src: avatar, alt: "", style: { width: "100%", height: "100%", objectFit: "cover" } }) : avatarLetter),
             React.createElement("div", { style: { marginTop: 18, display: "flex", alignItems: "center", gap: 5, fontSize: 20, fontWeight: 800 } }, displayName, verified && React.createElement(VerifiedBadge, { size: 18 })),
             username && React.createElement("div", { style: { marginTop: 5, fontSize: 15, color: "var(--muted, #666)" } }, "@" + String(username).replace(/^@/, "")),
-            React.createElement("p", { style: { maxWidth: 390, margin: "24px auto 0", fontSize: 14, lineHeight: 1.55, color: "var(--text, #222)" } }, "To help keep our community authentic, we’re showing information about profiles on Post App. See why this information is important.")
+            React.createElement("p", { style: { maxWidth: 390, margin: "24px auto 0", fontSize: 14, lineHeight: 1.55, color: "var(--text, #222)" } }, introText),
+          isOfficial && React.createElement("div", { style: { width: "100%", maxWidth: 390, boxSizing: "border-box", marginTop: 18, padding: "13px 16px", borderRadius: 12, background: "#eef5ff", border: "1px solid #cfe0ff", color: "#174ea6", textAlign: "left" } },
+            React.createElement("div", { style: { fontSize: 15, fontWeight: 800, lineHeight: 1.3 } }, "Official Post App account"),
+            React.createElement("div", { style: { fontSize: 13, lineHeight: 1.45, marginTop: 4 } }, "This account is managed by the official Post App team."))
           ),
           React.createElement("div", { style: { maxWidth: 430, margin: "40px auto 0", display: "flex", flexDirection: "column", gap: 27 } },
             React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 17 } }, icon("calendar"), React.createElement("div", null, React.createElement("div", { style: { fontSize: 18, lineHeight: 1.25 } }, "Date joined"), React.createElement("div", { style: { fontSize: 17, lineHeight: 1.35, marginTop: 2 } }, monthYear(profile && (profile.created_at || profile.joined_at))))),
