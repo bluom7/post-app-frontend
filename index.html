@@ -28402,9 +28402,14 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
     var hasCustomSong = !!(reel.music_url || reel.music_preview_url || (reel.music_title && reel.music_title !== "Original Audio") || (reel.audio_label && reel.audio_label !== "Original Audio"));
     var showOriginalAudioProfileTile = !!reel.video_url && !hasCustomSong;
     var originalAudioOwner = String(reel.user_name || reel.user_handle || "").trim();
+    var songTitle = String(reel.music_title || reel.audio_label || "").trim();
+    var artistName = String(reel.music_artist || "")
+      .replace(/\s*&\s*/g, ", ")
+      .replace(/\s*,\s*/g, ", ")
+      .trim();
     var songMarqueeText = showOriginalAudioProfileTile
-      ? (originalAudioOwner ? originalAudioOwner + " · " : "") + "Original Audio"
-      : (reel.music_title || reel.audio_label || "") + (reel.music_artist ? " · " + reel.music_artist : "");
+      ? (originalAudioOwner ? originalAudioOwner + " • " : "") + "Original Audio"
+      : (artistName ? artistName + " • " : "") + songTitle;
       var reelAudioTile = showOriginalAudioProfileTile
     ? (reel.avatar_photo
       ? React.createElement("img", { src: reel.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" }, alt: "" })
@@ -28848,9 +28853,9 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
             React.createElement("div", { style: { flex: 1, overflow: "hidden" } },
               React.createElement("span", { ref: songMarqueeRef, style: { color: "rgba(255,255,255,0.92)", fontFamily: "'Roboto Slab', Georgia, serif", fontSize: 13, fontWeight: 600, fontStyle: "normal", fontStretch: "normal", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", animation: "songHeaderTicker " + songMarqueeDuration + "s linear infinite", textShadow: "0 1px 4px rgba(0,0,0,0.6)" } },
                 React.createElement("span", { style: { display: "inline-block", whiteSpace: "nowrap" } }, songMarqueeText),
-                React.createElement("span", { style: { display: "inline-block", width: 4, flex: "0 0 4px" } }),
+                React.createElement("span", { style: { display: "inline-block", width: 2, flex: "0 0 2px" } }),
                 React.createElement("span", { style: { display: "inline-block", whiteSpace: "nowrap" } }, songMarqueeText),
-                React.createElement("span", { style: { display: "inline-block", width: 4, flex: "0 0 4px" } })))),
+                React.createElement("span", { style: { display: "inline-block", width: 2, flex: "0 0 2px" } })))),
           reel.location && React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } },
             React.createElement("svg", { width: 10, height: 10, viewBox: "0 0 24 24", fill: "#fff", style: { flexShrink: 0 } },
               React.createElement("path", { d: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" })),
