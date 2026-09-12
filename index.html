@@ -29770,8 +29770,12 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
         msOverflowStyle: "none"
       }
     },
-      reels.length === 0 && loading && React.createElement("div", { style: { height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", scrollSnapAlign: "start", background: "#000" } },
-        React.createElement("div", { style: { width: 36, height: 36, border: "3px solid rgba(255,255,255,0.15)", borderTop: "3px solid #fff", borderRadius: "50%", animation: "spin 0.75s linear infinite" } })),
+      reels.length === 0 && loading && React.createElement("div", { style: { minHeight: "100%", height: "100vh", overflow: "hidden", scrollSnapAlign: "start", background: "#000" } },
+        React.createElement("style", null, "@keyframes reelsTabDarkShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }"),
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, width: "100%", minHeight: "100%", padding: 2, boxSizing: "border-box" } },
+          [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].map(function(i) { return React.createElement("div", { key: "loading" + i, style: { aspectRatio: "1 / 1", minWidth: 0, background: "linear-gradient(90deg, #111 25%, #252525 50%, #111 75%)", backgroundSize: "200% 100%", animation: "reelsTabDarkShimmer 1.35s ease-in-out infinite" } }); })
+        )
+      ),
       reels.map(function(reel, idx) {
         return React.createElement(ReelItem, {
           key: reel.id,
@@ -29876,7 +29880,9 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                     React.createElement("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "2" }, React.createElement("path", { d: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" }), React.createElement("circle", { cx: "12", cy: "12", r: "3" })),
                     React.createElement("span", { style: { color: "#fff", fontSize: 10, fontWeight: 700, textShadow: "0 1px 3px rgba(0,0,0,0.9)" } }, vLabel)));
               }),
-              discoverLoading && [0,1,2,3,4,5].map(function(i) { return React.createElement("div", { key: "sk"+i, style: { aspectRatio: "1/1", background: "var(--border,#e8e8e8)" } }); })))
+              discoverLoading && React.createElement(React.Fragment, null,
+                 React.createElement("style", null, "@keyframes reelsDiscoverShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }"),
+                 [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].map(function(i) { return React.createElement("div", { key: "sk" + i, style: { aspectRatio: "1 / 1", background: "linear-gradient(90deg, #f0f1f4 25%, #fafbfc 50%, #f0f1f4 75%)", backgroundSize: "200% 100%", animation: "reelsDiscoverShimmer 1.35s ease-in-out infinite" } }); }))))
         : React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" } },
             React.createElement("div", { style: { display: "flex", borderBottom: "1px solid var(--border)", flexShrink: 0 } },
               [["reels","Reels"],["users","People"],["hashtags","Hashtags"]].map(function(pair) {
@@ -29885,11 +29891,9 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
               })),
             React.createElement("div", { style: { flex: 1, overflowY: "auto" } },
               searchLoading
-                ? React.createElement("div", { style: { textAlign: "center", padding: 40, color: "var(--muted)", fontSize: 14, display: "flex", flexDirection: "column", alignItems: "center", gap: 12 } },
-                  React.createElement("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", style: { animation: "spin 0.8s linear infinite" } },
-                    React.createElement("circle", { cx: "12", cy: "12", r: "10", stroke: "var(--border,#e0e0e0)", strokeWidth: "3" }),
-                    React.createElement("path", { d: "M12 2a10 10 0 0 1 10 10", stroke: "#FFD600", strokeWidth: "3", strokeLinecap: "round" })),
-                  "Searching...")
+                 ? React.createElement("div", { style: { flex: 1, minHeight: "100%", overflow: "hidden", display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, padding: 2, alignContent: "start", background: "var(--bg)" } },
+                   React.createElement("style", null, "@keyframes reelsSearchShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }"),
+                   [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(function(i) { return React.createElement("div", { key: "search-loading" + i, style: { aspectRatio: "1 / 1", minWidth: 0, background: "linear-gradient(90deg, #f0f1f4 25%, #fafbfc 50%, #f0f1f4 75%)", backgroundSize: "200% 100%", animation: "reelsSearchShimmer 1.35s ease-in-out infinite" } }); }))
                 : searchTab === "reels"
                   ? searchReels.length === 0
                     ? React.createElement("div", { style: { textAlign: "center", padding: 40, color: "var(--muted)", fontSize: 14 } }, "No reels found")
