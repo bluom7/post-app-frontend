@@ -28409,8 +28409,9 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
         items.map(function(item) { var views = Number(item.view_count || item.views_count || 0); return React.createElement("article", { key: item.id, style: { minWidth: 0 } },
           React.createElement("div", { style: { width: "100%", aspectRatio: "0.68", borderRadius: 2, overflow: "hidden", position: "relative", background: "#eee" } },
             renderMedia(item, false),
-            React.createElement("div", { style: { position: "absolute", bottom: 4, left: 4, display: "flex", alignItems: "center", gap: 3 } },
-              React.createElement("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "2" }, React.createElement("path", { d: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" }), React.createElement("circle", { cx: "12", cy: "12", r: "3" })), React.createElement("span", { style: { color: "#fff", fontSize: 10, fontWeight: 700, textShadow: "0 1px 3px rgba(0,0,0,0.9)" } }, count(views))
+            React.createElement("div", { style: { position: "absolute", bottom: 6, left: 6, display: "flex", alignItems: "center", gap: 5 } },
+              React.createElement("img", { src: "/view-count-eye.jpg", alt: "", "aria-hidden": true, style: { width: 25, height: 25, display: "block", objectFit: "cover", borderRadius: 7, flexShrink: 0 } }),
+              React.createElement("span", { style: { color: "#fff", fontSize: 13, lineHeight: 1, fontWeight: 800, textShadow: "0 1px 4px rgba(0,0,0,0.95)" } }, count(views))
             )
           )
         ); })
