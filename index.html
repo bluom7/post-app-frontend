@@ -2666,9 +2666,9 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
   },
     React.createElement("style", null, ".verification-modal-scroll::-webkit-scrollbar{display:none;width:0;height:0}.verification-modal-scroll{scrollbar-width:none;-ms-overflow-style:none}"),
     React.createElement("div", { style: { width: "100%", maxWidth: 560, minHeight: "100%", margin: "0 auto", boxSizing: "border-box", padding: "0 0 44px" } },
-      React.createElement("div", { style: { position: "relative", background: "#FFFFFF", padding: "10px 20px 0", boxSizing: "border-box" } },
+      React.createElement("div", { style: { position: "relative", background: "#FFFFFF", padding: "15px 20px 0", boxSizing: "border-box" } },
         React.createElement("div", { style: { position: "relative", display: "flex", alignItems: "center", minHeight: 58 } },
-          React.createElement("button", { onClick: () => screen === "apply" ? setScreen("benefits") : onClose(), "aria-label": "Back", style: { width: 46, height: 46, marginLeft: 0, border: "none", borderRadius: 13, background: "#F5F5F5", color: "#111111", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, cursor: "pointer" } }, React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
+          React.createElement("button", { onClick: () => screen === "apply" ? setScreen("benefits") : onClose(), "aria-label": "Back", style: { width: 54, height: 54, marginLeft: 0, border: "none", borderRadius: 15, background: "#F5F5F5", color: "#111111", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, cursor: "pointer" } }, React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
           React.createElement("div", { style: { position: "absolute", left: "50%", transform: "translateX(-50%)", color: "#111111", fontSize: 20, lineHeight: 1.12, fontWeight: 800, textAlign: "center", letterSpacing: "-0.25px", whiteSpace: "nowrap" } }, screen === "benefits" ? "Why verify" : "Apply")
         )
       ),
@@ -13050,9 +13050,9 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
       : "To help keep our community authentic, we’re showing information about profiles on Post App. See why this information is important.";
 
     return React.createElement("div", { className: "account-info-screen", style: { position: "fixed", inset: 0, zIndex: 10000, background: "#fff", color: "#111", display: "flex", flexDirection: "column", overflow: "hidden" } },
-      React.createElement("div", { style: { position: "relative", background: "#FFFFFF", padding: "10px 20px 0", boxSizing: "border-box" } },
+      React.createElement("div", { style: { position: "relative", background: "#FFFFFF", padding: "15px 20px 0", boxSizing: "border-box" } },
         React.createElement("div", { style: { position: "relative", display: "flex", alignItems: "center", minHeight: 58 } },
-          React.createElement("button", { onClick: onClose, "aria-label": "Back", style: { width: 46, height: 46, marginLeft: 0, border: "none", borderRadius: 13, background: "#F5F5F5", color: "#111111", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, cursor: "pointer" } }, React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
+          React.createElement("button", { onClick: onClose, "aria-label": "Back", style: { width: 54, height: 54, marginLeft: 0, border: "none", borderRadius: 15, background: "#F5F5F5", color: "#111111", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, cursor: "pointer" } }, React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
           React.createElement("div", { style: { position: "absolute", left: "50%", transform: "translateX(-50%)", color: "#111111", fontSize: 20, lineHeight: 1.12, fontWeight: 800, textAlign: "center", letterSpacing: "-0.25px", whiteSpace: "nowrap" } }, "About this account")
         )
       ),
@@ -28393,8 +28393,8 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
   var skeletonStyle = { background: "linear-gradient(90deg, #f0f1f4 25%, #f8f9fb 50%, #f0f1f4 75%)", backgroundSize: "200% 100%", animation: "remixSequenceSkeletonShimmer 1.35s ease-in-out infinite" };
   var loadingView = React.createElement("div", { style: { width: "100%", maxWidth: 560, margin: "0 auto", paddingTop: 20 } },
     React.createElement("style", null, "@keyframes remixSequenceSkeletonShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }"),
-    React.createElement("section", { style: { display: "flex", alignItems: "center", gap: 18, padding: "0 20px", minHeight: 177 } },
-      React.createElement("div", { style: Object.assign({}, skeletonStyle, { width: 114, height: 177, borderRadius: 18, flexShrink: 0 }) }),
+    React.createElement("section", { style: { display: "flex", alignItems: "center", gap: 20, padding: "0 20px", minHeight: 177 } },
+      React.createElement("div", { style: Object.assign({}, skeletonStyle, { width: 114, height: 177, borderRadius: 17, flexShrink: 0 }) }),
       React.createElement("div", { style: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 12 } },
         React.createElement("div", { style: Object.assign({}, skeletonStyle, { width: "82%", maxWidth: 190, height: 18, borderRadius: 4 }) }),
         React.createElement("div", { style: Object.assign({}, skeletonStyle, { width: "66%", maxWidth: 150, height: 16, borderRadius: 4 }) }),
@@ -28407,8 +28407,8 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
   );
 
   var contentView = React.createElement("main", { style: { maxWidth: 560, margin: "0 auto", padding: "20px 20px 0" } },
-    React.createElement("section", { style: { display: "flex", alignItems: "center", gap: 18, minHeight: 177, marginBottom: 20 } },
-      React.createElement("div", { style: { width: 114, height: 177, borderRadius: 18, overflow: "hidden", flexShrink: 0, background: "#eee" } }, renderMedia(source, true)),
+    React.createElement("section", { style: { display: "flex", alignItems: "center", gap: 20, minHeight: 177, marginBottom: 20 } },
+      React.createElement("div", { style: { width: 114, height: 177, borderRadius: 17, overflow: "hidden", flexShrink: 0, background: "#eee" } }, renderMedia(source, true)),
       React.createElement("div", { style: { minWidth: 0 } },
         React.createElement("div", { style: { fontSize: 20, fontWeight: 800, lineHeight: 1.35, wordBreak: "break-word" } }, "Remixes and sequences"),
         React.createElement("div", { style: { fontSize: 18, fontWeight: 700, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, artist || title),
@@ -28431,9 +28431,9 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
   );
 
   return React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 1200, background: "#fff", color: "#111", overflowY: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "calc(92px + env(safe-area-inset-bottom, 0px))" } },
-    React.createElement("div", { style: { position: "sticky", top: 0, zIndex: 3, background: "#FFFFFF", padding: "10px 20px 0", boxSizing: "border-box" } },
+    React.createElement("div", { style: { position: "sticky", top: 0, zIndex: 3, background: "#FFFFFF", padding: "15px 20px 0", boxSizing: "border-box" } },
       React.createElement("div", { style: { position: "relative", display: "flex", alignItems: "center", minHeight: 58 } },
-        React.createElement("button", { onClick: onClose, "aria-label": "Back", style: { width: 46, height: 46, marginLeft: 0, border: "none", borderRadius: 13, background: "#F5F5F5", color: "#111111", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, cursor: "pointer" } }, React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
+        React.createElement("button", { onClick: onClose, "aria-label": "Back", style: { width: 54, height: 54, marginLeft: 0, border: "none", borderRadius: 15, background: "#F5F5F5", color: "#111111", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, cursor: "pointer" } }, React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
         React.createElement("div", { style: { position: "absolute", left: "50%", transform: "translateX(-50%)", color: "#111111", fontSize: 20, lineHeight: 1.12, fontWeight: 800, textAlign: "center", letterSpacing: "-0.25px", whiteSpace: "nowrap" } }, "Remixes and sequences")
       )
     ),
