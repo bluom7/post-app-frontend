@@ -28374,8 +28374,8 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
   var mediaStyle = { width: "100%", height: "100%", objectFit: "cover", display: "block", background: "#e8e8e8" };
   var count = function(value) {
     var n = Number(value || 0);
-    if (n >= 1000000) return (n / 1000000).toFixed(n >= 10000000 ? 0 : 1).replace(".0", "") + "M";
-    if (n >= 1000) return (n / 1000).toFixed(n >= 100000 ? 0 : 1).replace(".0", "") + "K";
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
+    if (n >= 1000) return (n / 1000).toFixed(1) + "K";
     return String(n);
   };
   var renderMedia = function(item, firstFrame) {
@@ -28409,8 +28409,8 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
         items.map(function(item) { var views = Number(item.view_count || item.views_count || 0); return React.createElement("article", { key: item.id, style: { minWidth: 0 } },
           React.createElement("div", { style: { width: "100%", aspectRatio: "0.68", borderRadius: 2, overflow: "hidden", position: "relative", background: "#eee" } },
             renderMedia(item, false),
-            React.createElement("div", { style: { position: "absolute", left: 9, bottom: 8, display: "flex", alignItems: "center", gap: 5, color: "#fff", fontSize: 16, fontWeight: 700, textShadow: "0 1px 4px rgba(0,0,0,0.9)" } },
-              React.createElement("svg", { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 }, React.createElement("path", { d: "M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" }), React.createElement("circle", { cx: 12, cy: 12, r: 2.5 })), count(views)
+            React.createElement("div", { style: { position: "absolute", bottom: 4, left: 4, display: "flex", alignItems: "center", gap: 3 } },
+              React.createElement("svg", { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "2" }, React.createElement("path", { d: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" }), React.createElement("circle", { cx: "12", cy: "12", r: "3" })), React.createElement("span", { style: { color: "#fff", fontSize: 10, fontWeight: 700, textShadow: "0 1px 3px rgba(0,0,0,0.9)" } }, count(views))
             )
           )
         ); })
