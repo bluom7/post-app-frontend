@@ -2,6 +2,9 @@
 <html lang="en">
 <head><meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <meta name="theme-color" content="#F7F8FA" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -7082,7 +7085,7 @@ function BentoPostCard({
         }
       }, isFollowing ? "Following" : isPending ? "Requested" : "Follow"),
       // 3-dot menu — bottom sheet opens via Fragment-level showMenu
-      React.createElement("button", { onClick: () => setShowMenu(s => !s), "aria-label": "More options", style: { background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: "4px 10px", display:"flex",alignItems:"center", flexShrink:0, marginRight:"-6px" } }, React.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"currentColor"},React.createElement("circle",{cx:"12",cy:"5",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"12",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"19",r:"1.5"})))
+      React.createElement("button", { onClick: () => { setShowDeleteConfirm(false); setShowMenu(s => !s); }, "aria-label": "More options", style: { background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: "4px 10px", display:"flex",alignItems:"center", flexShrink:0, marginRight:"-6px" } }, React.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"currentColor"},React.createElement("circle",{cx:"12",cy:"5",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"12",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"19",r:"1.5"})))
     ),
     // ── Repost banner ──────────────────────────────────────────
     post.repost_of && React.createElement("div", { style: { padding: "0 14px 6px", fontSize: 12, color: "var(--muted)", display: "flex", alignItems: "center", gap: 4 } },
@@ -16838,7 +16841,7 @@ function ProfileTab({
     try {
       if (!_warmupDone) await Promise.race([warmupReady, new Promise(r => setTimeout(r, 30000))]);
       const d = await api(`/posts?user_id=${user.id}`, "GET", null, token);
-      setMyPosts((d.posts || d || []).filter(p => p.user_id === user.id));
+      setMyPosts((d.posts || d || []).filter(p => String(p.user_id) === String(user.id)));
     } catch (e) {}
     setPostsLoading(false);
   };
@@ -16862,13 +16865,18 @@ function ProfileTab({
     } catch(e) { showToast(e.message, COLORS.red); }
   };
   const handleDeleteMyPost = async (postId) => {
-    const isReel = myPosts.find(p => p.id === postId)?.is_reel;
+    const isReel = myPosts.find(p => String(p.id) === String(postId))?.is_reel;
     try {
       await api(isReel ? `/reels/${postId}` : `/posts/${postId}`, 'DELETE', null, token);
-      setMyPosts(prev => prev.filter(p => p.id !== postId));
+      setMyPosts(prev => prev.filter(p => String(p.id) !== String(postId)));
       setOpenedMyPost(null);
       showToast(isReel ? "Reel deleted" : "Post deleted", COLORS.red);
     } catch(e) { showToast(e.message, COLORS.red); }
+  };
+  const confirmDeleteMyPost = (post) => {
+    if (!post) return;
+    const kind = post.is_reel ? "Reel" : "Post";
+    if (window.confirm(`Are you sure you want to delete this ${kind}?`)) handleDeleteMyPost(post.id);
   };
   useEffect(() => {
     (async () => {
@@ -17486,7 +17494,7 @@ function ProfileTab({
     React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 } },
 React.createElement("span", null),
       React.createElement("button", {
-        onClick: e => { e.stopPropagation(); handleDeleteMyPost(post.id); },
+        onClick: e => { e.stopPropagation(); confirmDeleteMyPost(post); },
         title: post.is_reel ? "Delete reel" : "Delete post",
         style: { background: "none", border: "none", padding: 4, display: "flex", alignItems: "center", cursor: "pointer", color: "var(--muted)" }
       },
@@ -17603,7 +17611,7 @@ React.createElement("span", null),
           React.createElement("span", { style: { fontWeight: 700, fontSize: 17 } }, openedMyPost.is_reel ? "Reel" : "Post")
         ),
         React.createElement("button", {
-          onClick: () => { if (window.confirm(openedMyPost.is_reel ? "Delete this reel?" : "Delete this post?")) handleDeleteMyPost(openedMyPost.id); },
+          onClick: () => { if (window.confirm(openedMyPost.is_reel ? "Are you sure you want to delete this Reel?" : "Are you sure you want to delete this Post?")) handleDeleteMyPost(openedMyPost.id); },
           title: openedMyPost.is_reel ? "Delete reel" : "Delete post",
           style: { background: "none", border: "none", padding: 4, display: "flex", alignItems: "center", cursor: "pointer", color: "var(--muted)" }
         },
@@ -17777,7 +17785,7 @@ React.createElement("div", { style: { display:"flex", alignItems:"center", borde
               React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 } },
                 React.createElement("span", null),
                 React.createElement("button", {
-                  onClick: e => { e.stopPropagation(); handleDeleteMyPost(post.id); },
+                  onClick: e => { e.stopPropagation(); confirmDeleteMyPost(post); },
                   title: "Delete post",
                   style: { background: "none", border: "none", padding: 4, display: "flex", alignItems: "center", cursor: "pointer", color: "var(--muted)" }
                 },
@@ -28782,7 +28790,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
               React.createElement("path", { d: "M4 3h16v19l-8-5-8 5V3z" }))),
           React.createElement("span", { style: Object.assign({}, reelOverlayTextStyle, { fontSize: 15, marginTop: -2 }) }, fmtCount(reel.save_count || 0))),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 2 } },
-          React.createElement("button", { onClick: function(e) { e.stopPropagation(); setShowMenu(true); }, style: { background: "none", border: "none", cursor: "pointer", padding: 3, display: "flex", flexDirection: "column", gap: 3, alignItems: "center", justifyContent: "center", width: 27, height: 28 } },
+          React.createElement("button", { onClick: function(e) { e.stopPropagation(); setShowDeleteConfirm(false); setShowMenu(true); }, style: { background: "none", border: "none", cursor: "pointer", padding: 3, display: "flex", flexDirection: "column", gap: 3, alignItems: "center", justifyContent: "center", width: 27, height: 28 } },
              React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } },
                React.createElement("span", { style: { display: "block", width: 3, height: 3, background: "#fff", borderRadius: 0 } }),
                React.createElement("span", { style: { display: "block", width: 15, height: 3, background: "#fff", borderRadius: 0 } })),
@@ -29223,7 +29231,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   }
 
   function gvDeleteReel(rid) {
-    if (!window.confirm("Delete this reel?")) return;
+    if (!window.confirm("Are you sure you want to delete this Reel?")) return;
     api("/reels/" + rid, "DELETE", null, token)
       .then(function() {
         var upd = function(prev) { return prev.filter(function(r) { return r.id !== rid; }); };
@@ -29599,7 +29607,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
       .catch(function() {});
   }
   function deleteReel(rid) {
-    if (!window.confirm("Delete this reel?")) return;
+    if (!window.confirm("Are you sure you want to delete this Reel?")) return;
     api("/reels/" + rid, "DELETE", null, token)
       .then(function() {
         setReels(function(prev) { return prev.filter(function(r) { return r.id !== rid; }); });
