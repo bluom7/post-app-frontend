@@ -28390,9 +28390,11 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
     return function() { cancelled = true; };
   }, [reel && reel.id, token]);
   return React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 1200, background: "#fff", color: "#111", overflowY: "auto", WebkitOverflowScrolling: "touch", paddingBottom: "calc(92px + env(safe-area-inset-bottom, 0px))" } },
-    React.createElement("div", { style: { position: "sticky", top: 0, zIndex: 3, height: 60, display: "flex", alignItems: "center", gap: 16, padding: "0 18px", background: "rgba(255,255,255,0.97)", borderBottom: "1px solid #eee" } },
-      React.createElement("button", { onClick: onClose, "aria-label": "Back", style: { width: 34, height: 34, border: 0, background: "none", padding: 0, fontSize: 30, lineHeight: 1, color: "#111", cursor: "pointer" } }, "‹"),
-      React.createElement("div", { style: { fontSize: 23, fontWeight: 800, letterSpacing: -0.4 } }, "Remixes and sequences")
+    React.createElement("div", { style: { position: "sticky", top: 0, zIndex: 3, background: "#FFFFFF", padding: "10px 20px 0", boxSizing: "border-box" } },
+      React.createElement("div", { style: { position: "relative", display: "flex", alignItems: "center", minHeight: 58 } },
+        React.createElement("button", { onClick: onClose, "aria-label": "Back", style: { width: 46, height: 46, marginLeft: 0, border: "none", borderRadius: 13, background: "#F5F5F5", color: "#111111", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, cursor: "pointer" } }, React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
+        React.createElement("div", { style: { position: "absolute", left: "50%", transform: "translateX(-50%)", color: "#111111", fontSize: 20, lineHeight: 1.12, fontWeight: 800, textAlign: "center", letterSpacing: "-0.25px", whiteSpace: "nowrap" } }, "Remixes and sequences")
+      )
     ),
     React.createElement("main", { style: { maxWidth: 560, margin: "0 auto", padding: "20px 18px 0" } },
       React.createElement("section", { style: { display: "flex", alignItems: "center", gap: 18, minHeight: 150, marginBottom: 18 } },
