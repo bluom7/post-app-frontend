@@ -30088,17 +30088,18 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
       onClose: function() { setShowCommentStickerPicker(false); }
     }),
     catDrawerOpen && React.createElement("div", { onClick: function() { setCatDrawerOpen(false); }, style: { position: "fixed", inset: 0, zIndex: 480, background: "rgba(0,0,0,0.45)" } },
-      React.createElement("div", { onClick: function(e) { e.stopPropagation(); }, style: { position: "absolute", top: 0, left: 0, bottom: 0, width: 210, background: "var(--card-bg)", boxShadow: "4px 0 24px rgba(0,0,0,0.18)", display: "flex", flexDirection: "column", overflowY: "auto" } },
+      React.createElement("style", null, ".reels-category-drawer-scroll { scrollbar-width: none; -ms-overflow-style: none; } .reels-category-drawer-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }"),
+      React.createElement("div", { className: "reels-category-drawer-scroll", onClick: function(e) { e.stopPropagation(); }, style: { position: "absolute", top: 0, left: 0, bottom: 0, width: 210, background: "var(--card-bg)", boxShadow: "4px 0 24px rgba(0,0,0,0.18)", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none" } },
         React.createElement("div", { style: { padding: "20px 18px 12px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between" } },
           React.createElement("span", { style: { fontWeight: 800, fontSize: 16, color: "var(--text)" } }, "Categories"),
           React.createElement("button", { onClick: function() { setCatDrawerOpen(false); }, style: { background: "none", border: "none", fontSize: 22, cursor: "pointer", color: "var(--muted)", lineHeight: 1, padding: 0 } }, "×")),
-        React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "8px 0" } },
+        React.createElement("div", { className: "reels-category-drawer-scroll", style: { flex: 1, overflowY: "auto", padding: "8px 0", scrollbarWidth: "none", msOverflowStyle: "none" } },
           ["All","Comedy","Music","Food","Travel","Fashion","Fitness","Education","Tech","Movies","Gaming","Art","Motivation","News","Devotional","Vlogs","Business","Animals","Nature"].map(function(cat) {
             var isAct = discoverCategory === cat;
             return React.createElement("button", {
               key: cat,
               onClick: function() { setDiscoverCategory(cat); setCatDrawerOpen(false); },
-              style: { display: "flex", alignItems: "center", width: "100%", padding: "13px 20px", background: isAct ? "rgba(255,214,0,0.15)" : "none", border: "none", borderLeft: isAct ? "3px solid #FFD600" : "3px solid transparent", color: isAct ? "var(--text)" : "var(--text)", fontWeight: isAct ? 700 : 500, fontSize: 15, cursor: "pointer", textAlign: "left", gap: 10 }
+              style: { display: "flex", alignItems: "center", width: "100%", padding: "16px 20px", background: isAct ? "rgba(255,214,0,0.15)" : "none", border: "none", borderLeft: isAct ? "3px solid #FFD600" : "3px solid transparent", color: isAct ? "var(--text)" : "var(--text)", fontWeight: isAct ? 700 : 500, fontSize: 18, lineHeight: 1.2, cursor: "pointer", textAlign: "left", gap: 10 }
             },
               isAct && React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: "#FFD600", flexShrink: 0 } }),
               cat);
