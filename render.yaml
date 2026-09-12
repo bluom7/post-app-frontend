@@ -1,3 +1,4 @@
+# Rebuild trigger for latest Reels UI fix
 services:
   - type: web
     name: post-app-frontend
