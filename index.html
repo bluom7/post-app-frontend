@@ -28380,7 +28380,7 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
   };
   var renderMedia = function(item, firstFrame) {
     if (item && item.photo_url) return React.createElement("img", { src: item.photo_url, alt: "", style: mediaStyle, loading: firstFrame ? "eager" : "lazy" });
-    if (item && item.video_url) return React.createElement("video", { src: item.video_url, muted: true, playsInline: true, preload: "metadata", style: mediaStyle, onLoadedData: function(e) { try { e.currentTarget.currentTime = 0; e.currentTarget.pause(); } catch (_) {} } });
+    if (item && item.video_url) return React.createElement("video", { src: item.video_url, muted: true, playsInline: true, autoPlay: true, loop: true, preload: "auto", style: mediaStyle, onLoadedData: function(e) { try { var p = e.currentTarget.play(); if (p && p.catch) p.catch(function() {}); } catch (_) {} } });
     return React.createElement("div", { style: Object.assign({}, mediaStyle, { display: "flex", alignItems: "center", justifyContent: "center", color: "#777", fontSize: 24 }) }, "▶");
   };
   React.useEffect(function() {
@@ -28419,7 +28419,7 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
     !error && items.length === 0 && React.createElement("div", { style: { padding: "24px 0", color: "#666", fontSize: 15 } }, "No remixes yet."),
     React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 12 } },
       items.map(function(item) { var views = Number(item.view_count || item.views_count || 0); return React.createElement("article", { key: item.id, style: { minWidth: 0 } },
-        React.createElement("div", { style: { width: "100%", aspectRatio: "0.68", borderRadius: 2, overflow: "hidden", position: "relative", background: "#eee" } },
+        React.createElement("div", { style: { width: "100%", aspectRatio: "0.68", borderRadius: 14, overflow: "hidden", position: "relative", background: "#eee" } },
           renderMedia(item, false),
           React.createElement("div", { style: { position: "absolute", bottom: 6, left: 6, display: "flex", alignItems: "center", gap: 5 } },
             React.createElement("img", { src: "/view-count-eye.jpg", alt: "", "aria-hidden": true, style: { width: 25, height: 25, display: "block", objectFit: "cover", borderRadius: 7, flexShrink: 0 } }),
@@ -28440,7 +28440,7 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
     loading ? loadingView : contentView,
     !loading && React.createElement("div", { style: { position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 4, display: "flex", justifyContent: "center", padding: "14px 18px calc(14px + env(safe-area-inset-bottom, 0px))", background: "linear-gradient(to top, rgba(255,255,255,1) 60%, rgba(255,255,255,0))" } },
       React.createElement("button", { onClick: function() { onClose(); if (onTryRemix) onTryRemix(source); }, style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 9, minWidth: 142, height: 48, padding: "0 22px", border: 0, borderRadius: 28, background: "#159be8", color: "#fff", fontSize: 18, fontWeight: 800, cursor: "pointer", boxShadow: "0 3px 10px rgba(21,155,232,0.3)" } },
-        React.createElement("svg", { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("rect", { x: 3, y: 3, width: 18, height: 18, rx: 4 }), React.createElement("path", { d: "M8 12h8M12 8v8" })), "Try it"
+        React.createElement("svg", { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("rect", { x: 3, y: 3, width: 18, height: 18, rx: 4 }), React.createElement("path", { d: "M8 12h8M12 8v8" })), "Edit"
       )
     )
   );
@@ -28838,7 +28838,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   var reelOverlayTextStyle = { color: "#fff", fontFamily: "'Roboto Slab', Georgia, serif", fontStyle: "normal", fontStretch: "normal", fontWeight: 700, letterSpacing: 0.25, lineHeight: 1.15, WebkitTextStroke: "1px #000", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(0,0,0,0.7)" };
   return React.createElement(React.Fragment, null,
     React.createElement("div", { ref: itemRef, style: { height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden", flexShrink: 0, background: "#000", boxSizing: "border-box" } },
-      React.createElement(ReelVideoPlayer, { reel: reel, onTap: handleVideoTap, paused: !isActive || showUpload || showCamera || !!showSearch, onNatDims: function(w, h) { setMediaAR(h > 0 ? w / h : null); } }),
+      React.createElement(ReelVideoPlayer, { reel: reel, onTap: handleVideoTap, paused: !isActive || showUpload || showCamera || !!showSearch || showRemixPage, onNatDims: function(w, h) { setMediaAR(h > 0 ? w / h : null); } }),
       showHeart && React.createElement("div", { style: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none", zIndex: 10, animation: "reelHeartPop 0.9s ease forwards" } },
         React.createElement("svg", { width: 90, height: 90, viewBox: "0 0 24 24", fill: "#FF1744", stroke: "none" },
           React.createElement("path", { d: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" }))),
