@@ -29951,7 +29951,11 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                           return React.createElement("div", { key: u.id, style: { display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 16px" } },
                             React.createElement("div", { onClick: function() { onViewProfile && onViewProfile(u.id); setShowSearch(false); setSearchQuery(""); }, style: { width: 44, height: 44, borderRadius: "50%", background: u.avatar_bg || "#FFD600", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 17, color: "#111", overflow: "hidden", cursor: "pointer" } }, u.avatar_photo ? React.createElement("img", { src: u.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" } }) : (u.avatar_letter || (u.name || "?")[0])),
                             React.createElement("div", { onClick: function() { onViewProfile && onViewProfile(u.id); setShowSearch(false); setSearchQuery(""); }, style: { flex: 1, minWidth: 0, cursor: "pointer" } },
-                              React.createElement("div", { style: { fontWeight: 700, fontSize: 15, lineHeight: 1.2, color: "var(--text)" } }, u.name || u.handle || "User"),
+                              React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, minWidth: 0 } },
+                                React.createElement("span", { style: { flex: "0 1 auto", minWidth: 0, fontWeight: 700, fontSize: 15, lineHeight: 1.2, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, u.name || u.handle || "User"),
+                                u.is_badge_verified && React.createElement("span", { title: "Verified " + (u.verified_category || "account"), "aria-label": "Verified " + (u.verified_category || "account"), style: { display: "inline-flex", alignItems: "center", flexShrink: 0 } },
+                                  React.createElement(VerifiedBadge, { size: 15 }))
+                              ),
                               u.handle && React.createElement("div", { style: { fontSize: 13, lineHeight: 1.2, color: "var(--muted)" } }, "@" + u.handle.replace(/^@/, ""))),
                             !isOwn && React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 5, flexShrink: 0, alignItems: "flex-end" } },
                               React.createElement("button", {
