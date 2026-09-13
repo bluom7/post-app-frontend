@@ -23416,6 +23416,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const streamRef = React.useRef(null);
   const cameraStartPromiseRef = React.useRef(null);
   const cameraFlipInFlightRef = React.useRef(false);
+  const cameraSettingsRetryRef = React.useRef(false);
   const recorderRef = React.useRef(null);
   const chunksRef = React.useRef([]);
   const timerRef = React.useRef(null);
@@ -23970,9 +23971,44 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     return startPromise;
   }
 
+  React.useEffect(() => {
+    const retryAfterSettings = () => {
+      if (document.visibilityState !== "visible" || !cameraSettingsRetryRef.current) return;
+      cameraSettingsRetryRef.current = false;
+      window.setTimeout(() => startCamera({ videoOnly: true }), 180);
+    };
+    document.addEventListener("visibilitychange", retryAfterSettings);
+    window.addEventListener("pageshow", retryAfterSettings);
+    return () => {
+      document.removeEventListener("visibilitychange", retryAfterSettings);
+      window.removeEventListener("pageshow", retryAfterSettings);
+    };
+  }, []);
+
   async function retryCameraAccess() {
     setCameraError(null);
     setCameraReady(false);
+    let permissionState = null;
+    try {
+      const permission = await navigator.permissions.query({ name: "camera" });
+      permissionState = permission && permission.state;
+    } catch (_) {}
+    if (permissionState === "denied") {
+      cameraSettingsRetryRef.current = true;
+      const site = encodeURIComponent(window.location.origin);
+      const chromeSettings = "chrome://settings/content/siteDetails?site=" + site;
+      let opened = false;
+      try {
+        opened = !!window.open(chromeSettings, "_blank");
+      } catch (_) {}
+      if (!opened && /Android/i.test(navigator.userAgent || "")) {
+        try {
+          window.location.href = "intent://settings/content/siteDetails?site=" + site + "#Intent;scheme=chrome;package=com.android.chrome;end";
+        } catch (_) {}
+      }
+      setCameraError("Camera settings opened. Set Camera to Allow, return here, and camera will retry automatically.");
+      return;
+    }
     return startCamera({ videoOnly: true });
   }
 
