@@ -28367,8 +28367,8 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
   var [data, setData] = React.useState(null);
   var [loading, setLoading] = React.useState(true);
   var [error, setError] = React.useState(null);
-  var source = Object.assign({}, (data && data.source) || {}, reel || {});
-  var items = source && source.id != null ? [source] : [];
+  var source = (data && data.source) || reel || {};
+  var items = data && Array.isArray(data.reels) ? data.reels : [];
   var title = String(source.music_title || source.audio_label || "Original Audio").trim() || "Original Audio";
   var artist = String(source.music_artist || source.user_name || source.user_handle || "").trim();
   var mediaStyle = { width: "100%", height: "100%", objectFit: "cover", display: "block", background: "#e8e8e8" };
@@ -28402,7 +28402,7 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
       )
     ),
     React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, marginTop: 84, width: "100%" } },
-      [0].map(function(i) { return React.createElement("div", { key: i, style: Object.assign({}, skeletonStyle, { aspectRatio: "1 / 1", minWidth: 0 }) }); })
+      [0,1,2,3,4,5,6,7,8].map(function(i) { return React.createElement("div", { key: i, style: Object.assign({}, skeletonStyle, { aspectRatio: "1 / 1", minWidth: 0 }) }); })
     )
   );
 
@@ -28412,12 +28412,12 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
       React.createElement("div", { style: { minWidth: 0 } },
         React.createElement("div", { style: { fontSize: 20, fontWeight: 800, lineHeight: 1.35, wordBreak: "break-word" } }, "Remixes and sequences"),
         React.createElement("div", { style: { fontSize: 18, fontWeight: 700, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, artist || title),
-        React.createElement("div", { style: { fontSize: 17, color: "#222", marginTop: 8 } }, String(items.length) + (items.length === 1 ? " reel" : " reels"))
+        React.createElement("div", { style: { fontSize: 17, color: "#222", marginTop: 8 } }, String((data && data.total) || items.length) + " reels")
       )
     ),
     error && React.createElement("div", { style: { padding: "14px 0", color: "#c62828", fontSize: 14 } }, error),
     !error && items.length === 0 && React.createElement("div", { style: { padding: "24px 0", color: "#666", fontSize: 15 } }, "No remixes yet."),
-    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 14 } },
+    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 14 } },
       items.map(function(item) { var views = Number(item.view_count || item.views_count || 0); return React.createElement("article", { key: item.id, style: { minWidth: 0 } },
         React.createElement("div", { style: { width: "100%", aspectRatio: "0.68", borderRadius: 18, overflow: "hidden", position: "relative", background: "#eee" } },
           renderMedia(item, false),
@@ -28889,10 +28889,10 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
                React.createElement("span", { style: { display: "block", width: 3, height: 3, background: "#fff", borderRadius: 0 } }),
                React.createElement("span", { style: { display: "block", width: 15, height: 3, background: "#fff", borderRadius: 0 } })))),
         (hasCustomSong || showOriginalAudioProfileTile) && !hasReelHashtag && React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginTop: 4 } },
-          React.createElement("button", { onClick: function(e) { e.stopPropagation(); setShowAudioSheet(true); }, "aria-label": "Open audio options", style: { background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" } },
+          React.createElement("button", { onClick: function(e) { e.stopPropagation(); setShowAudioSheet(false); setShowRemixPage(true); }, "aria-label": "Open audio options", style: { background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" } },
             React.createElement("div", { style: { width: 26, height: 26, borderRadius: 5, overflow: "hidden", flexShrink: 0, boxShadow: "0 1px 6px rgba(0,0,0,0.55)", border: "1.5px solid rgba(255,255,255,0.95)", background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 13 } }, reelAudioTile)))),
     hasReelHashtag && !captionExpanded && (hasCustomSong || showOriginalAudioProfileTile) && React.createElement("div", { style: { position: "absolute", right: 16, bottom: "calc(20px + env(safe-area-inset-bottom, 0px))", width: 30, height: 30, zIndex: 6, display: "flex", alignItems: "center", justifyContent: "center" } },
-      React.createElement("button", { onClick: function(e) { e.stopPropagation(); setShowAudioSheet(true); }, "aria-label": "Open audio options", style: { background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" } },
+      React.createElement("button", { onClick: function(e) { e.stopPropagation(); setShowAudioSheet(false); setShowRemixPage(true); }, "aria-label": "Open audio options", style: { background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" } },
         React.createElement("div", { style: { width: 26, height: 26, borderRadius: 5, overflow: "hidden", flexShrink: 0, boxShadow: "0 1px 6px rgba(0,0,0,0.55)", border: "1.5px solid rgba(255,255,255,0.95)", background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 13 } }, reelAudioTile))),
      showAudioSheet && React.createElement("div", {
       onClick: function() { setShowAudioSheet(false); },
