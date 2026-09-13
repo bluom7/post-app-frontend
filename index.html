@@ -29763,6 +29763,9 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
     showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: reelToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); } }),
     showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); closeCamera(); } }));
 
+  var gridViewerItems = gridViewerSource === "discover" ? discoverReels : searchReels;
+  var gridViewerActiveReel = gridViewerItems[gridViewerActiveIdx] || null;
+
   // Main render — TikTok-style full-screen scroll snap
   return React.createElement("div", { style: { position: "fixed", inset: 0, background: "#000", zIndex: 100, overflow: "hidden" } },
 
@@ -30174,7 +30177,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
         },
         style: { position: "absolute", inset: 0, overflowY: "scroll", scrollSnapType: "y mandatory", WebkitOverflowScrolling: "touch", overscrollBehavior: "contain", scrollbarWidth: "none", msOverflowStyle: "none" }
       },
-        (gridViewerSource === "discover" ? discoverReels : searchReels).map(function(reel, idx) {
+        gridViewerItems.map(function(reel, idx) {
           return React.createElement(ReelItem, {
             key: reel.id, reel: reel, isActive: idx === gridViewerActiveIdx,
             user: user, token: token, showToast: reelToast,
@@ -30196,11 +30199,15 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
           });
         })),
       React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, zIndex: 491, height: 64, background: "#fff", display: "flex", alignItems: "center", pointerEvents: "none", boxShadow: "0 1px 0 rgba(17,24,39,0.08)" } }),
-      React.createElement("div", { style: { position: "fixed", top: 0, left: 0, zIndex: 492, height: 64, padding: "0 16px", display: "flex", alignItems: "center", gap: 10, pointerEvents: "auto" } },
-        React.createElement("button", { onClick: function() { setGridViewerOpen(false); }, "aria-label": "Go back", style: { width: 40, height: 40, padding: 0, borderRadius: "50%", background: "#fff", border: "1px solid #e5e7eb", boxShadow: "0 2px 8px rgba(17,24,39,0.12)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" } },
+      React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, zIndex: 492, height: 64, padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "space-between", pointerEvents: "none" } },
+        React.createElement("button", { onClick: function() { setGridViewerOpen(false); }, "aria-label": "Go back", style: { width: 40, height: 40, padding: 0, borderRadius: "50%", background: "#fff", border: "1px solid #e5e7eb", boxShadow: "0 2px 8px rgba(17,24,39,0.12)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "auto" } },
           React.createElement("svg", { width: 21, height: 21, viewBox: "0 0 24 24", fill: "none", stroke: "#6b7280", strokeWidth: "2.4", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" },
             React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
-        React.createElement("span", { style: { color: "#4b5563", fontFamily: "Arial, Helvetica, sans-serif", fontSize: 20, fontWeight: 400, lineHeight: "24px", letterSpacing: "0" } }, "Reels"))),
+        React.createElement("span", { style: { position: "absolute", left: "50%", transform: "translateX(-50%)", color: "#111827", fontFamily: "Arial Black, Helvetica, Arial, sans-serif", fontSize: 20, fontWeight: 900, lineHeight: "24px", letterSpacing: "0.12em", textTransform: "uppercase", whiteSpace: "nowrap" } }, "REELS"),
+        React.createElement("div", { "aria-label": "Reel user", style: { width: 36, height: 36, borderRadius: "50%", background: (gridViewerActiveReel && gridViewerActiveReel.avatar_bg) || "#e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0, color: "#374151", fontSize: 14, fontWeight: 900, pointerEvents: "auto" } },
+          gridViewerActiveReel && gridViewerActiveReel.avatar_photo
+            ? React.createElement("img", { src: gridViewerActiveReel.avatar_photo, alt: "", style: { width: "100%", height: "100%", objectFit: "cover" } })
+            : ((gridViewerActiveReel && (gridViewerActiveReel.avatar_letter || gridViewerActiveReel.user_name || gridViewerActiveReel.user_handle)) || "?").toString().charAt(0).toUpperCase()))),
 
     showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: reelToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); setShowUpload(false); } }),
     showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); closeCamera(); } }),
