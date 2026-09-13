@@ -23253,7 +23253,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
 }
 
 
-function ReelCameraModal({ token, user, initialStream, initialCameraError, showToast, onClose, onUploaded, onOpenGallery }) {
+function ReelCameraModal({ token, user, initialStream, initialCameraError, showToast, onClose, onUploaded, onOpenGallery, initialReel }) {
   const MAX_REEL_SECONDS = 30; // backend hard limit — must match server.py MAX_POST_VIDEO_SECONDS
   const DEFAULT_MUSIC_CLIP_SECONDS = 15;
   const normalizeMusicClipDuration = value => {
@@ -23262,7 +23262,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       ? Math.max(1, Math.min(MAX_REEL_SECONDS, parsed))
       : DEFAULT_MUSIC_CLIP_SECONDS;
   };
-  const [step, setStep] = React.useState("camera");
+  const [step, setStep] = React.useState(initialReel ? "preparing" : "camera");
   const [recording, setRecording] = React.useState(false);
   const [countdown, setCountdown] = React.useState(0);
   const [recordTime, setRecordTime] = React.useState(0);
@@ -23463,6 +23463,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const gallerySelectionRef = React.useRef(null);
   const galleryPosterPromiseRef = React.useRef(null);
   const initialEditorPauseRef = React.useRef(false);
+  const initialEditorStepRef = React.useRef(null);
 
   // Gallery video poster preparation runs in the background after the editor opens.
   // This prevents Android Chrome from briefly painting the video surface black.
@@ -24375,6 +24376,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     setRecordedPhotoAspect(null);
     setTextOverlays([]); setReelStickerOverlays([]);
     const isPhoto = file.type.startsWith("image/");
+    const requestedStep = initialEditorStepRef.current || "edit";
+    initialEditorStepRef.current = null;
     const mediaUrl = URL.createObjectURL(file);
     const selectionToken = {};
     gallerySelectionRef.current = selectionToken;
@@ -24406,9 +24409,9 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     stopStream(); setRecordTime(0);
     // Switch to the editor synchronously so the camera surface cannot flash.
     if (window.ReactDOM && ReactDOM.flushSync) {
-      ReactDOM.flushSync(() => setStep("edit"));
+      ReactDOM.flushSync(() => setStep(isPhoto ? "edit" : requestedStep));
     } else {
-      setStep("edit");
+      setStep(isPhoto ? "edit" : requestedStep);
     }
     // Resolve the selected video's dimensions before mounting the editor. This
     // keeps the tool dock in its final mode from the first render, instead of
@@ -24418,20 +24421,26 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
 
     if (!isPhoto) {
       // Open the editor immediately; prepare the video poster in the background.
-      setStep("edit");
+      setStep(requestedStep);
       const posterPromise = prepareGalleryVideo(file).then(prepared => {
         try { URL.revokeObjectURL(prepared.url); } catch (_) {}
         if (gallerySelectionRef.current !== selectionToken) return prepared.poster;
         const sourceAspect = Number(prepared.aspect);
+        const sourceDuration = Number(prepared.duration);
         if (Number.isFinite(sourceAspect) && sourceAspect > 0) setRecordedVideoAspect(sourceAspect);
+        if (Number.isFinite(sourceDuration) && sourceDuration > 0) {
+          setVideoDuration(sourceDuration);
+          setTrimStart(0);
+          setTrimEnd(Math.min(sourceDuration, MAX_REEL_SECONDS));
+        }
         // The same decoded frame is the fallback for editor, review, share,
         // and every return path, so none of those surfaces starts from black.
         setEditorVideoPoster(prepared.poster);
         setReviewPoster(prepared.poster);
-        setStep("edit");
+        setStep(requestedStep);
         return prepared.poster;
       }).catch(() => {
-        if (gallerySelectionRef.current === selectionToken) setStep("edit");
+        if (gallerySelectionRef.current === selectionToken) setStep(requestedStep);
         return null;
       });
       galleryPosterPromiseRef.current = posterPromise;
@@ -24439,6 +24448,36 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       setStep("edit");
     }
   }
+
+  // Remix editing starts from the selected reel media, not from the camera or picker.
+  React.useEffect(() => {
+    if (!initialReel) return;
+    let cancelled = false;
+    const sourceUrl = initialReel.photo_url || initialReel.video_url;
+    const isPhoto = !!initialReel.photo_url;
+    if (!sourceUrl) {
+      showToast && showToast("This reel has no editable media.", "#FF1744");
+      onClose && onClose();
+      return () => { cancelled = true; };
+    }
+    (async () => {
+      try {
+        const response = await fetch(sourceUrl, { mode: "cors" });
+        if (!response.ok) throw new Error("Could not load the reel media.");
+        const blob = await response.blob();
+        if (cancelled) return;
+        const type = blob.type || (isPhoto ? "image/jpeg" : "video/mp4");
+        const extension = isPhoto ? "jpg" : (type.indexOf("webm") >= 0 ? "webm" : "mp4");
+        initialEditorStepRef.current = isPhoto ? "edit" : "trim";
+        useGalleryFile(new File([blob], "remix-" + String(initialReel.id || "media") + "." + extension, { type }));
+      } catch (error) {
+        if (cancelled) return;
+        showToast && showToast(error && error.message ? error.message : "Could not load the reel media.", "#FF1744");
+        onClose && onClose();
+      }
+    })();
+    return () => { cancelled = true; initialEditorStepRef.current = null; };
+  }, [initialReel && (initialReel.id || initialReel.photo_url || initialReel.video_url)]);
 
   function onGalleryPick(e) {
     const files = Array.from(e.target.files || []);
@@ -25840,6 +25879,14 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       if (audioEl) { try { audioEl.pause(); if (audioEl._audioCtx && audioEl._audioCtx.close) audioEl._audioCtx.close(); audioEl.src = ""; audioEl.load(); } catch (_) {} }
       if (_audioObjectUrl) { try { URL.revokeObjectURL(_audioObjectUrl); } catch (_) {} }
     }
+  }
+
+  // ── Preparing a remix source ──
+  if (step === "preparing") {
+    return React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 500, background: "#000", color: "#fff", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, fontFamily: "inherit" } },
+      React.createElement("div", { style: { width: 34, height: 34, border: "3px solid rgba(255,255,255,0.25)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" } }),
+      React.createElement("div", { style: { fontSize: 16, fontWeight: 700 } }, "Preparing your reel…")
+    );
   }
 
   // ── Share step ──
@@ -29146,7 +29193,9 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   var [activeIdx, setActiveIdx] = React.useState(0);
   var [showUpload, setShowUpload] = React.useState(false);
   var [showCamera, setShowCamera] = React.useState(false);
-  function closeCamera() { setShowCamera(false); }
+  var [remixSource, setRemixSource] = React.useState(null);
+  function closeCamera() { setShowCamera(false); setRemixSource(null); }
+  function openRemixEditor(source) { setGridViewerOpen(false); setRemixSource(source || null); setShowCamera(true); }
   var [showComments, setShowComments] = React.useState(false);
   var [activeReelId, setActiveReelId] = React.useState(null);
   var [comments, setComments] = React.useState([]);
@@ -29821,7 +29870,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
           onView: function() {},
           externalViewTracking: true,
           isReelsFeed: true,
-          onTryRemix: function() { setGridViewerOpen(false); setShowCamera(true); }
+          onTryRemix: openRemixEditor
         });
       }),
       loading && React.createElement("div", { style: { height: "100%", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", scrollSnapAlign: "start", background: "#000" } },
@@ -30197,7 +30246,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
             },
             onMention: mentionReelUser,
             onOpenCompose: onOpenCompose,
-            onTryRemix: function() { setGridViewerOpen(false); setShowCamera(true); }
+            onTryRemix: openRemixEditor
           });
         })),
       React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, zIndex: 491, height: 64, background: "#fff", display: "flex", alignItems: "center", pointerEvents: "none", boxShadow: "0 1px 0 rgba(17,24,39,0.08)" } }),
@@ -30212,7 +30261,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
             : ((gridViewerActiveReel && (gridViewerActiveReel.avatar_letter || gridViewerActiveReel.user_name || gridViewerActiveReel.user_handle)) || "?").toString().charAt(0).toUpperCase()))),
 
     showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: reelToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); setShowUpload(false); } }),
-    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); closeCamera(); } }),
+    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, initialReel: remixSource, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); closeCamera(); } }),
     React.createElement("style", null, "@keyframes reelHeartPop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); } 40% { opacity: 1; transform: translate(-50%,-50%) scale(1.3); } 70% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(0.8); } }"));
 }
 
