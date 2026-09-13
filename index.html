@@ -12969,14 +12969,14 @@ function FollowListModal({
 
 function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
     const [profile, setProfile] = React.useState(initialProfile || null);
-    const [loading, setLoading] = React.useState(!initialProfile);
+    const [loading, setLoading] = React.useState(true);
     const [error, setError] = React.useState(false);
 
     React.useEffect(() => {
       let cancelled = false;
+      setLoading(true);
       if (initialProfile) {
         setProfile(initialProfile);
-        setLoading(false);
       }
       api("/users/" + encodeURIComponent(userId), "GET", null, token)
         .then(data => {
@@ -13049,6 +13049,28 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
       ? "This is the official account of Post App. We’re showing information about this account to help keep our community authentic."
       : "To help keep our community authentic, we’re showing information about profiles on Post App. See why this information is important.";
 
+    const accountSkeletonStyle = { background: "linear-gradient(90deg, #f0f1f4 25%, #f8f9fb 50%, #f0f1f4 75%)", backgroundSize: "200% 100%", animation: "accountInfoSkeletonShimmer 1.35s ease-in-out infinite" };
+    const skeletonLine = (width, height, extra) => React.createElement("div", { style: Object.assign({}, accountSkeletonStyle, { width: width, height: height, borderRadius: 6 }, extra || {}) });
+    const accountLoadingView = React.createElement(React.Fragment, null,
+      React.createElement("style", null, "@keyframes accountInfoSkeletonShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }"),
+      React.createElement("div", { role: "status", "aria-label": "Loading account information", style: { display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" } },
+        React.createElement("div", { style: Object.assign({}, accountSkeletonStyle, { width: 86, height: 86, borderRadius: "50%" }) }),
+        skeletonLine(170, 22, { marginTop: 14, borderRadius: 8 }),
+        React.createElement("div", { style: { width: "100%", maxWidth: 390, marginTop: 20, display: "flex", flexDirection: "column", alignItems: "center", gap: 9 } },
+          skeletonLine("92%", 12), skeletonLine("84%", 12), skeletonLine("66%", 12)
+        ),
+        React.createElement("div", { style: { width: "100%", margin: "40px 0 0", display: "flex", flexDirection: "column", gap: 25, textAlign: "left" } },
+          [0, 1, 2].map(function(i) { return React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 14 } },
+            React.createElement("div", { style: Object.assign({}, accountSkeletonStyle, { width: 25, height: 25, borderRadius: 7, flexShrink: 0 }) }),
+            React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", gap: 7 } }, skeletonLine(i === 0 ? 105 : i === 1 ? 135 : 82, 17, { borderRadius: 5 }), skeletonLine(i === 0 ? 145 : i === 1 ? 175 : 135, 13, { borderRadius: 5 }))
+          ); })
+        ),
+        React.createElement("div", { style: { width: "100%", maxWidth: 430, margin: "34px auto 0", paddingTop: 21, borderTop: "1px solid #e4e4e4", display: "flex", flexDirection: "column", alignItems: "center", gap: 9 } },
+          skeletonLine("96%", 12), skeletonLine("90%", 12), skeletonLine("58%", 12)
+        )
+      )
+    );
+
     return React.createElement("div", { className: "account-info-screen", style: { position: "fixed", inset: 0, zIndex: 10000, background: "#fff", color: "#111", display: "flex", flexDirection: "column", overflow: "hidden" } },
       React.createElement("div", { style: { position: "relative", background: "#FFFFFF", padding: "10px 20px 0", boxSizing: "border-box" } },
         React.createElement("div", { style: { position: "relative", display: "flex", alignItems: "center", minHeight: 58 } },
@@ -13057,7 +13079,7 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
         )
       ),
       React.createElement("div", { style: { flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none", background: "#fff", padding: "30px 22px 42px" } },
-        loading && !profile ? React.createElement("div", { style: { display: "flex", justifyContent: "center", alignItems: "center", paddingTop: 100 } }, React.createElement("span", { role: "status", "aria-label": "Loading account information", style: { width: 28, height: 28, border: "3px solid #dbeafe", borderTopColor: "#1877F2", borderRadius: "50%", display: "inline-block", animation: "spin 0.75s linear infinite" } })) :
+        loading ? accountLoadingView :
         React.createElement(React.Fragment, null,
           React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" } },
             React.createElement("div", { style: { width: 86, height: 86, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: (profile && profile.avatar_bg) || "#e9eef5", color: "#111", fontSize: 33, fontWeight: 800, border: "1px solid #e0e0e0" } }, avatar ? React.createElement("img", { src: avatar, alt: "", style: { width: "100%", height: "100%", objectFit: "cover" } }) : avatarLetter),
@@ -28521,8 +28543,8 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
         React.createElement("div", { style: Object.assign({}, skeletonStyle, { width: "38%", maxWidth: 86, height: 15, borderRadius: 4 }) })
       )
     ),
-    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 14, marginTop: 20, width: "100%" } },
-      [0,1].map(function(i) { return React.createElement("div", { key: i, style: Object.assign({}, skeletonStyle, { aspectRatio: "0.68", borderRadius: 18, minWidth: 0 }) }); })
+    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, marginTop: 84, width: "100%" } },
+      [0,1,2,3,4,5,6,7,8].map(function(i) { return React.createElement("div", { key: i, style: Object.assign({}, skeletonStyle, { aspectRatio: "1 / 1", minWidth: 0 }) }); })
     )
   );
 
