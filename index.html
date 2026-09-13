@@ -29961,7 +29961,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                               React.createElement("button", {
                                 onClick: function(e) { e.stopPropagation(); searchFollowUser(u.id); },
                                 disabled: folLoading,
-                                style: { padding: "7px 16px", borderRadius: 20, border: "none", background: "#1877F2", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", opacity: folLoading ? 0.5 : 1, whiteSpace: "nowrap" }
+                                style: { padding: "7px 16px", borderRadius: 20, border: isFollowing ? "1px solid var(--border)" : "none", background: isFollowing ? "transparent" : "#1877F2", color: isFollowing ? "var(--text)" : "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", opacity: folLoading ? 0.5 : 1, whiteSpace: "nowrap" }
                               }, isFollowing ? "Following" : "Follow"),
                               connectState !== "sent" && React.createElement("button", {
                                 onClick: function(e) { e.stopPropagation(); searchConnectUser(u.id); },
