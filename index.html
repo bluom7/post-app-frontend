@@ -23907,7 +23907,8 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     });
   }
 
-  async function startCamera() {
+  async function startCamera(options) {
+    const videoOnly = !!(options && options.videoOnly);
     if (cameraStartPromiseRef.current) return cameraStartPromiseRef.current;
     setCameraError(null);
     setCameraReady(false);
@@ -23921,24 +23922,58 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     let startPromise;
     startPromise = (async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode,
-            width: { ideal: 1280, max: 1920 },
-            height: { ideal: 720, max: 1080 },
-            frameRate: { ideal: 30, max: 30 },
-          },
-          audio: true,
-        });
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode,
+              width: { ideal: 1280, max: 1920 },
+              height: { ideal: 720, max: 1080 },
+              frameRate: { ideal: 30, max: 30 },
+            },
+            audio: !videoOnly,
+          });
+        } catch (permissionError) {
+          // A microphone denial must not prevent the camera from opening.
+          if (!videoOnly && (permissionError.name === "NotAllowedError" || permissionError.name === "PermissionDeniedError")) {
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                facingMode,
+                width: { ideal: 1280, max: 1920 },
+                height: { ideal: 720, max: 1080 },
+                frameRate: { ideal: 30, max: 30 },
+              },
+              audio: false,
+            });
+          } else {
+            throw permissionError;
+          }
+        }
         attachCameraStream(stream);
       } catch(e) {
-        setCameraError(e.name === "NotAllowedError" ? "Camera permission denied.\nPlease allow camera access." : "Camera error: " + e.message);
+        let permissionState = null;
+        if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
+          try {
+            const permission = await navigator.permissions.query({ name: "camera" });
+            permissionState = permission && permission.state;
+          } catch (_) {}
+        }
+        const deniedMessage = permissionState === "denied"
+          ? "Camera access is blocked by the browser.\nOpen the site settings, set Camera to Allow, then tap Allow Camera again."
+          : "Camera permission denied.\nPlease allow camera access.";
+        setCameraError((e.name === "NotAllowedError" || e.name === "PermissionDeniedError") ? deniedMessage : "Camera error: " + e.message);
       } finally {
         if (cameraStartPromiseRef.current === startPromise) cameraStartPromiseRef.current = null;
       }
     })();
     cameraStartPromiseRef.current = startPromise;
     return startPromise;
+  }
+
+  async function retryCameraAccess() {
+    setCameraError(null);
+    setCameraReady(false);
+    return startCamera({ videoOnly: true });
   }
 
   async function flipCamera() {
@@ -27510,7 +27545,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
       React.createElement("div", { style: { background: "rgba(10,10,10,0.95)", borderRadius: 20, padding: "28px 22px", textAlign: "center", color: "#fff", maxWidth: 300 } },
         React.createElement("div", { style: { fontSize: 44, marginBottom: 14 } }, "📷"),
         React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, whiteSpace: "pre-wrap", marginBottom: 20 } }, cameraError),
-        React.createElement("button", { onClick: startCamera, style: { background: "#FF1744", color: "#fff", border: "none", borderRadius: 22, padding: "11px 28px", fontWeight: 700, fontSize: 15, cursor: "pointer" } }, "Allow Camera")
+        React.createElement("button", { onClick: retryCameraAccess, style: { background: "#FF1744", color: "#fff", border: "none", borderRadius: 22, padding: "11px 28px", fontWeight: 700, fontSize: 15, cursor: "pointer" } }, "Allow Camera")
       )
     ),
 
