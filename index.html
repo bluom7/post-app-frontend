@@ -29884,7 +29884,11 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
             !discoverLoading && discoverReels.length === 0
               ? React.createElement("div", { style: { flex: 1, minHeight: "100%", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "36px 16px 48px", boxSizing: "border-box", background: "#FFFFFF" } },
                   React.createElement("svg", { width: "100%", height: "220", viewBox: "0 0 420 220", role: "img", "aria-label": "No results found", style: { width: "100%", maxWidth: 360, height: "auto", display: "block" } },
-                    React.createElement("text", { x: "84", y: "57", fill: "#14B8E5", fontSize: "20", fontWeight: "800", fontFamily: "Arial, sans-serif" }, "Oops!"),
+                    React.createElement("text", { x: "190", y: "116", fontSize: "40", fontWeight: "900", letterSpacing: "0", fontFamily: "Arial, sans-serif" },
+                      React.createElement("tspan", { fill: "#FFD600" }, "O"),
+                      React.createElement("tspan", { fill: "#13C636" }, "O"),
+                      React.createElement("tspan", { fill: "#F51C35" }, "P"),
+                      React.createElement("tspan", { fill: "#147CE5" }, "S")),,
                     React.createElement("g", { transform: "translate(60 63) scale(0.463)" },
                     React.createElement("line", { x1: "158", y1: "74", x2: "230", y2: "20", stroke: "#050505", strokeWidth: "15", strokeLinecap: "round" }),
                     React.createElement("circle", { cx: "112", cy: "116", r: "54", fill: "#15191C" }),
@@ -29897,11 +29901,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                     React.createElement("line", { x1: "137", y1: "167", x2: "144", y2: "191", stroke: "#111", strokeWidth: "5", strokeLinecap: "round" }),
                     React.createElement("ellipse", { cx: "110", cy: "196", rx: "53", ry: "8", fill: "#BDBDBD", opacity: "0.65" }),
                     ),
-                    React.createElement("text", { x: "190", y: "116", fontSize: "40", fontWeight: "900", letterSpacing: "0", fontFamily: "Arial, sans-serif" },
-                      React.createElement("tspan", { fill: "#FFD600" }, "F"),
-                      React.createElement("tspan", { fill: "#13C636" }, "A"),
-                      React.createElement("tspan", { fill: "#F51C35" }, "I"),
-                      React.createElement("tspan", { fill: "#147CE5" }, "L")),
+                    
                     React.createElement("rect", { x: "190", y: "128", width: "145", height: "28", rx: "14", fill: "#16B8E6" }),
                     React.createElement("text", { x: "262", y: "147", fill: "#FFFFFF", fontSize: "12", fontWeight: "700", textAnchor: "middle", fontFamily: "Arial, sans-serif" }, "No results found!")
                   ))
