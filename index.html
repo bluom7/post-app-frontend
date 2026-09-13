@@ -30270,7 +30270,16 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
       if (musicRef.current === a) setPhotoMusicPlaying(false);
     };
     a.onended = () => {
-      if (musicRef.current === a) { musicRef.current = null; setPhotoMusicPlaying(false); }
+      if (musicRef.current !== a) return;
+      // Photo reels use the selected music as their playback timeline. Restart
+      // the clip automatically so an active photo reel never stops at the end.
+      if (isPhotoReel && !paused && audioEnabledRef.current) {
+        try { a.currentTime = musicStartTime; } catch (_) {}
+        startMusicClip();
+      } else {
+        musicRef.current = null;
+        setPhotoMusicPlaying(false);
+      }
     };
     musicRef.current = a;
     return a;
@@ -30280,9 +30289,13 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims }) {
     if (!a) return Promise.resolve(false);
     clearMusicClipTimer();
     musicClipTimerRef.current = setTimeout(() => {
-      if (musicRef.current === a) {
-        a.pause();
-        try { a.currentTime = musicStartTime; } catch (_) {}
+      if (musicRef.current !== a) return;
+      a.pause();
+      try { a.currentTime = musicStartTime; } catch (_) {}
+      // Keep active photo reels looping through the same clip window.
+      if (isPhotoReel && !paused && audioEnabledRef.current) {
+        startMusicClip();
+      } else {
         musicRef.current = null;
         setPhotoMusicPlaying(false);
       }
