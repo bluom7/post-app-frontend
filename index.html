@@ -30195,12 +30195,12 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
             onTryRemix: function() { setGridViewerOpen(false); setShowCamera(true); }
           });
         })),
-      React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, zIndex: 491, height: 56, background: "linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, transparent 100%)", display: "flex", alignItems: "center", pointerEvents: "none" } }),
-      React.createElement("div", { style: { position: "fixed", top: 0, left: 0, zIndex: 492, display: "flex", alignItems: "center" } },
-        React.createElement("button", { onClick: function() { setGridViewerOpen(false); }, style: { background: "none", border: "none", cursor: "pointer", padding: "14px 12px", display: "flex", alignItems: "center", gap: 8 } },
-          React.createElement("svg", { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "2.5", strokeLinecap: "round", strokeLinejoin: "round" },
-            React.createElement("polyline", { points: "15 18 9 12 15 6" })),
-          React.createElement("span", { style: { color: "#fff", fontSize: 17, fontWeight: 700, textShadow: "0 1px 5px rgba(0,0,0,0.9)" } }, "Reels")))),
+      React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, zIndex: 491, height: 64, background: "#fff", display: "flex", alignItems: "center", pointerEvents: "none", boxShadow: "0 1px 0 rgba(17,24,39,0.08)" } }),
+      React.createElement("div", { style: { position: "fixed", top: 0, left: 0, zIndex: 492, height: 64, padding: "0 16px", display: "flex", alignItems: "center", gap: 10, pointerEvents: "auto" } },
+        React.createElement("button", { onClick: function() { setGridViewerOpen(false); }, "aria-label": "Go back", style: { width: 40, height: 40, padding: 0, borderRadius: "50%", background: "#fff", border: "1px solid #e5e7eb", boxShadow: "0 2px 8px rgba(17,24,39,0.12)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" } },
+          React.createElement("svg", { width: 21, height: 21, viewBox: "0 0 24 24", fill: "none", stroke: "#6b7280", strokeWidth: "2.4", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" },
+            React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
+        React.createElement("span", { style: { color: "#4b5563", fontFamily: "Arial, Helvetica, sans-serif", fontSize: 20, fontWeight: 400, lineHeight: "24px", letterSpacing: "0" } }, "Reels"))),
 
     showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: reelToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); setShowUpload(false); } }),
     showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); closeCamera(); } }),
