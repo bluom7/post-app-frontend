@@ -29173,6 +29173,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   var [searchQuery, setSearchQuery] = React.useState("");
   var [searchLoading, setSearchLoading] = React.useState(false);
   var [searchTab, setSearchTab] = React.useState("reels");
+  var searchTabTouchRef = React.useRef({ x: 0, y: 0 });
   var [searchReels, setSearchReels] = React.useState([]);
   var [searchUsers, setSearchUsers] = React.useState([]);
   var [searchHashtags, setSearchHashtags] = React.useState([]);
@@ -29885,11 +29886,25 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
               discoverLoading && React.createElement(React.Fragment, null,
                  React.createElement("style", null, "@keyframes reelsDiscoverShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }"),
                  [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].map(function(i) { return React.createElement("div", { key: "sk" + i, style: { aspectRatio: "0.68", borderRadius: 0, background: "linear-gradient(90deg, #f0f1f4 25%, #fafbfc 50%, #f0f1f4 75%)", backgroundSize: "200% 100%", animation: "reelsDiscoverShimmer 1.35s ease-in-out infinite" } }); }))))
-        : React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" } },
+        : React.createElement("div", {
+            style: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", touchAction: "pan-y" },
+            onTouchStart: function(e) { var t = e.touches && e.touches[0]; if (t) searchTabTouchRef.current = { x: t.clientX, y: t.clientY }; },
+            onTouchEnd: function(e) {
+              var t = e.changedTouches && e.changedTouches[0];
+              if (!t) return;
+              var dx = t.clientX - searchTabTouchRef.current.x;
+              var dy = t.clientY - searchTabTouchRef.current.y;
+              if (Math.abs(dx) < 45 || Math.abs(dx) < Math.abs(dy)) return;
+              var order = ["reels", "users", "hashtags"];
+              var currentIndex = order.indexOf(searchTab);
+              var nextIndex = Math.max(0, Math.min(order.length - 1, currentIndex + (dx < 0 ? 1 : -1)));
+              if (nextIndex !== currentIndex) setSearchTab(order[nextIndex]);
+            }
+          },
             React.createElement("div", { style: { display: "flex", borderBottom: "1px solid #E6E6E6", flexShrink: 0 } },
               [["reels","Reels"],["users","People"],["hashtags","Hashtags"]].map(function(pair) {
                 var tab=pair[0], label=pair[1]; var isAct = searchTab === tab;
-                return React.createElement("button", { key: tab, onClick: function() { setSearchTab(tab); }, style: { flex: 1, padding: "14px 0 12px", background: "none", border: "none", borderBottom: isAct ? "2px solid #111111" : "2px solid transparent", fontWeight: isAct ? 800 : 600, fontSize: 16, letterSpacing: "0.15px", color: isAct ? "#111111" : "#666666", cursor: "pointer" } }, label);
+                return React.createElement("button", { key: tab, onClick: function() { setSearchTab(tab); }, style: { flex: 1, position: "relative", padding: "14px 0 12px", background: "none", border: "none", borderBottom: "none", fontWeight: 800, fontSize: 17, letterSpacing: "0.2px", color: isAct ? "#111111" : "#555555", cursor: "pointer" } }, label, React.createElement("span", { style: { position: "absolute", left: 0, right: 0, bottom: -1, height: 2, background: isAct ? "#111111" : "transparent" } }));
               })),
             React.createElement("div", { style: { flex: 1, overflowY: "auto", background: "#FFFFFF" } },
               searchLoading
