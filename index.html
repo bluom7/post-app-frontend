@@ -29881,7 +29881,28 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
           "Clear")),
       !searchQuery.trim()
         ? React.createElement("div", { style: { flex: 1, overflowY: "auto", background: "#FFFFFF" }, onScroll: function(e) { var el = e.currentTarget; if (!discoverLoadingRef.current && discoverHasMoreRef.current && el.scrollHeight - el.scrollTop - el.clientHeight < 400) { loadDiscover(false); } } },
-            React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, padding: 0, background: "#FFFFFF" } },
+            !discoverLoading && discoverReels.length === 0
+              ? React.createElement("div", { style: { flex: 1, minHeight: "100%", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "36px 16px 48px", boxSizing: "border-box", background: "#FFFFFF" } },
+                  React.createElement("svg", { width: "100%", height: "220", viewBox: "0 0 420 220", role: "img", "aria-label": "No results found", style: { width: "100%", maxWidth: 360, height: "auto", display: "block" } },
+                    React.createElement("text", { x: "18", y: "38", fill: "#14B8E5", fontSize: "30", fontWeight: "800", fontFamily: "Arial, sans-serif" }, "Oops!"),
+                    React.createElement("line", { x1: "158", y1: "74", x2: "230", y2: "20", stroke: "#050505", strokeWidth: "15", strokeLinecap: "round" }),
+                    React.createElement("circle", { cx: "112", cy: "116", r: "54", fill: "#15191C" }),
+                    React.createElement("circle", { cx: "112", cy: "116", r: "43", fill: "#B9F1FB", stroke: "#49AFC0", strokeWidth: "5" }),
+                    React.createElement("path", { d: "M84 91 Q112 72 140 91 Q119 82 84 91", fill: "#E9FDFF", opacity: "0.9" }),
+                    React.createElement("circle", { cx: "96", cy: "115", r: "5", fill: "#117887" }),
+                    React.createElement("circle", { cx: "128", cy: "115", r: "5", fill: "#117887" }),
+                    React.createElement("path", { d: "M98 137 Q112 126 126 137", fill: "none", stroke: "#117887", strokeWidth: "3", strokeLinecap: "round" }),
+                    React.createElement("line", { x1: "82", y1: "167", x2: "75", y2: "191", stroke: "#111", strokeWidth: "5", strokeLinecap: "round" }),
+                    React.createElement("line", { x1: "137", y1: "167", x2: "144", y2: "191", stroke: "#111", strokeWidth: "5", strokeLinecap: "round" }),
+                    React.createElement("ellipse", { cx: "110", cy: "196", rx: "53", ry: "8", fill: "#BDBDBD", opacity: "0.65" }),
+                    React.createElement("text", { x: "192", y: "116", fill: "#FFD600", fontSize: "57", fontWeight: "900", fontFamily: "Arial, sans-serif" }, "F"),
+                    React.createElement("text", { x: "238", y: "116", fill: "#13C636", fontSize: "57", fontWeight: "900", fontFamily: "Arial, sans-serif" }, "A"),
+                    React.createElement("text", { x: "292", y: "116", fill: "#F51C35", fontSize: "57", fontWeight: "900", fontFamily: "Arial, sans-serif" }, "I"),
+                    React.createElement("text", { x: "317", y: "116", fill: "#147CE5", fontSize: "57", fontWeight: "900", fontFamily: "Arial, sans-serif" }, "L"),
+                    React.createElement("rect", { x: "192", y: "139", width: "190", height: "34", rx: "17", fill: "#16B8E6" }),
+                    React.createElement("text", { x: "287", y: "162", fill: "#FFFFFF", fontSize: "16", fontWeight: "700", textAnchor: "middle", fontFamily: "Arial, sans-serif" }, "No results found!")
+                  ))
+              : React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, padding: 0, background: "#FFFFFF" } },
               discoverReels.map(function(r, _gvi) {
                 var views = r.view_count || (Array.isArray(r.views) ? r.views.length : 0) || 0; var vLabel = views >= 1000000 ? (views/1000000).toFixed(1)+"M" : views >= 1000 ? (views/1000).toFixed(1)+"K" : String(views);
                 var rawVid = r.video_url || ""; var thumb = r.thumbnail_url || r.photo_url || (rawVid && rawVid.includes("res.cloudinary.com") ? rawVid.replace("/video/upload/", "/video/upload/so_0,w_800,c_fill,q_auto:best,f_auto/").replace(/\.(mp4|mov|webm|avi)(\?.*)?$/i, ".jpg") : rawVid) || "";
