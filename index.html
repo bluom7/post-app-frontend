@@ -28446,7 +28446,7 @@ function RemixSequencePage({ reel, token, onClose, onTryRemix }) {
   );
 }
 
-function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onViewAccountInfo, onLike, onSave, onShare, onFollow, onOpenComments, onDelete, fmtCount, showUpload, showCamera, showSearch, onNotInterested, onMention, onOpenCompose, onView, externalViewTracking, isReelsFeed, onTryRemix }) {
+function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onViewAccountInfo, onLike, onSave, onShare, onFollow, onOpenComments, onDelete, fmtCount, showUpload, showCamera, showSearch, onNotInterested, onMention, onOpenCompose, onView, externalViewTracking, isReelsFeed, hideInlineLocation, onTryRemix }) {
   var [showHeart, setShowHeart] = React.useState(false);
   var [mediaAR, setMediaAR] = React.useState(null);
   var itemRef = React.useRef(null);
@@ -28943,7 +28943,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
                 React.createElement("span", { style: { display: "block", width: 10, minWidth: 10, height: 1, flex: "0 0 10px" } }),
                 React.createElement("span", { style: { display: "inline-block", whiteSpace: "nowrap" } }, songMarqueeText),
                 React.createElement("span", { style: { display: "block", width: 10, minWidth: 10, height: 1, flex: "0 0 10px" } })))),
-          reel.location && React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } },
+          !hideInlineLocation && reel.location && React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } },
             React.createElement("svg", { width: 10, height: 10, viewBox: "0 0 24 24", fill: "#fff", style: { flexShrink: 0 } },
               React.createElement("path", { d: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" })),
             React.createElement("span", { style: { color: "rgba(255,255,255,0.85)", fontSize: 11, fontWeight: 600, marginTop: 3, textShadow: "0 1px 4px rgba(0,0,0,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, reel.location))),
@@ -30189,7 +30189,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
             onViewProfile: function(uid) { setGridViewerOpen(false); onViewProfile && onViewProfile(uid); },
             onLike: gvLikeReel, onSave: gvSaveReel, onShare: gvShareReel, onFollow: gvFollowUser,
             onOpenComments: openComments, onDelete: gvDeleteReel, fmtCount: fmtCount,
-            showUpload: false, showCamera: false, isReelsFeed: true,
+            showUpload: false, showCamera: false, isReelsFeed: true, hideInlineLocation: true,
             onView: function(rid) {
               var upd = function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, { view_count: (r.view_count || 0) + 1 }) : r; }); };
               if (gridViewerSource === 'discover') setDiscoverReels(upd); else setSearchReels(upd);
