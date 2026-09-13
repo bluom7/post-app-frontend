@@ -30184,7 +30184,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
             onViewProfile: function(uid) { setGridViewerOpen(false); onViewProfile && onViewProfile(uid); },
             onLike: gvLikeReel, onSave: gvSaveReel, onShare: gvShareReel, onFollow: gvFollowUser,
             onOpenComments: openComments, onDelete: gvDeleteReel, fmtCount: fmtCount,
-            showUpload: false, showCamera: false,
+            showUpload: false, showCamera: false, isReelsFeed: true,
             onView: function(rid) {
               var upd = function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, { view_count: (r.view_count || 0) + 1 }) : r; }); };
               if (gridViewerSource === 'discover') setDiscoverReels(upd); else setSearchReels(upd);
