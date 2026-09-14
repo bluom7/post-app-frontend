@@ -57,7 +57,7 @@ button[data-help-spin]:focus, button[data-help-spin]:focus-visible, button[data-
   --help-page-bg: #ffffff; --help-surface: #ffffff; --help-soft: #F0F2F5;
   --help-soft-blue: #F1F7FA; --help-control: #EAF2F6; --help-heading: #111111;
   --help-body: #1A2330; --help-muted: #687078; --help-line: #E5E7EB;
-  --help-blue: #0D9FF3; --help-login-icon: #0D9FF3; --help-username-icon: #A82BBD; --help-account-settings-icon: #20B981; --help-notifications-icon: #F59A23; --help-verified-icon: #E1B900; --help-suspended-icon: #D94A4A; --help-deactivate-icon: #0D9FF3; --help-selected: #EEF6FF; --help-hero: #111820; --help-spin-bg: #111111; --help-spin-fg: #ffffff;
+  --help-blue: #0D9FF3; --help-login-icon: #0D9FF3; --help-username-icon: #A82BBD; --help-account-settings-icon: #20B981; --help-notifications-icon: #F59A23; --help-verified-icon: #E1B900; --help-suspended-icon: #D94A4A; --help-deactivate-icon: #0D9FF3; --help-hero-bg: #F7F8FC; --help-hero-border: #EEF1F6; --help-hero-heading: #10203A; --help-hero-copy: #657187; --help-hero-search: #708098; --help-hero-input-bg: #FFFFFF; --help-hero-input-border: #E5E9F1; --help-hero-input-text: #17233B; --help-hero-art-halo: #F0F0FF; --help-hero-art-halo-secondary: #ECEBFF; --help-hero-art-paper: #FFFFFF; --help-hero-art-line: #E5E8FA; --help-hero-art-line-strong: #DCDFF8; --help-hero-art-stroke: #246DE0; --help-hero-art-shadow: drop-shadow(0 12px 16px rgba(47,66,105,.13)); --help-hero-input-shadow: 0 6px 18px rgba(55,72,112,.08); --help-selected: #EEF6FF; --help-hero: #111820; --help-spin-bg: #111111; --help-spin-fg: #ffffff;
 }
 [data-theme="dark"] {
   --bg: #0f0f0f; --card-bg: #1a1a1a; --text: #f0f0f0; --muted: #aaaaaa; --friends-spinner: #ffffff;
@@ -66,7 +66,7 @@ button[data-help-spin]:focus, button[data-help-spin]:focus-visible, button[data-
   --help-page-bg: #0f0f0f; --help-surface: #1a1a1a; --help-soft: #202124;
   --help-soft-blue: #1c2930; --help-control: #0D9FF3; --help-heading: #f0f0f0;
   --help-body: #e8e8e8; --help-muted: #a8a8a8; --help-line: #303438;
-  --help-blue: #0D9FF3; --help-login-icon: #FFFFFF; --help-username-icon: #FFFFFF; --help-account-settings-icon: #FFFFFF; --help-notifications-icon: #FFFFFF; --help-verified-icon: #FFFFFF; --help-suspended-icon: #FFFFFF; --help-deactivate-icon: #FFFFFF; --help-selected: #0D9FF3; --help-hero: #141414; --help-spin-bg: #ffffff; --help-spin-fg: #111111;
+  --help-blue: #0D9FF3; --help-login-icon: #FFFFFF; --help-username-icon: #FFFFFF; --help-account-settings-icon: #FFFFFF; --help-notifications-icon: #FFFFFF; --help-verified-icon: #FFFFFF; --help-suspended-icon: #FFFFFF; --help-deactivate-icon: #FFFFFF; --help-hero-bg: #0F0F0F; --help-hero-border: #303438; --help-hero-heading: #F0F0F0; --help-hero-copy: #A8A8A8; --help-hero-search: #B9C4D1; --help-hero-input-bg: #1A1A1A; --help-hero-input-border: #3A4148; --help-hero-input-text: #F0F0F0; --help-hero-art-halo: #202124; --help-hero-art-halo-secondary: #292D33; --help-hero-art-paper: #1A1A1A; --help-hero-art-line: #4A5260; --help-hero-art-line-strong: #5D6878; --help-hero-art-stroke: #6CB5FF; --help-hero-art-shadow: drop-shadow(0 12px 16px rgba(0,0,0,.42)); --help-hero-input-shadow: 0 6px 18px rgba(0,0,0,.35); --help-selected: #0D9FF3; --help-hero: #141414; --help-spin-bg: #ffffff; --help-spin-fg: #111111;
 }
 :root { --post-app-font: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
     body { background: var(--bg); color: var(--text); font-family: var(--post-app-font); letter-spacing: 0.008em; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-kerning: normal; font-feature-settings: "kern", "liga"; transition: background 0.3s, color 0.3s; }
@@ -20705,36 +20705,36 @@ function AccountRecoveryScreen({
         e("button",{onClick:function(){var input=document.getElementById("post-help-search");if(input)input.focus();},"aria-label":"Search help articles",style:{border:0,background:"none",cursor:"pointer",padding:4,color:"var(--help-heading)"}},icon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z","var(--help-heading)",22)),
         e("button",{onClick:function(){setMenuOpen(!menuOpen);},"aria-label":"Open help menu",style:{border:0,background:"none",cursor:"pointer",padding:4,color:"var(--help-heading)"}},icon("M4 6h16M4 12h16M4 18h16","var(--help-heading)",23))
      ),
-      e("section",{style:{background:"#F7F8FC",color:"#10203A",padding:"0 24px",position:"relative",overflow:"hidden",borderBottom:"1px solid #EEF1F6"}},
+      e("section",{style:{background:"var(--help-hero-bg)",color:"var(--help-hero-heading)",padding:"0 24px",position:"relative",overflow:"hidden",borderBottom:"1px solid var(--help-hero-border)"}},
         e("div",{className:"post-help-hero-inner",style:{maxWidth:904,minHeight:322,margin:"0 auto",display:"grid",alignItems:"center",gap:34,padding:"28px 0",boxSizing:"border-box"}},
           e("div",{style:{minWidth:0}},
-            e("h1",{style:{fontSize:"clamp(36px,5vw,52px)",lineHeight:1.07,letterSpacing:-1.7,margin:"0 0 16px",fontWeight:800,color:"#10203A",maxWidth:430}},"Hi, how can",e("br"),"we help you?"),
-            e("p",{style:{fontSize:18,lineHeight:1.45,letterSpacing:-.1,color:"#657187",margin:"0 0 24px",maxWidth:370}},"Search our help articles or explore topics",e("br"),"to get the support you need."),
+            e("h1",{style:{fontSize:"clamp(36px,5vw,52px)",lineHeight:1.07,letterSpacing:-1.7,margin:"0 0 16px",fontWeight:800,color:"var(--help-hero-heading)",maxWidth:430}},"Hi, how can",e("br"),"we help you?"),
+            e("p",{style:{fontSize:18,lineHeight:1.45,letterSpacing:-.1,color:"var(--help-hero-copy)",margin:"0 0 24px",maxWidth:370}},"Search our help articles or explore topics",e("br"),"to get the support you need."),
             e("div",{style:{position:"relative",width:"100%",maxWidth:365}},
-              e("span",{style:{position:"absolute",left:19,top:17,pointerEvents:"none",display:"flex",alignItems:"center",color:"#708098"}},icon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z","#708098",21)),
-              e("input",{id:"post-help-search",type:"search",value:search,onChange:function(ev){setSearch(ev.target.value);},"aria-label":"Search help articles",placeholder:"Search for help articles...",style:{width:"100%",height:56,border:"1px solid #E5E9F1",borderRadius:30,padding:"0 20px 0 54px",fontSize:16,outline:0,color:"#17233B",background:"#FFFFFF",boxShadow:"0 6px 18px rgba(55,72,112,.08)",boxSizing:"border-box",appearance:"none"},className:"post-help-hero-search"})
+              e("span",{style:{position:"absolute",left:19,top:17,pointerEvents:"none",display:"flex",alignItems:"center",color:"var(--help-hero-search)"}},icon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z","var(--help-hero-search)",21)),
+              e("input",{id:"post-help-search",type:"search",value:search,onChange:function(ev){setSearch(ev.target.value);},"aria-label":"Search help articles",placeholder:"Search for help articles...",style:{width:"100%",height:56,border:"1px solid var(--help-hero-input-border)",borderRadius:30,padding:"0 20px 0 54px",fontSize:16,outline:0,color:"var(--help-hero-input-text)",background:"var(--help-hero-input-bg)",boxShadow:"var(--help-hero-input-shadow)",boxSizing:"border-box",appearance:"none"},className:"post-help-hero-search"})
             )
           ),
           e("div",{className:"post-help-hero-art",style:{display:"flex",alignItems:"center",justifyContent:"center",minWidth:0}},
             e("svg",{viewBox:"0 0 430 260",width:"100%",height:"260",role:"img","aria-label":"Help center illustration",style:{display:"block",overflow:"visible"}},
-              e("circle",{cx:"300",cy:"128",r:"112",fill:"#F0F0FF"}),
-              e("circle",{cx:"190",cy:"94",r:"29",fill:"#ECEBFF"}),
+              e("circle",{cx:"300",cy:"128",r:"112",fill:"var(--help-hero-art-halo)"}),
+              e("circle",{cx:"190",cy:"94",r:"29",fill:"var(--help-hero-art-halo-secondary)"}),
               e("path",{d:"M300 14l5.5 13.5L319 33l-13.5 5.5L300 52l-5.5-13.5L281 33l13.5-5.5Z",fill:"#F4BE31"}),
               e("circle",{cx:"421",cy:"174",r:"4",fill:"#A873F2"}),
               e("path",{d:"M184 187c-22-13-43-35-51-60 24 5 47 20 60 39 5 8 6 15 3 21Z",fill:"#20B86B"}),
               e("path",{d:"M188 205c-12-29-8-61 10-86 11 24 13 48 6 68-3 9-8 15-16 18Z",fill:"#1BAA64"}),
               e("path",{d:"M181 213c-9-27-28-45-53-54 2 24 14 46 32 56 8 5 15 4 21-2Z",fill:"#7BCB87"}),
-              e("rect",{x:"249",y:"45",width:"145",height:"184",rx:"15",fill:"#FFFFFF",style:{filter:"drop-shadow(0 12px 16px rgba(47,66,105,.13))"}}),
+              e("rect",{x:"249",y:"45",width:"145",height:"184",rx:"15",fill:"var(--help-hero-art-paper)",style:{filter:"var(--help-hero-art-shadow)"}}),
               e("rect",{x:"274",y:"74",width:"58",height:"11",rx:"5.5",fill:"#5A90EA"}),
-              e("rect",{x:"274",y:"101",width:"92",height:"8",rx:"4",fill:"#E5E8FA"}),
-              e("rect",{x:"274",y:"117",width:"70",height:"8",rx:"4",fill:"#E5E8FA"}),
-              e("rect",{x:"274",y:"133",width:"83",height:"8",rx:"4",fill:"#E5E8FA"}),
-              e("rect",{x:"274",y:"165",width:"103",height:"8",rx:"4",fill:"#DCDFF8"}),
-              e("rect",{x:"274",y:"181",width:"73",height:"8",rx:"4",fill:"#DCDFF8"}),
+              e("rect",{x:"274",y:"101",width:"92",height:"8",rx:"4",fill:"var(--help-hero-art-line)"}),
+              e("rect",{x:"274",y:"117",width:"70",height:"8",rx:"4",fill:"var(--help-hero-art-line)"}),
+              e("rect",{x:"274",y:"133",width:"83",height:"8",rx:"4",fill:"var(--help-hero-art-line)"}),
+              e("rect",{x:"274",y:"165",width:"103",height:"8",rx:"4",fill:"var(--help-hero-art-line-strong)"}),
+              e("rect",{x:"274",y:"181",width:"73",height:"8",rx:"4",fill:"var(--help-hero-art-line-strong)"}),
               e("path",{d:"M351 35h53c11 0 20 9 20 20v20c0 11-9 20-20 20h-13l-14 12V95h-26c-11 0-20-9-20-20V55c0-11 9-20 20-20Z",fill:"#6477EA"}),
               e("circle",{cx:"359",cy:"65",r:"5",fill:"#FFFFFF"}),e("circle",{cx:"376",cy:"65",r:"5",fill:"#FFFFFF"}),e("circle",{cx:"393",cy:"65",r:"5",fill:"#FFFFFF"}),
-              e("circle",{cx:"344",cy:"116",r:"40",fill:"#FFFFFF",stroke:"#246DE0",strokeWidth:"9"}),
-              e("path",{d:"M373 145l29 29",fill:"none",stroke:"#246DE0",strokeWidth:"11",strokeLinecap:"round"})
+              e("circle",{cx:"344",cy:"116",r:"40",fill:"var(--help-hero-art-paper)",stroke:"var(--help-hero-art-stroke)",strokeWidth:"9"}),
+              e("path",{d:"M373 145l29 29",fill:"none",stroke:"var(--help-hero-art-stroke)",strokeWidth:"11",strokeLinecap:"round"})
             )
           )
         )
