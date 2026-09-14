@@ -29908,8 +29908,67 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
     showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: reelToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); } }),
     showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); closeCamera(); } }));
 
-  var gridViewerItems = gridViewerSource === "discover" ? discoverReels : searchReels;
+  // Reuse the already-ranked /reels/feed order for grid results. Search and
+  // discover filters keep any reels not present in the loaded feed in their
+  // original server order, so filtering never hides a result.
+  function rankGridReels(items) {
+    var feedRank = Object.create(null);
+    reels.forEach(function(item, index) {
+      var key = item && item.id != null ? String(item.id) : "";
+      if (key && feedRank[key] === undefined) feedRank[key] = index;
+    });
+    return (Array.isArray(items) ? items : []).map(function(item, index) { return { item: item, index: index }; })
+      .sort(function(a, b) {
+        var aKey = a.item && a.item.id != null ? String(a.item.id) : "";
+        var bKey = b.item && b.item.id != null ? String(b.item.id) : "";
+        var aRank = feedRank[aKey], bRank = feedRank[bKey];
+        if (aRank !== undefined && bRank !== undefined) return aRank - bRank;
+        if (aRank !== undefined) return -1;
+        if (bRank !== undefined) return 1;
+        return a.index - b.index;
+      })
+      .map(function(entry) { return entry.item; });
+  }
+  var rankedDiscoverReels = rankGridReels(discoverReels);
+  var rankedSearchReels = rankGridReels(searchReels);
+  var gridViewerItems = gridViewerSource === "discover" ? rankedDiscoverReels : rankedSearchReels;
   var gridViewerActiveReel = gridViewerItems[gridViewerActiveIdx] || null;
+  var gridViewerActiveId = gridViewerActiveReel && gridViewerActiveReel.id != null ? String(gridViewerActiveReel.id) : "";
+  var gridViewSessionRef = React.useRef(null);
+  function beginGridViewSession(reel) {
+    if (!reel || !reel.id || !token) return;
+    gridViewSessionRef.current = { id: String(reel.id), reel: reel, startedAt: Date.now() };
+  }
+  function finishGridViewSession(reason) {
+    var session = gridViewSessionRef.current;
+    if (!session || !session.reel || !session.id || !token) return;
+    gridViewSessionRef.current = null;
+    var watchSeconds = Math.max(0, (Date.now() - session.startedAt) / 1000);
+    var duration = Number(session.reel.duration || session.reel.video_duration || 0);
+    var completionRatio = duration > 0 ? Math.min(1, watchSeconds / duration) : (watchSeconds >= 3 ? 1 : 0);
+    api("/reels/" + encodeURIComponent(session.id) + "/view", "POST", {
+      watch_seconds: Number(watchSeconds.toFixed(3)),
+      completion_ratio: Number(completionRatio.toFixed(4)),
+      category: session.reel.category || "general",
+      reason: reason || "grid_swipe"
+    }, token).catch(function() {});
+    if (completionRatio >= 0.95) {
+      api("/reels/ab-metric", "POST", { group: algorithmGroupRef.current || "A", event: "watch_complete" }, token).catch(function() {});
+    }
+  }
+  React.useEffect(function() {
+    if (!gridViewerOpen || !gridViewerActiveId || !token) return;
+    var active = gridViewerItems[gridViewerActiveIdx];
+    var current = gridViewSessionRef.current;
+    if (current && current.id !== gridViewerActiveId) finishGridViewSession("grid_swipe");
+    if (!current || current.id !== gridViewerActiveId) beginGridViewSession(active);
+  }, [gridViewerOpen, gridViewerActiveId, token]);
+  React.useEffect(function() {
+    if (!gridViewerOpen) finishGridViewSession("leave_grid_viewer");
+  }, [gridViewerOpen]);
+  React.useEffect(function() {
+    return function() { finishGridViewSession("leave_reels"); };
+  }, []);
 
   // Main render — TikTok-style full-screen scroll snap
   return React.createElement("div", { style: { position: "fixed", inset: 0, background: "#000", zIndex: 100, overflow: "hidden" } },
@@ -30056,7 +30115,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                     React.createElement("text", { x: "218", y: "147", fill: "#FFFFFF", fontSize: "12", fontWeight: "700", textAnchor: "middle", fontFamily: "Arial, sans-serif" }, "No results found!")
                   ))
               : React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, padding: 0, background: "#FFFFFF" } },
-              discoverReels.map(function(r, _gvi) {
+              rankedDiscoverReels.map(function(r, _gvi) {
                 var views = r.view_count || (Array.isArray(r.views) ? r.views.length : 0) || 0; var vLabel = views >= 1000000 ? (views/1000000).toFixed(1)+"M" : views >= 1000 ? (views/1000).toFixed(1)+"K" : String(views);
                 var rawVid = r.video_url || ""; var thumb = r.thumbnail_url || r.photo_url || (rawVid && rawVid.includes("res.cloudinary.com") ? rawVid.replace("/video/upload/", "/video/upload/so_0,w_800,c_fill,q_auto:best,f_auto/").replace(/\.(mp4|mov|webm|avi)(\?.*)?$/i, ".jpg") : rawVid) || "";
                 var isVideo = !!(r.video_url);
@@ -30102,7 +30161,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                     ? React.createElement("div", { style: { flex: 1, minHeight: "100%", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "48px 24px", boxSizing: "border-box", background: "#FFFFFF" } },
                       React.createElement("div", { style: { textAlign: "center", color: "#666", fontSize: 14, fontWeight: 500, lineHeight: 1.4 } }, "No reels found"))
                     : React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, padding: 0, background: "#FFFFFF" } },
-                        searchReels.map(function(r, _gvi) {
+                        rankedSearchReels.map(function(r, _gvi) {
                           var views = r.view_count || (Array.isArray(r.views) ? r.views.length : 0) || 0; var vLabel = views >= 1000000 ? (views/1000000).toFixed(1)+"M" : views >= 1000 ? (views/1000).toFixed(1)+"K" : String(views);
                           var rawVid = r.video_url || ""; var thumb = r.thumbnail_url || r.photo_url || (rawVid && rawVid.includes("res.cloudinary.com") ? rawVid.replace("/video/upload/", "/video/upload/so_0,w_800,c_fill,q_auto:best,f_auto/").replace(/\.(mp4|mov|webm|avi)(\?.*)?$/i, ".jpg") : rawVid) || "";
                 var isVideo = !!(r.video_url);
@@ -30327,9 +30386,10 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
             key: reel.id, reel: reel, isActive: idx === gridViewerActiveIdx,
             user: user, token: token, showToast: reelToast,
             onViewProfile: function(uid) { setGridViewerOpen(false); onViewProfile && onViewProfile(uid); },
+            onViewAccountInfo: function(uid, profileData) { setGridViewerOpen(false); onViewAccountInfo && onViewAccountInfo(uid, profileData); },
             onLike: gvLikeReel, onSave: gvSaveReel, onShare: gvShareReel, onFollow: gvFollowUser,
             onOpenComments: openComments, onDelete: gvDeleteReel, fmtCount: fmtCount,
-            showUpload: false, showCamera: false, isReelsFeed: true, hideInlineLocation: true,
+            showUpload: false, showCamera: false, isReelsFeed: true, hideInlineLocation: true, externalViewTracking: true,
             onView: function(rid) {
               var upd = function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, { view_count: (r.view_count || 0) + 1 }) : r; }); };
               if (gridViewerSource === 'discover') setDiscoverReels(upd); else setSearchReels(upd);
