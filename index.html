@@ -18311,7 +18311,7 @@ function QuickMenuDropdown({
    );
    if (!settingsCategory) {
      return React.createElement("div", {
-       style: { minHeight: "100vh", background: "#FFFFFF", color: "#0F1419", padding: "16px 16px 40px", boxSizing: "border-box", fontFamily: "Roboto, Arial, Helvetica, sans-serif" }
+       style: { minHeight: "100vh", background: "#FFFFFF", color: "#0F1419", padding: "16px 16px 40px", boxSizing: "border-box", fontFamily: "Arial, Helvetica, sans-serif", fontVariantLigatures: "none" }
      },
        React.createElement("div", {
          style: { display: "flex", alignItems: "center", gap: 16, padding: "0 4px 16px", borderBottom: "1px solid #EFF3F4" }
@@ -18320,7 +18320,7 @@ function QuickMenuDropdown({
            onClick: onBack, "aria-label": "Back from Settings",
            style: { background: "none", border: 0, cursor: "pointer", display: "flex", alignItems: "center", padding: 4, color: "#536471" }
          }, settingsIcon("M15 18 9 12l6-6", "var(--text)")),
-         React.createElement("div", { style: { fontSize: 24, fontWeight: 700, lineHeight: 1.1, letterSpacing: "-0.2px" } }, "Settings")
+         React.createElement("div", { style: { fontSize: 24, fontWeight: 700, lineHeight: 1.1, letterSpacing: 0 } }, "Settings")
        ),
        React.createElement("div", { style: { position: "relative", margin: "10px 0 28px" } },
          React.createElement("span", { style: { position: "absolute", left: 18, top: 12, color: "#536471", pointerEvents: "none" } }, settingsIcon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z", "var(--muted)")),
@@ -18338,7 +18338,7 @@ function QuickMenuDropdown({
            },
              settingsRowIcon(category.icon, "#536471"),
              React.createElement("span", { style: { flex: 1, minWidth: 0 } },
-               React.createElement("span", { style: { display: "block", fontSize: 18, fontWeight: 700, lineHeight: 1.25, letterSpacing: "-0.1px", color: "#0F1419" } }, category.title),
+               React.createElement("span", { style: { display: "block", fontSize: 18, fontWeight: 700, lineHeight: 1.25, letterSpacing: 0, color: "#0F1419" } }, category.title),
                React.createElement("span", { style: { display: "block", fontSize: 15, fontWeight: 400, lineHeight: 1.35, letterSpacing: 0, color: "#536471", marginTop: 3 } }, category.description)
              )
            )
@@ -18479,7 +18479,7 @@ function QuickMenuDropdown({
         )
        );
      }
-     return React.createElement("div", { style: { minHeight: "100vh", background: "var(--bg)", color: "var(--text)", padding: "20px 16px 44px", boxSizing: "border-box", fontFamily: "Roboto, Arial, Helvetica, sans-serif" } },
+     return React.createElement("div", { style: { minHeight: "100vh", background: "var(--bg)", color: "var(--text)", padding: "20px 16px 44px", boxSizing: "border-box", fontFamily: "Arial, Helvetica, sans-serif", fontVariantLigatures: "none" } },
        detailHeader,
        React.createElement("div", { style: { maxWidth: 600, margin: "0 auto" } }, detailContent)
      );
