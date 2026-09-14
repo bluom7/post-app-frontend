@@ -57,7 +57,7 @@ button[data-help-spin]:focus, button[data-help-spin]:focus-visible, button[data-
   --help-page-bg: #ffffff; --help-surface: #ffffff; --help-soft: #F0F2F5;
   --help-soft-blue: #F1F7FA; --help-control: #EAF2F6; --help-heading: #111111;
   --help-body: #1A2330; --help-muted: #687078; --help-line: #E5E7EB;
-  --help-blue: #0D9FF3; --help-selected: #EEF6FF; --help-hero: #111820; --help-spin-bg: #111111; --help-spin-fg: #ffffff;
+  --help-blue: #0D9FF3; --help-login-icon: #0D9FF3; --help-selected: #EEF6FF; --help-hero: #111820; --help-spin-bg: #111111; --help-spin-fg: #ffffff;
 }
 [data-theme="dark"] {
   --bg: #0f0f0f; --card-bg: #1a1a1a; --text: #f0f0f0; --muted: #aaaaaa; --friends-spinner: #ffffff;
@@ -66,7 +66,7 @@ button[data-help-spin]:focus, button[data-help-spin]:focus-visible, button[data-
   --help-page-bg: #0f0f0f; --help-surface: #1a1a1a; --help-soft: #202124;
   --help-soft-blue: #1c2930; --help-control: #0D9FF3; --help-heading: #f0f0f0;
   --help-body: #e8e8e8; --help-muted: #a8a8a8; --help-line: #303438;
-  --help-blue: #0D9FF3; --help-selected: #0D9FF3; --help-hero: #141414; --help-spin-bg: #ffffff; --help-spin-fg: #111111;
+  --help-blue: #0D9FF3; --help-login-icon: #FFFFFF; --help-selected: #0D9FF3; --help-hero: #141414; --help-spin-bg: #ffffff; --help-spin-fg: #111111;
 }
 :root { --post-app-font: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
     body { background: var(--bg); color: var(--text); font-family: var(--post-app-font); letter-spacing: 0.008em; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-kerning: normal; font-feature-settings: "kern", "liga"; transition: background 0.3s, color 0.3s; }
@@ -19461,7 +19461,7 @@ function AccountRecoveryScreen({
      {
        key:"login-password",
        iconPath:"M12 17v-2M6 11V7a6 6 0 0 1 12 0v4M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z",
-       iconColor:"#0D9FF3", title:"Login and password",
+       iconColor:"var(--help-login-icon)", title:"Login and password",
        guide: [
          { heading:"How to log in", steps:[
            "Open the POST app or visit the site in your browser.",
