@@ -83,6 +83,12 @@ video::-webkit-media-controls { display: none !important; }
 @keyframes _rpt_spin{to{transform:rotate(360deg)}}
 .group-media-scroll{scrollbar-width:none;-ms-overflow-style:none;} .group-media-scroll::-webkit-scrollbar{display:none;width:0;height:0;} .group-chat-search-scroll{scrollbar-width:none;-ms-overflow-style:none;} .group-chat-search-scroll::-webkit-scrollbar{display:none;width:0;height:0;}
 @keyframes swipeHintBob { 0%, 100% { opacity: 0.72; transform: translate(-50%, 0); } 50% { opacity: 1; transform: translate(-50%, -3px); } }
+
+.post-help-hero-inner { grid-template-columns: minmax(0, 1fr) minmax(330px, 0.92fr); }
+.post-help-hero-art { width: 100%; max-width: 460px; justify-self: end; }
+.post-help-hero-search::placeholder { color: #7B8798; opacity: 1; }
+@media (max-width: 760px) { .post-help-hero-inner { grid-template-columns: 1fr; min-height: 0 !important; gap: 18px !important; padding: 38px 0 18px !important; } .post-help-hero-art { max-width: 360px; justify-self: center; } }
+@media (max-width: 480px) { .post-help-hero-art { transform: scale(.9); transform-origin: top center; margin-bottom: -22px; } }
 </style>
 <style id="post-mobile-compat">html,body,#root{min-height:100%;}body{min-height:100vh;min-height:100dvh;margin:0;overscroll-behavior-y:none;-webkit-text-size-adjust:100%;}button,input,textarea{font:inherit;}@supports(padding:max(0px)){body{padding-bottom:env(safe-area-inset-bottom);}}</style>
 <style>.assistant-rich-text h3{display:block;margin:18px 0 8px;color:var(--text)!important;font-size:22px!important;font-weight:700!important;line-height:1.35!important;letter-spacing:0!important;}.assistant-actions{flex-wrap:wrap!important;height:auto!important;row-gap:8px!important;}.assistant-actions::after{content:"BluOm Ai can make mistakes.";display:block;flex-basis:100%;color:var(--muted);font-size:12px;line-height:1.4;margin-top:0;}.assistant-rich-text ol{list-style-position:inside;padding-left:0;margin:8px 0;}.assistant-rich-text ol li{padding-left:4px;}.assistant-rich-text ol li::marker{font-weight:700;font-size:22px;}.voice-waveform{flex:1;min-height:34px;height:34px;display:flex;align-items:center;justify-content:center;gap:2px;overflow:hidden;}.voice-waveform span{display:block;width:2px;min-height:3px;border-radius:3px;background:#0D9FF3;transition:height .08s linear;}.voice-recording-ready{flex:1;min-width:0;min-height:34px;display:flex;align-items:center;gap:9px;color:var(--text);font-size:15px;font-weight:600;}.voice-recording-ready .voice-ready-dot{width:9px;height:9px;border-radius:50%;background:#D11A2A;box-shadow:0 0 0 4px rgba(209,26,42,.12);flex:none;}.voice-recording-ready .voice-ready-wave{display:flex;align-items:center;gap:2px;height:22px;flex:none;}.voice-recording-ready .voice-ready-wave span{display:block;width:2px;border-radius:3px;background:#0D9FF3;}</style><style id="post-settings-typography">
@@ -20646,12 +20652,40 @@ function AccountRecoveryScreen({
         e("button",{onClick:function(){var input=document.getElementById("post-help-search");if(input)input.focus();},"aria-label":"Search help articles",style:{border:0,background:"none",cursor:"pointer",padding:4,color:"var(--help-heading)"}},icon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z","var(--help-heading)",22)),
         e("button",{onClick:function(){setMenuOpen(!menuOpen);},"aria-label":"Open help menu",style:{border:0,background:"none",cursor:"pointer",padding:4,color:"var(--help-heading)"}},icon("M4 6h16M4 12h16M4 18h16","var(--help-heading)",23))
      ),
-      e("section",{style:{background:"var(--help-hero)",color:"#fff",padding:"42px 20px 44px",position:"relative",overflow:"hidden"}},
-       e("div",{style:{position:"absolute",inset:0,opacity:.23,backgroundImage:"radial-gradient(circle at 20% 30%,#8ea3b4 0 1px,transparent 1.5px),radial-gradient(circle at 80% 60%,#8ea3b4 0 1px,transparent 1.5px)",backgroundSize:"34px 34px,52px 52px"}}),
-            e("div",{style:{position:"relative",maxWidth:760,margin:"0 auto"}},e("div",{style:{fontSize:12,fontWeight:900,letterSpacing:2,color:"#B9E7FF",marginBottom:14}},"WELCOME TO POST HELP CENTER"),e("h1",{style:{fontSize:"clamp(36px,10vw,58px)",lineHeight:1.03,letterSpacing:-1.8,margin:"0 0 26px",fontWeight:900,maxWidth:560}},"What can we help you find?"),
-            e("div",{style:{position:"relative"}},e("span",{style:{position:"absolute",left:16,top:17,pointerEvents:"none"}},icon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z","#68727B",21)),e("input",{id:"post-help-search",value:search,onChange:function(ev){setSearch(ev.target.value);},placeholder:"Search articles",style:{width:"100%",height:56,border:0,borderRadius:10,padding:"0 18px 0 48px",fontSize:16,outline:0,color:"#111",background:"#fff"}}))
-       )
-     ),
+            e("section",{style:{background:"#F7F8FC",color:"#10203A",padding:"0 24px",position:"relative",overflow:"hidden",borderBottom:"1px solid #EEF1F6"}},
+        e("div",{className:"post-help-hero-inner",style:{maxWidth:904,minHeight:322,margin:"0 auto",display:"grid",alignItems:"center",gap:34,padding:"28px 0",boxSizing:"border-box"}},
+          e("div",{style:{minWidth:0}},
+            e("h1",{style:{fontSize:"clamp(36px,5vw,52px)",lineHeight:1.07,letterSpacing:-1.7,margin:"0 0 16px",fontWeight:800,color:"#10203A",maxWidth:430}},"Hi, how can",e("br"),"we help you?"),
+            e("p",{style:{fontSize:18,lineHeight:1.45,letterSpacing:-.1,color:"#657187",margin:"0 0 24px",maxWidth:370}},"Search our help articles or explore topics",e("br"),"to get the support you need."),
+            e("div",{style:{position:"relative",width:"100%",maxWidth:365}},
+              e("span",{style:{position:"absolute",left:19,top:17,pointerEvents:"none",display:"flex",alignItems:"center",color:"#708098"}},icon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z","#708098",21)),
+              e("input",{id:"post-help-search",type:"search",value:search,onChange:function(ev){setSearch(ev.target.value);},"aria-label":"Search help articles",placeholder:"Search for help articles...",style:{width:"100%",height:56,border:"1px solid #E5E9F1",borderRadius:30,padding:"0 20px 0 54px",fontSize:16,outline:0,color:"#17233B",background:"#FFFFFF",boxShadow:"0 6px 18px rgba(55,72,112,.08)",boxSizing:"border-box",appearance:"none"},className:"post-help-hero-search"})
+            )
+          ),
+          e("div",{className:"post-help-hero-art",style:{display:"flex",alignItems:"center",justifyContent:"center",minWidth:0}},
+            e("svg",{viewBox:"0 0 430 260",width:"100%",height:"260",role:"img","aria-label":"Help center illustration",style:{display:"block",overflow:"visible"}},
+              e("circle",{cx:"300",cy:"128",r:"112",fill:"#F0F0FF"}),
+              e("circle",{cx:"190",cy:"94",r:"29",fill:"#ECEBFF"}),
+              e("path",{d:"M300 14l5.5 13.5L319 33l-13.5 5.5L300 52l-5.5-13.5L281 33l13.5-5.5Z",fill:"#F4BE31"}),
+              e("circle",{cx:"421",cy:"174",r:"4",fill:"#A873F2"}),
+              e("path",{d:"M184 187c-22-13-43-35-51-60 24 5 47 20 60 39 5 8 6 15 3 21Z",fill:"#20B86B"}),
+              e("path",{d:"M188 205c-12-29-8-61 10-86 11 24 13 48 6 68-3 9-8 15-16 18Z",fill:"#1BAA64"}),
+              e("path",{d:"M181 213c-9-27-28-45-53-54 2 24 14 46 32 56 8 5 15 4 21-2Z",fill:"#7BCB87"}),
+              e("rect",{x:"249",y:"45",width:"145",height:"184",rx:"15",fill:"#FFFFFF",style:{filter:"drop-shadow(0 12px 16px rgba(47,66,105,.13))"}}),
+              e("rect",{x:"274",y:"74",width:"58",height:"11",rx:"5.5",fill:"#5A90EA"}),
+              e("rect",{x:"274",y:"101",width:"92",height:"8",rx:"4",fill:"#E5E8FA"}),
+              e("rect",{x:"274",y:"117",width:"70",height:"8",rx:"4",fill:"#E5E8FA"}),
+              e("rect",{x:"274",y:"133",width:"83",height:"8",rx:"4",fill:"#E5E8FA"}),
+              e("rect",{x:"274",y:"165",width:"103",height:"8",rx:"4",fill:"#DCDFF8"}),
+              e("rect",{x:"274",y:"181",width:"73",height:"8",rx:"4",fill:"#DCDFF8"}),
+              e("path",{d:"M351 35h53c11 0 20 9 20 20v20c0 11-9 20-20 20h-13l-14 12V95h-26c-11 0-20-9-20-20V55c0-11 9-20 20-20Z",fill:"#6477EA"}),
+              e("circle",{cx:"359",cy:"65",r:"5",fill:"#FFFFFF"}),e("circle",{cx:"376",cy:"65",r:"5",fill:"#FFFFFF"}),e("circle",{cx:"393",cy:"65",r:"5",fill:"#FFFFFF"}),
+              e("circle",{cx:"344",cy:"116",r:"40",fill:"#FFFFFF",stroke:"#246DE0",strokeWidth:"9"}),
+              e("path",{d:"M373 145l29 29",fill:"none",stroke:"#246DE0",strokeWidth:"11",strokeLinecap:"round"})
+            )
+          )
+        )
+      ),
       e("main",{style:{width:"100%",maxWidth:820,margin:"0 auto",padding:"30px 16px 60px",boxSizing:"border-box"}},e("div",{style:{fontSize:12,letterSpacing:1.8,fontWeight:900,color:"#74808A",margin:"0 0 7px 2px"}},"SUPPORT LIBRARY"),e("h2",{style:{fontSize:25,margin:"0 0 22px",letterSpacing:-.5}},"Browse by topic"),
        visible.length ? visible.map(function(item){
           var category=item.category, idx=item.index, isOpen=!!expanded[idx], shown=showAll===idx?item.articles:item.articles.slice(0,3);
