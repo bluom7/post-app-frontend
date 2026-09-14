@@ -20711,7 +20711,7 @@ function AccountRecoveryScreen({
             e("h1",{style:{fontSize:"clamp(36px,5vw,52px)",lineHeight:1.07,letterSpacing:-1.7,margin:"0 0 16px",fontWeight:800,color:"var(--help-hero-heading)",maxWidth:430}},"Hi, how can",e("br"),"we help you?"),
             e("p",{style:{fontSize:18,lineHeight:1.45,letterSpacing:-.1,color:"var(--help-hero-copy)",margin:"0 0 24px",maxWidth:370}},"Search our help articles or explore topics",e("br"),"to get the support you need."),
             e("div",{style:{position:"relative",width:"100%",maxWidth:365}},
-              e("span",{style:{position:"absolute",left:19,top:17,pointerEvents:"none",display:"flex",alignItems:"center",color:"var(--help-hero-search)"}},icon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z","var(--help-hero-search)",21)),
+              e("span",{style:{position:"absolute",left:18,top:16,pointerEvents:"none",display:"flex",alignItems:"center",color:"var(--help-hero-search)"}},settingsIcon("M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z","var(--help-hero-search)")),
               e("input",{id:"post-help-search",type:"search",value:search,onChange:function(ev){setSearch(ev.target.value);},"aria-label":"Search help articles",placeholder:"Search for help articles...",style:{width:"100%",height:56,border:"1px solid var(--help-hero-input-border)",borderRadius:30,padding:"0 20px 0 54px",fontSize:16,outline:0,color:"var(--help-hero-input-text)",background:"var(--help-hero-input-bg)",boxShadow:"var(--help-hero-input-shadow)",boxSizing:"border-box",appearance:"none"},className:"post-help-hero-search"})
             )
           ),
