@@ -13095,7 +13095,8 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14 } }, icon("verified"), React.createElement("div", null, React.createElement("div", { style: { fontSize: 19, lineHeight: 1.25, fontWeight: 600 } }, "Verified"), React.createElement("div", { style: { fontSize: 16, lineHeight: 1.35, marginTop: 2, color: verified ? "#111" : "#777", fontWeight: 400 } }, verified ? fullDate(verifiedAt) : "Not verified")))
           ),
           React.createElement("div", { style: { maxWidth: 430, margin: "34px auto 0", paddingTop: 21, borderTop: "1px solid var(--border, #e4e4e4)", fontSize: 14, lineHeight: 1.55, color: "#666" } }, verified ? "The verified badge means this account has been verified based on information or documents provided by the account owner." : "This account has not been verified on Post App. Account information shown here comes from the account profile."),
-          error && React.createElement("div", { style: { maxWidth: 430, margin: "18px auto 0", fontSize: 13, color: "var(--muted, #777)" } }, "Some account details could not be loaded. Showing the information available from this post.")
+          error && React.createElement("div", { style: { maxWidth: 430, margin: "18px auto 0", fontSize: 13, color: "var(--muted, #777)" } }, "Some account details could not be loaded. Showing the information available from this post."),
+          isOfficial && React.createElement("div", { style: { width: "100%", marginTop: 26, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 6, color: "#111", fontSize: 14, fontWeight: 800 } }, "Team Post App", React.createElement("span", { style: { color: "#FFD21F", fontSize: 19, lineHeight: 1 } }, "♥"))
         )
       )
     );
