@@ -87,6 +87,11 @@ video::-webkit-media-controls { display: none !important; }
 .group-media-scroll{scrollbar-width:none;-ms-overflow-style:none;} .group-media-scroll::-webkit-scrollbar{display:none;width:0;height:0;} .group-chat-search-scroll{scrollbar-width:none;-ms-overflow-style:none;} .group-chat-search-scroll::-webkit-scrollbar{display:none;width:0;height:0;}
 @keyframes swipeHintBob { 0%, 100% { opacity: 0.72; transform: translate(-50%, 0); } 50% { opacity: 1; transform: translate(-50%, -3px); } }
 
+.post-help-center { scrollbar-width: none; -ms-overflow-style: none; }
+.post-help-center::-webkit-scrollbar { display: none; width: 0; height: 0; }
+html:has(.post-help-center), body:has(.post-help-center) { scrollbar-width: none; -ms-overflow-style: none; }
+html:has(.post-help-center)::-webkit-scrollbar, body:has(.post-help-center)::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
 .post-help-hero-inner { grid-template-columns: minmax(0, 1fr) minmax(330px, 0.92fr); }
 .post-help-hero-art { width: 100%; max-width: 460px; justify-self: end; }
 .post-help-hero-search::placeholder { color: #7B8798; opacity: 1; }
@@ -20264,7 +20269,7 @@ function AccountRecoveryScreen({
     function SafetyArticle(_props) {
       var sec = _props.sec;
       var article = _props.article;
-      return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
+      return e("div", { className:"post-help-center", style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
         e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--help-line)", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
           e("button", { onClick:function(){ setSafetyArticle(null); }, "aria-label":"Back to Safety and security", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","var(--help-heading)",24)),
           e("div", { style:{ flex:1 } },
@@ -20306,7 +20311,7 @@ function AccountRecoveryScreen({
     function RulesArticle(_props) {
       var sec = _props.sec;
       var article = _props.article;
-      return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
+      return e("div", { className:"post-help-center", style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
         e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--help-line)", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
           e("button", { onClick:function(){ setRulesArticle(null); }, "aria-label":"Back to Rules and policies", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","var(--help-heading)",24)),
           e("div", { style:{ flex:1 } },
@@ -20347,7 +20352,7 @@ function AccountRecoveryScreen({
 
    function ManagingAccountArticle(_props) {
      var sec = _props.sec;
-      return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
+      return e("div", { className:"post-help-center", style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
         e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--help-line)", padding:"13px 16px", display:"flex", alignItems:"center", gap:10 } },
           e("button", { onClick:function(){ setManagingAccArticle(null); }, "aria-label":"Back", style:{ background:"none", border:"none", cursor:"pointer", padding:4, color:"var(--help-heading)", display:"flex", alignItems:"center" } },
            icon("M15 18 9 12l6-6","currentColor",24)),
@@ -20392,7 +20397,7 @@ function AccountRecoveryScreen({
      }
 
      if (rulesOpen) {
-       return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
+       return e("div", { className:"post-help-center", style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
          e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--help-line)", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
            e("button", { onClick:function(){ setRulesOpen(false); setMenuOpen(true); }, "aria-label":"Back to Help Center", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","var(--help-heading)",24)),
            e("div", { style:{ flex:1 } },
@@ -20441,7 +20446,7 @@ function AccountRecoveryScreen({
      }
 
      if (safetyOpen) {
-       return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
+       return e("div", { className:"post-help-center", style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
          e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--help-line)", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
             e("button", { onClick:function(){ setSafetyOpen(false); setMenuOpen(true); }, "aria-label":"Back to Help Center", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","var(--help-heading)",24)),
           e("div", { style:{ flex:1 } },
@@ -20490,7 +20495,7 @@ function AccountRecoveryScreen({
     }
 
      if (managingAccOpen) {
-        return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
+        return e("div", { className:"post-help-center", style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
           e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--help-line)", padding:"13px 18px", display:"flex", alignItems:"center", gap:12 } },
             e("button", { onClick:function(){ setManagingAccOpen(false); setMenuOpen(true); }, "aria-label":"Back to Help Center", style:{ background:"none", border:0, cursor:"pointer", padding:4, color:"var(--help-heading)", display:"flex", alignItems:"center" } }, icon("M15 18 9 12l6-6","var(--help-heading)",24)),
             e("div", { style:{ flex:1 } },
@@ -20532,7 +20537,7 @@ function AccountRecoveryScreen({
         );
      }
      if (menuOpen) {
-       return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
+       return e("div", { className:"post-help-center", style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
          e("header", { style:{ display:"flex", alignItems:"center", gap:16, padding:"36px 24px 22px", background:"var(--help-page-bg)" } },
           e("button", {
             onClick:function(){ setMenuOpen(false); },
@@ -20609,7 +20614,7 @@ function AccountRecoveryScreen({
     }
 
     if (selectedArticle && selectedArticle.special === "welcome") {
-     return e("div",{style:{minHeight:"100vh",background:"var(--bg)",color:"var(--text)"}},
+     return e("div",{className:"post-help-center",style:{minHeight:"100vh",background:"var(--bg)",color:"var(--text)"}},
        e("div",{style:{position:"sticky",top:0,zIndex:4,background:"var(--nav-bg)",borderBottom:"1px solid var(--border)",padding:"13px 16px",display:"flex",alignItems:"center",gap:10}},
           e("button",{onClick:function(){setSelectedArticle(null);setMenuOpen(true);},"aria-label":"Back to Help Center menu",style:{background:"none",border:"none",cursor:"pointer",padding:4,color:"var(--text)",display:"flex",alignItems:"center"}},icon("M15 18 9 12l6-6","currentColor",24)),
          e("div",{style:{flex:1}},e("div",{style:{fontSize:18,fontWeight:900,letterSpacing:-.3}},"Help Center"),e("div",{style:{fontSize:10,color:"var(--muted)",marginTop:1}},"POST \u00B7 ")),
@@ -20656,7 +20661,7 @@ function AccountRecoveryScreen({
    }
 
    if (selectedArticle) {
-     return e("div", { style:{ minHeight:"100vh", background:"var(--bg)", color:"var(--text)" } },
+     return e("div", { className:"post-help-center", style:{ minHeight:"100vh", background:"var(--bg)", color:"var(--text)" } },
        e("div", { style:{ position:"sticky", top:0, zIndex:4, background:"var(--nav-bg)", borderBottom:"1px solid var(--border)", padding:"15px 18px", display:"flex", alignItems:"center", gap:12 } },
          e("button", { onClick:function(){ setSelectedArticle(null); }, "aria-label":"Back to Help Center", style:{ background:"none", border:"none", cursor:"pointer", padding:3, color:"var(--text)" } }, icon("M15 18 9 12l6-6", "currentColor", 24)),
          e("div", null, e("div",{style:{fontSize:20,fontWeight:900}},"Help Center"), e("div",{style:{fontSize:11,color:"var(--muted)",marginTop:2}},"POST · "))
@@ -20698,7 +20703,7 @@ function AccountRecoveryScreen({
      );
    }
 
-    return e("div", { style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
+    return e("div", { className:"post-help-center", style:{ minHeight:"100vh", background:"var(--help-page-bg)", color:"var(--help-heading)" } },
         e("header", { style:{ position:"sticky",top:0,zIndex:10,background:"var(--nav-bg)",borderBottom:"1px solid var(--help-line)",display:"flex",alignItems:"center",gap:12,padding:"14px 18px" } },
          e("button",{onClick:function(){onBack();},"aria-label":"Go back from Help Center",style:{width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",border:0,borderRadius:17,background:"transparent",cursor:"pointer",padding:0,color:"var(--help-heading)"}},icon("M15 18 9 12l6-6","var(--help-heading)",24)),
          e("div",{style:{fontSize:20,fontWeight:900,flex:1,letterSpacing:-.5}},"Help Center"),
