@@ -20363,20 +20363,20 @@ function AccountRecoveryScreen({
           e("button", { onClick:function(){ setManagingAccArticle(null); setManagingAccOpen(true); }, "aria-label":"Back to Managing account", style:{ background:"none", border:"none", cursor:"pointer", padding:6, color:"var(--help-heading)", display:"flex", alignItems:"center" } },
             icon("M4 6h16M4 12h16M4 18h16","var(--help-heading)",24))
        ),
-       e("div", { style:{ padding:"24px 18px 60px", maxWidth:540 } },
+       e("main", { style:{ maxWidth:760, margin:"0 auto", padding:"30px 20px 64px" } },
          e("div", { style:{ fontSize:26, fontWeight:900, marginBottom:20, lineHeight:1.2, display:"flex", alignItems:"center", gap:10 } }, icon(sec.iconPath, sec.iconColor, 28), sec.title),
          sec.guide.map(function(g, gi) {
-            return e("div", { key:gi, style:{ background:"var(--help-soft)", borderRadius:14, padding:"18px 16px", marginBottom:16 } },
-              e("div", { style:{ fontSize:16, fontWeight:800, color:"var(--help-heading)", marginBottom:12, lineHeight:1.3 } }, g.heading),
-             e("ol", { style:{ margin:0, padding:"0 0 0 20px" } },
+            return e("section", { key:gi, style:{ marginBottom:28 } },
+              e("h2", { style:{ fontSize:24, lineHeight:1.2, margin:"0 0 16px", letterSpacing:-.4, fontWeight:900 } }, g.heading),
+             e("ol", { style:{ margin:0, padding:"0 0 0 24px" } },
                g.steps.map(function(step, si) {
-                  return e("li", { key:si, style:{ fontSize:14, color:"var(--help-body)", lineHeight:1.65, marginBottom:6 } }, step);
+                  return e("li", { key:si, style:{ fontSize:17, color:"var(--help-body)", lineHeight:1.65, marginBottom:12, paddingLeft:3 } }, step);
                })
              ),
-              g.note ? e("div", { style:{ marginTop:10, fontSize:12, color:"var(--help-muted)", fontStyle:"italic", lineHeight:1.5 } }, "\u26A0\uFE0F Note: " + g.note) : null
+              g.note ? e("div", { style:{ marginTop:14, fontSize:15, color:"var(--help-muted)", fontStyle:"italic", lineHeight:1.6 } }, "\u26A0\uFE0F Note: " + g.note) : null
            );
          }),
-          e("div", { style:{ marginTop:24, paddingTop:18 } },
+          e("div", { style:{ marginTop:30, paddingTop:22 } },
             e("div", { style:{ fontSize:13, color:"var(--help-muted)", marginBottom:10 } }, "Need more help?"),
             e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Help%3A%20" + encodeURIComponent(sec.title), style:{ display:"inline-block", border:"1px solid var(--help-heading)", borderRadius:22, padding:"10px 20px", background:"var(--help-page-bg)", color:"var(--help-heading)", fontSize:13, fontWeight:700, cursor:"pointer", textDecoration:"none" } }, "Contact Support")
          )
