@@ -47,6 +47,7 @@ button, [role="button"], [onclick] { -webkit-tap-highlight-color: transparent; }
 .bell-shake { animation: bellShake 0.6s ease; }
 button:focus:not([data-follow-control]) { outline: none !important; box-shadow: none !important; border: none !important; }
 button:focus-visible:not([data-follow-control]) { outline: none !important; box-shadow: none !important; border: none !important; }
+button[data-help-spin]:focus, button[data-help-spin]:focus-visible, button[data-help-spin]:active { outline: none !important; box-shadow: none !important; border: 2px solid var(--help-spin-bg) !important; background: var(--help-spin-bg) !important; color: var(--help-spin-fg) !important; }
 :root {
   --bg: #ffffff; --card-bg: #ffffff; --text: #111111; --muted: #666666; --friends-spinner: #0D9FF3;
   --border: #e0e0e0; --input-bg: #f5f5f5; --nav-bg: #ffffff;
@@ -54,7 +55,7 @@ button:focus-visible:not([data-follow-control]) { outline: none !important; box-
   --help-page-bg: #ffffff; --help-surface: #ffffff; --help-soft: #F0F2F5;
   --help-soft-blue: #F1F7FA; --help-control: #EAF2F6; --help-heading: #111111;
   --help-body: #1A2330; --help-muted: #687078; --help-line: #E5E7EB;
-  --help-blue: #0D9FF3; --help-selected: #EEF6FF; --help-hero: #111820;
+  --help-blue: #0D9FF3; --help-selected: #EEF6FF; --help-hero: #111820; --help-spin-bg: #111111; --help-spin-fg: #ffffff;
 }
 [data-theme="dark"] {
   --bg: #0f0f0f; --card-bg: #1a1a1a; --text: #f0f0f0; --muted: #aaaaaa; --friends-spinner: #ffffff;
@@ -63,7 +64,7 @@ button:focus-visible:not([data-follow-control]) { outline: none !important; box-
   --help-page-bg: #0f0f0f; --help-surface: #1a1a1a; --help-soft: #202124;
   --help-soft-blue: #1c2930; --help-control: #0D9FF3; --help-heading: #f0f0f0;
   --help-body: #e8e8e8; --help-muted: #a8a8a8; --help-line: #303438;
-  --help-blue: #0D9FF3; --help-selected: #0D9FF3; --help-hero: #141414;
+  --help-blue: #0D9FF3; --help-selected: #0D9FF3; --help-hero: #141414; --help-spin-bg: #ffffff; --help-spin-fg: #111111;
 }
 :root { --post-app-font: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; }
     body { background: var(--bg); color: var(--text); font-family: var(--post-app-font); letter-spacing: 0.008em; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-kerning: normal; font-feature-settings: "kern", "liga"; transition: background 0.3s, color 0.3s; }
@@ -20596,8 +20597,8 @@ function AccountRecoveryScreen({
               e("path",{d:"M204 292c8 9 20 8 25 0-8 2-15 2-25 0z",fill:"none",stroke:"#F4C400",strokeWidth:3,strokeLinecap:"round"})
               ),
             ),
-            e("button",{type:"button",onClick:cycleArt,"aria-label":"Change illustration",style:{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:9,margin:"2px auto 0",padding:"11px 22px",border:"1px solid var(--help-heading)",borderRadius:999,background:"var(--help-surface)",color:"var(--help-heading)",fontSize:15,fontWeight:800,lineHeight:1,cursor:"pointer",fontFamily:"inherit"}},
-              e("span",{style:{display:"inline-flex",transformOrigin:"center"}},icon("M20 11a8 8 0 1 0 1.5 5M20 5v6h-6","var(--help-heading)",18)),
+            e("button",{type:"button",onClick:cycleArt,"data-help-spin":"true","aria-label":"Change illustration",style:{display:"inline-flex",alignItems:"center",justifyContent:"center",gap:9,margin:"2px auto 0",padding:"11px 22px",border:"2px solid var(--help-spin-bg)",borderRadius:999,background:"var(--help-spin-bg)",color:"var(--help-spin-fg)",fontSize:15,fontWeight:800,lineHeight:1,cursor:"pointer",fontFamily:"inherit",appearance:"none",WebkitAppearance:"none",WebkitTapHighlightColor:"transparent"}},
+              e("span",{style:{display:"inline-flex",transformOrigin:"center"}},icon("M20 11a8 8 0 1 0 1.5 5M20 5v6h-6","var(--help-spin-fg)",18)),
               e("span",null,"Spin")
             )
           )
