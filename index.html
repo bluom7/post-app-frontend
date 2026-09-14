@@ -65,8 +65,10 @@ button:focus-visible:not([data-follow-control]) { outline: none !important; box-
   --help-body: #e8e8e8; --help-muted: #a8a8a8; --help-line: #303438;
   --help-blue: #61c3ff; --help-selected: #183247; --help-hero: #141414;
 }
-body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; transition: background 0.3s, color 0.3s; }
-input, textarea, button { font-family: inherit; }
+:root { --post-app-font: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    body { background: var(--bg); color: var(--text); font-family: var(--post-app-font); letter-spacing: 0.008em; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-kerning: normal; font-feature-settings: "kern", "liga"; transition: background 0.3s, color 0.3s; }
+    html, body, #root, #root * { font-family: var(--post-app-font) !important; font-kerning: normal; font-feature-settings: "kern", "liga"; }
+    input, textarea, button { font-family: var(--post-app-font) !important; letter-spacing: inherit; }
 ::-webkit-scrollbar { width: 4px; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .photo-editor-crops::-webkit-scrollbar { display: none; width: 0; height: 0; }
@@ -88,7 +90,7 @@ video::-webkit-media-controls { display: none !important; }
     .post-settings-screen button,
     .post-settings-screen input,
     .post-settings-screen textarea {
-    --post-settings-font: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --post-settings-font: var(--post-app-font);
     font-family: var(--post-settings-font) !important;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
