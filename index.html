@@ -20283,7 +20283,7 @@ function AccountRecoveryScreen({
           e("h1", { style:{ fontSize:"clamp(30px,8vw,46px)", lineHeight:1.08, letterSpacing:-1, margin:"0 0 16px", fontWeight:900 } }, article.title),
           e("p", { style:{ fontSize:17, lineHeight:1.65, color:"var(--help-muted)", margin:"0 0 28px" } }, article.summary),
           article.blocks.map(function(block, blockIndex) {
-            return e("section", { key:blockIndex, style:{ borderTop:"1px solid var(--help-line)", paddingTop:20, marginTop:blockIndex ? 26 : 0 } },
+            return e("section", { key:blockIndex, style:{ paddingTop:20, marginTop:blockIndex ? 26 : 0 } },
               e("h2", { style:{ fontSize:24, lineHeight:1.2, margin:"0 0 16px", letterSpacing:-.4, fontWeight:900 } }, block.heading),
               block.paragraphs ? block.paragraphs.map(function(text, index) {
                 return e("p", { key:index, style:{ fontSize:17, lineHeight:1.65, margin:"0 0 16px" } }, text);
@@ -20300,7 +20300,7 @@ function AccountRecoveryScreen({
               ) : null
             );
           }),
-          e("div", { style:{ borderTop:"1px solid var(--help-line)", marginTop:30, paddingTop:22 } },
+          e("div", { style:{ marginTop:30, paddingTop:22 } },
             e("div", { style:{ fontSize:13, color:"var(--help-muted)", marginBottom:10 } }, "Need more help?"),
             e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Help%3A%20" + encodeURIComponent(article.title), style:{ display:"inline-block", border:"1px solid var(--help-heading)", borderRadius:24, padding:"11px 20px", background:"var(--help-page-bg)", color:"var(--help-heading)", fontSize:14, fontWeight:800, cursor:"pointer", textDecoration:"none" } }, "Contact Post Support")
           )
@@ -20325,7 +20325,7 @@ function AccountRecoveryScreen({
           e("h1", { style:{ fontSize:"clamp(30px,8vw,46px)", lineHeight:1.08, letterSpacing:-1, margin:"0 0 16px", fontWeight:900 } }, article.title),
           e("p", { style:{ fontSize:17, lineHeight:1.65, color:"var(--help-muted)", margin:"0 0 28px" } }, article.summary),
           article.blocks.map(function(block, blockIndex) {
-            return e("section", { key:blockIndex, style:{ borderTop:"1px solid var(--help-line)", paddingTop:20, marginTop:blockIndex ? 26 : 0 } },
+            return e("section", { key:blockIndex, style:{ paddingTop:20, marginTop:blockIndex ? 26 : 0 } },
               e("h2", { style:{ fontSize:24, lineHeight:1.2, margin:"0 0 16px", letterSpacing:-.4, fontWeight:900 } }, block.heading),
               block.paragraphs ? block.paragraphs.map(function(text, index) {
                 return e("p", { key:index, style:{ fontSize:17, lineHeight:1.65, margin:"0 0 16px" } }, text);
@@ -20342,7 +20342,7 @@ function AccountRecoveryScreen({
               ) : null
             );
           }),
-          e("div", { style:{ borderTop:"1px solid var(--help-line)", marginTop:30, paddingTop:22 } },
+          e("div", { style:{ marginTop:30, paddingTop:22 } },
             e("div", { style:{ fontSize:13, color:"var(--help-muted)", marginBottom:10 } }, "Need more help?"),
             e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Rules%20Help%3A%20" + encodeURIComponent(article.title), style:{ display:"inline-block", border:"1px solid var(--help-heading)", borderRadius:24, padding:"11px 20px", background:"var(--help-page-bg)", color:"var(--help-heading)", fontSize:14, fontWeight:800, cursor:"pointer", textDecoration:"none" } }, "Contact Post Support")
           )
@@ -20376,7 +20376,7 @@ function AccountRecoveryScreen({
               g.note ? e("div", { style:{ marginTop:10, fontSize:12, color:"var(--help-muted)", fontStyle:"italic", lineHeight:1.5 } }, "\u26A0\uFE0F Note: " + g.note) : null
            );
          }),
-          e("div", { style:{ marginTop:24, borderTop:"1px solid var(--help-line)", paddingTop:18 } },
+          e("div", { style:{ marginTop:24, paddingTop:18 } },
             e("div", { style:{ fontSize:13, color:"var(--help-muted)", marginBottom:10 } }, "Need more help?"),
             e("a", { href:"mailto:postbluom@gmail.com?subject=POST%20Help%3A%20" + encodeURIComponent(sec.title), style:{ display:"inline-block", border:"1px solid var(--help-heading)", borderRadius:22, padding:"10px 20px", background:"var(--help-page-bg)", color:"var(--help-heading)", fontSize:13, fontWeight:700, cursor:"pointer", textDecoration:"none" } }, "Contact Support")
          )
@@ -20670,7 +20670,7 @@ function AccountRecoveryScreen({
         e("div",{style:{fontSize:12,fontWeight:800,letterSpacing:1.4,textTransform:"uppercase",color:"var(--help-blue)",marginBottom:12}}, selectedArticle.category),
          e("h1",{style:{fontSize:"clamp(28px,7vw,42px)",lineHeight:1.08,margin:"0 0 16px",fontWeight:900}},selectedArticle.title),
          e("p",{style:{fontSize:16,lineHeight:1.65,color:"var(--muted)",margin:"0 0 26px"}},selectedArticle.summary),
-         e("div",{style:{borderTop:"1px solid var(--border)",paddingTop:22,fontSize:15,lineHeight:1.8,color:"var(--text)"}},
+         e("div",{style:{paddingTop:22,fontSize:15,lineHeight:1.8,color:"var(--text)"}},
            e("p",null,"Thanks for checking the Post Help Center. Follow the steps in this guide, then try the action again."),
            e("p",{style:{marginTop:16}},"If the problem continues, share what you tried, your device, and the time it happened with Post Support.")
          ),
