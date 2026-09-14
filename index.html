@@ -89,16 +89,22 @@ video::-webkit-media-controls { display: none !important; }
     .post-settings-screen input,
     .post-settings-screen textarea {
     --post-settings-font: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-family: var(--post-settings-font);
+    font-family: var(--post-settings-font) !important;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    font-kerning: normal;
+    font-feature-settings: "kern", "liga";
     }
     .post-settings-screen {
     letter-spacing: 0.008em;
     }
     .post-settings-screen button,
-    .post-settings-screen input {
+    .post-settings-screen input,
+    .post-settings-screen textarea {
     letter-spacing: inherit;
+    }
+    .post-settings-screen * {
+    border-radius: 0 !important;
     }
     </style>
     </head>
