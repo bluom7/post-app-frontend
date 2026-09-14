@@ -18284,7 +18284,7 @@ function QuickMenuDropdown({
       )
     );
     const qmdBackHeader = React.createElement("div", {
-      style: { display: "flex", alignItems: "center", gap: 12, padding: "0 4px 16px", borderBottom: "1px solid var(--border)", marginBottom: 10 }
+      style: { display: "flex", alignItems: "center", gap: 12, padding: "0 20px 16px", margin: "0 -16px 10px", width: "calc(100% + 32px)", boxSizing: "border-box", borderBottom: "1px solid var(--border)" }
     },
       React.createElement("button", {
         onClick: () => setSubScreen(null),
@@ -18346,7 +18346,7 @@ function QuickMenuDropdown({
        style: { minHeight: "100vh", background: "#FFFFFF", color: "#0F1419", padding: "16px 16px 40px", boxSizing: "border-box", fontFamily: "Roboto, Arial, Helvetica, sans-serif", fontVariantLigatures: "none" }
      },
        React.createElement("div", {
-         style: { display: "flex", alignItems: "center", gap: 16, padding: "0 20px 16px", margin: "0 -16px", borderBottom: "1px solid #EFF3F4" }
+         style: { display: "flex", alignItems: "center", gap: 16, padding: "0 20px 16px", margin: "0 -16px", width: "calc(100% + 32px)", boxSizing: "border-box", borderBottom: "1px solid #EFF3F4" }
        },
          React.createElement("button", {
            onClick: onBack, "aria-label": "Back from Settings",
@@ -21114,7 +21114,7 @@ function AccountRecoveryScreen({
     strokeLinecap: "round", strokeLinejoin: "round", style: { flexShrink: 0 }
   }, React.createElement("path", { d: path }));
   const settingsHeader = (title, forceHandle) => /*#__PURE__*/React.createElement("div", {
-    style: { display: "flex", alignItems: "center", gap: 12, padding: "0 4px 16px", borderBottom: "1px solid var(--border)", marginBottom: 10 }
+    style: { display: "flex", alignItems: "center", gap: 12, padding: "0 20px 16px", margin: "0 -16px 10px", width: "calc(100% + 32px)", boxSizing: "border-box", borderBottom: "1px solid var(--border)" }
   },
     /*#__PURE__*/React.createElement("button", {
       onClick: goBack, "aria-label": "Back from Settings",
