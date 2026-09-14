@@ -106,8 +106,14 @@ video::-webkit-media-controls { display: none !important; }
     letter-spacing: inherit;
     }
     .post-settings-screen * {
-    border-radius: 0 !important;
-    }
+      border-radius: 0 !important;
+      }
+      .post-settings-screen .post-settings-toggle {
+      border-radius: 999px !important;
+      }
+      .post-settings-screen .post-settings-toggle-thumb {
+      border-radius: 5px !important;
+      }
     </style>
     </head>
 <body>
@@ -18755,37 +18761,39 @@ function SettingRow({
   }, sub)), right);
 }
 function Toggle({
-  on,
-  onChange
-}) {
-  return /*#__PURE__*/React.createElement("button", {
-    onClick: () => onChange(!on),
-    style: {
-      width: 44,
-      height: 26,
-      borderRadius: 14,
-      border: "none",
-      cursor: "pointer",
-      background: on ? COLORS.green : "#ccc",
-      position: "relative",
-      transition: "background 0.2s",
-      flexShrink: 0
+    on,
+    onChange
+    }) {
+    return /*#__PURE__*/React.createElement("button", {
+      className: "post-settings-toggle",
+      onClick: () => onChange(!on),
+      style: {
+        width: 44,
+        height: 26,
+        borderRadius: 999,
+        border: "none",
+        cursor: "pointer",
+        background: on ? "#1D9BF0" : "#C8C8C8",
+        position: "relative",
+        transition: "background 0.2s",
+        flexShrink: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "post-settings-toggle-thumb",
+      style: {
+        width: 20,
+        height: 20,
+        borderRadius: 5,
+        background: "#fff",
+        position: "absolute",
+        top: 3,
+        left: on ? 21 : 3,
+        transition: "left 0.2s",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
+      }
+    }));
     }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 20,
-      height: 20,
-      borderRadius: "50%",
-      background: "#fff",
-      position: "absolute",
-      top: 3,
-      left: on ? 21 : 3,
-      transition: "left 0.2s",
-      boxShadow: "0 1px 3px rgba(0,0,0,0.3)"
-    }
-  }));
-}
-function SettingsSection({
+    function SettingsSection({
   title,
   children
 }) {
