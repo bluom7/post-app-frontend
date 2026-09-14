@@ -29936,7 +29936,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
 
   function renderSearchEmptyState(message) {
     return React.createElement("div", { style: { flex: 1, minHeight: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "28px 24px 48px", boxSizing: "border-box", background: "#FFFFFF", color: "#666" } },
-      React.createElement("svg", { width: 236, height: 236, viewBox: "0 0 240 240", role: "img", "aria-label": message, style: { display: "block", overflow: "visible" } },
+      React.createElement("svg", { width: 40, height: 40, viewBox: "0 0 240 240", role: "img", "aria-label": message, style: { display: "block", overflow: "visible", flexShrink: 0 } },
         React.createElement("ellipse", { cx: 113, cy: 224, rx: 48, ry: 5, fill: "#c7c7c7", opacity: 0.62 }),
         React.createElement("circle", { cx: 108, cy: 108, r: 76, fill: "#e7e7e7" }),
         React.createElement("line", { x1: 143, y1: 140, x2: 181, y2: 181, stroke: "#6b6b6b", strokeWidth: 16, strokeLinecap: "round" }),
@@ -29947,7 +29947,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
         React.createElement("line", { x1: 174, y1: 78, x2: 201, y2: 105, stroke: "#f01818", strokeWidth: 12, strokeLinecap: "round" }),
         React.createElement("line", { x1: 201, y1: 78, x2: 174, y2: 105, stroke: "#f01818", strokeWidth: 12, strokeLinecap: "round" })
       ),
-      React.createElement("div", { style: { marginTop: 4, color: "#666", fontSize: 15, fontWeight: 600, lineHeight: 1.4, textAlign: "center" } }, message)
+      React.createElement("div", { style: { marginTop: 10, color: "#666", fontSize: 16, fontWeight: 700, letterSpacing: "0.3px", lineHeight: 1.35, textAlign: "center" } }, message)
     );
   }
   var gridViewerActiveId = gridViewerActiveReel && gridViewerActiveReel.id != null ? String(gridViewerActiveReel.id) : "";
