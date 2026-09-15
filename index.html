@@ -30074,19 +30074,19 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   var gridViewerActiveReel = gridViewerItems[gridViewerActiveIdx] || null;
 
   function renderSearchEmptyState(message) {
-    return React.createElement("div", { style: { flex: 1, minHeight: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "28px 24px 48px", boxSizing: "border-box", background: "#FFFFFF", color: "#666" } },
+    return React.createElement("div", { style: { flex: 1, minHeight: 300, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-start", padding: "28px 24px 48px", boxSizing: "border-box", background: "var(--bg)", color: "var(--muted)" } },
       React.createElement("svg", { width: 50, height: 50, viewBox: "0 0 240 240", role: "img", "aria-label": message, style: { display: "block", overflow: "visible", flexShrink: 0 } },
-        React.createElement("ellipse", { cx: 113, cy: 224, rx: 48, ry: 5, fill: "#c7c7c7", opacity: 0.62 }),
-        React.createElement("circle", { cx: 108, cy: 108, r: 76, fill: "#e7e7e7" }),
-        React.createElement("line", { x1: 143, y1: 140, x2: 181, y2: 181, stroke: "#6b6b6b", strokeWidth: 16, strokeLinecap: "round" }),
-        React.createElement("line", { x1: 148, y1: 146, x2: 173, y2: 173, stroke: "#f4f4f4", strokeWidth: 3.5, strokeLinecap: "round", opacity: 0.9 }),
-        React.createElement("circle", { cx: 108, cy: 105, r: 46, fill: "#ffffff", stroke: "#626262", strokeWidth: 5 }),
-        React.createElement("circle", { cx: 108, cy: 105, r: 37, fill: "none", stroke: "#626262", strokeWidth: 5 }),
-        React.createElement("path", { d: "M159 48h43c15 0 27 12 27 27v27c0 15-12 27-27 27h-18v18l-18-18h-7c-15 0-27-12-27-27V75c0-15 12-27 27-27Z", fill: "#ffffff", stroke: "#626262", strokeWidth: 5, strokeLinejoin: "round" }),
+        React.createElement("ellipse", { cx: 113, cy: 224, rx: 48, ry: 5, fill: "var(--border)", opacity: 0.62 }),
+        React.createElement("circle", { cx: 108, cy: 108, r: 76, fill: "var(--input-bg)" }),
+        React.createElement("line", { x1: 143, y1: 140, x2: 181, y2: 181, stroke: "var(--muted)", strokeWidth: 16, strokeLinecap: "round" }),
+        React.createElement("line", { x1: 148, y1: 146, x2: 173, y2: 173, stroke: "var(--bg)", strokeWidth: 3.5, strokeLinecap: "round", opacity: 0.9 }),
+        React.createElement("circle", { cx: 108, cy: 105, r: 46, fill: "var(--card-bg)", stroke: "var(--muted)", strokeWidth: 5 }),
+        React.createElement("circle", { cx: 108, cy: 105, r: 37, fill: "none", stroke: "var(--muted)", strokeWidth: 5 }),
+        React.createElement("path", { d: "M159 48h43c15 0 27 12 27 27v27c0 15-12 27-27 27h-18v18l-18-18h-7c-15 0-27-12-27-27V75c0-15 12-27 27-27Z", fill: "var(--card-bg)", stroke: "var(--muted)", strokeWidth: 5, strokeLinejoin: "round" }),
         React.createElement("line", { x1: 174, y1: 78, x2: 201, y2: 105, stroke: "#f01818", strokeWidth: 12, strokeLinecap: "round" }),
         React.createElement("line", { x1: 201, y1: 78, x2: 174, y2: 105, stroke: "#f01818", strokeWidth: 12, strokeLinecap: "round" })
       ),
-      React.createElement("div", { style: { marginTop: 8, color: "#666", fontSize: 10, fontWeight: 600, letterSpacing: "0.15px", lineHeight: 1.3, textAlign: "center" } }, message)
+      React.createElement("div", { style: { marginTop: 8, color: "var(--muted)", fontSize: 10, fontWeight: 600, letterSpacing: "0.15px", lineHeight: 1.3, textAlign: "center" } }, message)
     );
   }
   var gridViewerActiveId = gridViewerActiveReel && gridViewerActiveReel.id != null ? String(gridViewerActiveReel.id) : "";
@@ -30207,26 +30207,26 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
       React.createElement("div", { style: { flex: 1, fontFamily: "'Roboto Slab', Georgia, serif", fontStyle: "normal", fontWeight: 800, fontSize: 24, lineHeight: 1, letterSpacing: 0, color: "#fff", WebkitTextStroke: "1.5px #000", paintOrder: "stroke fill", textShadow: "0 1px 3px rgba(0,0,0,0.95)", whiteSpace: "nowrap" } }, "Reels"),
       React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } },
         React.createElement("button", { onClick: function() { setShowCamera(true); }, style: { background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", alignItems: "center" } },
-          React.createElement("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "2.2", strokeLinecap: "round" },
+          React.createElement("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", stroke: "var(--text)", strokeWidth: "2.2", strokeLinecap: "round" },
             React.createElement("line", { x1: "12", y1: "5", x2: "12", y2: "19" }),
             React.createElement("line", { x1: "5", y1: "12", x2: "19", y2: "12" }))),
         React.createElement("button", { onClick: function() { setShowSearch(true); }, style: { background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", alignItems: "center" } },
-          React.createElement("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth:1.8, strokeLinecap: "round",strokeLinejoin:"round" },
+          React.createElement("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", stroke: "var(--text)", strokeWidth:1.8, strokeLinecap: "round",strokeLinejoin:"round" },
             React.createElement("path",{d:"M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"}))))),
 
     // ── In-feed search overlay ────────────────────────────────────────────────
-    showSearch && React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 400, background: "#FFFFFF", display: "flex", flexDirection: "column" } },
-      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "12px 14px 10px", borderBottom: "none", background: "#FFFFFF", flexShrink: 0 } },
-        React.createElement("button", { onClick: function() { setShowSearch(false); setSearchQuery(""); setSearchReels([]); setSearchUsers([]); setSearchHashtags([]); setDiscoverCategory("All"); }, style: { background: "#F5F5F5", border: "none", borderRadius: 15, cursor: "pointer", padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text)" } },
+    showSearch && React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 400, background: "var(--bg)", display: "flex", flexDirection: "column" } },
+      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "12px 14px 10px", borderBottom: "none", background: "var(--nav-bg)", flexShrink: 0 } },
+        React.createElement("button", { onClick: function() { setShowSearch(false); setSearchQuery(""); setSearchReels([]); setSearchUsers([]); setSearchHashtags([]); setDiscoverCategory("All"); }, style: { background: "var(--input-bg)", border: "none", borderRadius: 15, cursor: "pointer", padding: "6px 10px", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text)" } },
           React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round" }, React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
-        React.createElement("div", { style: { flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#F5F5F5", borderRadius: 22, padding: "10px 14px" } },
-          React.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "#777", strokeWidth:1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("path",{d:"M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"})),
+        React.createElement("div", { style: { flex: 1, display: "flex", alignItems: "center", gap: 8, background: "var(--input-bg)", borderRadius: 22, padding: "10px 14px" } },
+          React.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "var(--muted)", strokeWidth:1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("path",{d:"M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"})),
           React.createElement("input", { autoFocus: true, value: searchQuery, onChange: function(e) { setSearchQuery(e.target.value); setSearchTab("reels"); }, onFocus: function() { setSearchInputFocused(true); }, onBlur: function() { setSearchInputFocused(false); }, placeholder: "Search", style: { flex: 1, background: "none", border: "none", outline: "none", fontSize: 15, color: "var(--text)", caretColor: "auto" } }),
-          searchQuery ? React.createElement("button", { onClick: function() { setSearchQuery(""); }, style: { background: "none", border: "none", cursor: "pointer", color: "#999", fontSize: 18, padding: 0, lineHeight: 1 } }, "×") : null)),
+          searchQuery ? React.createElement("button", { onClick: function() { setSearchQuery(""); }, style: { background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 18, padding: 0, lineHeight: 1 } }, "×") : null)),
       !searchQuery.trim() && React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "10px 14px", flexShrink: 0, gap: 8, background: "transparent" } },
         React.createElement("button", {
           onClick: function() { setCatDrawerOpen(true); },
-          style: { flexShrink: 0, height: 36, minHeight: 36, padding: "7px 16px", borderRadius: 24, border: discoverCategory === "All" ? "none" : "1px solid #D5D5D5", background: discoverCategory === "All" ? "#000000" : "#E4E4E4", color: discoverCategory === "All" ? "#FFFFFF" : "#111", fontWeight: 700, fontSize: 15, cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6, boxSizing: "border-box" } },
+          style: { flexShrink: 0, height: 36, minHeight: 36, padding: "7px 16px", borderRadius: 24, border: discoverCategory === "All" ? "none" : "1px solid var(--border)", background: discoverCategory === "All" ? "var(--text)" : "var(--input-bg)", color: discoverCategory === "All" ? "var(--bg)" : "var(--text)", fontWeight: 700, fontSize: 15, cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6, boxSizing: "border-box" } },
           React.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5", strokeLinecap: "round", "aria-hidden": true },
             React.createElement("line", { x1: "3", y1: "6", x2: "21", y2: "6" }),
             React.createElement("line", { x1: "3", y1: "12", x2: "21", y2: "12" }),
@@ -30234,7 +30234,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
           discoverCategory === "All" ? "All" : discoverCategory),
         React.createElement("button", {
           onClick: function() { setDiscoverCategory(discoverCategory === "Trending" ? "All" : "Trending"); },
-          style: { flexShrink: 0, height: 36, minHeight: 36, padding: "7px 16px", borderRadius: 24, background: "#0D9FF3", color: "#FFFFFF", fontWeight: 700, fontSize: 15, cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6, border: discoverCategory === "Trending" ? "none" : "1px solid #D5D5D5", boxSizing: "border-box" } },
+          style: { flexShrink: 0, height: 36, minHeight: 36, padding: "7px 16px", borderRadius: 24, background: "#0D9FF3", color: "#FFFFFF", fontWeight: 700, fontSize: 15, cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6, border: discoverCategory === "Trending" ? "none" : "1px solid var(--border)", boxSizing: "border-box" } },
           React.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.4", strokeLinecap: "round", "aria-hidden": true }, React.createElement("line", { x1: "12", y1: "5", x2: "12", y2: "19" }), React.createElement("line", { x1: "5", y1: "12", x2: "19", y2: "12" })), "Trending"),
         discoverCategory !== "All" && discoverCategory !== "Trending" && React.createElement("button", {
           onClick: function() { setDiscoverCategory("All"); },
@@ -30242,9 +30242,9 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
           React.createElement("svg", { width: 10, height: 10, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.5" }, React.createElement("line", { x1: "18", y1: "6", x2: "6", y2: "18" }), React.createElement("line", { x1: "6", y1: "6", x2: "18", y2: "18" })),
           "Clear")),
       !searchQuery.trim()
-        ? React.createElement("div", { style: { flex: 1, overflowY: "auto", background: "#FFFFFF" }, onScroll: function(e) { var el = e.currentTarget; if (!discoverLoadingRef.current && discoverHasMoreRef.current && el.scrollHeight - el.scrollTop - el.clientHeight < 400) { loadDiscover(false); } } },
+        ? React.createElement("div", { style: { flex: 1, overflowY: "auto", background: "var(--bg)" }, onScroll: function(e) { var el = e.currentTarget; if (!discoverLoadingRef.current && discoverHasMoreRef.current && el.scrollHeight - el.scrollTop - el.clientHeight < 400) { loadDiscover(false); } } },
             !discoverLoading && discoverReels.length === 0
-              ? React.createElement("div", { style: { flex: 1, minHeight: "100%", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "36px 16px 48px", boxSizing: "border-box", background: "#FFFFFF" } },
+              ? React.createElement("div", { style: { flex: 1, minHeight: "100%", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "36px 16px 48px", boxSizing: "border-box", background: "var(--bg)" } },
                   React.createElement("svg", { width: "100%", height: "220", viewBox: "0 0 420 220", role: "img", "aria-label": "No results found", style: { width: "100%", maxWidth: 360, height: "auto", display: "block" } },
                     React.createElement("text", { x: "145", y: "116", fontSize: "40", fontWeight: "900", letterSpacing: "0", fontFamily: "Arial, sans-serif" },
                       React.createElement("tspan", { fill: "#FFD600" }, "O"),
@@ -30269,13 +30269,13 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                     React.createElement("rect", { x: "145", y: "128", width: "145", height: "28", rx: "14", fill: "#0D9FF3" }),
                     React.createElement("text", { x: "218", y: "147", fill: "#FFFFFF", fontSize: "12", fontWeight: "700", textAnchor: "middle", fontFamily: "Arial, sans-serif" }, "No results found!")
                   ))
-              : React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, padding: 0, background: "#FFFFFF" } },
+              : React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, padding: 0, background: "var(--bg)" } },
               rankedDiscoverReels.map(function(r, _gvi) {
                 var views = r.view_count || (Array.isArray(r.views) ? r.views.length : 0) || 0; var vLabel = views >= 1000000 ? (views/1000000).toFixed(1)+"M" : views >= 1000 ? (views/1000).toFixed(1)+"K" : String(views);
                 var rawVid = r.video_url || ""; var thumb = r.thumbnail_url || r.photo_url || (rawVid && rawVid.includes("res.cloudinary.com") ? rawVid.replace("/video/upload/", "/video/upload/so_0,w_800,c_fill,q_auto:best,f_auto/").replace(/\.(mp4|mov|webm|avi)(\?.*)?$/i, ".jpg") : rawVid) || "";
                 var isVideo = !!(r.video_url);
                 return React.createElement("div", { key: r.id, onClick: function() { gridViewerStartIdxRef.current = _gvi; setGridViewerSource("discover"); setGridViewerActiveIdx(_gvi); setGridViewerOpen(true); }, style: { position: "relative", aspectRatio: "0.68", background: "#000", borderRadius: 0, overflow: "hidden", cursor: "pointer" } },
-                  thumb ? React.createElement("img", { src: thumb, alt: "", style: { width: "100%", height: "100%", objectFit: "cover", background: "#FFFFFF" }, loading: "lazy", decoding: "async" }) : React.createElement("div", { style: { width: "100%", height: "100%", background: "#222" } }),
+                  thumb ? React.createElement("img", { src: thumb, alt: "", style: { width: "100%", height: "100%", objectFit: "cover", background: "var(--bg)" }, loading: "lazy", decoding: "async" }) : React.createElement("div", { style: { width: "100%", height: "100%", background: "#222" } }),
                   isVideo && React.createElement("div", { style: { position: "absolute", top: 5, right: 5, background: "rgba(0,0,0,0.55)", borderRadius: 4, width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center" } },
                     React.createElement("svg", { width: 12, height: 12, viewBox: "0 0 24 24", fill: "none", "aria-hidden": true }, React.createElement("path", { d: "M10 5.45C9.15 4.98 8 5.6 8 6.55v10.9c0 .95 1.15 1.57 2 1.1l9.55-5.55c.95-.55.95-1.95 0-2.5L10 5.45Z", fill: "#fff" }))),
                   React.createElement("div", { style: { position: "absolute", bottom: 6, left: 6, display: "flex", alignItems: "center", gap: 5 } },
@@ -30284,7 +30284,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
               }),
               discoverLoading && React.createElement(React.Fragment, null,
                  React.createElement("style", null, "@keyframes reelsDiscoverShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }"),
-                 [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].map(function(i) { return React.createElement("div", { key: "sk" + i, style: { aspectRatio: "0.68", borderRadius: 0, background: "linear-gradient(90deg, #f0f1f4 25%, #fafbfc 50%, #f0f1f4 75%)", backgroundSize: "200% 100%", animation: "reelsDiscoverShimmer 1.35s ease-in-out infinite" } }); }))))
+                 [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].map(function(i) { return React.createElement("div", { key: "sk" + i, style: { aspectRatio: "0.68", borderRadius: 0, background: "linear-gradient(90deg, var(--input-bg) 25%, var(--card-bg) 50%, var(--input-bg) 75%)", backgroundSize: "200% 100%", animation: "reelsDiscoverShimmer 1.35s ease-in-out infinite" } }); }))))
         : React.createElement("div", {
             style: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", touchAction: "pan-y" },
             onTouchStart: function(e) { var t = e.touches && e.touches[0]; if (t) searchTabTouchRef.current = { x: t.clientX, y: t.clientY }; },
@@ -30301,27 +30301,27 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
             }
           },
             React.createElement("style", null, "@keyframes reelsSearchTabFromRight { from { transform: translateX(100%); opacity: 0.45; } to { transform: translateX(0); opacity: 1; } } @keyframes reelsSearchTabFromLeft { from { transform: translateX(-100%); opacity: 0.45; } to { transform: translateX(0); opacity: 1; } }"),
-            React.createElement("div", { style: { display: "flex", borderBottom: "1px solid #E6E6E6", flexShrink: 0 } },
+            React.createElement("div", { style: { display: "flex", borderBottom: "1px solid var(--border)", flexShrink: 0 } },
               [["reels","Reels"],["users","People"],["hashtags","Hashtags"]].map(function(pair) {
                 var tab=pair[0], label=pair[1]; var isAct = searchTab === tab;
-                return React.createElement("button", { key: tab, onClick: function() { switchSearchTab(tab); }, style: { flex: 1, position: "relative", padding: "14px 0 12px", background: "none", border: "none", borderBottom: "none", fontWeight: 900, fontSize: 18, letterSpacing: "0.3px", color: isAct ? "#111111" : "#555555", cursor: "pointer" } }, label, React.createElement("span", { style: { position: "absolute", left: "20%", right: "20%", bottom: -1, height: 2, background: isAct ? "#111111" : "transparent" } }));
+                return React.createElement("button", { key: tab, onClick: function() { switchSearchTab(tab); }, style: { flex: 1, position: "relative", padding: "14px 0 12px", background: "none", border: "none", borderBottom: "none", fontWeight: 900, fontSize: 18, letterSpacing: "0.3px", color: isAct ? "var(--text)" : "var(--muted)", cursor: "pointer" } }, label, React.createElement("span", { style: { position: "absolute", left: "20%", right: "20%", bottom: -1, height: 2, background: isAct ? "var(--text)" : "transparent" } }));
               })),
-            React.createElement("div", { key: "search-tab-pane-" + searchTab, style: { flex: 1, overflowY: "auto", background: "#FFFFFF", animation: searchTabMotion === "from-right" ? "reelsSearchTabFromRight 320ms cubic-bezier(0.22, 1, 0.36, 1) both" : searchTabMotion === "from-left" ? "reelsSearchTabFromLeft 320ms cubic-bezier(0.22, 1, 0.36, 1) both" : "none" } },
+            React.createElement("div", { key: "search-tab-pane-" + searchTab, style: { flex: 1, overflowY: "auto", background: "var(--bg)", animation: searchTabMotion === "from-right" ? "reelsSearchTabFromRight 320ms cubic-bezier(0.22, 1, 0.36, 1) both" : searchTabMotion === "from-left" ? "reelsSearchTabFromLeft 320ms cubic-bezier(0.22, 1, 0.36, 1) both" : "none" } },
               searchLoading
-                 ? React.createElement("div", { style: { flex: 1, minHeight: "100%", overflow: "hidden", display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, padding: 2, alignContent: "start", background: "#FFFFFF" } },
+                 ? React.createElement("div", { style: { flex: 1, minHeight: "100%", overflow: "hidden", display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, padding: 2, alignContent: "start", background: "var(--bg)" } },
                    React.createElement("style", null, "@keyframes reelsSearchShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }"),
-                   [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(function(i) { return React.createElement("div", { key: "search-loading" + i, style: { aspectRatio: "0.68", minWidth: 0, borderRadius: 0, background: "linear-gradient(90deg, #f0f1f4 25%, #fafbfc 50%, #f0f1f4 75%)", backgroundSize: "200% 100%", animation: "reelsSearchShimmer 1.35s ease-in-out infinite" } }); }))
+                   [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(function(i) { return React.createElement("div", { key: "search-loading" + i, style: { aspectRatio: "0.68", minWidth: 0, borderRadius: 0, background: "linear-gradient(90deg, var(--input-bg) 25%, var(--card-bg) 50%, var(--input-bg) 75%)", backgroundSize: "200% 100%", animation: "reelsSearchShimmer 1.35s ease-in-out infinite" } }); }))
                 : searchTab === "reels"
                   ? searchReels.length === 0
-                    ? React.createElement("div", { style: { flex: 1, minHeight: "100%", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "48px 24px", boxSizing: "border-box", background: "#FFFFFF" } },
+                    ? React.createElement("div", { style: { flex: 1, minHeight: "100%", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "48px 24px", boxSizing: "border-box", background: "var(--bg)" } },
                       renderSearchEmptyState("No reels found"))
-                    : React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, padding: 0, background: "#FFFFFF" } },
+                    : React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, padding: 0, background: "var(--bg)" } },
                         rankedSearchReels.map(function(r, _gvi) {
                           var views = r.view_count || (Array.isArray(r.views) ? r.views.length : 0) || 0; var vLabel = views >= 1000000 ? (views/1000000).toFixed(1)+"M" : views >= 1000 ? (views/1000).toFixed(1)+"K" : String(views);
                           var rawVid = r.video_url || ""; var thumb = r.thumbnail_url || r.photo_url || (rawVid && rawVid.includes("res.cloudinary.com") ? rawVid.replace("/video/upload/", "/video/upload/so_0,w_800,c_fill,q_auto:best,f_auto/").replace(/\.(mp4|mov|webm|avi)(\?.*)?$/i, ".jpg") : rawVid) || "";
                 var isVideo = !!(r.video_url);
                 return React.createElement("div", { key: r.id, onClick: function() { gridViewerStartIdxRef.current = _gvi; setGridViewerSource("search"); setGridViewerActiveIdx(_gvi); setGridViewerOpen(true); }, style: { position: "relative", aspectRatio: "0.68", background: "#000", borderRadius: 0, overflow: "hidden", cursor: "pointer" } },
-                  thumb ? React.createElement("img", { src: thumb, alt: "", style: { width: "100%", height: "100%", objectFit: "cover", background: "#FFFFFF" }, loading: "lazy", decoding: "async" }) : React.createElement("div", { style: { width: "100%", height: "100%", background: "#222" } }),
+                  thumb ? React.createElement("img", { src: thumb, alt: "", style: { width: "100%", height: "100%", objectFit: "cover", background: "var(--bg)" }, loading: "lazy", decoding: "async" }) : React.createElement("div", { style: { width: "100%", height: "100%", background: "#222" } }),
                   isVideo && React.createElement("div", { style: { position: "absolute", top: 5, right: 5, background: "rgba(0,0,0,0.55)", borderRadius: 4, width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center" } },
                     React.createElement("svg", { width: 12, height: 12, viewBox: "0 0 24 24", fill: "none", "aria-hidden": true }, React.createElement("path", { d: "M10 5.45C9.15 4.98 8 5.6 8 6.55v10.9c0 .95 1.15 1.57 2 1.1l9.55-5.55c.95-.55.95-1.95 0-2.5L10 5.45Z", fill: "#fff" }))),
                   React.createElement("div", { style: { position: "absolute", bottom: 6, left: 6, display: "flex", alignItems: "center", gap: 5 } },
@@ -30362,7 +30362,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                     : searchHashtags.length === 0
                       ? renderSearchEmptyState("No hashtags found")
                       : searchHashtags.map(function(h) { return React.createElement("div", { key: h.tag, style: { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", cursor: "pointer", borderBottom: "1px solid var(--border)" } },
-                          React.createElement("div", { style: { width: 44, height: 44, borderRadius: "50%", background: "#F5F5F5", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--text)" } }, "#"),
+                          React.createElement("div", { style: { width: 44, height: 44, borderRadius: "50%", background: "var(--input-bg)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, color: "var(--text)" } }, "#"),
                           React.createElement("div", null, React.createElement("div", { style: { fontWeight: 700, fontSize: 14, color: "var(--text)" } }, "#" + h.tag), h.count ? React.createElement("div", { style: { fontSize: 12, color: "var(--muted)" } }, h.count + " reels") : null)); })))),
 
 
