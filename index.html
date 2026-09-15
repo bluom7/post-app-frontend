@@ -16,7 +16,7 @@
 
 <script>
 // Apply saved theme immediately before React renders — prevents white flash on reload
-(function(){ var t=localStorage.getItem('post_theme'); if(t==='dark') document.documentElement.setAttribute('data-theme','dark'); })();
+(function(){ var t=localStorage.getItem('post_theme'); var dark = t === 'dark'; if(dark) document.documentElement.setAttribute('data-theme','dark'); var meta = document.querySelector('meta[name=\"theme-color\"]'); if(meta) meta.setAttribute('content', dark ? '#0f0f0f' : '#F7F8FA'); })();
 </script>
 <style>
 .reel-effects-scroll { scrollbar-width: none; -ms-overflow-style: none; }
@@ -604,6 +604,8 @@ function useReelSync(setter) {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('post_theme', theme);
+  var meta = document.querySelector('meta[name=\"theme-color\"]');
+  if (meta) meta.setAttribute('content', theme === 'dark' ? '#0f0f0f' : '#F7F8FA');
   window.dispatchEvent(new CustomEvent('post-theme-change', { detail: { theme } }));
 }
 
@@ -13088,7 +13090,7 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
       ? "This is the official account of Post App. We’re showing information about this account to help keep our community authentic."
       : "To help keep our community authentic, we’re showing information about profiles on Post App. See why this information is important.";
 
-    const accountSkeletonStyle = { background: "linear-gradient(90deg, #f0f1f4 25%, #f8f9fb 50%, #f0f1f4 75%)", backgroundSize: "200% 100%", animation: "accountInfoSkeletonShimmer 1.35s ease-in-out infinite" };
+    const accountSkeletonStyle = { background: "linear-gradient(90deg, var(--input-bg) 25%, var(--card-bg) 50%, var(--input-bg) 75%)", backgroundSize: "200% 100%", animation: "accountInfoSkeletonShimmer 1.35s ease-in-out infinite" };
     const skeletonLine = (width, height, extra) => React.createElement("div", { style: Object.assign({}, accountSkeletonStyle, { width: width, height: height, borderRadius: 6 }, extra || {}) });
     const accountLoadingView = React.createElement(React.Fragment, null,
       React.createElement("style", null, "@keyframes accountInfoSkeletonShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }"),
@@ -13104,38 +13106,38 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
             React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", gap: 7 } }, skeletonLine(i === 0 ? 105 : i === 1 ? 135 : 82, 17, { borderRadius: 5 }), skeletonLine(i === 0 ? 145 : i === 1 ? 175 : 135, 13, { borderRadius: 5 }))
           ); })
         ),
-        React.createElement("div", { style: { width: "100%", maxWidth: 430, margin: "34px auto 0", paddingTop: 21, borderTop: "1px solid #e4e4e4", display: "flex", flexDirection: "column", alignItems: "center", gap: 9 } },
+        React.createElement("div", { style: { width: "100%", maxWidth: 430, margin: "34px auto 0", paddingTop: 21, borderTop: "1px solid var(--border)", display: "flex", flexDirection: "column", alignItems: "center", gap: 9 } },
           skeletonLine("96%", 12), skeletonLine("90%", 12), skeletonLine("58%", 12)
         )
       )
     );
 
-    return React.createElement("div", { className: "account-info-screen", style: { position: "fixed", inset: 0, zIndex: 10000, background: "#fff", color: "#111", display: "flex", flexDirection: "column", overflow: "hidden" } },
-      React.createElement("div", { style: { position: "relative", background: "#FFFFFF", padding: "10px 20px 0", boxSizing: "border-box" } },
+    return React.createElement("div", { className: "account-info-screen", style: { position: "fixed", inset: 0, zIndex: 10000, background: "var(--bg)", color: "var(--text)", display: "flex", flexDirection: "column", overflow: "hidden" } },
+      React.createElement("div", { style: { position: "relative", background: "var(--nav-bg)", padding: "10px 20px 0", boxSizing: "border-box" } },
         React.createElement("div", { style: { position: "relative", display: "flex", alignItems: "center", minHeight: 58 } },
-          React.createElement("button", { onClick: onClose, "aria-label": "Back", style: { width: 46, height: 46, marginLeft: 0, border: "none", borderRadius: 13, background: "#F5F5F5", color: "#111111", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, cursor: "pointer" } }, React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
-          React.createElement("div", { style: { position: "absolute", left: "50%", transform: "translateX(-50%)", color: "#111111", fontSize: 20, lineHeight: 1.12, fontWeight: 800, textAlign: "center", letterSpacing: "-0.25px", whiteSpace: "nowrap" } }, "About this account")
+          React.createElement("button", { onClick: onClose, "aria-label": "Back", style: { width: 46, height: 46, marginLeft: 0, border: "none", borderRadius: 13, background: "var(--input-bg)", color: "var(--text)", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, cursor: "pointer" } }, React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
+          React.createElement("div", { style: { position: "absolute", left: "50%", transform: "translateX(-50%)", color: "var(--text)", fontSize: 20, lineHeight: 1.12, fontWeight: 800, textAlign: "center", letterSpacing: "-0.25px", whiteSpace: "nowrap" } }, "About this account")
         )
       ),
-      React.createElement("div", { style: { flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none", background: "#fff", padding: "30px 22px 42px" } },
+      React.createElement("div", { style: { flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none", background: "var(--bg)", padding: "30px 22px 42px" } },
         loading ? accountLoadingView :
         React.createElement(React.Fragment, null,
           React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" } },
-            React.createElement("div", { style: { width: 86, height: 86, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: (profile && profile.avatar_bg) || "#e9eef5", color: "#111", fontSize: 33, fontWeight: 800, border: "1px solid #e0e0e0" } }, avatar ? React.createElement("img", { src: avatar, alt: "", style: { width: "100%", height: "100%", objectFit: "cover" } }) : avatarLetter),
+            React.createElement("div", { style: { width: 86, height: 86, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: (profile && profile.avatar_bg) || "var(--input-bg)", color: "var(--text)", fontSize: 33, fontWeight: 800, border: "1px solid var(--border)" } }, avatar ? React.createElement("img", { src: avatar, alt: "", style: { width: "100%", height: "100%", objectFit: "cover" } }) : avatarLetter),
             React.createElement("div", { style: { marginTop: 14, display: "flex", alignItems: "center", gap: 5, fontSize: 20, fontWeight: 800 } }, displayName, verified && React.createElement(VerifiedBadge, { size: 18 })),
-                        React.createElement("p", { style: { maxWidth: 390, margin: "14px auto 0", fontSize: 14, lineHeight: 1.55, color: "#222" } }, introText),
-          isOfficial && React.createElement("div", { style: { width: "100%", maxWidth: 390, marginTop: 18, color: "#111", textAlign: "center", fontSize: 15, fontWeight: 700, lineHeight: 1.45 } },
+                        React.createElement("p", { style: { maxWidth: 390, margin: "14px auto 0", fontSize: 14, lineHeight: 1.55, color: "var(--text)" } }, introText),
+          isOfficial && React.createElement("div", { style: { width: "100%", maxWidth: 390, marginTop: 18, color: "var(--text)", textAlign: "center", fontSize: 15, fontWeight: 700, lineHeight: 1.45 } },
             React.createElement("div", null, "Official Post App account"),
             React.createElement("div", { style: { marginTop: 4 } }, "This account is managed by the official Post App team."))
           ),
           React.createElement("div", { style: { width: "100%", margin: "40px 0 0", display: "flex", flexDirection: "column", gap: 25 } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14 } }, icon("calendar"), React.createElement("div", null, React.createElement("div", { style: { fontSize: 19, lineHeight: 1.25, fontWeight: 600 } }, "Date joined"), React.createElement("div", { style: { fontSize: 16, lineHeight: 1.35, marginTop: 2, fontWeight: 400 } }, monthYear(profile && (profile.created_at || profile.joined_at))))),
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14 } }, icon("location"), React.createElement("div", null, React.createElement("div", { style: { fontSize: 19, lineHeight: 1.25, fontWeight: 600 } }, "Account based in"), React.createElement("div", { style: { fontSize: 16, lineHeight: 1.35, marginTop: 2, fontWeight: 400 } }, location))),
-            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14 } }, icon("verified"), React.createElement("div", null, React.createElement("div", { style: { fontSize: 19, lineHeight: 1.25, fontWeight: 600 } }, "Verified"), React.createElement("div", { style: { fontSize: 16, lineHeight: 1.35, marginTop: 2, color: verified ? "#111" : "#777", fontWeight: 400 } }, verified ? fullDate(verifiedAt) : "Not verified")))
+            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14 } }, icon("verified"), React.createElement("div", null, React.createElement("div", { style: { fontSize: 19, lineHeight: 1.25, fontWeight: 600 } }, "Verified"), React.createElement("div", { style: { fontSize: 16, lineHeight: 1.35, marginTop: 2, color: verified ? "var(--text)" : "var(--muted)", fontWeight: 400 } }, verified ? fullDate(verifiedAt) : "Not verified")))
           ),
-          React.createElement("div", { style: { maxWidth: 430, margin: "34px auto 0", paddingTop: 21, fontSize: 14, lineHeight: 1.55, color: "#666" } }, verified ? "The verified badge means this account has been verified based on information or documents provided by the account owner." : "This account has not been verified on Post App. Account information shown here comes from the account profile."),
+          React.createElement("div", { style: { maxWidth: 430, margin: "34px auto 0", paddingTop: 21, fontSize: 14, lineHeight: 1.55, color: "var(--muted)" } }, verified ? "The verified badge means this account has been verified based on information or documents provided by the account owner." : "This account has not been verified on Post App. Account information shown here comes from the account profile."),
           error && React.createElement("div", { style: { maxWidth: 430, margin: "18px auto 0", fontSize: 13, color: "var(--muted, #777)" } }, "Some account details could not be loaded. Showing the information available from this post."),
-          isOfficial && React.createElement("div", { style: { width: "100%", marginTop: 26, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 6, color: "#111", fontSize: 14, fontWeight: 800 } }, "Team Post App", React.createElement(HeartIcon, { color: COLORS.yellow, size: 19 }))
+          isOfficial && React.createElement("div", { style: { width: "100%", marginTop: 26, display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 6, color: "var(--text)", fontSize: 14, fontWeight: 800 } }, "Team Post App", React.createElement(HeartIcon, { color: COLORS.yellow, size: 19 }))
         )
       )
     );
