@@ -3541,6 +3541,9 @@ const POST_DRAFT_DB_NAME="post-app-drafts";const POST_DRAFT_DB_VERSION=2;
 function openPostDraftDb(){return new Promise(function(resolve,reject){if(!window.indexedDB){reject(new Error("Draft storage unavailable"));return;}const q=window.indexedDB.open(POST_DRAFT_DB_NAME,POST_DRAFT_DB_VERSION);q.onupgradeneeded=function(){const db=q.result;if(!db.objectStoreNames.contains("reels"))db.createObjectStore("reels",{keyPath:"id"});if(!db.objectStoreNames.contains("posts"))db.createObjectStore("posts",{keyPath:"id"});};q.onsuccess=function(){resolve(q.result)};q.onerror=function(){reject(q.error)};});}
 function putPostDraftRecord(store,draft){return openPostDraftDb().then(function(db){return new Promise(function(resolve,reject){const tx=db.transaction(store,"readwrite");tx.objectStore(store).put(draft);tx.oncomplete=function(){db.close();resolve(draft)};tx.onerror=function(){db.close();reject(tx.error)};});});}
 function getPostDraftRecords(store,ownerId){return openPostDraftDb().then(function(db){return new Promise(function(resolve,reject){const q=db.transaction(store,"readonly").objectStore(store).getAll();q.onsuccess=function(){const rows=(q.result||[]).filter(function(d){return String(d.ownerId||"")===String(ownerId||"")});db.close();resolve(rows)};q.onerror=function(){db.close();reject(q.error)};});});}
+function deletePostDraftRecord(store,id){return openPostDraftDb().then(function(db){return new Promise(function(resolve,reject){const tx=db.transaction(store,"readwrite");tx.objectStore(store).delete(id);tx.oncomplete=function(){db.close();resolve(true)};tx.onerror=function(){db.close();reject(tx.error)};});});}
+function sortSavedDrafts(rows){return (rows||[]).slice().sort(function(a,b){var ap=a&&a.pinned?1:0,bp=b&&b.pinned?1:0;return bp-ap||Number(b.savedAt||0)-Number(a.savedAt||0);});}
+function savedDraftTitle(d){return String((d&&d.title)||(d&&d.name)||((d&&d.text)||((d&&d.caption)||"")).trim()||((d&&d.kind)==="reel"?"Reel draft":"Post draft")).trim()||((d&&d.kind)==="reel"?"Reel draft":"Post draft");}
 function savedDraftDate(v){try{
   if(!v)return "";
   var date=new Date(v),now=new Date();
@@ -3549,24 +3552,14 @@ function savedDraftDate(v){try{
   return sameDay?"Created today, "+time:"Created "+date.toLocaleDateString([],{month:"short",day:"numeric"})+", "+time;
 }catch(_){return""}}
 function draftVideoDuration(d){
-  var value=Number(d&&(d.video_duration||d.videoDuration||d.pendingVideoDuration||d.recordTime||0));
-  if(!Number.isFinite(value)||value<=0)return "";
-  var total=Math.max(0,Math.round(value)),minutes=Math.floor(total/60),seconds=String(total%60).padStart(2,"0");
-  return minutes+":"+seconds;
-}
-function draftVideoSize(d){
-  var bytes=Number(d&&(d.video_file_size||d.videoSize||(d.video_blob&&d.video_blob.size)||(d.media&&d.media.size)||0));
-  if(!Number.isFinite(bytes)||bytes<=0)return "";
-  var units=["B","KB","MB","GB"],index=0,size=bytes;
-  while(size>=1024&&index<units.length-1){size/=1024;index++;}
-  var digits=index===0?0:(size>=100?0:size>=10?1:2);
-  return size.toFixed(digits).replace(/\.0+$/,"")+" "+units[index];
-}
-function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
+  var value=Numberfunction SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
   const [drafts, setDrafts] = React.useState([]);
   const [srcs, setSrcs] = React.useState({});
   const [loading, setLoading] = React.useState(true);
   const [showDraftInfo, setShowDraftInfo] = React.useState(false);
+  const [draftMenu, setDraftMenu] = React.useState(null);
+  const [renamingDraftId, setRenamingDraftId] = React.useState(null);
+  const [renameValue, setRenameValue] = React.useState("");
 
   React.useEffect(function() {
     let live = true;
@@ -3577,9 +3570,7 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
       if (!live) return;
       const posts = records[0].map(function(d) { return Object.assign({}, d, {kind: "post"}); });
       const reels = records[1].map(function(d) { return Object.assign({}, d, {kind: "reel"}); });
-      setDrafts(posts.concat(reels).sort(function(a, b) {
-        return Number(b.savedAt || 0) - Number(a.savedAt || 0);
-      }));
+      setDrafts(sortSavedDrafts(posts.concat(reels)));
     }).catch(function(e) {
       if (live && showToast) showToast(e.message || "Could not load drafts", "#FF1744");
     }).finally(function() {
@@ -3607,6 +3598,64 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
     };
   }, [drafts]);
 
+  const draftStore = function(d) { return d && d.kind === "reel" ? "reels" : "posts"; };
+  const saveDraftRecord = function(d, patch) {
+    var record = Object.assign({}, d, patch || {});
+    delete record.kind;
+    return putPostDraftRecord(draftStore(d), record);
+  };
+  const openDraftMenu = function(d, event) {
+    var rect = event.currentTarget.getBoundingClientRect();
+    var menuHeight = 270;
+    setDraftMenu({draft: d, top: Math.max(12, Math.min(rect.bottom + 8, window.innerHeight - menuHeight - 12)), right: Math.max(12, window.innerWidth - rect.right)});
+  };
+  const startDraftRename = function(d) {
+    setDraftMenu(null);
+    setRenamingDraftId(d.id);
+    setRenameValue(savedDraftTitle(d));
+  };
+  const cancelDraftRename = function() { setRenamingDraftId(null); setRenameValue(""); };
+  const commitDraftRename = function(d) {
+    var nextTitle = renameValue.trim();
+    if (!nextTitle) { if (showToast) showToast("Enter a name for this draft", "#FF1744"); return; }
+    saveDraftRecord(d, {title: nextTitle}).then(function() {
+      setDrafts(function(prev) { return prev.map(function(item) { return item.id === d.id ? Object.assign({}, item, {title: nextTitle}) : item; }); });
+      cancelDraftRename();
+      if (showToast) showToast("Draft renamed", "#22C55E");
+    }).catch(function() { if (showToast) showToast("Could not rename draft", "#FF1744"); });
+  };
+  const toggleDraftPin = function(d) {
+    var nextPinned = !d.pinned;
+    saveDraftRecord(d, {pinned: nextPinned}).then(function() {
+      setDrafts(function(prev) { return sortSavedDrafts(prev.map(function(item) { return item.id === d.id ? Object.assign({}, item, {pinned: nextPinned}) : item; })); });
+      setDraftMenu(null);
+      if (showToast) showToast(nextPinned ? "Draft pinned" : "Draft unpinned", "#22C55E");
+    }).catch(function() { if (showToast) showToast("Could not update pin", "#FF1744"); });
+  };
+  const deleteDraft = function(d) {
+    if (window.confirm("Delete this draft permanently?")) {
+      deletePostDraftRecord(draftStore(d), d.id).then(function() {
+        setDrafts(function(prev) { return prev.filter(function(item) { return item.id !== d.id; }); });
+        setDraftMenu(null);
+        if (showToast) showToast("Draft deleted", "#22C55E");
+      }).catch(function() { if (showToast) showToast("Could not delete draft", "#FF1744"); });
+    }
+  };
+  const openDraftEdits = function(d) {
+    setDraftMenu(null);
+    if (d.kind === "reel") { if (onEditReel) onEditReel(d); } else if (onEditPost) onEditPost(d);
+  };
+  const draftMenuIcon = function(type, color) {
+    var children = type === "pin"
+      ? [React.createElement("path", {key: "a", d: "m14 4 6 6-4 1-5 5-1 4-3 3-1-1 3-3 4-1 5-5 1-4Z"}), React.createElement("path", {key: "b", d: "m9 15-4-4"})]
+      : type === "rename"
+        ? [React.createElement("rect", {key: "a", x: 4, y: 3, width: 16, height: 18, rx: 3}), React.createElement("path", {key: "b", d: "M9 8h6M9 12h6M9 16h4"})]
+        : type === "edits"
+          ? [React.createElement("path", {key: "a", d: "M8 3H6a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h2M16 3h2a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3h-2"}), React.createElement("path", {key: "b", d: "M9 12h6"})]
+          : [React.createElement("path", {key: "a", d: "M4 7h16M10 11v6M14 11v6M9 7V4h6v3M6 7l1 14h10l1-14"})];
+    return React.createElement("svg", {width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: color || "currentColor", strokeWidth: 1.9, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true"}, children);
+  };
+
   return React.createElement("div", {
     style: {position: "fixed", inset: 0, zIndex: 220, background: "var(--bg)", color: "var(--text)", display: "flex", flexDirection: "column"}
   },
@@ -3626,6 +3675,14 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
           React.createElement("button", {onClick: function() { setShowDraftInfo(false); }, "aria-label": "Close information", style: {border: 0, background: "none", color: "#555", fontSize: 22, lineHeight: 1, padding: 1, cursor: "pointer"}}, "×")
         ),
         React.createElement("p", {style: {margin: 0, fontSize: 13, lineHeight: 1.45, color: "#4b4b4b"}}, "Your saved Post and Reel drafts appear here. Photo or video thumbnails, save date and time, and the actual duration and file size of videos are shown here.")
+      )
+    ),
+    draftMenu && React.createElement("div", {role: "presentation", onClick: function() { setDraftMenu(null); }, style: {position: "fixed", inset: 0, zIndex: 250, background: "transparent"}},
+      React.createElement("div", {role: "menu", "aria-label": "Draft actions", onClick: function(event) { event.stopPropagation(); }, style: {position: "fixed", top: draftMenu.top, right: draftMenu.right, width: 250, boxSizing: "border-box", background: "#262626", color: "#fff", borderRadius: 18, padding: "8px 0", boxShadow: "0 10px 30px rgba(0,0,0,0.28)"}},
+        React.createElement("button", {role: "menuitem", onClick: function() { toggleDraftPin(draftMenu.draft); }, style: {width: "100%", height: 54, display: "flex", alignItems: "center", gap: 16, padding: "0 20px", border: 0, background: "none", color: "#fff", fontSize: 17, cursor: "pointer", textAlign: "left"}}, draftMenuIcon("pin", "#fff"), React.createElement("span", null, draftMenu.draft.pinned ? "Unpin" : "Pin")),
+        React.createElement("button", {role: "menuitem", onClick: function() { startDraftRename(draftMenu.draft); }, style: {width: "100%", height: 54, display: "flex", alignItems: "center", gap: 16, padding: "0 20px", border: 0, background: "none", color: "#fff", fontSize: 17, cursor: "pointer", textAlign: "left"}}, draftMenuIcon("rename", "#fff"), React.createElement("span", null, "Rename")),
+        React.createElement("button", {role: "menuitem", onClick: function() { openDraftEdits(draftMenu.draft); }, style: {width: "100%", height: 54, display: "flex", alignItems: "center", gap: 16, padding: "0 20px", border: 0, background: "none", color: "#fff", fontSize: 17, cursor: "pointer", textAlign: "left"}}, draftMenuIcon("edits", "#fff"), React.createElement("span", null, "Open in Edits")),
+        React.createElement("button", {role: "menuitem", onClick: function() { deleteDraft(draftMenu.draft); }, style: {width: "100%", height: 54, display: "flex", alignItems: "center", gap: 16, padding: "0 20px", border: 0, background: "none", color: "#ff375f", fontSize: 17, cursor: "pointer", textAlign: "left"}}, draftMenuIcon("delete", "#ff375f"), React.createElement("span", null, "Delete"))
       )
     ),
     React.createElement("div", {className: "saved-drafts-scroll", style: {flex: 1, overflowY: "auto", padding: "8px 16px 32px"}},
@@ -3648,12 +3705,27 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
                     : React.createElement("video", {src: media, muted: true, playsInline: true, preload: "metadata", style: {width: 114, height: 177, borderRadius: 17, objectFit: "cover", background: "#111"}})
                   : React.createElement("div", {style: {width: 114, height: 177, borderRadius: 17, background: "var(--input-bg)"}}),
                 React.createElement("div", {style: {flex: 1, minWidth: 0}},
-                  React.createElement("b", {style: {display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}, (d.text || d.caption || "").trim() || (d.kind === "reel" ? "Reel draft" : "Post draft")),
+                  renamingDraftId === d.id
+                    ? React.createElement("form", {onSubmit: function(event) { event.preventDefault(); commitDraftRename(d); }, style: {display: "flex", alignItems: "center", gap: 6}},
+                        React.createElement("input", {autoFocus: true, value: renameValue, onChange: function(event) { setRenameValue(event.target.value); }, style: {minWidth: 0, flex: 1, height: 30, border: "1px solid var(--border)", borderRadius: 7, padding: "0 8px", color: "var(--text)", background: "var(--input-bg)", fontSize: 15, fontWeight: 700}}),
+                        React.createElement("button", {type: "submit", "aria-label": "Save name", style: {border: 0, background: "#22C55E", color: "#fff", borderRadius: 6, width: 28, height: 28, cursor: "pointer", fontWeight: 800}}, "✓"),
+                        React.createElement("button", {type: "button", "aria-label": "Cancel rename", onClick: cancelDraftRename, style: {border: 0, background: "var(--input-bg)", color: "var(--text)", borderRadius: 6, width: 28, height: 28, cursor: "pointer", fontWeight: 800}}, "×")
+                      )
+                    : React.createElement("div", {style: {display: "flex", alignItems: "center", gap: 6, minWidth: 0}},
+                        d.pinned && React.createElement("span", {title: "Pinned draft", style: {display: "flex", flexShrink: 0}}, draftMenuIcon("pin", "var(--text)")),
+                        React.createElement("b", {style: {display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}, savedDraftTitle(d))
+                      ),
                   React.createElement("small", {style: {display: "block", color: "var(--muted)", marginTop: 6}}, savedDraftDate(d.savedAt)),
                   React.createElement("small", {style: {color: "var(--muted)"}}, (d.kind === "reel" ? "Reel" : "Post") + " · #" + String(draftIndex + 1)),
                   (!photo && (media || d.video_blob || d.media)) && React.createElement("small", {style: {display: "block", color: "var(--muted)", marginTop: 4, fontVariantNumeric: "tabular-nums"}}, [draftVideoDuration(d), draftVideoSize(d)].filter(Boolean).join("  | "))
                 ),
-                (d.kind === "post" || d.kind === "reel") && React.createElement("button", {"aria-label": "Edit draft", onClick: function() { if (d.kind === "reel") { if (onEditReel) onEditReel(d); } else { onEditPost(d); } }, style: {border: 0, background: "none", color: "var(--text)", width: 24, height: 24, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer"}}, React.createElement("svg", {width: 24, height: 24, viewBox: "0 0 24 24", fill: "currentColor", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false"}, React.createElement("path", {d: "M3.65 19.55 5.2 13.4 14.05 4.65l5.1 5.1-8.8 8.8-5.9 1.6a.7.7 0 0 1-.8-.6Z"}), React.createElement("path", {d: "m14.05 4.65 5.1 5.1"}))), React.createElement("span", {role: "img", "aria-label": "Draft options", style: {width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text)"}}, React.createElement("svg", {width: 24, height: 24, viewBox: "0 0 24 24", fill: "currentColor", "aria-hidden": "true", focusable: "false"}, React.createElement("rect", {x: 5.25, y: 4.25, width: 3.5, height: 3.5, rx: 1.05}), React.createElement("rect", {x: 5.25, y: 10.25, width: 3.5, height: 3.5, rx: 1.05}), React.createElement("rect", {x: 5.25, y: 16.25, width: 3.5, height: 3.5, rx: 1.05})))
+                (d.kind === "post" || d.kind === "reel") && React.createElement("button", {"aria-label": "Edit draft", onClick: function() { openDraftEdits(d); }, style: {border: 0, background: "none", color: "var(--text)", width: 24, height: 24, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer"}}, React.createElement("svg", {width: 24, height: 24, viewBox: "0 0 24 24", fill: "currentColor", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false"}, React.createElement("path", {d: "M3.65 19.55 5.2 13.4 14.05 4.65l5.1 5.1-8.8 8.8-5.9 1.6-2.1-.6a.7.7 0 0 1-.8-.6Z"}), React.createElement("path", {d: "m14.05 4.65 5.1 5.1"}))), React.createElement("button", {"aria-label": "Draft options", onClick: function(event) { event.stopPropagation(); openDraftMenu(d, event); }, style: {width: 24, height: 24, padding: 0, border: 0, background: "none", color: "var(--text)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer"}}, React.createElement("svg", {width: 24, height: 24, viewBox: "0 0 24 24", fill: "currentColor", "aria-hidden": "true", focusable: "false"}, React.createElement("rect", {x: 5.25, y: 4.25, width: 3.5, height: 3.5, rx: 1.05}), React.createElement("rect", {x: 5.25, y: 10.25, width: 3.5, height: 3.5, rx: 1.05}), React.createElement("rect", {x: 5.25, y: 16.25, width: 3.5, height: 3.5, rx: 1.05})))
+              );
+            })
+    )
+  );
+}
+6a.7.7 0 0 1-.8-.6Z"}), React.createElement("path", {d: "m14.05 4.65 5.1 5.1"}))), React.createElement("span", {role: "img", "aria-label": "Draft options", style: {width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text)"}}, React.createElement("svg", {width: 24, height: 24, viewBox: "0 0 24 24", fill: "currentColor", "aria-hidden": "true", focusable: "false"}, React.createElement("rect", {x: 5.25, y: 4.25, width: 3.5, height: 3.5, rx: 1.05}), React.createElement("rect", {x: 5.25, y: 10.25, width: 3.5, height: 3.5, rx: 1.05}), React.createElement("rect", {x: 5.25, y: 16.25, width: 3.5, height: 3.5, rx: 1.05})))
               );
             })
     )
