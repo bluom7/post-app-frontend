@@ -2709,7 +2709,7 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
     className: "verification-modal-scroll",
     style: { position: "fixed", inset: 0, height: "100dvh", background: "var(--bg)", color: "var(--text)", zIndex: 9999, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none", msOverflowStyle: "none", boxSizing: "border-box" }
   },
-    React.createElement("style", null, ".verification-modal-scroll::-webkit-scrollbar{display:none;width:0;height:0}.verification-modal-scroll{scrollbar-width:none;-ms-overflow-style:none}"),
+    React.createElement("style", null, ".verification-modal-scroll::-webkit-scrollbar{display:none;width:0;height:0}.verification-modal-scroll{scrollbar-width:none;-ms-overflow-style:none}.verification-content-panel{background:transparent!important;border-radius:0!important;box-shadow:none!important}"),
     React.createElement("div", { style: { width: "100%", maxWidth: 560, minHeight: "100%", margin: "0 auto", boxSizing: "border-box", padding: "0 0 44px" } },
       React.createElement("div", { style: { position: "relative", background: "var(--bg)", padding: "10px 20px 0", boxSizing: "border-box" } },
         React.createElement("div", { style: { position: "relative", display: "flex", alignItems: "center", minHeight: 58 } },
@@ -2717,7 +2717,7 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
           React.createElement("div", { style: { position: "absolute", left: "50%", transform: "translateX(-50%)", color: "var(--text)", fontSize: 20, lineHeight: 1.12, fontWeight: 800, textAlign: "center", letterSpacing: "-0.25px", whiteSpace: "nowrap" } }, screen === "benefits" ? "Why verify" : "Apply")
         )
       ),
-      screen === "benefits" ? React.createElement("div", { style: { marginTop: 24, border: "none", borderRadius: 0, background: "transparent", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "none" } },
+      screen === "benefits" ? React.createElement("div", { className: "verification-content-panel", style: { marginTop: 24, border: "none", borderRadius: 0, background: "transparent", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "none" } },
         React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 27 } },
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#F4BD16" } }),
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#16A568" } }),
@@ -2735,7 +2735,7 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
           benefit("sparkle", "Early access to new POST App features")
         ),
         React.createElement("button", { onClick: () => setScreen("apply"), style: { marginTop: 30, marginLeft: "auto", display: "block", width: "274px", maxWidth: "100%", padding: "16px 26px", minHeight: 62, border: "none", borderRadius: 32, background: "#0D9FF3", color: "#FFFFFF", fontSize: 16, fontWeight: 800, letterSpacing: "0.25px", cursor: "pointer", boxShadow: "0 3px 0 rgba(0,0,0,0.08)" } }, "Apply for verification")
-       ) : React.createElement("div", { style: { marginTop: 0, border: "none", borderRadius: 0, background: "transparent", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "none" } },
+       ) : React.createElement("div", { className: "verification-content-panel", style: { marginTop: 0, border: "none", borderRadius: 0, background: "transparent", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "none" } },
         React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 26 } },
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#F4BD16" } }),
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#16A568" } }),
