@@ -3538,7 +3538,7 @@ function openPostDraftDb(){return new Promise(function(resolve,reject){if(!windo
 function putPostDraftRecord(store,draft){return openPostDraftDb().then(function(db){return new Promise(function(resolve,reject){const tx=db.transaction(store,"readwrite");tx.objectStore(store).put(draft);tx.oncomplete=function(){db.close();resolve(draft)};tx.onerror=function(){db.close();reject(tx.error)};});});}
 function getPostDraftRecords(store,ownerId){return openPostDraftDb().then(function(db){return new Promise(function(resolve,reject){const q=db.transaction(store,"readonly").objectStore(store).getAll();q.onsuccess=function(){const rows=(q.result||[]).filter(function(d){return String(d.ownerId||"")===String(ownerId||"")});db.close();resolve(rows)};q.onerror=function(){db.close();reject(q.error)};});});}
 function savedDraftDate(v){try{return v?new Date(v).toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):""}catch(_){return""}}
-function SavedDraftsScreen({user,onBack,onEditPost,showToast}) {
+function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
   const [drafts, setDrafts] = React.useState([]);
   const [srcs, setSrcs] = React.useState({});
   const [loading, setLoading] = React.useState(true);
@@ -3612,7 +3612,7 @@ function SavedDraftsScreen({user,onBack,onEditPost,showToast}) {
                   React.createElement("small", {style: {display: "block", color: "var(--muted)", marginTop: 6}}, savedDraftDate(d.savedAt)),
                   React.createElement("small", {style: {color: "var(--muted)"}}, d.kind === "reel" ? "Reel" : "Post")
                 ),
-                d.kind === "post" && React.createElement("button", {onClick: function() { onEditPost(d); }, style: {border: 0, background: "none", color: "var(--text)", fontSize: 25, cursor: "pointer"}}, "✎")
+                (d.kind === "post" || d.kind === "reel") && React.createElement("button", {onClick: function() { if (d.kind === "reel") { if (onEditReel) onEditReel(d); } else { onEditPost(d); } }, style: {border: 0, background: "none", color: "var(--text)", fontSize: 25, cursor: "pointer"}}, "✎")
               );
             })
     )
@@ -3931,6 +3931,7 @@ function PostApp() {
   const [joinWorldOpen, setJoinWorldOpen] = useState(false);
   const [reelComposeText, setReelComposeText] = useState(null);
   const [postDraftToEdit,setPostDraftToEdit]=useState(null);
+  const [reelDraftToEdit,setReelDraftToEdit]=useState(null);
   const [worldLiveCount, setWorldLiveCount] = useState(0);
   const prevUnreadRef = React.useRef(0);
   // Stores which tab to open when screen becomes "app" (set by push notification click)
@@ -4577,7 +4578,7 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
         } else { setActiveCall(null); showToast("Could not start call"); }
       } catch(e) { setActiveCall(null); showToast("Call failed: " + (e.message || "")); }
     }
-  }), tab === "reels" && /*#__PURE__*/React.createElement(ReelsTab, { token, user, showToast, onViewProfile, onViewAccountInfo, onBack: () => setTab("home"), setTab: setTab, onOpenCompose: text => { setReelComposeText(text); setTab("home"); } }), tab === "drafts" && React.createElement(SavedDraftsScreen, { user: user, showToast: showToast, onBack: () => setTab("home"), onEditPost: draft => { setPostDraftToEdit(draft); setTab("home"); } }), tab === "profile" && /*#__PURE__*/React.createElement(ProfileTab, {
+  }), tab === "reels" && /*#__PURE__*/React.createElement(ReelsTab, { token, user, showToast, onViewProfile, onViewAccountInfo, onBack: () => setTab("home"), setTab: setTab, onOpenCompose: text => { setReelComposeText(text); setTab("home"); }, reelDraft: reelDraftToEdit, onReelDraftHandled: () => setReelDraftToEdit(null) }), tab === "drafts" && React.createElement(SavedDraftsScreen, { user: user, showToast: showToast, onBack: () => setTab("home"), onEditPost: draft => { setPostDraftToEdit(draft); setTab("home"); }, onEditReel: draft => { setReelDraftToEdit(draft); setTab("reels"); } }), tab === "profile" && /*#__PURE__*/React.createElement(ProfileTab, {
     token: token,
     user: user,
     setUser: setUser,
@@ -10767,7 +10768,7 @@ function ComposeModal({
     setPendingVideoObjectUrl(url || null);
     if (previous && previous !== url) deferRevokeVideoUrl(previous);
   };
-  React.useEffect(() => { if (!initialDraft) return; setText(initialDraft.text || ""); setPhotoUrls(initialDraft.photo_urls || initialDraft.photoUrls || []); setLocation(initialDraft.location || ""); setFeeling(initialDraft.feeling || ""); setTaggedUsers(initialDraft.taggedUsers || []); setAudience(initialDraft.audience || {type:"public",users:[]}); setPhotoAudience(initialDraft.photoAudience || "everyone"); setCommentsEnabled(initialDraft.commentsEnabled !== false); setAltText(initialDraft.altText || ""); setVideoUrl(initialDraft.video_url || null); setVideoDuration(Number(initialDraft.video_duration || 0)); const blob=initialDraft.video_blob; if(blob instanceof Blob){const f=new File([blob],initialDraft.video_file_name||"draft-video.mp4",{type:blob.type||"video/mp4"});setPendingVideoFile(f);replaceLocalVideoPreview(URL.createObjectURL(f));setPendingVideoDuration(Number(initialDraft.pendingVideoDuration||initialDraft.video_duration||0));} }, [initialDraft && initialDraft.id]);
+  React.useEffect(() => { if (!initialDraft) return; setText(initialDraft.text || ""); setPhotoUrls(initialDraft.photo_urls || initialDraft.photoUrls || []); setLocation(initialDraft.location || ""); setFeeling(initialDraft.feeling || ""); setTaggedUsers(initialDraft.taggedUsers || []); setAudience(initialDraft.audience || {type:"public",users:[]}); setPhotoAudience(initialDraft.photoAudience || "everyone"); setCommentsEnabled(initialDraft.commentsEnabled !== false); setAltText(initialDraft.altText || ""); setGifUrl(initialDraft.gifUrl || null); setStickerOverlays(initialDraft.stickerOverlays || []); setEmojiOverlays(initialDraft.emojiOverlays || []); setSelectedMusic(initialDraft.selectedMusic || null); setVideoUrl(initialDraft.video_url || null); setVideoDuration(Number(initialDraft.video_duration || 0)); const blob=initialDraft.video_blob; if(blob instanceof Blob){const f=new File([blob],initialDraft.video_file_name||"draft-video.mp4",{type:blob.type||"video/mp4"});setPendingVideoFile(f);replaceLocalVideoPreview(URL.createObjectURL(f));setPendingVideoDuration(Number(initialDraft.pendingVideoDuration||initialDraft.video_duration||0));} }, [initialDraft && initialDraft.id]);
   const clearLocalVideoPreview = () => {
     localVideoUrlRef.current = null;
     setLocalVideoPreviewUrl(null);
@@ -10981,7 +10982,7 @@ function ComposeModal({
     };
     const closeComposeToHome = () => { clearComposeState(); onClose(); };
     const handleComposeClose = () => { if (hasUnsavedCompose()) setShowDiscardDialog(true); else closeComposeToHome(); };
-    const saveComposeDraft = async () => { const draft={id:initialDraft&&initialDraft.id?initialDraft.id:"post_"+Date.now(),ownerId:user&&user.id,type:"post",savedAt:Date.now(),text,photo_urls:photoUrls,location,feeling,taggedUsers,audience,photoAudience,commentsEnabled,altText,gifUrl,stickerOverlays,emojiOverlays,video_url:videoUrl||null,video_duration:videoDuration||pendingVideoDuration||0,video_blob:pendingVideoFile||null,video_file_name:pendingVideoFile&&pendingVideoFile.name,pendingVideoDuration:pendingVideoDuration||0}; try{await putPostDraftRecord("posts",draft);try{localStorage.removeItem("post_compose_draft")}catch(_){}showToast("Draft saved",COLORS.green);closeComposeToHome()}catch(_){showToast("Draft save failed — media is too large",COLORS.red)} };
+    const saveComposeDraft = async () => { const draft={id:initialDraft&&initialDraft.id?initialDraft.id:"post_"+Date.now(),ownerId:user&&user.id,type:"post",savedAt:Date.now(),text,photo_urls:photoUrls,location,feeling,taggedUsers,audience,photoAudience,commentsEnabled,altText,gifUrl,stickerOverlays,emojiOverlays,selectedMusic,video_url:videoUrl||null,video_duration:videoDuration||pendingVideoDuration||0,video_blob:pendingVideoFile||null,video_file_name:pendingVideoFile&&pendingVideoFile.name,pendingVideoDuration:pendingVideoDuration||0}; try{await putPostDraftRecord("posts",draft);try{localStorage.removeItem("post_compose_draft")}catch(_){}showToast("Draft saved",COLORS.green);closeComposeToHome()}catch(_){showToast("Draft save failed — media is too large",COLORS.red)} };
     const openReplacementGallery = () => {
       try { localStorage.removeItem("post_compose_draft"); } catch (_) {}
       clearComposeState();
@@ -23508,7 +23509,7 @@ function MusicPickerModalRC({ onClose, onSelect, videoSrc, isPhoto }) {
 }
 
 
-function ReelCameraModal({ token, user, initialStream, initialCameraError, showToast, onClose, onUploaded, onOpenGallery, initialReel }) {
+function ReelCameraModal({ token, user, initialStream, initialCameraError, showToast, onClose, onUploaded, onOpenGallery, initialReel, initialDraft }) {
   const MAX_REEL_SECONDS = 30; // backend hard limit — must match server.py MAX_POST_VIDEO_SECONDS
   const DEFAULT_MUSIC_CLIP_SECONDS = 15;
   const normalizeMusicClipDuration = value => {
@@ -24806,6 +24807,53 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     return () => { cancelled = true; initialEditorStepRef.current = null; };
   }, [initialReel && (initialReel.id || initialReel.photo_url || initialReel.video_url)]);
 
+  // Restore a saved reel draft into the editor without re-fetching or losing Blob media.
+  React.useEffect(() => {
+    if (!initialDraft) return;
+    const draftMedia = initialDraft.media;
+    let objectUrl = null;
+    if (draftMedia instanceof Blob) {
+      objectUrl = URL.createObjectURL(draftMedia);
+      setRecordedBlob(draftMedia);
+      setRecordedURL(objectUrl);
+      setStep(initialDraft.isPhoto ? "edit" : "trim");
+      setReviewMode(false);
+    }
+    setCaption(initialDraft.caption || "");
+    setIsPhotoReel(!!initialDraft.isPhoto);
+    setPhotoDataUrl(initialDraft.photoDataUrl || null);
+    setAudioLabel(initialDraft.audioLabel || "Original Audio");
+    setAudioArtist(initialDraft.audioArtist || "");
+    setAudioArtwork(initialDraft.audioArtwork || "");
+    setRecordTime(Number(initialDraft.recordTime || 0));
+    setVideoDuration(Number(initialDraft.videoDuration || 0));
+    setTrimStart(Number(initialDraft.trimStart || 0));
+    setTrimEnd(Number(initialDraft.trimEnd || initialDraft.videoDuration || 0));
+    setEffect(initialDraft.effect || "none");
+    setBrightnessVal(Number(initialDraft.brightnessVal || 100));
+    setSpeed(Number(initialDraft.speed || 1));
+    setAspect(initialDraft.aspect || "original");
+    setResolution(initialDraft.resolution || "1080p");
+    setTextOverlays(initialDraft.textOverlays || []);
+    setReelStickerOverlays(initialDraft.reelStickerOverlays || []);
+    setEditEmojiOverlays(initialDraft.editEmojiOverlays || []);
+    setReviewTextOverlays(initialDraft.reviewTextOverlays || []);
+    setReviewEmojiOverlays(initialDraft.reviewEmojiOverlays || []);
+    setReviewCrop(initialDraft.reviewCrop || {left: 0, top: 0, right: 0, bottom: 0});
+    setThemeIdx(Number(initialDraft.themeIdx || 0));
+    setSelectedTextColor(initialDraft.selectedTextColor || "#ffffff");
+    setSelectedTextSize(Number(initialDraft.selectedTextSize || 22));
+    setOrigAudioOn(!!initialDraft.origAudioOn);
+    setReelLocation(initialDraft.reelLocation || "");
+    setReelTaggedUsers(initialDraft.reelTaggedUsers || []);
+    setReelAudience(initialDraft.reelAudience || {type: "public", users: []});
+    return function() {
+      if (objectUrl) {
+        try { URL.revokeObjectURL(objectUrl); } catch (_) {}
+      }
+    };
+  }, [initialDraft && initialDraft.id]);
+
   function onGalleryPick(e) {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) {
@@ -24908,6 +24956,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
     const blobToSave = exportedBlob || recordedBlob;
     const draft = {
       id: "reel_" + Date.now(),
+      ownerId: user && user.id,
       type: "reel",
       caption: caption || "",
       savedAt: Date.now(),
@@ -24917,43 +24966,38 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       audioArtwork: audioArtwork || "",
       media: blobToSave || null,
       mediaType: blobToSave && blobToSave.type ? blobToSave.type : null,
+      photoDataUrl: photoDataUrl || null,
+      recordTime: Number(recordTime || 0),
+      videoDuration: Number(videoDuration || 0),
+      trimStart: Number(trimStart || 0),
+      trimEnd: Number(trimEnd || 0),
+      effect: effect || "none",
+      brightnessVal: Number(brightnessVal || 100),
+      speed: Number(speed || 1),
+      aspect: aspect || "original",
+      resolution: resolution || "1080p",
+      textOverlays: textOverlays || [],
+      reelStickerOverlays: reelStickerOverlays || [],
+      editEmojiOverlays: editEmojiOverlays || [],
+      reviewTextOverlays: reviewTextOverlays || [],
+      reviewEmojiOverlays: reviewEmojiOverlays || [],
+      reviewCrop: reviewCrop || {left: 0, top: 0, right: 0, bottom: 0},
+      themeIdx: Number(themeIdx || 0),
+      selectedTextColor: selectedTextColor || "#ffffff",
+      selectedTextSize: Number(selectedTextSize || 22),
+      origAudioOn: !!origAudioOn,
+      reelLocation: reelLocation || "",
+      reelTaggedUsers: reelTaggedUsers || [],
+      reelAudience: reelAudience || {type: "public", users: []}
     };
     try {
-      localStorage.setItem("reel_draft_meta", JSON.stringify({
-        id: draft.id,
-        type: draft.type,
-        caption: draft.caption,
-        savedAt: draft.savedAt,
-        isPhoto: draft.isPhoto,
-      }));
-    } catch (_) {}
-    let stored = false;
-    if (typeof indexedDB !== "undefined") {
-      try {
-        await new Promise((resolve, reject) => {
-          const request = indexedDB.open("post-app-drafts", 1);
-          request.onupgradeneeded = () => {
-            if (!request.result.objectStoreNames.contains("reels")) {
-              request.result.createObjectStore("reels", { keyPath: "id" });
-            }
-          };
-          request.onerror = () => reject(request.error);
-          request.onsuccess = () => {
-            const db = request.result;
-            const tx = db.transaction("reels", "readwrite");
-            tx.objectStore("reels").put(draft);
-            tx.oncomplete = () => { stored = true; db.close(); resolve(); };
-            tx.onerror = () => { db.close(); reject(tx.error); };
-          };
-        });
-      } catch (_) {}
-    }
-    if (stored || !blobToSave) {
+      await putPostDraftRecord("reels", draft);
+      try { localStorage.removeItem("reel_draft_meta"); } catch (_) {}
       showToast && showToast("Draft saved", "#22C55E");
-    } else {
-      showToast && showToast("Draft details saved", "#22C55E");
+      exitReelComposer();
+    } catch (_) {
+      showToast && showToast("Draft save failed", "#FF1744");
     }
-    exitReelComposer();
   }
 
   function discardReel() {
@@ -29492,7 +29536,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   );
 }
 // ── ReelsTab — TikTok-style smooth vertical scroll ───────────────────────────
-function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, onBack, setTab, onOpenCompose }) {
+function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, onBack, setTab, onOpenCompose, reelDraft, onReelDraftHandled }) {
   // Reels stays quiet after successful actions. Keep only genuine failures
   // visible so users are not interrupted by transient success/instruction toasts.
   function reelToast(message, color) {
@@ -29520,8 +29564,15 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   var [activeIdx, setActiveIdx] = React.useState(0);
   var [showUpload, setShowUpload] = React.useState(false);
   var [showCamera, setShowCamera] = React.useState(false);
+  var [draftToEdit, setDraftToEdit] = React.useState(null);
   var [remixSource, setRemixSource] = React.useState(null);
-  function closeCamera() { setShowCamera(false); setRemixSource(null); }
+  React.useEffect(function() {
+    if (!reelDraft) return;
+    setDraftToEdit(reelDraft);
+    setShowCamera(true);
+    if (onReelDraftHandled) onReelDraftHandled();
+  }, [reelDraft && reelDraft.id]);
+  function closeCamera() { setShowCamera(false); setRemixSource(null); setDraftToEdit(null); }
   function openRemixEditor(source) { setGridViewerOpen(false); setRemixSource(source || null); setShowCamera(true); }
   var [showComments, setShowComments] = React.useState(false);
   var [activeReelId, setActiveReelId] = React.useState(null);
@@ -30139,7 +30190,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
       React.createElement("div", { style: { fontWeight: 800, fontSize: 18, color: "#111", marginBottom: 8 } }, "No Reels Yet"),
       React.createElement("div", { style: { fontSize: 14, marginBottom: 20, color: "rgba(0,0,0,0.55)" } }, "Be the first to share a reel!")),
     showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: reelToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); } }),
-    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); closeCamera(); } }));
+    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, initialDraft: draftToEdit, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels([r]); setActiveIdx(0); closeCamera(); } }));
 
   // Reuse the already-ranked /reels/feed order for grid results. Search and
   // discover filters keep any reels not present in the loaded feed in their
@@ -30664,7 +30715,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
             : ((gridViewerActiveReel && (gridViewerActiveReel.avatar_letter || gridViewerActiveReel.user_name || gridViewerActiveReel.user_handle)) || "?").toString().charAt(0).toUpperCase()))),
 
     showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: reelToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); setShowUpload(false); } }),
-    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, initialReel: remixSource, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); closeCamera(); } }),
+    showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, initialReel: remixSource, initialDraft: draftToEdit, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); closeCamera(); } }),
     React.createElement("style", null, "@keyframes reelHeartPop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); } 40% { opacity: 1; transform: translate(-50%,-50%) scale(1.3); } 70% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(0.8); } }"));
 }
 
