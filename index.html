@@ -3533,6 +3533,13 @@ function AccountSwitcherSheet({open, onClose, user, onCreateAccount, onAddAccoun
   );
 }
 
+const POST_DRAFT_DB_NAME="post-app-drafts";const POST_DRAFT_DB_VERSION=2;
+function openPostDraftDb(){return new Promise(function(resolve,reject){if(!window.indexedDB){reject(new Error("Draft storage unavailable"));return;}const q=window.indexedDB.open(POST_DRAFT_DB_NAME,POST_DRAFT_DB_VERSION);q.onupgradeneeded=function(){const db=q.result;if(!db.objectStoreNames.contains("reels"))db.createObjectStore("reels",{keyPath:"id"});if(!db.objectStoreNames.contains("posts"))db.createObjectStore("posts",{keyPath:"id"});};q.onsuccess=function(){resolve(q.result)};q.onerror=function(){reject(q.error)};});}
+function putPostDraftRecord(store,draft){return openPostDraftDb().then(function(db){return new Promise(function(resolve,reject){const tx=db.transaction(store,"readwrite");tx.objectStore(store).put(draft);tx.oncomplete=function(){db.close();resolve(draft)};tx.onerror=function(){db.close();reject(tx.error)};});});}
+function getPostDraftRecords(store,ownerId){return openPostDraftDb().then(function(db){return new Promise(function(resolve,reject){const q=db.transaction(store,"readonly").objectStore(store).getAll();q.onsuccess=function(){const rows=(q.result||[]).filter(function(d){return String(d.ownerId||"")===String(ownerId||"")});db.close();resolve(rows)};q.onerror=function(){db.close();reject(q.error)};});});}
+function savedDraftDate(v){try{return v?new Date(v).toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):""}catch(_){return""}}
+function SavedDraftsScreen({user,onBack,onEditPost,showToast}){const[drafts,setDrafts]=React.useState([]),[srcs,setSrcs]=React.useState({}),[loading,setLoading]=React.useState(true);React.useEffect(function(){let live=true;Promise.all([getPostDraftRecords("posts",user&&user.id),getPostDraftRecords("reels",user&&user.id)]).then(function(p){if(live)setDrafts(p[0].map(function(d){return Object.assign({},d,{kind:"post"})}).concat(p[1].map(function(d){return Object.assign({},d,{kind:"reel"})})).sort(function(a,b){return Number(b.savedAt||0)-Number(a.savedAt||0)})}).catch(function(e){if(live&&showToast)showToast(e.message||"Could not load drafts","#FF1744")}).finally(function(){if(live)setLoading(false)});return function(){live=false}},[user&&user.id]);React.useEffect(function(){const n={};drafts.forEach(function(d){const b=d.kind==="reel"?d.media:d.video_blob;n[d.id]=b instanceof Blob?URL.createObjectURL(b):d.video_url||(d.photo_urls&&d.photo_urls[0])||d.photo_url||null});setSrcs(n);return function(){Object.keys(n).forEach(function(k){if(String(n[k]).indexOf("blob:")===0)try{URL.revokeObjectURL(n[k])}catch(_){}})}},[drafts]);return React.createElement("div",{style:{position:"fixed",inset:0,zIndex:220,background:"var(--bg)",color:"var(--text)",display:"flex",flexDirection:"column"}},React.createElement("div",{style:{display:"flex",alignItems:"center",gap:16,padding:"16px 20px",borderBottom:"1px solid var(--border)"}},React.createElement("button",{onClick:onBack,style:{background:"none",border:0,color:"var(--text)",fontSize:30,cursor:"pointer"}},"‹"),React.createElement("b",{style:{fontSize:22}},"Saved Drafts")),React.createElement("div",{style:{flex:1,overflowY:"auto",padding:"8px 16px 32px"}},loading?React.createElement("div",{style:{padding:48,textAlign:"center",color:"var(--muted)"}},"Loading drafts…"):!drafts.length?React.createElement("div",{style:{padding:72,textAlign:"center",color:"var(--muted)"}},"No saved drafts"):drafts.map(function(d){const media=srcs[d.id],photo=d.kind==="post"?!d.video_url&&!d.video_blob:!!d.isPhoto;return React.createElement("div",{key:d.id,style:{display:"flex",alignItems:"center",gap:12,padding:"12px 0",borderBottom:"1px solid var(--border)"}},media?(photo?React.createElement("img",{src:media,alt:"",style:{width:84,height:84,borderRadius:12,objectFit:"cover"}}):React.createElement("video",{src:media,muted:true,playsInline:true,preload:"metadata",style:{width:84,height:84,borderRadius:12,objectFit:"cover",background:"#111"}})):React.createElement("div",{style:{width:84,height:84,borderRadius:12,background:"var(--input-bg)"}}),React.createElement("div",{style:{flex:1,minWidth:0}},React.createElement("b",{style:{display:"block",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},(d.text||d.caption||"").trim()||(d.kind==="reel"?"Reel draft":"Post draft")),React.createElement("small",{style:{display:"block",color:"var(--muted)",marginTop:6}},savedDraftDate(d.savedAt)),React.createElement("small",{style:{color:"var(--muted)"}},d.kind==="reel"?"Reel":"Post"})),d.kind==="post"&&React.createElement("button",{onClick:function(){onEditPost(d)},style:{border:0,background:"none",color:"var(--text)",fontSize:25,cursor:"pointer"}},"✎"));})));}
+
 function DrawerPanel({open, onClose, user, onNavigate, isDark, onToggleDark, onOpenFollowList, onOpenAccountSwitcher, onOpenAiAgent, skipAnimation}) {
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
@@ -3579,7 +3586,7 @@ function DrawerPanel({open, onClose, user, onNavigate, isDark, onToggleDark, onO
     {icon: React.createElement("svg",{width:24,height:24,viewBox:"0 0 24 24",fill:"none"}, React.createElement("path",{d:"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z",fill:"#0D9FF3",stroke:"none"}), React.createElement("polyline",{points:"9 12 11 14 15 10",stroke:"white",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"})), label:"Get Verification", action:"verify"},
     {icon: React.createElement("svg",{width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"}, React.createElement("circle",{cx:"12",cy:"12",r:"9"}), React.createElement("path",{d:"M3 12h18M12 3c2.2 2.4 3.3 5.4 3.3 9s-1.1 6.6-3.3 9c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3z"})), label:"Our Planet", action:"our-planet"},
     {icon: React.createElement("svg",{width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"}, React.createElement("path",{d:"M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"})), label:"Saved", action:"bookmarks"},
-    {icon: React.createElement("svg",{width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"}, React.createElement("line",{x1:"8",y1:"6",x2:"21",y2:"6"}), React.createElement("line",{x1:"8",y1:"12",x2:"21",y2:"12"}), React.createElement("line",{x1:"8",y1:"18",x2:"21",y2:"18"}), React.createElement("line",{x1:"3",y1:"6",x2:"3.01",y2:"6"}), React.createElement("line",{x1:"3",y1:"12",x2:"3.01",y2:"12"}), React.createElement("line",{x1:"3",y1:"18",x2:"3.01",y2:"18"})), label:"Saved Drafts", action:"friends"},
+    {icon: React.createElement("svg",{width:24,height:24,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"}, React.createElement("line",{x1:"8",y1:"6",x2:"21",y2:"6"}), React.createElement("line",{x1:"8",y1:"12",x2:"21",y2:"12"}), React.createElement("line",{x1:"8",y1:"18",x2:"21",y2:"18"}), React.createElement("line",{x1:"3",y1:"6",x2:"3.01",y2:"6"}), React.createElement("line",{x1:"3",y1:"12",x2:"3.01",y2:"12"}), React.createElement("line",{x1:"3",y1:"18",x2:"3.01",y2:"18"})), label:"Saved Drafts", action:"drafts"},
   ];
 
   const secondaryItems = [
@@ -3844,6 +3851,7 @@ function PostApp() {
   const [loginKey, setLoginKey] = useState(0);
   const [joinWorldOpen, setJoinWorldOpen] = useState(false);
   const [reelComposeText, setReelComposeText] = useState(null);
+  const [postDraftToEdit,setPostDraftToEdit]=useState(null);
   const [worldLiveCount, setWorldLiveCount] = useState(0);
   const prevUnreadRef = React.useRef(0);
   // Stores which tab to open when screen becomes "app" (set by push notification click)
@@ -4188,7 +4196,7 @@ function PostApp() {
     /*#__PURE__*/React.createElement("div", { style: { color: COLORS.muted, fontSize: 13 } }, "Loading..."),
     /*#__PURE__*/React.createElement("style", null, "@keyframes spin{to{transform:rotate(360deg)}}")
   );
-  const isSubPage = tab === "settings" || tab === "account-recovery" || tab === "invite" || tab === "admin" || tab === "helpcenter";
+  const isSubPage = tab === "settings" || tab === "account-recovery" || tab === "invite" || tab === "admin" || tab === "helpcenter" || tab === "drafts";
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: "100vh",
@@ -4414,7 +4422,9 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
     onOpenJoinWorld: () => setJoinWorldOpen(true),
     onOpenReel: () => setTab("reels"),
     reelComposeText: reelComposeText,
-    onReelComposeHandled: () => setReelComposeText(null)
+    onReelComposeHandled: () => setReelComposeText(null),
+    draftToEdit: postDraftToEdit,
+    onDraftHandled: () => setPostDraftToEdit(null)
   }), tab === "discover" && /*#__PURE__*/React.createElement(DiscoverTab, {
     token: token,
     user: user,
@@ -4488,7 +4498,7 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
         } else { setActiveCall(null); showToast("Could not start call"); }
       } catch(e) { setActiveCall(null); showToast("Call failed: " + (e.message || "")); }
     }
-  }), tab === "reels" && /*#__PURE__*/React.createElement(ReelsTab, { token, user, showToast, onViewProfile, onViewAccountInfo, onBack: () => setTab("home"), setTab: setTab, onOpenCompose: text => { setReelComposeText(text); setTab("home"); } }), tab === "profile" && /*#__PURE__*/React.createElement(ProfileTab, {
+  }), tab === "reels" && /*#__PURE__*/React.createElement(ReelsTab, { token, user, showToast, onViewProfile, onViewAccountInfo, onBack: () => setTab("home"), setTab: setTab, onOpenCompose: text => { setReelComposeText(text); setTab("home"); } }), tab === "drafts" && React.createElement(SavedDraftsScreen, { user: user, showToast: showToast, onBack: () => setTab("home"), onEditPost: draft => { setPostDraftToEdit(draft); setTab("home"); } }), tab === "profile" && /*#__PURE__*/React.createElement(ProfileTab, {
     token: token,
     user: user,
     setUser: setUser,
@@ -5602,7 +5612,9 @@ function HomeTab({
   onOpenJoinWorld,
   onOpenReel,
   reelComposeText,
-  onReelComposeHandled
+  onReelComposeHandled,
+  draftToEdit,
+  onDraftHandled
 }) {
   // Feed state
   const [posts, setPosts] = useState([]);
@@ -5610,12 +5622,14 @@ function HomeTab({
   const [loadError, setLoadError] = useState(null);
   const [showCompose, setShowCompose] = useState(false);
   const [composeInitialText, setComposeInitialText] = useState("");
+  const [composeDraft, setComposeDraft] = useState(null);
   React.useEffect(() => {
     if (reelComposeText == null) return;
     setComposeInitialText(reelComposeText);
     setShowCompose(true);
     onReelComposeHandled && onReelComposeHandled();
   }, [reelComposeText, onReelComposeHandled]);
+  React.useEffect(() => { if (!draftToEdit) return; setComposeDraft(draftToEdit); setComposeInitialText(draftToEdit.text || ""); setShowCompose(true); onDraftHandled && onDraftHandled(); }, [draftToEdit, onDraftHandled]);
   const [followingIds, setFollowingIds] = useState(new Set());
   const [pendingFollowIds, setPendingFollowIds] = useState(new Set());
   const [newPostsQueue, setNewPostsQueue] = useState([]);
@@ -6006,9 +6020,10 @@ function HomeTab({
       key: composeInitialText || "compose",
       token, user,
       initialText: composeInitialText,
-      onClose: () => { setShowCompose(false); setComposeInitialText(""); },
+      initialDraft: composeDraft,
+      onClose: () => { setShowCompose(false); setComposeInitialText(""); setComposeDraft(null); },
       onPost: () => {
-        setShowCompose(false); setComposeInitialText("");
+        setShowCompose(false); setComposeInitialText(""); setComposeDraft(null);
         loadPosts();
         showToast("Posted! 🌍", COLORS.green);
       },
@@ -10589,7 +10604,8 @@ function ComposeModal({
   onClose,
   onPost,
   showToast,
-  initialText
+  initialText,
+  initialDraft
 }) {
   const [text, setText] = useState(initialText || "");
   const [accent, setAccent] = useState(COLORS.yellow);
@@ -10672,6 +10688,7 @@ function ComposeModal({
     setPendingVideoObjectUrl(url || null);
     if (previous && previous !== url) deferRevokeVideoUrl(previous);
   };
+  React.useEffect(() => { if (!initialDraft) return; setText(initialDraft.text || ""); setPhotoUrls(initialDraft.photo_urls || initialDraft.photoUrls || []); setLocation(initialDraft.location || ""); setFeeling(initialDraft.feeling || ""); setTaggedUsers(initialDraft.taggedUsers || []); setAudience(initialDraft.audience || {type:"public",users:[]}); setPhotoAudience(initialDraft.photoAudience || "everyone"); setCommentsEnabled(initialDraft.commentsEnabled !== false); setAltText(initialDraft.altText || ""); setVideoUrl(initialDraft.video_url || null); setVideoDuration(Number(initialDraft.video_duration || 0)); const blob=initialDraft.video_blob; if(blob instanceof Blob){const f=new File([blob],initialDraft.video_file_name||"draft-video.mp4",{type:blob.type||"video/mp4"});setPendingVideoFile(f);replaceLocalVideoPreview(URL.createObjectURL(f));setPendingVideoDuration(Number(initialDraft.pendingVideoDuration||initialDraft.video_duration||0));} }, [initialDraft && initialDraft.id]);
   const clearLocalVideoPreview = () => {
     localVideoUrlRef.current = null;
     setLocalVideoPreviewUrl(null);
@@ -10885,11 +10902,7 @@ function ComposeModal({
     };
     const closeComposeToHome = () => { clearComposeState(); onClose(); };
     const handleComposeClose = () => { if (hasUnsavedCompose()) setShowDiscardDialog(true); else closeComposeToHome(); };
-    const saveComposeDraft = () => {
-      const draft = { version: 1, savedAt: Date.now(), text, photoUrls, location, feeling, taggedUsers, audience, photoAudience, commentsEnabled, altText, gifUrl, stickerOverlays, emojiOverlays, videoUrl, hasLocalVideo: Boolean(pendingVideoFile || localVideoPreviewUrl) };
-      try { localStorage.setItem("post_compose_draft", JSON.stringify(draft)); showToast("Draft saved", COLORS.green); closeComposeToHome(); }
-      catch (_) { showToast("Draft save failed — media is too large", COLORS.red); }
-    };
+    const saveComposeDraft = async () => { const draft={id:initialDraft&&initialDraft.id?initialDraft.id:"post_"+Date.now(),ownerId:user&&user.id,type:"post",savedAt:Date.now(),text,photo_urls:photoUrls,location,feeling,taggedUsers,audience,photoAudience,commentsEnabled,altText,gifUrl,stickerOverlays,emojiOverlays,video_url:videoUrl||null,video_duration:videoDuration||pendingVideoDuration||0,video_blob:pendingVideoFile||null,video_file_name:pendingVideoFile&&pendingVideoFile.name,pendingVideoDuration:pendingVideoDuration||0}; try{await putPostDraftRecord("posts",draft);try{localStorage.removeItem("post_compose_draft")}catch(_){}showToast("Draft saved",COLORS.green);closeComposeToHome()}catch(_){showToast("Draft save failed — media is too large",COLORS.red)} };
     const openReplacementGallery = () => {
       try { localStorage.removeItem("post_compose_draft"); } catch (_) {}
       clearComposeState();
