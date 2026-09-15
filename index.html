@@ -10993,7 +10993,7 @@ function ComposeModal({
   const replacementGalleryRef = React.useRef(false);
     // Compose exit flow: empty compose closes to home; active compose offers three real choices.
     const hasUnsavedCompose = () => Boolean(
-      text.trim() || photoUrls.length || videoUrl || localVideoPreviewUrl || pendingVideoFile ||
+      text.trim() || photoUrls.length || photoProcessing || videoUrl || localVideoPreviewUrl || pendingVideoFile ||
       gifUrl || stickerOverlays.length || emojiOverlays.length || selectedMusic || location || feeling || taggedUsers.length
     );
     const clearComposeState = () => {
