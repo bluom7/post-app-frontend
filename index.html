@@ -2698,7 +2698,7 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
 
   const tab = (label, value) => React.createElement("button", {
     onClick: () => setScreen(value),
-    style: { width: value === "benefits" ? 109 : 58, border: "none", borderBottom: screen === value ? "3px solid var(--text)" : "3px solid transparent", background: "transparent", color: screen === value ? "#171717" : "#8A8A8A", padding: "14px 0 12px", fontSize: 17, fontWeight: screen === value ? 800 : 600, letterSpacing: "0.25px", cursor: "pointer" }
+    style: { width: value === "benefits" ? 109 : 58, border: "none", borderBottom: screen === value ? "3px solid var(--text)" : "3px solid transparent", background: "transparent", color: screen === value ? "var(--text)" : "var(--muted)", padding: "14px 0 12px", fontSize: 17, fontWeight: screen === value ? 800 : 600, letterSpacing: "0.25px", cursor: "pointer" }
   }, label);
 
   const inputStyle = { width: "100%", height: 52, padding: "0 15px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--input-bg)", color: "var(--text)", fontSize: 15, outline: "none", boxSizing: "border-box", boxShadow: "0 2px 8px rgba(20,20,20,0.03)" };
