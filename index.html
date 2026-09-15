@@ -80,6 +80,8 @@ button[data-help-spin]:focus, button[data-help-spin]:focus-visible, button[data-
 .photo-editor-color-palette::-webkit-scrollbar { display: none; width: 0; height: 0; } .photo-editor-color-palette { background: transparent !important; box-shadow: none !important; border: none !important; }
 ::-webkit-scrollbar-track { background: var(--input-bg); }
 ::-webkit-scrollbar-thumb { background: #888; border-radius: 2px; }
+ html, body, #root { scrollbar-width: none; -ms-overflow-style: none; }
+ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
 ::-webkit-media-controls-overlay-cast-button { display: none !important; }
 ::-webkit-media-controls-cast-button { display: none !important; }
 video::-webkit-media-controls { display: none !important; }
@@ -3600,7 +3602,7 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
               const photo = d.kind === "post" ? !d.video_url && !d.video_blob : !!d.isPhoto;
               return React.createElement("div", {
                 key: d.id,
-                style: {display: "flex", alignItems: "center", gap: 12, padding: "12px 0", borderBottom: "1px solid var(--border)"}
+                style: {display: "flex", alignItems: "center", gap: 12, padding: "12px 0"}
               },
                 media
                   ? photo
