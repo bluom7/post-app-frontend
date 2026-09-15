@@ -3606,9 +3606,9 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
               },
                 media
                   ? photo
-                    ? React.createElement("img", {src: media, alt: "", style: {width: 84, height: 84, borderRadius: 12, objectFit: "cover"}})
-                    : React.createElement("video", {src: media, muted: true, playsInline: true, preload: "metadata", style: {width: 84, height: 84, borderRadius: 12, objectFit: "cover", background: "#111"}})
-                  : React.createElement("div", {style: {width: 84, height: 84, borderRadius: 12, background: "var(--input-bg)"}}),
+                    ? React.createElement("img", {src: media, alt: "", style: {width: 114, height: 177, borderRadius: 17, objectFit: "cover"}})
+                    : React.createElement("video", {src: media, muted: true, playsInline: true, preload: "metadata", style: {width: 114, height: 177, borderRadius: 17, objectFit: "cover", background: "#111"}})
+                  : React.createElement("div", {style: {width: 114, height: 177, borderRadius: 17, background: "var(--input-bg)"}}),
                 React.createElement("div", {style: {flex: 1, minWidth: 0}},
                   React.createElement("b", {style: {display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}, (d.text || d.caption || "").trim() || (d.kind === "reel" ? "Reel draft" : "Post draft")),
                   React.createElement("small", {style: {display: "block", color: "var(--muted)", marginTop: 6}}, savedDraftDate(d.savedAt)),
