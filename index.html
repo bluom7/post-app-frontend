@@ -3541,7 +3541,27 @@ const POST_DRAFT_DB_NAME="post-app-drafts";const POST_DRAFT_DB_VERSION=2;
 function openPostDraftDb(){return new Promise(function(resolve,reject){if(!window.indexedDB){reject(new Error("Draft storage unavailable"));return;}const q=window.indexedDB.open(POST_DRAFT_DB_NAME,POST_DRAFT_DB_VERSION);q.onupgradeneeded=function(){const db=q.result;if(!db.objectStoreNames.contains("reels"))db.createObjectStore("reels",{keyPath:"id"});if(!db.objectStoreNames.contains("posts"))db.createObjectStore("posts",{keyPath:"id"});};q.onsuccess=function(){resolve(q.result)};q.onerror=function(){reject(q.error)};});}
 function putPostDraftRecord(store,draft){return openPostDraftDb().then(function(db){return new Promise(function(resolve,reject){const tx=db.transaction(store,"readwrite");tx.objectStore(store).put(draft);tx.oncomplete=function(){db.close();resolve(draft)};tx.onerror=function(){db.close();reject(tx.error)};});});}
 function getPostDraftRecords(store,ownerId){return openPostDraftDb().then(function(db){return new Promise(function(resolve,reject){const q=db.transaction(store,"readonly").objectStore(store).getAll();q.onsuccess=function(){const rows=(q.result||[]).filter(function(d){return String(d.ownerId||"")===String(ownerId||"")});db.close();resolve(rows)};q.onerror=function(){db.close();reject(q.error)};});});}
-function savedDraftDate(v){try{return v?new Date(v).toLocaleString([],{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):""}catch(_){return""}}
+function savedDraftDate(v){try{
+  if(!v)return "";
+  var date=new Date(v),now=new Date();
+  var sameDay=date.getFullYear()===now.getFullYear()&&date.getMonth()===now.getMonth()&&date.getDate()===now.getDate();
+  var time=date.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+  return sameDay?"Created today, "+time:"Created "+date.toLocaleDateString([],{month:"short",day:"numeric"})+", "+time;
+}catch(_){return""}}
+function draftVideoDuration(d){
+  var value=Number(d&&(d.video_duration||d.videoDuration||d.pendingVideoDuration||d.recordTime||0));
+  if(!Number.isFinite(value)||value<=0)return "";
+  var total=Math.max(0,Math.round(value)),minutes=Math.floor(total/60),seconds=String(total%60).padStart(2,"0");
+  return minutes+":"+seconds;
+}
+function draftVideoSize(d){
+  var bytes=Number(d&&(d.video_file_size||d.videoSize||(d.video_blob&&d.video_blob.size)||(d.media&&d.media.size)||0));
+  if(!Number.isFinite(bytes)||bytes<=0)return "";
+  var units=["B","KB","MB","GB"],index=0,size=bytes;
+  while(size>=1024&&index<units.length-1){size/=1024;index++;}
+  var digits=index===0?0:(size>=100?0:size>=10?1:2);
+  return size.toFixed(digits).replace(/\.0+$/,"")+" "+units[index];
+}
 function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
   const [drafts, setDrafts] = React.useState([]);
   const [srcs, setSrcs] = React.useState({});
@@ -3599,7 +3619,7 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
         ? React.createElement("div", {style: {padding: 48, textAlign: "center", color: "var(--muted)"}}, "Loading drafts…")
         : !drafts.length
           ? React.createElement("div", {style: {padding: 72, textAlign: "center", color: "var(--muted)"}}, "No saved drafts")
-          : drafts.map(function(d) {
+          : drafts.map(function(d, draftIndex) {
               const media = srcs[d.id];
               const photo = d.kind === "post" ? !d.video_url && !d.video_blob : !!d.isPhoto;
               return React.createElement("div", {
@@ -3614,7 +3634,8 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
                 React.createElement("div", {style: {flex: 1, minWidth: 0}},
                   React.createElement("b", {style: {display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"}}, (d.text || d.caption || "").trim() || (d.kind === "reel" ? "Reel draft" : "Post draft")),
                   React.createElement("small", {style: {display: "block", color: "var(--muted)", marginTop: 6}}, savedDraftDate(d.savedAt)),
-                  React.createElement("small", {style: {color: "var(--muted)"}}, d.kind === "reel" ? "Reel" : "Post")
+                  React.createElement("small", {style: {color: "var(--muted)"}}, (d.kind === "reel" ? "Reel" : "Post") + " · #" + String(draftIndex + 1)),
+                  (!photo && (media || d.video_blob || d.media)) && React.createElement("small", {style: {display: "block", color: "var(--muted)", marginTop: 4, fontVariantNumeric: "tabular-nums"}}, [draftVideoDuration(d), draftVideoSize(d)].filter(Boolean).join("  | "))
                 ),
                 (d.kind === "post" || d.kind === "reel") && React.createElement("button", {"aria-label": "Edit draft", onClick: function() { if (d.kind === "reel") { if (onEditReel) onEditReel(d); } else { onEditPost(d); } }, style: {border: 0, background: "none", color: "var(--text)", width: 24, height: 24, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer"}}, React.createElement("svg", {width: 24, height: 24, viewBox: "0 0 24 24", fill: "currentColor", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false"}, React.createElement("path", {d: "M3.65 19.55 5.2 13.4 14.05 4.65l5.1 5.1-8.8 8.8-5.9 1.6a.7.7 0 0 1-.8-.6Z"}), React.createElement("path", {d: "m14.05 4.65 5.1 5.1"}))), React.createElement("span", {role: "img", "aria-label": "Draft options", style: {width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text)"}}, React.createElement("svg", {width: 24, height: 24, viewBox: "0 0 24 24", fill: "currentColor", "aria-hidden": "true", focusable: "false"}, React.createElement("rect", {x: 5.25, y: 4.25, width: 3.5, height: 3.5, rx: 1.05}), React.createElement("rect", {x: 5.25, y: 10.25, width: 3.5, height: 3.5, rx: 1.05}), React.createElement("rect", {x: 5.25, y: 16.25, width: 3.5, height: 3.5, rx: 1.05})))
               );
@@ -11027,6 +11048,7 @@ function ComposeModal({
         video_duration: videoDuration || pendingVideoDuration || 0,
         video_blob: pendingVideoFile || null,
         video_file_name: pendingVideoFile && pendingVideoFile.name,
+        video_file_size: pendingVideoFile ? Number(pendingVideoFile.size || 0) : 0,
         pendingVideoDuration: pendingVideoDuration || 0
       };
       try {
@@ -25021,6 +25043,7 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
       audioArtwork: audioArtwork || "",
       media: blobToSave || null,
       mediaType: blobToSave && blobToSave.type ? blobToSave.type : null,
+      video_file_size: blobToSave && !isPhotoReel ? Number(blobToSave.size || 0) : 0,
       photoDataUrl: photoDataUrl || null,
       recordTime: Number(recordTime || 0),
       videoDuration: Number(videoDuration || 0),
