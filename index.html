@@ -3591,9 +3591,10 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
     const next = {};
     drafts.forEach(function(d) {
       const blob = d.kind === "reel" ? d.media : d.video_blob;
+      const photoUrls = d.photo_urls || d.photoUrls || [];
       next[d.id] = blob instanceof Blob
         ? URL.createObjectURL(blob)
-        : d.video_url || (d.photo_urls && d.photo_urls[0]) || d.photo_url || null;
+        : d.video_url || photoUrls[0] || d.photo_url || null;
     });
     setSrcs(next);
     return function() {
@@ -3621,7 +3622,9 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
           ? React.createElement("div", {style: {padding: 72, textAlign: "center", color: "var(--muted)"}}, "No saved drafts")
           : drafts.map(function(d, draftIndex) {
               const media = srcs[d.id];
-              const photo = d.kind === "post" ? !d.video_url && !d.video_blob : !!d.isPhoto;
+              const photoUrls = d.photo_urls || d.photoUrls || [];
+              const hasVideo = !!(d.video_url || d.video_blob);
+              const photo = d.kind === "post" ? !hasVideo && !!(photoUrls.length || d.photo_url) : !!d.isPhoto;
               return React.createElement("div", {
                 key: d.id,
                 style: {display: "flex", alignItems: "center", gap: 12, padding: "12px 0"}
@@ -10717,7 +10720,8 @@ function ComposeModal({
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
   const [photoUrls, setPhotoUrls] = useState([]);
-  const [photoAspect, setPhotoAspect] = useState(null); // {w,h} of first photo
+  const [photoAspect, setPhotoAspect] = useState(null);
+  const [photoProcessing, setPhotoProcessing] = useState(false); // {w,h} of first photo
   const [reelMode, setReelMode] = useState(false);
   const [reelInitialFile, setReelInitialFile] = useState(null);
   const reelFileInputRef = React.useRef(null);
@@ -10960,6 +10964,7 @@ function ComposeModal({
   const mediaRef = useRef(null);
   const pickerInputRef = useRef(null);
   const photoFileMapRef = useRef(new Map());
+  const photoProcessingRef = useRef(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [pickerDraft, setPickerDraft] = useState([]);
   const [pickerLoading, setPickerLoading] = useState(false);
@@ -11008,6 +11013,10 @@ function ComposeModal({
     const closeComposeToHome = () => { clearComposeState(); onClose(); };
     const handleComposeClose = () => { if (hasUnsavedCompose()) setShowDiscardDialog(true); else closeComposeToHome(); };
     const saveComposeDraft = async () => {
+      if (photoProcessing || photoProcessingRef.current) {
+        showToast("Photo is still loading. Please wait a moment.", COLORS.red);
+        return;
+      }
       let stablePhotoUrls = [];
       try {
         stablePhotoUrls = (await Promise.all(photoUrls.map(async src => {
@@ -11120,14 +11129,18 @@ function ComposeModal({
     setVideoUrl(null); setVideoDuration(0); setPhotoAspect(null);
     setPendingVideoFile(null);
     clearLocalVideoPreview();
-    // Compress every photo before storing — keeps payload small enough to upload
-    Promise.all(toAdd.map(compressPhoto)).then(results => {
-      const valid = results.filter(Boolean); // drop nulls from failed reads
-      if (valid.length) {
-        setPhotoUrls(prev => [...prev, ...valid.map(r=>r.src)].slice(0, 5));
-        setPhotoAspect(prev => prev || (valid[0].w && valid[0].h ? { w: valid[0].w, h: valid[0].h } : null));
-      }
-    });
+    // Compress every photo before storing — the draft action stays disabled until this finishes.
+    setPhotoProcessing(true);
+    photoProcessingRef.current = Promise.all(toAdd.map(compressPhoto))
+      .then(results => {
+        const valid = results.filter(Boolean); // drop nulls from failed reads
+        if (valid.length) {
+          setPhotoUrls(prev => [...prev, ...valid.map(r=>r.src)].slice(0, 5));
+          setPhotoAspect(prev => prev || (valid[0].w && valid[0].h ? { w: valid[0].w, h: valid[0].h } : null));
+        }
+      })
+      .catch(() => showToast("Photo processing failed. Please try again.", COLORS.red))
+      .finally(() => { photoProcessingRef.current = null; setPhotoProcessing(false); });
     e.target.value = '';
   };
   // Uploads a video (optionally trimmed to [start,end]) to the server, which
@@ -11278,12 +11291,16 @@ function ComposeModal({
       setVideoPreparing(false);
       setVideoUrl(null); setVideoDuration(0); setPendingVideoFile(null);
       clearLocalVideoPreview();
-      compressPhoto(file).then(result => {
-        if (result) {
-          setPhotoUrls(prev => [...prev, result.src].slice(0, 5));
-          setPhotoAspect(prev => prev || (result.w && result.h ? { w: result.w, h: result.h } : null));
-        }
-      });
+      setPhotoProcessing(true);
+      photoProcessingRef.current = compressPhoto(file)
+        .then(result => {
+          if (result) {
+            setPhotoUrls(prev => [...prev, result.src].slice(0, 5));
+            setPhotoAspect(prev => prev || (result.w && result.h ? { w: result.w, h: result.h } : null));
+          }
+        })
+        .catch(() => showToast("Photo processing failed. Please try again.", COLORS.red))
+        .finally(() => { photoProcessingRef.current = null; setPhotoProcessing(false); });
     }
   };
   const handlePickerFiles = e => {
@@ -12041,7 +12058,7 @@ function ComposeModal({
         /*#__PURE__*/React.createElement("div", { onClick: e => e.stopPropagation(), style: { width: "100%", maxWidth: 520, background: "var(--card-bg)", borderRadius: "24px 24px 0 0", padding: "0 0 env(safe-area-inset-bottom, 14px)", color: "var(--text)", boxSizing: "border-box" } },
           /*#__PURE__*/React.createElement("div", { style: { width: 42, height: 4, borderRadius: 999, background: "var(--muted)", opacity: 0.65, margin: "12px auto 18px" } }),
           /*#__PURE__*/React.createElement("div", { style: { padding: "0 20px 14px", fontSize: 18, fontWeight: 700 } }, "Want to finish your post later?"),
-          /*#__PURE__*/React.createElement("button", { onClick: saveComposeDraft, style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "9px 20px", background: "none", border: "none", color: "var(--text)", textAlign: "left", cursor: "pointer", fontSize: 16 } },
+          /*#__PURE__*/React.createElement("button", { onClick: saveComposeDraft, disabled: photoProcessing, style: { width: "100%", display: "flex", alignItems: "center", gap: 16, padding: "9px 20px", background: "none", border: "none", color: "var(--text)", textAlign: "left", cursor: photoProcessing ? "wait" : "pointer", opacity: photoProcessing ? 0.55 : 1, fontSize: 16 } },
             /*#__PURE__*/React.createElement("span", { style: { width: 42, height: 42, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } },
               /*#__PURE__*/React.createElement("svg", { width: 23, height: 23, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" },
                 /*#__PURE__*/React.createElement("path", { d: "M6 3.5h8.25L18.5 7.75V20.5H6z" }),
