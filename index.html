@@ -10768,7 +10768,7 @@ function ComposeModal({
     setPendingVideoObjectUrl(url || null);
     if (previous && previous !== url) deferRevokeVideoUrl(previous);
   };
-  React.useEffect(() => { if (!initialDraft) return; setText(initialDraft.text || ""); setPhotoUrls(initialDraft.photo_urls || initialDraft.photoUrls || []); setLocation(initialDraft.location || ""); setFeeling(initialDraft.feeling || ""); setTaggedUsers(initialDraft.taggedUsers || []); setAudience(initialDraft.audience || {type:"public",users:[]}); setPhotoAudience(initialDraft.photoAudience || "everyone"); setCommentsEnabled(initialDraft.commentsEnabled !== false); setAltText(initialDraft.altText || ""); setGifUrl(initialDraft.gifUrl || null); setStickerOverlays(initialDraft.stickerOverlays || []); setEmojiOverlays(initialDraft.emojiOverlays || []); setSelectedMusic(initialDraft.selectedMusic || null); setVideoUrl(initialDraft.video_url || null); setVideoDuration(Number(initialDraft.video_duration || 0)); const blob=initialDraft.video_blob; if(blob instanceof Blob){const f=new File([blob],initialDraft.video_file_name||"draft-video.mp4",{type:blob.type||"video/mp4"});setPendingVideoFile(f);replaceLocalVideoPreview(URL.createObjectURL(f));setPendingVideoDuration(Number(initialDraft.pendingVideoDuration||initialDraft.video_duration||0));} }, [initialDraft && initialDraft.id]);
+  React.useEffect(() => { if (!initialDraft) return; setText(initialDraft.text || ""); setPhotoUrls(initialDraft.photo_urls || initialDraft.photoUrls || []); setPhotoAspect(initialDraft.photo_aspect || null); setLocation(initialDraft.location || ""); setFeeling(initialDraft.feeling || ""); setTaggedUsers(initialDraft.taggedUsers || []); setAudience(initialDraft.audience || {type:"public",users:[]}); setPhotoAudience(initialDraft.photoAudience || "everyone"); setCommentsEnabled(initialDraft.commentsEnabled !== false); setAltText(initialDraft.altText || ""); setGifUrl(initialDraft.gifUrl || null); setStickerOverlays(initialDraft.stickerOverlays || []); setEmojiOverlays(initialDraft.emojiOverlays || []); setSelectedMusic(initialDraft.selectedMusic || null); setVideoUrl(initialDraft.video_url || null); setVideoDuration(Number(initialDraft.video_duration || 0)); const blob=initialDraft.video_blob; if(blob instanceof Blob){const f=new File([blob],initialDraft.video_file_name||"draft-video.mp4",{type:blob.type||"video/mp4"});setPendingVideoFile(f);replaceLocalVideoPreview(URL.createObjectURL(f));setPendingVideoDuration(Number(initialDraft.pendingVideoDuration||initialDraft.video_duration||0));} }, [initialDraft && initialDraft.id]);
   const clearLocalVideoPreview = () => {
     localVideoUrlRef.current = null;
     setLocalVideoPreviewUrl(null);
@@ -10982,7 +10982,58 @@ function ComposeModal({
     };
     const closeComposeToHome = () => { clearComposeState(); onClose(); };
     const handleComposeClose = () => { if (hasUnsavedCompose()) setShowDiscardDialog(true); else closeComposeToHome(); };
-    const saveComposeDraft = async () => { const draft={id:initialDraft&&initialDraft.id?initialDraft.id:"post_"+Date.now(),ownerId:user&&user.id,type:"post",savedAt:Date.now(),text,photo_urls:photoUrls,location,feeling,taggedUsers,audience,photoAudience,commentsEnabled,altText,gifUrl,stickerOverlays,emojiOverlays,selectedMusic,video_url:videoUrl||null,video_duration:videoDuration||pendingVideoDuration||0,video_blob:pendingVideoFile||null,video_file_name:pendingVideoFile&&pendingVideoFile.name,pendingVideoDuration:pendingVideoDuration||0}; try{await putPostDraftRecord("posts",draft);try{localStorage.removeItem("post_compose_draft")}catch(_){}showToast("Draft saved",COLORS.green);closeComposeToHome()}catch(_){showToast("Draft save failed — media is too large",COLORS.red)} };
+    const saveComposeDraft = async () => {
+      let stablePhotoUrls = [];
+      try {
+        stablePhotoUrls = (await Promise.all(photoUrls.map(async src => {
+          const file = photoFileMapRef.current.get(src);
+          if (file) {
+            const compressed = await compressPhoto(file);
+            return compressed ? compressed.src : null;
+          }
+          // Drawer/Media Picker previews are temporary blob URLs. Never persist
+          // them: they stop working as soon as the browser session changes.
+          if (typeof src === "string" && src.indexOf("blob:") === 0) return null;
+          return src;
+        }))).filter(Boolean);
+      } catch (_) {
+        showToast("Draft save failed — photo processing failed", COLORS.red);
+        return;
+      }
+      const draft = {
+        id: initialDraft && initialDraft.id ? initialDraft.id : "post_" + Date.now(),
+        ownerId: user && user.id,
+        type: "post",
+        savedAt: Date.now(),
+        text,
+        photo_urls: stablePhotoUrls,
+        photo_aspect: photoAspect || null,
+        location,
+        feeling,
+        taggedUsers,
+        audience,
+        photoAudience,
+        commentsEnabled,
+        altText,
+        gifUrl,
+        stickerOverlays,
+        emojiOverlays,
+        selectedMusic,
+        video_url: videoUrl || null,
+        video_duration: videoDuration || pendingVideoDuration || 0,
+        video_blob: pendingVideoFile || null,
+        video_file_name: pendingVideoFile && pendingVideoFile.name,
+        pendingVideoDuration: pendingVideoDuration || 0
+      };
+      try {
+        await putPostDraftRecord("posts", draft);
+        try { localStorage.removeItem("post_compose_draft"); } catch (_) {}
+        showToast("Draft saved", COLORS.green);
+        closeComposeToHome();
+      } catch (_) {
+        showToast("Draft save failed — media is too large", COLORS.red);
+      }
+    };
     const openReplacementGallery = () => {
       try { localStorage.removeItem("post_compose_draft"); } catch (_) {}
       clearComposeState();
