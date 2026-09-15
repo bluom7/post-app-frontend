@@ -3552,7 +3552,20 @@ function savedDraftDate(v){try{
   return sameDay?"Created today, "+time:"Created "+date.toLocaleDateString([],{month:"short",day:"numeric"})+", "+time;
 }catch(_){return""}}
 function draftVideoDuration(d){
-  var value=Numberfunction SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
+  var value=Number(d&&(d.video_duration||d.videoDuration||d.pendingVideoDuration||d.recordTime||0));
+  if(!Number.isFinite(value)||value<=0)return "";
+  var total=Math.max(0,Math.round(value)),minutes=Math.floor(total/60),seconds=String(total%60).padStart(2,"0");
+  return minutes+":"+seconds;
+}
+function draftVideoSize(d){
+  var bytes=Number(d&&(d.video_file_size||d.videoSize||(d.video_blob&&d.video_blob.size)||(d.media&&d.media.size)||0));
+  if(!Number.isFinite(bytes)||bytes<=0)return "";
+  var units=["B","KB","MB","GB"],index=0,size=bytes;
+  while(size>=1024&&index<units.length-1){size/=1024;index++;}
+  var digits=index===0?0:(size>=100?0:size>=10?1:2);
+  return size.toFixed(digits).replace(/\.0+$/,"")+" "+units[index];
+}
+function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
   const [drafts, setDrafts] = React.useState([]);
   const [srcs, setSrcs] = React.useState({});
   const [loading, setLoading] = React.useState(true);
