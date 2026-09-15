@@ -2679,7 +2679,7 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
   };
 
   const icon = (type) => {
-    const base = { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "#111111", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true, style: { flexShrink: 0, marginTop: 1 } };
+    const base = { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "var(--text)", strokeWidth: 1.7, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true, style: { flexShrink: 0, marginTop: 1 } };
     const path = (d, extra) => React.createElement("path", { d, ...(extra || {}) });
     const shapes = {
       badge: [path("M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.78 4.78 4 4 0 0 1-6.74 0 4 4 0 0 1-4.78-4.78 4 4 0 0 1 0-6.75Z", { transform: "translate(1.7 1.7) scale(0.86)" }), path("m9 12 2 2 4-4", { transform: "translate(1.7 1.7) scale(0.86)" })],
@@ -2694,38 +2694,38 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
 
   const benefit = (type, title) => React.createElement("div", {
     style: { display: "flex", gap: 16, alignItems: "flex-start", padding: "18px 0", borderBottom: "none" }
-  }, icon(type), React.createElement("div", { style: { minWidth: 0, color: "#171717", fontSize: 17, fontWeight: 600, lineHeight: 1.45, letterSpacing: "0.55px", paddingTop: 1 } }, title));
+  }, icon(type), React.createElement("div", { style: { minWidth: 0, color: "var(--text)", fontSize: 17, fontWeight: 600, lineHeight: 1.45, letterSpacing: "0.55px", paddingTop: 1 } }, title));
 
   const tab = (label, value) => React.createElement("button", {
     onClick: () => setScreen(value),
-    style: { width: value === "benefits" ? 109 : 58, border: "none", borderBottom: screen === value ? "3px solid #171717" : "3px solid transparent", background: "transparent", color: screen === value ? "#171717" : "#8A8A8A", padding: "14px 0 12px", fontSize: 17, fontWeight: screen === value ? 800 : 600, letterSpacing: "0.25px", cursor: "pointer" }
+    style: { width: value === "benefits" ? 109 : 58, border: "none", borderBottom: screen === value ? "3px solid var(--text)" : "3px solid transparent", background: "transparent", color: screen === value ? "#171717" : "#8A8A8A", padding: "14px 0 12px", fontSize: 17, fontWeight: screen === value ? 800 : 600, letterSpacing: "0.25px", cursor: "pointer" }
   }, label);
 
-  const inputStyle = { width: "100%", height: 52, padding: "0 15px", borderRadius: 12, border: "1px solid #DEDEDE", background: "#FFFFFF", color: "#171717", fontSize: 15, outline: "none", boxSizing: "border-box", boxShadow: "0 2px 8px rgba(20,20,20,0.03)" };
-  const labelStyle = { display: "block", color: "#2D2D2D", fontSize: 14, fontWeight: 700, marginBottom: 8 };
-  const helperStyle = { color: "#777777", fontSize: 12, lineHeight: 1.45, marginTop: 7 };
+  const inputStyle = { width: "100%", height: 52, padding: "0 15px", borderRadius: 12, border: "1px solid var(--border)", background: "var(--input-bg)", color: "var(--text)", fontSize: 15, outline: "none", boxSizing: "border-box", boxShadow: "0 2px 8px rgba(20,20,20,0.03)" };
+  const labelStyle = { display: "block", color: "var(--text)", fontSize: 14, fontWeight: 700, marginBottom: 8 };
+  const helperStyle = { color: "var(--muted)", fontSize: 12, lineHeight: 1.45, marginTop: 7 };
 
   return React.createElement("div", {
     className: "verification-modal-scroll",
-    style: { position: "fixed", inset: 0, height: "100dvh", background: "#FFFFFF", color: "#171717", zIndex: 9999, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none", msOverflowStyle: "none", boxSizing: "border-box" }
+    style: { position: "fixed", inset: 0, height: "100dvh", background: "#FFFFFF", color: "var(--text)", zIndex: 9999, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none", msOverflowStyle: "none", boxSizing: "border-box" }
   },
     React.createElement("style", null, ".verification-modal-scroll::-webkit-scrollbar{display:none;width:0;height:0}.verification-modal-scroll{scrollbar-width:none;-ms-overflow-style:none}"),
     React.createElement("div", { style: { width: "100%", maxWidth: 560, minHeight: "100%", margin: "0 auto", boxSizing: "border-box", padding: "0 0 44px" } },
-      React.createElement("div", { style: { position: "relative", background: "#FFFFFF", padding: "10px 20px 0", boxSizing: "border-box" } },
+      React.createElement("div", { style: { position: "relative", background: "var(--bg)", padding: "10px 20px 0", boxSizing: "border-box" } },
         React.createElement("div", { style: { position: "relative", display: "flex", alignItems: "center", minHeight: 58 } },
-          React.createElement("button", { onClick: () => screen === "apply" ? setScreen("benefits") : onClose(), "aria-label": "Back", style: { width: 46, height: 46, marginLeft: 0, border: "none", borderRadius: 13, background: "#F5F5F5", color: "#111111", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, cursor: "pointer" } }, React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
-          React.createElement("div", { style: { position: "absolute", left: "50%", transform: "translateX(-50%)", color: "#111111", fontSize: 20, lineHeight: 1.12, fontWeight: 800, textAlign: "center", letterSpacing: "-0.25px", whiteSpace: "nowrap" } }, screen === "benefits" ? "Why verify" : "Apply")
+          React.createElement("button", { onClick: () => screen === "apply" ? setScreen("benefits") : onClose(), "aria-label": "Back", style: { width: 46, height: 46, marginLeft: 0, border: "none", borderRadius: 13, background: "#F5F5F5", color: "var(--text)", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, cursor: "pointer" } }, React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
+          React.createElement("div", { style: { position: "absolute", left: "50%", transform: "translateX(-50%)", color: "var(--text)", fontSize: 20, lineHeight: 1.12, fontWeight: 800, textAlign: "center", letterSpacing: "-0.25px", whiteSpace: "nowrap" } }, screen === "benefits" ? "Why verify" : "Apply")
         )
       ),
-      screen === "benefits" ? React.createElement("div", { style: { marginTop: 24, border: "none", borderRadius: 20, background: "#FFFFFF", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "0 2px 5px rgba(0,0,0,0.03)" } },
+      screen === "benefits" ? React.createElement("div", { style: { marginTop: 24, border: "none", borderRadius: 20, background: "var(--card-bg)", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "0 2px 5px rgba(0,0,0,0.03)" } },
         React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 27 } },
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#F4BD16" } }),
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#16A568" } }),
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#EF476F" } }),
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#0D9FF3" } })
         ),
-        React.createElement("h1", { style: { margin: 0, color: "#111111", fontSize: 35, lineHeight: 1.08, letterSpacing: "-0.8px", fontWeight: 800 } }, "Get verified"),
-        React.createElement("p", { style: { margin: "16px 0 25px", color: "#777777", fontSize: 17, lineHeight: 1.5, letterSpacing: "0.55px", maxWidth: 420 } }, "A verified badge tells people this account is authentic. Here’s what changes once you’re approved."),
+        React.createElement("h1", { style: { margin: 0, color: "var(--text)", fontSize: 35, lineHeight: 1.08, letterSpacing: "-0.8px", fontWeight: 800 } }, "Get verified"),
+        React.createElement("p", { style: { margin: "16px 0 25px", color: "var(--muted)", fontSize: 17, lineHeight: 1.5, letterSpacing: "0.55px", maxWidth: 420 } }, "A verified badge tells people this account is authentic. Here’s what changes once you’re approved."),
         React.createElement("div", { style: {} },
           benefit("badge", "Verified badge on your profile"),
           benefit("shield", "Fewer impersonation reports against you"),
@@ -2735,49 +2735,49 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
           benefit("sparkle", "Early access to new POST App features")
         ),
         React.createElement("button", { onClick: () => setScreen("apply"), style: { marginTop: 30, marginLeft: "auto", display: "block", width: "274px", maxWidth: "100%", padding: "16px 26px", minHeight: 62, border: "none", borderRadius: 32, background: "#0D9FF3", color: "#FFFFFF", fontSize: 16, fontWeight: 800, letterSpacing: "0.25px", cursor: "pointer", boxShadow: "0 3px 0 rgba(0,0,0,0.08)" } }, "Apply for verification")
-       ) : React.createElement("div", { style: { marginTop: 0, border: "none", borderRadius: 20, background: "#FFFFFF", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "0 2px 5px rgba(0,0,0,0.03)" } },
+       ) : React.createElement("div", { style: { marginTop: 0, border: "none", borderRadius: 20, background: "var(--card-bg)", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "0 2px 5px rgba(0,0,0,0.03)" } },
         React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 26 } },
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#F4BD16" } }),
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#16A568" } }),
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#EF476F" } }),
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#0D9FF3" } })
         ),
-        React.createElement("button", { onClick: () => setScreen("benefits"), style: { border: "none", background: "transparent", padding: 0, color: "#777777", fontSize: 15, fontWeight: 600, letterSpacing: "0.35px", cursor: "pointer", marginBottom: 25 } }, "←  Why verify"),
-        React.createElement("h1", { style: { margin: 0, color: "#111111", fontSize: 35, lineHeight: 1.08, letterSpacing: "-0.8px", fontWeight: 800 } }, "Application"),
-        React.createElement("p", { style: { margin: "14px 0 28px", color: "#777777", fontSize: 17, lineHeight: 1.45, letterSpacing: "0.55px" } }, "Reviews usually take 3–5 days."),
-        status === "pending" && React.createElement("div", { style: { padding: "13px 14px", marginBottom: 20, borderRadius: 12, background: "#FFF8E5", color: "#795B00", fontSize: 13, lineHeight: 1.45 } }, "Your previous request is currently under review."),
-        status === "rejected" && React.createElement("div", { style: { padding: "13px 14px", marginBottom: 20, borderRadius: 12, background: "#FFF1F1", color: "#A32929", fontSize: 13, lineHeight: 1.45 } }, "You can submit updated information for another review."),
+        React.createElement("button", { onClick: () => setScreen("benefits"), style: { border: "none", background: "transparent", padding: 0, color: "var(--muted)", fontSize: 15, fontWeight: 600, letterSpacing: "0.35px", cursor: "pointer", marginBottom: 25 } }, "←  Why verify"),
+        React.createElement("h1", { style: { margin: 0, color: "var(--text)", fontSize: 35, lineHeight: 1.08, letterSpacing: "-0.8px", fontWeight: 800 } }, "Application"),
+        React.createElement("p", { style: { margin: "14px 0 28px", color: "var(--muted)", fontSize: 17, lineHeight: 1.45, letterSpacing: "0.55px" } }, "Reviews usually take 3–5 days."),
+        status === "pending" && React.createElement("div", { style: { padding: "13px 14px", marginBottom: 20, borderRadius: 12, background: "rgba(255,193,7,0.14)", color: "var(--text)", fontSize: 13, lineHeight: 1.45 } }, "Your previous request is currently under review."),
+        status === "rejected" && React.createElement("div", { style: { padding: "13px 14px", marginBottom: 20, borderRadius: 12, background: "rgba(255,23,68,0.12)", color: "var(--text)", fontSize: 13, lineHeight: 1.45 } }, "You can submit updated information for another review."),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 24 } },
           React.createElement("div", null,
             React.createElement("label", { style: labelStyle }, "Full name"),
-            React.createElement("input", { value: fullName, onChange: e => setFullName(e.target.value), placeholder: "As it appears on your ID", style: { ...inputStyle, height: 63, borderRadius: 32, background: "#F3F3F3", border: "1px solid #D8D8D8", fontSize: 17, letterSpacing: "0.4px" }, autoComplete: "name" })
+            React.createElement("input", { value: fullName, onChange: e => setFullName(e.target.value), placeholder: "As it appears on your ID", style: { ...inputStyle, height: 63, borderRadius: 32, background: "var(--input-bg)", border: "1px solid var(--border)", fontSize: 17, letterSpacing: "0.4px" }, autoComplete: "name" })
           ),
           React.createElement("div", null,
             React.createElement("label", { style: labelStyle }, "Username"),
-            React.createElement("input", { value: username, onChange: e => setUsername(e.target.value), placeholder: "@yourhandle", style: { ...inputStyle, height: 63, borderRadius: 32, background: "#F3F3F3", border: "1px solid #D8D8D8", fontSize: 17, letterSpacing: "0.4px" }, autoComplete: "username" })
+            React.createElement("input", { value: username, onChange: e => setUsername(e.target.value), placeholder: "@yourhandle", style: { ...inputStyle, height: 63, borderRadius: 32, background: "var(--input-bg)", border: "1px solid var(--border)", fontSize: 17, letterSpacing: "0.4px" }, autoComplete: "username" })
           ),
           React.createElement("div", null,
             React.createElement("label", { style: { ...labelStyle, marginBottom: 12 } }, "Account type"),
             React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 9 } },
-              [["Individual", "Creator, journalist, public voice"], ["Business", "Brand, company, organisation"], ["Government", "Official body or public office"]].map(([value, description]) => React.createElement("button", { key: value, type: "button", onClick: () => setAccountType(value), style: { width: "100%", textAlign: "left", padding: "14px 17px", borderRadius: 16, border: accountType === value ? "1.5px solid #0D9FF3" : "1px solid #D8D8D8", background: accountType === value ? "#F1F5FF" : "#F3F3F3", color: "#171717", cursor: "pointer", boxSizing: "border-box" } }, React.createElement("div", { style: { fontSize: 17, fontWeight: 800, lineHeight: 1.25, letterSpacing: "0.3px" } }, value), React.createElement("div", { style: { marginTop: 6, color: "#777777", fontSize: 15, lineHeight: 1.3, letterSpacing: "0.35px" } }, description)))
+              [["Individual", "Creator, journalist, public voice"], ["Business", "Brand, company, organisation"], ["Government", "Official body or public office"]].map(([value, description]) => React.createElement("button", { key: value, type: "button", onClick: () => setAccountType(value), style: { width: "100%", textAlign: "left", padding: "14px 17px", borderRadius: 16, border: accountType === value ? "1.5px solid #0D9FF3" : "1px solid var(--border)", background: accountType === value ? "rgba(13,159,243,0.12)" : "var(--input-bg)", color: "var(--text)", cursor: "pointer", boxSizing: "border-box" } }, React.createElement("div", { style: { fontSize: 17, fontWeight: 800, lineHeight: 1.25, letterSpacing: "0.3px" } }, value), React.createElement("div", { style: { marginTop: 6, color: "var(--muted)", fontSize: 15, lineHeight: 1.3, letterSpacing: "0.35px" } }, description)))
             )
           ),
           React.createElement("div", null,
             React.createElement("label", { style: { ...labelStyle, marginBottom: 12 } }, "Proof of identity"),
-            React.createElement("label", { htmlFor: "verification-proof-upload", style: { minHeight: 170, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 17, border: "1px dashed #CFCFCF", background: "#F3F3F3", color: "#171717", cursor: "pointer", textAlign: "center", padding: "20px", boxSizing: "border-box" } },
+            React.createElement("label", { htmlFor: "verification-proof-upload", style: { minHeight: 170, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 17, border: "1px dashed var(--border)", background: "var(--input-bg)", color: "var(--text)", cursor: "pointer", textAlign: "center", padding: "20px", boxSizing: "border-box" } },
               React.createElement("input", { id: "verification-proof-upload", type: "file", accept: ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png", onChange: handleProofChange, style: { display: "none" } }),
-              React.createElement("svg", { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "#777777", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M12 16V4" }), React.createElement("path", { d: "m8 8 4-4 4 4" }), React.createElement("path", { d: "M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" })),
+              React.createElement("svg", { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "var(--muted)", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M12 16V4" }), React.createElement("path", { d: "m8 8 4-4 4 4" }), React.createElement("path", { d: "M5 15v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4" })),
               React.createElement("div", { style: { fontSize: 17, lineHeight: 1.4, letterSpacing: "0.45px" } }, proofFileName || "Upload a government ID or registration document"),
-              React.createElement("div", { style: { color: proofFileName ? "#0D9FF3" : "#777777", fontSize: 15, lineHeight: 1.35, letterSpacing: "0.4px" } }, proofFileName ? "File selected · Tap to replace" : "PDF, JPG, or PNG · under 10MB")
+              React.createElement("div", { style: { color: proofFileName ? "#0D9FF3" : "var(--muted)", fontSize: 15, lineHeight: 1.35, letterSpacing: "0.4px" } }, proofFileName ? "File selected · Tap to replace" : "PDF, JPG, or PNG · under 10MB")
             )
           ),
           React.createElement("div", null,
             React.createElement("label", { style: { ...labelStyle, marginBottom: 12 } }, "Why should this account be verified?"),
-            React.createElement("textarea", { value: verificationReason, onChange: e => setVerificationReason(e.target.value), placeholder: "Tell us who you are and why people should trust this account", rows: 4, style: { ...inputStyle, height: 154, padding: "16px 17px", borderRadius: 18, background: "#F3F3F3", border: "1px solid #D8D8D8", resize: "vertical", lineHeight: 1.45, fontSize: 17, letterSpacing: "0.35px" } })
+            React.createElement("textarea", { value: verificationReason, onChange: e => setVerificationReason(e.target.value), placeholder: "Tell us who you are and why people should trust this account", rows: 4, style: { ...inputStyle, height: 154, padding: "16px 17px", borderRadius: 18, background: "var(--input-bg)", border: "1px solid var(--border)", resize: "vertical", lineHeight: 1.45, fontSize: 17, letterSpacing: "0.35px" } })
           ),
           React.createElement("div", null,
             React.createElement("label", { style: { ...labelStyle, marginBottom: 12 } }, "Supporting links (optional)"),
-            React.createElement("textarea", { value: supportingLinks, onChange: e => setSupportingLinks(e.target.value), placeholder: "News coverage, official website, other verified profiles", rows: 3, style: { ...inputStyle, height: 94, padding: "16px 17px", borderRadius: 18, background: "#F3F3F3", border: "1px solid #D8D8D8", resize: "vertical", lineHeight: 1.45, fontSize: 17, letterSpacing: "0.35px" } })
+            React.createElement("textarea", { value: supportingLinks, onChange: e => setSupportingLinks(e.target.value), placeholder: "News coverage, official website, other verified profiles", rows: 3, style: { ...inputStyle, height: 94, padding: "16px 17px", borderRadius: 18, background: "var(--input-bg)", border: "1px solid var(--border)", resize: "vertical", lineHeight: 1.45, fontSize: 17, letterSpacing: "0.35px" } })
           )
         ),
         React.createElement("button", { onClick: handleSubmit, disabled: loading, style: { width: "274px", maxWidth: "100%", minHeight: 62, marginTop: 30, marginLeft: "auto", borderRadius: 34, background: loading ? "#0D9FF3" : "#0D9FF3", color: "#FFFFFF", fontWeight: 800, fontSize: 17, letterSpacing: "0.25px", border: "none", cursor: loading ? "default" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 } },
