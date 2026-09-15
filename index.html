@@ -2717,7 +2717,7 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
           React.createElement("div", { style: { position: "absolute", left: "50%", transform: "translateX(-50%)", color: "var(--text)", fontSize: 20, lineHeight: 1.12, fontWeight: 800, textAlign: "center", letterSpacing: "-0.25px", whiteSpace: "nowrap" } }, screen === "benefits" ? "Why verify" : "Apply")
         )
       ),
-      screen === "benefits" ? React.createElement("div", { style: { marginTop: 24, border: "none", borderRadius: 20, background: "var(--card-bg)", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "0 2px 5px rgba(0,0,0,0.03)" } },
+      screen === "benefits" ? React.createElement("div", { style: { marginTop: 24, border: "none", borderRadius: 0, background: "transparent", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "none" } },
         React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 27 } },
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#F4BD16" } }),
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#16A568" } }),
@@ -2735,7 +2735,7 @@ function VerificationModal({ token, status, showToast, onClose, onSubmitted }) {
           benefit("sparkle", "Early access to new POST App features")
         ),
         React.createElement("button", { onClick: () => setScreen("apply"), style: { marginTop: 30, marginLeft: "auto", display: "block", width: "274px", maxWidth: "100%", padding: "16px 26px", minHeight: 62, border: "none", borderRadius: 32, background: "#0D9FF3", color: "#FFFFFF", fontSize: 16, fontWeight: 800, letterSpacing: "0.25px", cursor: "pointer", boxShadow: "0 3px 0 rgba(0,0,0,0.08)" } }, "Apply for verification")
-       ) : React.createElement("div", { style: { marginTop: 0, border: "none", borderRadius: 20, background: "var(--card-bg)", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "0 2px 5px rgba(0,0,0,0.03)" } },
+       ) : React.createElement("div", { style: { marginTop: 0, border: "none", borderRadius: 0, background: "transparent", padding: "28px 23px 31px", boxSizing: "border-box", boxShadow: "none" } },
         React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 26 } },
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#F4BD16" } }),
           React.createElement("span", { style: { width: 27, height: 7, borderRadius: 8, background: "#16A568" } }),
