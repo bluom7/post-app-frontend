@@ -81,6 +81,8 @@ button[data-help-spin]:focus, button[data-help-spin]:focus-visible, button[data-
 ::-webkit-scrollbar-track { background: var(--input-bg); }
 ::-webkit-scrollbar-thumb { background: #888; border-radius: 2px; }
  html, body, #root { scrollbar-width: none; -ms-overflow-style: none; }
+ .saved-drafts-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+ .saved-drafts-scroll::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
  html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
 ::-webkit-media-controls-overlay-cast-button { display: none !important; }
 ::-webkit-media-controls-cast-button { display: none !important; }
@@ -3592,7 +3594,7 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
       React.createElement("button", {onClick: onBack, style: {background: "none", border: 0, color: "var(--text)", fontSize: 30, cursor: "pointer"}}, "‹"),
       React.createElement("b", {style: {fontSize: 22}}, "Saved Drafts")
     ),
-    React.createElement("div", {style: {flex: 1, overflowY: "auto", padding: "8px 16px 32px"}},
+    React.createElement("div", {className: "saved-drafts-scroll", style: {flex: 1, overflowY: "auto", padding: "8px 16px 32px"}},
       loading
         ? React.createElement("div", {style: {padding: 48, textAlign: "center", color: "var(--muted)"}}, "Loading drafts…")
         : !drafts.length
