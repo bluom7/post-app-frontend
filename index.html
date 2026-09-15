@@ -3566,6 +3566,7 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
   const [drafts, setDrafts] = React.useState([]);
   const [srcs, setSrcs] = React.useState({});
   const [loading, setLoading] = React.useState(true);
+  const [showDraftInfo, setShowDraftInfo] = React.useState(false);
 
   React.useEffect(function() {
     let live = true;
@@ -3613,7 +3614,19 @@ function SavedDraftsScreen({user,onBack,onEditPost,onEditReel,showToast}) {
       style: {display: "flex", alignItems: "center", gap: 16, padding: "16px 20px", borderBottom: "1px solid var(--border)"}
     },
       React.createElement("button", {onClick: onBack, style: {background: "none", border: 0, color: "var(--text)", fontSize: 30, cursor: "pointer"}}, "‹"),
-      React.createElement("b", {style: {fontSize: 22}}, "Saved Drafts")
+      React.createElement("b", {style: {fontSize: 22}}, "Saved Drafts"),
+      React.createElement("span", {style: {flex: 1}}),
+      React.createElement("button", {onClick: function() { setShowDraftInfo(true); }, "aria-label": "Saved drafts information", style: {width: 32, height: 32, padding: 0, border: 0, background: "none", color: "var(--text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"}}, React.createElement("svg", {width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true"}, React.createElement("circle", {cx: 12, cy: 12, r: 9.5}), React.createElement("line", {x1: 12, y1: 10.5, x2: 12, y2: 16}), React.createElement("circle", {cx: 12, cy: 7.2, r: 0.65, fill: "currentColor", stroke: "none"})))
+    ),
+    showDraftInfo && React.createElement("div", {role: "presentation", onClick: function() { setShowDraftInfo(false); }, style: {position: "fixed", inset: 0, zIndex: 230, background: "transparent"}},
+      React.createElement("div", {role: "dialog", "aria-label": "Saved drafts information", onClick: function(event) { event.stopPropagation(); }, style: {position: "absolute", top: 62, right: 16, width: "min(310px, calc(100vw - 32px))", boxSizing: "border-box", background: "#fff", color: "#171717", borderRadius: 16, padding: "15px 16px 16px", boxShadow: "0 10px 28px rgba(0,0,0,0.22)", border: "1px solid rgba(0,0,0,0.1)"}},
+        React.createElement("div", {style: {display: "flex", alignItems: "center", gap: 9, marginBottom: 8}},
+          React.createElement("span", {style: {width: 25, height: 25, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "#f1f1f1", color: "#222", fontWeight: 800, fontSize: 16}}, "i"),
+          React.createElement("b", {style: {fontSize: 16, flex: 1}}, "Saved Drafts"),
+          React.createElement("button", {onClick: function() { setShowDraftInfo(false); }, "aria-label": "Close information", style: {border: 0, background: "none", color: "#555", fontSize: 22, lineHeight: 1, padding: 1, cursor: "pointer"}}, "×")
+        ),
+        React.createElement("p", {style: {margin: 0, fontSize: 13, lineHeight: 1.45, color: "#4b4b4b"}}, "Saved Post aur Reel drafts yahan milte hain. Photo ya video thumbnail, save date-time, aur video ka real duration/file size yahin dikhaya jata hai.")
+      )
     ),
     React.createElement("div", {className: "saved-drafts-scroll", style: {flex: 1, overflowY: "auto", padding: "8px 16px 32px"}},
       loading
