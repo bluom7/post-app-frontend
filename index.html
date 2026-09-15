@@ -11074,6 +11074,8 @@ function ComposeModal({
         id: initialDraft && initialDraft.id ? initialDraft.id : "post_" + Date.now(),
         ownerId: user && user.id,
         type: "post",
+        title: initialDraft && initialDraft.title ? initialDraft.title : null,
+        pinned: !!(initialDraft && initialDraft.pinned),
         savedAt: Date.now(),
         text,
         photo_urls: stablePhotoUrls,
@@ -25085,9 +25087,11 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   async function saveReelDraft() {
     const blobToSave = exportedBlob || recordedBlob;
     const draft = {
-      id: "reel_" + Date.now(),
+      id: initialDraft && initialDraft.id ? initialDraft.id : "reel_" + Date.now(),
       ownerId: user && user.id,
       type: "reel",
+      title: initialDraft && initialDraft.title ? initialDraft.title : null,
+      pinned: !!(initialDraft && initialDraft.pinned),
       caption: caption || "",
       savedAt: Date.now(),
       isPhoto: !!isPhotoReel,
