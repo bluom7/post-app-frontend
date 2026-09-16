@@ -30076,6 +30076,56 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
         });
     }
 
+    // On the first page, show whichever valid source responds first. The
+    // lightweight legacy feed prevents a blank screen while the ranked feed
+    // finishes; the ranked response replaces it as soon as it arrives.
+    if (!useLegacy && requestedPage === 0 && replace) {
+      var algorithmApplied = false;
+      var fallbackApplied = false;
+      var currentFollowing = new Set((user && Array.isArray(user.following) ? user.following : []).map(function(id) { return String(id); }));
+      function applyFirstFeed(d, isAlgorithm) {
+        var newReels = Array.isArray(d && d.reels) ? d.reels : [];
+        if (!newReels.length) return false;
+        newReels = newReels.map(function(reel) {
+          return Object.assign({}, reel, { is_following: !!reel.is_following || currentFollowing.has(String(reel.user_id)) });
+        });
+        if (isAlgorithm) algorithmGroupRef.current = d && d.ab_group || "A";
+        setReels(function(prev) {
+          var seen = Object.create(null);
+          return newReels.filter(function(reel) {
+            var key = String(reel && reel.id || "");
+            if (!key || seen[key]) return false;
+            seen[key] = true;
+            return true;
+          });
+        });
+        hasMoreRef.current = !!(d && d.has_more);
+        setHasMore(!!(d && d.has_more));
+        skipRef.current = isAlgorithm ? requestedPage + 1 : requestedPage + newReels.length;
+        setLoading(false);
+        return true;
+      }
+      var algorithmRequest = api(requestPath, "GET", null, token)
+        .then(function(d) {
+          if (applyFirstFeed(d, true)) algorithmApplied = true;
+          return d;
+        })
+        .catch(function() { return null; });
+      var fastFallbackRequest = api("/reels?skip=0&limit=10", "GET", null, token)
+        .then(function(d) {
+          if (!algorithmApplied && applyFirstFeed(Object.assign({}, d, { ab_group: "A", algorithm: "legacy_fast_fallback" }), false)) fallbackApplied = true;
+          return d;
+        })
+        .catch(function() { return null; });
+      Promise.all([algorithmRequest, fastFallbackRequest]).then(function() {
+        if (!algorithmApplied) legacyFeedRef.current = true;
+        loadingRef.current = false;
+        setLoading(false);
+        if (!algorithmApplied && !fallbackApplied && !reels.length) reelToast && reelToast("Could not load reels", "#FF1744");
+      });
+      return;
+    }
+
     api(requestPath, "GET", null, token)
       .then(function(d) {
         var hasValidReels = d && Array.isArray(d.reels) && d.reels.length > 0;
