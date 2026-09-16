@@ -6231,7 +6231,7 @@ function HomeTab({
         setShowCompose(true);
       }
     }),
-    showCompose && React.createElement(ComposeModal, 
+    showCompose && React.createElement(ComposeModal, {
       key: composeInitialText || "compose",
       token, user,
       initialText: composeInitialText,
