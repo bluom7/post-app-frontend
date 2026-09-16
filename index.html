@@ -4668,7 +4668,12 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
         } else { setActiveCall(null); showToast("Could not start call"); }
       } catch(e) { setActiveCall(null); showToast("Call failed: " + (e.message || "")); }
     }
-  }), tab === "reels" && /*#__PURE__*/React.createElement(ReelsTab, { token, user, showToast, onViewProfile, onViewAccountInfo, onBack: () => setTab("home"), setTab: setTab, onOpenCompose: text => { setReelComposeText(text); setTab("home"); }, reelDraft: reelDraftToEdit, onReelDraftHandled: () => setReelDraftToEdit(null) }), tab === "drafts" && React.createElement(SavedDraftsScreen, { user: user, showToast: showToast, onBack: () => setTab("home"), onEditPost: draft => { setPostDraftToEdit(draft); setTab("home"); }, onEditReel: draft => { setReelDraftToEdit(draft); setTab("reels"); } }), tab === "profile" && /*#__PURE__*/React.createElement(ProfileTab, {
+  }), tab === "reels" && /*#__PURE__*/React.createElement(ReelsTab, { token, user, showToast, onViewProfile, onViewAccountInfo, onBack: () => setTab("home"), setTab: setTab, onOpenCompose: text => { setReelComposeText(text); setTab("home"); }, reelDraft: reelDraftToEdit, onReelDraftHandled: () => setReelDraftToEdit(null) }), tab === "drafts" && React.createElement(SavedDraftsScreen, { user: user, showToast: showToast, onBack: () => setTab("home"), onEditPost: draft => {
+          const photoUrls = draft && (draft.photo_urls || draft.photoUrls || (draft.photo_url ? [draft.photo_url] : []));
+          const hasPostPhoto = draft && draft.kind === "post" && !draft.video_url && !draft.video_blob && Array.isArray(photoUrls) && photoUrls.some(Boolean);
+          setPostDraftToEdit(hasPostPhoto ? Object.assign({}, draft, {openDirectImageEditor: true}) : draft);
+          setTab("home");
+        }, onEditReel: draft => { setReelDraftToEdit(draft); setTab("reels"); } }), tab === "profile" && /*#__PURE__*/React.createElement(ProfileTab, {
     token: token,
     user: user,
     setUser: setUser,
@@ -5793,13 +5798,27 @@ function HomeTab({
   const [showCompose, setShowCompose] = useState(false);
   const [composeInitialText, setComposeInitialText] = useState("");
   const [composeDraft, setComposeDraft] = useState(null);
+  const [directPhotoDraft, setDirectPhotoDraft] = useState(null);
   React.useEffect(() => {
     if (reelComposeText == null) return;
     setComposeInitialText(reelComposeText);
     setShowCompose(true);
     onReelComposeHandled && onReelComposeHandled();
   }, [reelComposeText, onReelComposeHandled]);
-  React.useEffect(() => { if (!draftToEdit) return; setComposeDraft(draftToEdit); setComposeInitialText(draftToEdit.text || ""); setShowCompose(true); onDraftHandled && onDraftHandled(); }, [draftToEdit, onDraftHandled]);
+  React.useEffect(() => {
+    if (!draftToEdit) return;
+    const photoUrls = draftToEdit.photo_urls || draftToEdit.photoUrls || (draftToEdit.photo_url ? [draftToEdit.photo_url] : []);
+    const hasDirectPostPhoto = draftToEdit.openDirectImageEditor && draftToEdit.kind === "post" && !draftToEdit.video_url && !draftToEdit.video_blob && Array.isArray(photoUrls) && photoUrls.some(Boolean);
+    if (hasDirectPostPhoto) {
+      setDirectPhotoDraft(draftToEdit);
+      onDraftHandled && onDraftHandled();
+      return;
+    }
+    setComposeDraft(draftToEdit);
+    setComposeInitialText(draftToEdit.text || "");
+    setShowCompose(true);
+    onDraftHandled && onDraftHandled();
+  }, [draftToEdit, onDraftHandled]);
   const [followingIds, setFollowingIds] = useState(new Set());
   const [pendingFollowIds, setPendingFollowIds] = useState(new Set());
   const [newPostsQueue, setNewPostsQueue] = useState([]);
@@ -6186,7 +6205,33 @@ function HomeTab({
       onClick: ()=>setShowCompose(true),
       style: { position:"fixed", bottom:24, right:20, width:58, height:58, borderRadius:"50%", background:COLORS.blue, color:"#fff", border:"none", fontSize:30, fontWeight:900, cursor:"pointer", zIndex:100, display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 4px 18px rgba(0,0,0,0.30)", lineHeight:1 }
     }, "+"),
-    showCompose && React.createElement(ComposeModal, {
+    directPhotoDraft && React.createElement(PhotoEditorOverlay, {
+      src: (directPhotoDraft.photo_urls || directPhotoDraft.photoUrls || [directPhotoDraft.photo_url]).filter(Boolean)[0],
+      onClose: () => setDirectPhotoDraft(null),
+      onSave: (newSrc) => {
+        const nextDraft = Object.assign({}, directPhotoDraft, { photo_urls: [newSrc], photo_url: newSrc, photoUrls: [newSrc] });
+        const savedDraft = Object.assign({}, nextDraft);
+        delete savedDraft.kind;
+        delete savedDraft.photoUrls;
+        putPostDraftRecord("posts", savedDraft).catch(() => {});
+        setDirectPhotoDraft(null);
+        setComposeDraft(nextDraft);
+        setComposeInitialText(nextDraft.text || "");
+        setShowCompose(true);
+      },
+      onDelete: () => {
+        const nextDraft = Object.assign({}, directPhotoDraft, { photo_urls: [], photo_url: null, photoUrls: [] });
+        const savedDraft = Object.assign({}, nextDraft);
+        delete savedDraft.kind;
+        delete savedDraft.photoUrls;
+        putPostDraftRecord("posts", savedDraft).catch(() => {});
+        setDirectPhotoDraft(null);
+        setComposeDraft(nextDraft);
+        setComposeInitialText(nextDraft.text || "");
+        setShowCompose(true);
+      }
+    }),
+    showCompose && React.createElement(ComposeModal, 
       key: composeInitialText || "compose",
       token, user,
       initialText: composeInitialText,
