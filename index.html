@@ -27466,14 +27466,14 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
         if (tab === "gif") {
           content = reelStickerLoading
             ? React.createElement("div", { style: { display: "flex", justifyContent: "center", padding: 30 } }, React.createElement("div", { style: { width: 26, height: 26, border: "2.5px solid rgba(255,255,255,0.25)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" } }))
-            : React.createElement("div", { style: { overflowY: "auto", padding: "4px 12px 28px", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 } },
+            : React.createElement("div", { className: "no-scrollbar", style: { overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none", padding: "4px 12px 28px", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 } },
                 reelStickerItems.length
                   ? reelStickerItems.map(item => React.createElement("button", { key: item.id, onClick: () => addGif(item), style: { height: 74, border: "none", borderRadius: 12, background: "rgba(255,255,255,0.08)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 4 } }, React.createElement("img", { src: item.preview || item.full, alt: item.title || "GIF", loading: "lazy", style: { maxWidth: "100%", maxHeight: "100%", objectFit: "contain" } })))
                   : React.createElement("div", { style: { gridColumn: "1 / -1", padding: 24, textAlign: "center", color: "rgba(255,255,255,0.65)", fontSize: 13 } }, "GIFs load nahi ho paaye. Emoji tab try karein.")
               );
         } else {
           const compact = tab !== "emoji";
-          content = React.createElement("div", { style: { overflowY: "auto", padding: "3px 14px 30px", flex: 1 } },
+          content = React.createElement("div", { className: "no-scrollbar", style: { overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none", padding: "3px 14px 30px", flex: 1 } },
             React.createElement("div", { style: { display: "grid", gridTemplateColumns: compact ? "repeat(4, minmax(0, 1fr))" : "repeat(2, minmax(0, 1fr))", columnGap: compact ? 8 : 16, rowGap: 5 } },
               items.map((item, i) => React.createElement("button", { key: item.label + item.emoji + i, onClick: () => addEmoji(item), style: compact ? { minHeight: 76, border: "none", borderRadius: 14, background: "rgba(255,255,255,0.05)", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5, padding: 5, fontFamily: "inherit" } : { minHeight: 58, border: "none", borderRadius: 13, background: "transparent", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 10, textAlign: "left", padding: "4px 5px", fontFamily: "inherit" } },
                 React.createElement("span", { style: { fontSize: compact ? 40 : 34, lineHeight: 1, flexShrink: 0, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.35))" } }, item.emoji),
