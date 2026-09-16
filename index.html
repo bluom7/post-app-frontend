@@ -29824,20 +29824,21 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   var [showAllReplies, setShowAllReplies] = React.useState({});
   var commentInputRef = React.useRef(null);
   var commentListRef = React.useRef(null);
+  var replyPositionRef = React.useRef(null);
+  React.useLayoutEffect(function() {
+    var pending = replyPositionRef.current;
+    var list = commentListRef.current;
+    if (!pending || !list) return;
+    var item = list.querySelector('[data-reel-comment-id="' + String(pending.commentId) + '"]');
+    if (item) list.scrollTop += item.getBoundingClientRect().top - pending.top;
+    replyPositionRef.current = null;
+  }, [expandedReplies]);
   function expandReelCommentReplies(commentId) {
     var list = commentListRef.current;
     var selector = '[data-reel-comment-id="' + String(commentId) + '"]';
     var item = list && list.querySelector(selector);
-    var beforeTop = item ? item.getBoundingClientRect().top : null;
+    if (item) replyPositionRef.current = { commentId: commentId, top: item.getBoundingClientRect().top };
     setExpandedReplies(function(prev) { return Object.assign({}, prev, { [commentId]: true }); });
-    if (beforeTop === null || typeof requestAnimationFrame !== "function") return;
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() {
-        var updatedItem = list && list.querySelector(selector);
-        if (!updatedItem) return;
-        list.scrollTop += updatedItem.getBoundingClientRect().top - beforeTop;
-      });
-    });
   }
   var commentPollRef = React.useRef(null);
   var commentSheetDragRef = React.useRef({ startY: 0, startExpanded: false, dragging: false });
