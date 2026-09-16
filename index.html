@@ -29848,7 +29848,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   var commentSheetDragRef = React.useRef({ startY: 0, startExpanded: false, dragging: false });
   var [commentSheetExpanded, setCommentSheetExpanded] = React.useState(false);
   var commentCacheRef = React.useRef({});
-  var commentLikeBusyRef = React.useRef(new Set());
+  var commentLikeQueueRef = React.useRef({});
   var pendingCommentLikesRef = React.useRef({});
   var scrollRef = React.useRef(null);
   var skipRef = React.useRef(0);
@@ -30477,16 +30477,27 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
     if (!activeReelId || !user) return;
     var reelIdAtRequest = String(activeReelId);
     var commentId = String(cid);
-    // Keep one in-flight mutation per comment; each tap still updates the UI
-    // immediately and the next tap is available as soon as the server settles.
-    if (commentLikeBusyRef.current.has(commentId)) return;
+    var pendingKey = reelIdAtRequest + ":" + commentId;
     var current = comments.find(function(c) { return String(c.id) === commentId; });
     if (!current) return;
     var previousLikes = Array.isArray(current.likes) ? current.likes.slice() : [];
     var wasLiked = previousLikes.some(function(id) { return String(id) === String(user.id); });
     var requestedLiked = !wasLiked;
-    var pendingKey = reelIdAtRequest + ":" + commentId;
-    commentLikeBusyRef.current.add(commentId);
+    var queue = commentLikeQueueRef.current[pendingKey];
+    if (!queue) {
+      queue = {
+        reelId: reelIdAtRequest,
+        commentId: commentId,
+        baseLikes: previousLikes.slice(),
+        desiredLiked: requestedLiked,
+        inFlight: false,
+      };
+      commentLikeQueueRef.current[pendingKey] = queue;
+    } else {
+      // A second tap while the first request is pending becomes the next
+      // explicit server state instead of being ignored by a busy lock.
+      queue.desiredLiked = requestedLiked;
+    }
     pendingCommentLikesRef.current[pendingKey] = requestedLiked;
     function applyLikes(likes) {
       // Write the optimistic/authoritative result to the cache synchronously.
@@ -30509,26 +30520,49 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
       }
     }
     applyLikes(requestedLiked
-      ? previousLikes.concat([user.id])
+      ? previousLikes.concat([String(user.id)])
       : previousLikes.filter(function(id) { return String(id) !== String(user.id); }));
-    _apiFetch("/reels/" + reelIdAtRequest + "/comments/" + commentId + "/like", "POST", { liked: requestedLiked }, token, 8000, 0)
-      .then(function(result) {
-        // A successful mutation must invalidate every cached GET for this reel's
-        // comments; otherwise the 45s stale response can overwrite the heart.
-        invalidateCache("/reels/" + reelIdAtRequest + "/comments");
-        if (!result || typeof result.liked !== "boolean") return;
-        var authoritativeLikes = Array.isArray(result.likes) ? result.likes.map(String) : previousLikes.filter(function(id) { return String(id) !== String(user.id); });
-        if (!Array.isArray(result.likes) && result.liked) authoritativeLikes.push(String(user.id));
-        applyLikes(authoritativeLikes);
-      })
-      .catch(function() {
-        invalidateCache("/reels/" + reelIdAtRequest + "/comments");
-        applyLikes(previousLikes);
-      })
-      .finally(function() {
-        delete pendingCommentLikesRef.current[pendingKey];
-        commentLikeBusyRef.current.delete(commentId);
-      });
+    function sendNext() {
+      var active = commentLikeQueueRef.current[pendingKey];
+      if (!active || active.inFlight) return;
+      active.inFlight = true;
+      var sentLiked = active.desiredLiked;
+      _apiFetch("/reels/" + reelIdAtRequest + "/comments/" + commentId + "/like", "POST", { liked: sentLiked }, token, 8000, 0)
+        .then(function(result) {
+          invalidateCache("/reels/" + reelIdAtRequest + "/comments");
+          var serverLikes = Array.isArray(result && result.likes) ? result.likes.map(String) : null;
+          if (active.desiredLiked !== sentLiked) {
+            // The user changed their mind while this request was in flight.
+            // Keep the newest optimistic state visible and carry forward the
+            // first response as the rollback state for the next request.
+            if (serverLikes) active.baseLikes = serverLikes;
+            return;
+          }
+          if (!result || typeof result.liked !== "boolean") return;
+          var authoritativeLikes = serverLikes || active.baseLikes.slice();
+          if (!serverLikes) {
+            authoritativeLikes = authoritativeLikes.filter(function(id) { return String(id) !== String(user.id); });
+            if (result.liked) authoritativeLikes.push(String(user.id));
+          }
+          active.baseLikes = authoritativeLikes.slice();
+          applyLikes(authoritativeLikes);
+        })
+        .catch(function() {
+          // Roll back only if this was still the latest requested state.
+          if (active.desiredLiked === sentLiked) applyLikes(active.baseLikes.slice());
+        })
+        .finally(function() {
+          active.inFlight = false;
+          if (active.desiredLiked !== sentLiked) {
+            pendingCommentLikesRef.current[pendingKey] = active.desiredLiked;
+            sendNext();
+          } else {
+            delete pendingCommentLikesRef.current[pendingKey];
+            delete commentLikeQueueRef.current[pendingKey];
+          }
+        });
+    }
+    sendNext();
   }
   function translateReelComment(cid, text) { var existing = commentTranslationState[cid]; if (existing) { setCommentTranslationState(function(prev) { return Object.assign({}, prev, { [cid]: Object.assign({}, prev[cid], { showingOriginal: !prev[cid].showingOriginal }) }); }); return; } setCommentTranslationLoading(function(prev) { return Object.assign({}, prev, { [cid]: true }); }); translateText(text, "hi").then(function(result) { setCommentTranslationState(function(prev) { return Object.assign({}, prev, { [cid]: { translated: result && result.translated ? result.translated : text, showingOriginal: false } }); }); }).catch(function() {}).finally(function() { setCommentTranslationLoading(function(prev) { return Object.assign({}, prev, { [cid]: false }); }); }); } function deleteReply(cid, rid) {
     api("/reels/" + activeReelId + "/comments/" + cid + "/replies/" + rid, "DELETE", null, token)
