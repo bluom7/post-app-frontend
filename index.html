@@ -29833,12 +29833,9 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
     if (item) list.scrollTop += item.getBoundingClientRect().top - pending.top;
     replyPositionRef.current = null;
   }, [expandedReplies]);
-  function expandReelCommentReplies(commentId) {
-    var list = commentListRef.current;
-    var selector = '[data-reel-comment-id="' + String(commentId) + '"]';
-    var item = list && list.querySelector(selector);
-    if (item) replyPositionRef.current = { commentId: commentId, top: item.getBoundingClientRect().top };
-    setExpandedReplies(function(prev) { return Object.assign({}, prev, { [commentId]: true }); });
+  function toggleReelCommentReplies(commentId) {
+    rememberReelCommentPosition(commentId);
+    setExpandedReplies(function(prev) { return Object.assign({}, prev, { [commentId]: !prev[commentId] }); });
   }
   var commentPollRef = React.useRef(null);
   var commentSheetDragRef = React.useRef({ startY: 0, startExpanded: false, dragging: false });
@@ -30811,9 +30808,9 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                           cLikeCount > 0 && React.createElement("span", { style: { fontSize: 16, color: "#111", lineHeight: "16px", fontWeight: 400 } }, cLikeCount)))))),
                   cReplies.length > 0 && React.createElement("div", { style: { marginLeft: 44, marginTop: 4 } },
                     // "View X replies" toggle — collapsed by default
-                    !expandedReplies[c.id] && React.createElement("button", { onClick: function() { expandReelCommentReplies(c.id); }, style: { background: "none", border: "none", cursor: "pointer", color: "#888", fontSize: 12, fontWeight: 600, padding: "2px 0", display: "flex", alignItems: "center", gap: 6 } },
+                    React.createElement("button", { onClick: function() { toggleReelCommentReplies(c.id); }, style: { background: "none", border: "none", cursor: "pointer", color: "#888", fontSize: 12, fontWeight: 600, padding: "2px 0", display: "flex", alignItems: "center", gap: 6 } },
                       React.createElement("span", { style: { display: "inline-block", width: 22, height: 1, background: "#ddd", verticalAlign: "middle" } }),
-                      "View " + cReplies.length + " " + (cReplies.length === 1 ? "reply" : "replies")),
+                      expandedReplies[c.id] ? "Hide replies" : ("View " + cReplies.length + " " + (cReplies.length === 1 ? "reply" : "replies"))),
                     // When expanded: show first 2 (or all if showAllReplies)
                     expandedReplies[c.id] && (function() {
                       var visibleReplies = cReplies;
