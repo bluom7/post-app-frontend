@@ -30619,10 +30619,16 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
         msOverflowStyle: "none"
       }
     },
-      reels.length === 0 && loading && React.createElement("div", { style: { minHeight: "100%", height: "100vh", overflow: "hidden", scrollSnapAlign: "start", background: "#000" } },
-        React.createElement("style", null, "@keyframes reelsTabDarkShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }"),
-        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, width: "100%", minHeight: "100%", padding: 2, boxSizing: "border-box" } },
-          [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].map(function(i) { return React.createElement("div", { key: "loading" + i, style: { aspectRatio: "1 / 1", minWidth: 0, background: "linear-gradient(90deg, #111 25%, #252525 50%, #111 75%)", backgroundSize: "200% 100%", animation: "reelsTabDarkShimmer 1.35s ease-in-out infinite" } }); })
+      reels.length === 0 && loading && React.createElement("div", { style: { minHeight: "100%", height: "100vh", position: "relative", overflow: "hidden", scrollSnapAlign: "start", background: "#050505" } },
+        React.createElement("style", null, "@keyframes reelsFeedShimmer { 0% { background-position: 180% 0; } 100% { background-position: -80% 0; } }"),
+        React.createElement("div", { style: { position: "absolute", inset: 0, background: "linear-gradient(105deg, #070707 20%, #1d1d1d 42%, #070707 64%)", backgroundSize: "220% 100%", animation: "reelsFeedShimmer 1.25s ease-in-out infinite" } }),
+        React.createElement("div", { style: { position: "absolute", right: 14, bottom: 120, display: "flex", flexDirection: "column", alignItems: "center", gap: 22 } },
+          [0,1,2,3,4].map(function(i) { return React.createElement("div", { key: "reel-action-skeleton-" + i, style: { width: i === 1 ? 34 : 30, height: i === 1 ? 34 : 30, borderRadius: "50%", background: "rgba(255,255,255,0.14)" } }); })
+        ),
+        React.createElement("div", { style: { position: "absolute", left: 18, right: 82, bottom: 34, display: "flex", flexDirection: "column", gap: 9 } },
+          React.createElement("div", { style: { width: 132, height: 13, borderRadius: 7, background: "rgba(255,255,255,0.17)" } }),
+          React.createElement("div", { style: { width: "74%", maxWidth: 260, height: 11, borderRadius: 6, background: "rgba(255,255,255,0.12)" } }),
+          React.createElement("div", { style: { width: "52%", maxWidth: 180, height: 11, borderRadius: 6, background: "rgba(255,255,255,0.10)" } })
         )
       ),
       reels.map(function(reel, idx) {
