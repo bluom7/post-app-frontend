@@ -73,7 +73,8 @@ button[data-help-spin]:focus, button[data-help-spin]:focus-visible, button[data-
     html, body, body *, #root, #root * { font-family: var(--post-app-font) !important; font-kerning: normal; font-feature-settings: "kern", "liga"; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
     input, textarea, button { font-family: var(--post-app-font) !important; letter-spacing: inherit; }
 ::-webkit-scrollbar { width: 4px; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none !important; -ms-overflow-style: none !important; }
+ .no-scrollbar::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
 .photo-editor-crops::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .photo-editor-effects::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .photo-editor-text-fonts::-webkit-scrollbar { display: none; width: 0; height: 0; }
@@ -9200,7 +9201,7 @@ function GifPickerModal({ onSelect, onClose }) {
     loading
       ? React.createElement('div', { style:{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', background:'#fff' } },
           React.createElement('div', { style:{ width:36, height:36, border:'3px solid #e0e0e0', borderTopColor:'#0D9FF3', borderRadius:'50%', animation:'spin 0.8s linear infinite' } }))
-      : React.createElement('div', { style:{ flex:1, overflowY:'auto', padding:2, background:'#fff' } },
+      : React.createElement('div', { className:'no-scrollbar', style:{ flex:1, overflowY:'auto', padding:2, background:'#fff', scrollbarWidth:'none', msOverflowStyle:'none', WebkitOverflowScrolling:'touch' } },
           gifs.length === 0
             ? React.createElement('div', { style:{ textAlign:'center', color:'#666', padding:'40px 20px', display:'flex', flexDirection:'column', alignItems:'center', gap:14 } },
                 gifError
@@ -9280,7 +9281,7 @@ function StickerPickerModal({ onSelect, onClose }) {
     loading
       ? React.createElement('div', { style:{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', background:'#fff' } },
           React.createElement('div', { style:{ width:36, height:36, border:'3px solid #e0e0e0', borderTopColor:COLORS.blue, borderRadius:'50%', animation:'spin 0.8s linear infinite' } }))
-      : React.createElement('div', { style:{ flex:1, overflowY:'auto', padding:8, background:'#fff' } },
+      : React.createElement('div', { className:'no-scrollbar', style:{ flex:1, overflowY:'auto', padding:8, background:'#fff', scrollbarWidth:'none', msOverflowStyle:'none', WebkitOverflowScrolling:'touch' } },
           React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(3, 1fr)', gap:6 } },
             stickers.map(s => React.createElement('div', {
               key:s.id, onClick:()=>onSelect(s.full),
