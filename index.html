@@ -30409,12 +30409,20 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
     commentLikeBusyRef.current.add(cid);
     pendingCommentLikesRef.current[pendingKey] = requestedLiked;
     function applyLikes(likes) {
+      // Write the optimistic/authoritative result to the cache synchronously.
+      // React functional updaters can run after the sheet closes; the cache must
+      // already contain the new like when the user immediately reopens it.
+      var cached = commentCacheRef.current[activeReelId];
+      var hasTarget = Array.isArray(cached) && cached.some(function(c) { return String(c.id) === String(cid); });
+      var cacheBase = hasTarget ? cached : comments;
+      var cachedUpdated = (Array.isArray(cacheBase) ? cacheBase : []).map(function(c) {
+        return String(c.id) === String(cid) ? Object.assign({}, c, { likes: likes.slice() }) : c;
+      });
+      commentCacheRef.current[activeReelId] = cachedUpdated;
       setComments(function(prev) {
-        var updated = prev.map(function(c) {
+        return prev.map(function(c) {
           return String(c.id) === String(cid) ? Object.assign({}, c, { likes: likes.slice() }) : c;
         });
-        commentCacheRef.current[activeReelId] = updated;
-        return updated;
       });
     }
     applyLikes(requestedLiked
