@@ -29950,9 +29950,26 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   }, [gridViewerOpen]);
 
   function gvLikeReel(rid) {
-    var upd = function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, { is_liked: !r.is_liked, like_count: r.is_liked ? Math.max(0,(r.like_count||0)-1) : (r.like_count||0)+1 }) : r; }); };
-    if (gridViewerSource === "discover") setDiscoverReels(upd); else setSearchReels(upd);
-    api("/reels/" + rid + "/like", "POST", {}, token).catch(function() {});
+    var source = gridViewerSource === "discover" ? discoverReels : searchReels;
+    var current = source.find(function(r) { return r.id === rid; });
+    if (!current) return;
+    var requestedLiked = !current.is_liked;
+    var previous = { is_liked: !!current.is_liked, like_count: Number(current.like_count) || 0 };
+    var optimistic = function(prev) { return prev.map(function(r) {
+      if (r.id !== rid) return r;
+      return Object.assign({}, r, { is_liked: requestedLiked, like_count: Math.max(0, previous.like_count + (requestedLiked ? 1 : -1)) });
+    }); };
+    if (gridViewerSource === "discover") setDiscoverReels(optimistic); else setSearchReels(optimistic);
+    api("/reels/" + rid + "/like", "POST", { liked: requestedLiked }, token)
+      .then(function(result) {
+        if (!result) return;
+        var reconcile = function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, {
+          is_liked: typeof result.liked === "boolean" ? result.liked : r.is_liked,
+          like_count: typeof result.like_count === "number" ? result.like_count : r.like_count
+        }) : r; }); };
+        if (gridViewerSource === "discover") setDiscoverReels(reconcile); else setSearchReels(reconcile);
+      })
+      .catch(function() { if (gridViewerSource === "discover") setDiscoverReels(function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, previous) : r; }); }); else setSearchReels(function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, previous) : r; }); }); });
   }
   function gvSaveReel(rid) {
     var upd = function(prev) { return prev.map(function(r) {
@@ -30171,6 +30188,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   // Mutating reel actions use optimistic UI, but always reconcile with the
   // server and roll back the visible state when the request fails.
   var reelActionSeqRef = React.useRef({});
+  var reelLikeBusyRef = React.useRef(new Set());
   var reelFollowBusyRef = React.useRef(new Set());
   function nextReelAction(rid) {
     var next = (reelActionSeqRef.current[rid] || 0) + 1;
@@ -30181,38 +30199,43 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
     return reelActionSeqRef.current[rid] === seq;
   }
   function likeReel(rid) {
+    if (reelLikeBusyRef.current.has(rid)) return;
     var actionReel = reels.find(function(r) { return r.id === rid; });
-    var actionIsLike = actionReel ? !actionReel.is_liked : true;
+    if (!actionReel) return;
+    var actionIsLike = !actionReel.is_liked;
     var previous = null;
     var seq = nextReelAction(rid);
+    reelLikeBusyRef.current.add(rid);
     setReels(function(prev) {
       return prev.map(function(r) {
         if (r.id !== rid) return r;
-        previous = { is_liked: !!r.is_liked, like_count: r.like_count || 0 };
-        var newLiked = !r.is_liked;
-        var newCount = newLiked ? previous.like_count + 1 : Math.max(0, previous.like_count - 1);
-        var upd = Object.assign({}, r, { is_liked: newLiked, like_count: newCount });
-        dispatchReelUpdate(rid, { is_liked: newLiked, like_count: newCount });
+        previous = { is_liked: !!r.is_liked, like_count: Number(r.like_count) || 0 };
+        var newCount = Math.max(0, previous.like_count + (actionIsLike ? 1 : -1));
+        var upd = Object.assign({}, r, { is_liked: actionIsLike, like_count: newCount });
+        dispatchReelUpdate(rid, { is_liked: actionIsLike, like_count: newCount });
         return upd;
       });
     });
-    api("/reels/" + rid + "/like", "POST", {}, token)
+    api("/reels/" + rid + "/like", "POST", { liked: actionIsLike }, token)
       .then(function(result) {
         if (!isLatestReelAction(rid, seq) || !result) return;
         api("/reels/ab-metric", "POST", { group: algorithmGroupRef.current || "A", event: actionIsLike ? "like" : "unlike" }, token).catch(function() {});
+        var confirmed = {
+          is_liked: typeof result.liked === "boolean" ? result.liked : actionIsLike,
+          like_count: typeof result.like_count === "number" ? result.like_count : null
+        };
         setReels(function(prev) { return prev.map(function(r) {
-          return r.id === rid ? Object.assign({}, r, {
-            is_liked: typeof result.liked === "boolean" ? result.liked : r.is_liked,
-            like_count: typeof result.like_count === "number" ? result.like_count : r.like_count
-          }) : r;
+          return r.id === rid ? Object.assign({}, r, confirmed.like_count === null ? { is_liked: confirmed.is_liked } : confirmed) : r;
         }); });
+        dispatchReelUpdate(rid, confirmed.like_count === null ? { is_liked: confirmed.is_liked } : confirmed);
       })
       .catch(function() {
         if (!previous || !isLatestReelAction(rid, seq)) return;
         setReels(function(prev) { return prev.map(function(r) { return r.id === rid ? Object.assign({}, r, previous) : r; }); });
         dispatchReelUpdate(rid, previous);
         reelToast && reelToast("Couldn't update like", "#FF3B5C");
-      });
+      })
+      .finally(function() { reelLikeBusyRef.current.delete(rid); });
   }
   function saveReel(rid) {
     var previous = null;
