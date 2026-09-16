@@ -7725,6 +7725,7 @@ function BentoPostCard({
                       React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between" } },
                         React.createElement("div", null,
                           React.createElement("span", { style: { fontWeight: 700, fontSize: 13, color: "var(--text)" } }, c.user_name || c.user_handle || "User"),
+                          c.is_badge_verified && React.createElement(VerifiedBadge, { size: 13 }),
                           React.createElement("span", { style: { color: "var(--muted)", fontSize: 11, marginLeft: 7 } }, fmtTimeAgo(c.created_at))),
                         React.createElement("button", { onClick: () => likeCommentSheet(c.id), style: { background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 1, flexShrink: 0, padding: "0 2px" } },
                           React.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: cLiked ? "#FF1744" : "none", stroke: cLiked ? "#FF1744" : "var(--border)", strokeWidth: "2" },
@@ -7746,6 +7747,7 @@ function BentoPostCard({
                         React.createElement("div", { style: { flex: 1, minWidth: 0 } },
                           React.createElement("div", null,
                             React.createElement("span", { style: { fontWeight: 700, fontSize: 12, color: "var(--text)" } }, r.user_name || r.user_handle || "User"),
+                                r.is_badge_verified && React.createElement(VerifiedBadge, { size: 12 }),
                             React.createElement("span", { style: { color: "var(--muted)", fontSize: 10, marginLeft: 6 } }, fmtTimeAgo(r.created_at))),
                           r.gif_url && React.createElement("img", { src: r.gif_url, alt: "GIF", style: { maxWidth: 140, borderRadius: 6, marginTop: 3, display: "block" }, loading: "lazy" }),
                           React.createElement("div", { style: { fontSize: 13, color: "var(--text)", marginTop: 2, wordBreak: "break-word", lineHeight: 1.4 } }, r.text))))));
