@@ -29848,6 +29848,8 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   var commentSheetDragRef = React.useRef({ startY: 0, startExpanded: false, dragging: false });
   var [commentSheetExpanded, setCommentSheetExpanded] = React.useState(false);
   var commentCacheRef = React.useRef({});
+  var commentLikeBusyRef = React.useRef(new Set());
+  var pendingCommentLikesRef = React.useRef({});
   var scrollRef = React.useRef(null);
   var skipRef = React.useRef(0);
   var hasMoreRef = React.useRef(true);
@@ -30301,11 +30303,14 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
       var merged = server.map(function(sc) {
         var lc = prevById[sc.id];
         if (!lc) return sc;
-        // Union likes
-        var serverLikes = sc.likes || [];
-        var localLikes = lc.likes || [];
+        // Server likes are authoritative. Only keep a local value while its request is pending.
+        var serverLikes = Array.isArray(sc.likes) ? sc.likes : [];
+        var pendingLike = pendingCommentLikesRef.current[String(rid) + ":" + String(sc.id)];
         var combined = serverLikes.slice();
-        localLikes.forEach(function(uid) { if (combined.indexOf(uid) === -1) combined.push(uid); });
+        if (typeof pendingLike === "boolean") {
+          combined = combined.filter(function(uid) { return String(uid) !== String(user.id); });
+          if (pendingLike) combined.push(user.id);
+        }
         // Preserve optimistic replies not yet confirmed by server
         var serverReplies = sc.replies || [];
         var serverReplyIds = serverReplies.map(function(r) { return r.id; });
@@ -30394,21 +30399,38 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
       .catch(function() {});
   }
   function likeComment(cid) {
-    // Use functional updater so wasLiked is always based on current state
-    var didLike;
-    setComments(function(prev) {
-      return prev.map(function(c) {
-        if (c.id !== cid) return c;
-        var lk = c.likes || [];
-        var wasLiked = lk.indexOf(user.id) !== -1;
-        didLike = !wasLiked;
-        return Object.assign({}, c, { likes: wasLiked ? lk.filter(function(id){return id!==user.id;}) : lk.concat([user.id]) });
+    if (!activeReelId || !user || commentLikeBusyRef.current.has(cid)) return;
+    var current = comments.find(function(c) { return String(c.id) === String(cid); });
+    if (!current) return;
+    var previousLikes = Array.isArray(current.likes) ? current.likes.slice() : [];
+    var wasLiked = previousLikes.some(function(id) { return String(id) === String(user.id); });
+    var requestedLiked = !wasLiked;
+    var pendingKey = String(activeReelId) + ":" + String(cid);
+    commentLikeBusyRef.current.add(cid);
+    pendingCommentLikesRef.current[pendingKey] = requestedLiked;
+    function applyLikes(likes) {
+      setComments(function(prev) {
+        var updated = prev.map(function(c) {
+          return String(c.id) === String(cid) ? Object.assign({}, c, { likes: likes.slice() }) : c;
+        });
+        commentCacheRef.current[activeReelId] = updated;
+        return updated;
       });
-    });
-    api("/reels/" + activeReelId + "/comments/" + cid + "/like", "POST", {}, token)
-      .catch(function() {
-        // Revert on error
-        setComments(function(prev) { return prev.map(function(c) { if (c.id !== cid) return c; var lk = c.likes || []; return Object.assign({}, c, { likes: didLike ? lk.filter(function(id){return id!==user.id;}) : lk.concat([user.id]) }); }); });
+    }
+    applyLikes(requestedLiked
+      ? previousLikes.concat([user.id])
+      : previousLikes.filter(function(id) { return String(id) !== String(user.id); }));
+    api("/reels/" + activeReelId + "/comments/" + cid + "/like", "POST", { liked: requestedLiked }, token)
+      .then(function(result) {
+        if (!result || typeof result.liked !== "boolean") return;
+        var authoritativeLikes = Array.isArray(result.likes) ? result.likes.slice() : previousLikes.filter(function(id) { return String(id) !== String(user.id); });
+        if (!Array.isArray(result.likes) && result.liked) authoritativeLikes.push(user.id);
+        applyLikes(authoritativeLikes);
+      })
+      .catch(function() { applyLikes(previousLikes); })
+      .finally(function() {
+        delete pendingCommentLikesRef.current[pendingKey];
+        commentLikeBusyRef.current.delete(cid);
       });
   }
   function translateReelComment(cid, text) { var existing = commentTranslationState[cid]; if (existing) { setCommentTranslationState(function(prev) { return Object.assign({}, prev, { [cid]: Object.assign({}, prev[cid], { showingOriginal: !prev[cid].showingOriginal }) }); }); return; } setCommentTranslationLoading(function(prev) { return Object.assign({}, prev, { [cid]: true }); }); translateText(text, "hi").then(function(result) { setCommentTranslationState(function(prev) { return Object.assign({}, prev, { [cid]: { translated: result && result.translated ? result.translated : text, showingOriginal: false } }); }); }).catch(function() {}).finally(function() { setCommentTranslationLoading(function(prev) { return Object.assign({}, prev, { [cid]: false }); }); }); } function deleteReply(cid, rid) {
@@ -30835,7 +30857,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
             : comments.length === 0
               ? React.createElement("div", { style: { textAlign: "center", color: "#999", padding: "36px 0", fontSize: 14 } }, "No comments yet. Be the first!")
             : comments.map(function(c) {
-                var cLiked = (c.likes || []).indexOf(user.id) !== -1;
+                var cLiked = (c.likes || []).some(function(id) { return String(id) === String(user.id); });
                 var cLikeCount = (c.likes || []).length;
                 var cReplies = c.replies || []; var commentTranslation = commentTranslationState[c.id]; var commentTextValue = commentTranslation && !commentTranslation.showingOriginal ? commentTranslation.translated : c.text;
                 return React.createElement("div", { key: c.id, "data-reel-comment-id": String(c.id), style: { padding: "10px 0" } },
