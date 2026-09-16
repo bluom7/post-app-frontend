@@ -23757,6 +23757,14 @@ function ReelCameraModal({ token, user, initialStream, initialCameraError, showT
   const [recordedBlob, setRecordedBlob] = React.useState(null);
   const [recordedURL, setRecordedURL] = React.useState(null);
   const [caption, setCaption] = React.useState("");
+  const shareCaptionRef = React.useRef(null);
+  React.useLayoutEffect(() => {
+    if (step !== "share") return;
+    const input = shareCaptionRef.current;
+    if (!input) return;
+    input.style.height = "0px";
+    input.style.height = Math.max(56, input.scrollHeight) + "px";
+  }, [caption, step]);
   const [uploading, setUploading] = React.useState(false);
   const [uploadProgress, setUploadProgress] = React.useState(0);
   const [uploadError, setUploadError] = React.useState(null);
@@ -26570,6 +26578,7 @@ React.createElement("div", { style: { position: "absolute", bottom: 10, left: "5
           ),
           React.createElement("textarea", {
             className: "reel-share-caption",
+            ref: shareCaptionRef,
             placeholder: "", value: caption, onChange: e => setCaption(e.target.value), maxLength: 2200,
             onFocus: () => { if (previewMusicAudioRef.current) { try { previewMusicAudioRef.current.pause(); } catch(_) {} } setPreviewPlaying(false); },
             style: { position: "relative", zIndex: 1, width: "100%", minHeight: 56, background: "transparent", border: "none", outline: "none", color: "transparent", WebkitTextFillColor: "transparent", caretColor: "var(--text)", fontSize: 18, resize: "none", lineHeight: 1.45, padding: 0, fontFamily: "inherit", overflow: "hidden", scrollbarWidth: "none", msOverflowStyle: "none" }
