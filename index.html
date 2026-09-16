@@ -29812,6 +29812,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   var [showComments, setShowComments] = React.useState(false);
   var [activeReelId, setActiveReelId] = React.useState(null);
   var [comments, setComments] = React.useState([]); var [commentText, setCommentText] = React.useState(""); var [commentTranslationState, setCommentTranslationState] = React.useState({}); var [commentTranslationLoading, setCommentTranslationLoading] = React.useState({});
+  var [commentsFetching, setCommentsFetching] = React.useState(false);
   var [commentLoading, setCommentLoading] = React.useState(false);
   var [commentGifOpen, setCommentGifOpen] = React.useState(false);
   var [commentGifUrl, setCommentGifUrl] = React.useState(null);
@@ -30267,12 +30268,27 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
     var ep=wasPending?"/users/"+userId+"/follow-request/cancel":wasFollowing?"/users/"+userId+"/unfollow":"/users/"+userId+"/follow";
     api(ep,"POST",{},token).then(function(res){if(!isLatestReelAction("follow:"+userId,seq))return;var pending=!!(res&&res.pending),confirmed=following&&!pending;setReels(function(p){return p.map(function(x){return x.user_id===userId?Object.assign({},x,{is_following:confirmed,is_follow_pending:pending}):x;});});dispatchFollowUpdate(userId,confirmed,pending,{actorId:user&&user.id,actorUser:user,targetUser,followersDelta:pending?-delta:0});}).catch(function(){if(!isLatestReelAction("follow:"+userId,seq))return;setReels(function(p){return p.map(function(x){return x.user_id===userId?Object.assign({},x,{is_following:wasFollowing,is_follow_pending:wasPending}):x;});});dispatchFollowUpdate(userId,wasFollowing,wasPending,{actorId:user&&user.id,actorUser:user,targetUser,followersDelta:-delta});showToast&&showToast("Couldn't update follow","#FF3B5C");}).finally(function(){reelFollowBusyRef.current.delete(userId);});
   }
+  function renderReelCommentSkeleton(key) {
+    var shimmer = { background: "linear-gradient(90deg, #f0f0f0 25%, #fafafa 37%, #f0f0f0 63%)", backgroundSize: "400% 100%", animation: "reelCommentShimmer 1.25s ease-in-out infinite" };
+    return React.createElement("div", { key: "reel-comment-skeleton-" + key, style: { display: "flex", gap: 10, alignItems: "flex-start", padding: "10px 0" } },
+      React.createElement("div", { style: Object.assign({}, shimmer, { width: 38, height: 38, borderRadius: "50%", flexShrink: 0 }) }),
+      React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } },
+          React.createElement("div", { style: Object.assign({}, shimmer, { width: 72, height: 14, borderRadius: 4 }) }),
+          React.createElement("div", { style: Object.assign({}, shimmer, { width: 28, height: 12, borderRadius: 4 }) })),
+        React.createElement("div", { style: Object.assign({}, shimmer, { width: "78%", maxWidth: 220, height: 17, borderRadius: 4, marginTop: 8 }) }),
+        React.createElement("div", { style: { display: "flex", gap: 14, marginTop: 8 } },
+          React.createElement("div", { style: Object.assign({}, shimmer, { width: 42, height: 14, borderRadius: 4 }) }),
+          React.createElement("div", { style: Object.assign({}, shimmer, { width: 92, height: 14, borderRadius: 4 }) }))));
+  }
   function openComments(rid) {
     if (commentPollRef.current) { clearInterval(commentPollRef.current); commentPollRef.current = null; }
     setActiveReelId(rid); setShowComments(true); setCommentGifUrl(null); setCommentGifOpen(false); setCommentSheetExpanded(false); setCommentTranslationState({}); setCommentTranslationLoading({});
     // Show cached comments instantly — no blank flash when reopening
     var cached = commentCacheRef.current[rid];
-    setComments(cached && cached.length > 0 ? cached : []);
+    var hasCachedComments = !!(cached && cached.length > 0);
+    setComments(hasCachedComments ? cached : []);
+    setCommentsFetching(!hasCachedComments);
     // Shared merge helper — race-safe, always updates cache
     function mergeServerComments(server, prev) {
       var serverIds = server.map(function(c) { return c.id; });
@@ -30302,7 +30318,8 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
     // Initial fetch — merges into prev state, never overwrites optimistic comments
     api("/reels/" + rid + "/comments", "GET", null, token)
       .then(function(d) { setComments(function(prev) { return mergeServerComments(d.comments || [], prev); }); })
-      .catch(function() {});
+      .catch(function() {})
+      .finally(function() { setCommentsFetching(false); });
     // Poll every 5s — same merge logic
     commentPollRef.current = setInterval(function() {
       api("/reels/" + rid + "/comments", "GET", null, token)
@@ -30803,8 +30820,10 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
 
         // ── comment list ──
         React.createElement("div", { ref: commentListRef, style: { flex: 1, overflowY: "auto", padding: "6px 14px", background: "#fff" } },
-          comments.length === 0
-            ? React.createElement("div", { style: { textAlign: "center", color: "#999", padding: "36px 0", fontSize: 14 } }, "No comments yet. Be the first!")
+          commentsFetching
+            ? ["one", "two", "three"].map(function(key) { return renderReelCommentSkeleton(key); })
+            : comments.length === 0
+              ? React.createElement("div", { style: { textAlign: "center", color: "#999", padding: "36px 0", fontSize: 14 } }, "No comments yet. Be the first!")
             : comments.map(function(c) {
                 var cLiked = (c.likes || []).indexOf(user.id) !== -1;
                 var cLikeCount = (c.likes || []).length;
@@ -30976,7 +30995,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
 
     showUpload && React.createElement(ReelUploadModal, { token: token, user: user, showToast: reelToast, onClose: function() { setShowUpload(false); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); setShowUpload(false); } }),
     showCamera && React.createElement(ReelCameraModal, { token: token, user: user, showToast: reelToast, initialReel: remixSource, initialDraft: draftToEdit, onClose: closeCamera, onOpenGallery: function() { closeCamera(); setShowUpload(true); }, onUploaded: function(r) { setReels(function(prev) { return [r].concat(prev); }); setActiveIdx(0); closeCamera(); } }),
-    React.createElement("style", null, "@keyframes reelHeartPop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); } 40% { opacity: 1; transform: translate(-50%,-50%) scale(1.3); } 70% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(0.8); } }"));
+    React.createElement("style", null, "@keyframes reelCommentShimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } } @keyframes reelHeartPop { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); } 40% { opacity: 1; transform: translate(-50%,-50%) scale(1.3); } 70% { opacity: 1; transform: translate(-50%,-50%) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(0.8); } }"));
 }
 
 var _REEL_FONT_MAP = { Bubble: { fontFamily: "'Arial Rounded MT Bold', Arial, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "none", textShadow: "0 3px 0 rgba(0,0,0,0.65)" }, "Slab Serif": { fontFamily: "'Roboto Slab', Georgia, serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 6px rgba(0,0,0,0.9)" }, Geometric: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 800, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 5px rgba(0,0,0,0.9)" }, Classic: { fontFamily: "Georgia, serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }, Headline: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "uppercase", textShadow: "0 2px 6px rgba(0,0,0,0.85)" }, Glow: { fontFamily: "Arial, sans-serif", fontWeight: 700, fontStyle: "normal", textTransform: "none", textShadow: "0 0 20px currentColor, 0 0 40px currentColor, 0 2px 6px rgba(0,0,0,0.7)" }, Fancy: { fontFamily: "Georgia, 'Times New Roman', serif", fontWeight: 600, fontStyle: "italic", textTransform: "none", textShadow: "0 2px 8px rgba(0,0,0,0.9)" }, Pop: { fontFamily: "'Arial Black', Impact, sans-serif", fontWeight: 900, fontStyle: "normal", textTransform: "uppercase", textShadow: "2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000" } };
