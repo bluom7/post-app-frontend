@@ -29814,6 +29814,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   var [activeReelId, setActiveReelId] = React.useState(null);
   var [comments, setComments] = React.useState([]); var [commentText, setCommentText] = React.useState(""); var [commentTranslationState, setCommentTranslationState] = React.useState({}); var [commentTranslationLoading, setCommentTranslationLoading] = React.useState({});
   var [commentsFetching, setCommentsFetching] = React.useState(false);
+  var [showCommentInfo, setShowCommentInfo] = React.useState(false);
   var [commentLoading, setCommentLoading] = React.useState(false);
   var [commentGifOpen, setCommentGifOpen] = React.useState(false);
   var [commentGifUrl, setCommentGifUrl] = React.useState(null);
@@ -30284,7 +30285,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   }
   function openComments(rid) {
     if (commentPollRef.current) { clearInterval(commentPollRef.current); commentPollRef.current = null; }
-    setActiveReelId(rid); setShowComments(true); setCommentGifUrl(null); setCommentGifOpen(false); setCommentSheetExpanded(false); setCommentTranslationState({}); setCommentTranslationLoading({});
+    setActiveReelId(rid); setShowComments(true); setCommentGifUrl(null); setCommentGifOpen(false); setCommentSheetExpanded(false); setCommentTranslationState({}); setCommentTranslationLoading({}); setShowCommentInfo(false);
     // Show cached comments instantly — no blank flash when reopening
     var cached = commentCacheRef.current[rid];
     var hasCachedComments = !!(cached && cached.length > 0);
@@ -30785,7 +30786,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
 
 
       // ── Comments bottom sheet — Instagram-style dark half-screen ─────────────
-    showComments && React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 600 }, onClick: function(e) { if (e.target === e.currentTarget) { setShowComments(false); setCommentGifOpen(false); setCommentSheetExpanded(false); } } },
+    showComments && React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 600 }, onClick: function(e) { if (e.target === e.currentTarget) { setShowComments(false); setCommentGifOpen(false); setCommentSheetExpanded(false); setShowCommentInfo(false); } } },
       React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, background: "#fff", borderRadius: commentSheetExpanded ? "0" : "16px 16px 0 0", height: commentSheetExpanded ? "100vh" : "56vh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 -4px 32px rgba(0,0,0,0.18)", transition: "height 0.32s cubic-bezier(0.4,0,0.2,1), border-radius 0.32s" } },
 
         // ── drag handle ──
@@ -30815,9 +30816,17 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
           ),
           activeCommentReel.user_id != null && String(activeCommentReel.user_id) !== "" && !(activeCommentReel.is_own || (user && String(activeCommentReel.user_id) === String(user.id))) && React.createElement("button", { onClick: function() { followUser(activeCommentReel.user_id); }, "aria-label": activeCommentReel.is_follow_pending ? "Requested" : activeCommentReel.is_following ? "Following" : "Follow", style: { background: "#EFF0F2", color: "#111", border: "none", borderRadius: 6, padding: "7px 14px", minWidth: 78, height: 34, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: 15, lineHeight: "20px", fontWeight: 650, cursor: "pointer", flexShrink: 0 } }, activeCommentReel.is_follow_pending ? "Requested" : activeCommentReel.is_following ? "Following" : "Follow")
         ),
-        // ── centered yellow comments title ──
-        React.createElement("div", { style: { alignSelf: "flex-start", flexShrink: 0, width: "fit-content", background: "#FFD600", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, padding: "8px 20px", margin: "0 0 8px 16px" } },
-          React.createElement("span", { style: { color: "#111", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 800, fontSize: 15, lineHeight: "20px" } }, "Comments")),
+        // ── comments title + information ──
+        React.createElement("div", { style: { position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", margin: "0 0 8px" } },
+          React.createElement("div", { style: { flexShrink: 0, width: "fit-content", background: "#FFD600", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, padding: "8px 20px" } },
+            React.createElement("span", { style: { color: "#111", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 800, fontSize: 15, lineHeight: "20px" } }, "Comments")),
+          React.createElement("button", { type: "button", onClick: function() { setShowCommentInfo(function(prev) { return !prev; }); }, "aria-label": "Comments information", style: { width: 32, height: 32, flexShrink: 0, padding: 0, border: 0, background: "none", color: "#111", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" } },
+            React.createElement("svg", { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" },
+              React.createElement("circle", { cx: 12, cy: 12, r: 9.5 }),
+              React.createElement("line", { x1: 12, y1: 10.5, x2: 12, y2: 16 }),
+              React.createElement("circle", { cx: 12, cy: 7.2, r: 0.65, fill: "currentColor", stroke: "none" }))),
+          showCommentInfo && React.createElement("div", { role: "dialog", "aria-label": "Comments information", onClick: function(event) { event.stopPropagation(); }, style: { position: "absolute", top: 42, right: 16, width: "min(300px, calc(100vw - 48px))", boxSizing: "border-box", background: "#fff", color: "#111", borderRadius: 14, padding: "14px 16px", boxShadow: "0 10px 28px rgba(0,0,0,0.18)", border: "1px solid #e5e5e5", zIndex: 10, fontSize: 14, lineHeight: 1.45 } }, "Join the conversation. A thought becomes meaningful when it’s shared.")
+        ),
 
         // ── comment list ──
         React.createElement("div", { ref: commentListRef, style: { flex: 1, overflowY: "auto", padding: "6px 14px", background: "#fff" } },
