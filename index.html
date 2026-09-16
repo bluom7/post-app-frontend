@@ -30812,7 +30812,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                                 React.createElement("span", { style: { color: "#999", fontSize: 10, marginLeft: 0 } }, r.created_at ? (function(ts){var d=new Date(ts),s=Math.floor((Date.now()-d)/1000);return s<5?"just now":s<60?s+"s":s<3600?Math.floor(s/60)+"m":s<86400?Math.floor(s/3600)+"h":s<604800?Math.floor(s/86400)+"d":s<2592000?Math.floor(s/604800)+"w":Math.floor(s/2592000)+"mo";})(r.created_at) : "")),
                               r.gif_url && React.createElement("img", { src: r.gif_url, alt: "GIF", style: { maxWidth: 140, borderRadius: 6, marginTop: 3, display: "block" }, loading: "lazy" }),
                               React.createElement("div", { style: { fontSize: 13, color: "#222", marginTop: 2, wordBreak: "break-word", lineHeight: 1.4 } }, r.text)));
-                        }),
+                        }));
 
                     })()));
               })),
