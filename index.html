@@ -7141,7 +7141,7 @@ function BentoPostCard({
     if (commentGifUrl) body.gif_url = commentGifUrl;
     if (replyingTo) {
       const parentId = replyingTo.id;
-      const tempReply = { id: "temp_" + Date.now(), user_id: user.id, user_name: user.name, user_handle: user.handle, avatar_bg: user.avatar_bg, avatar_letter: user.avatar_letter, avatar_photo: user.avatar_photo, text: body.text || "", gif_url: body.gif_url || null, created_at: new Date().toISOString() };
+      const tempReply = { id: "temp_" + Date.now(), user_id: user.id, user_name: user.name, user_handle: user.handle, avatar_bg: user.avatar_bg, avatar_letter: user.avatar_letter, avatar_photo: user.avatar_photo, is_badge_verified: !!(user && user.is_badge_verified), text: body.text || "", gif_url: body.gif_url || null, created_at: new Date().toISOString() };
       setLocalComments(prev => (prev || []).map(c => c.id === parentId ? { ...c, replies: [...(c.replies || []), tempReply] } : c));
       setExpandedReplies(prev => ({ ...prev, [parentId]: true }));
       setCommentText(""); setCommentGifUrl(null); setReplyingTo(null);
@@ -7151,7 +7151,7 @@ function BentoPostCard({
       return;
     }
     const tempId = "temp_" + Date.now();
-    const tempComment = { id: tempId, user_id: user.id, user_name: user.name, user_handle: user.handle, avatar_bg: user.avatar_bg, avatar_letter: user.avatar_letter, avatar_photo: user.avatar_photo, text: body.text || "", gif_url: body.gif_url || null, created_at: new Date().toISOString(), likes: [], replies: [] };
+    const tempComment = { id: tempId, user_id: user.id, user_name: user.name, user_handle: user.handle, avatar_bg: user.avatar_bg, avatar_letter: user.avatar_letter, avatar_photo: user.avatar_photo, is_badge_verified: !!(user && user.is_badge_verified), text: body.text || "", gif_url: body.gif_url || null, created_at: new Date().toISOString(), likes: [], replies: [] };
     setLocalComments(prev => [...(prev || []), tempComment]);
     setCommentText(""); setCommentGifUrl(null);
     api(`/posts/${post.id}/comments`, "POST", body, token)
@@ -30303,7 +30303,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
     if (commentGifUrl) body.gif_url = commentGifUrl;
     if (replyingTo) {
       var parentId = replyingTo.id;
-      var tempReply = { id: "temp_" + Date.now(), user_id: user.id, user_name: user.name, user_handle: user.handle, avatar_bg: user.avatar_bg, avatar_letter: user.avatar_letter, avatar_photo: user.avatar_photo, text: body.text || "", gif_url: body.gif_url || null, created_at: new Date().toISOString() };
+      var tempReply = { id: "temp_" + Date.now(), user_id: user.id, user_name: user.name, user_handle: user.handle, avatar_bg: user.avatar_bg, avatar_letter: user.avatar_letter, avatar_photo: user.avatar_photo, is_badge_verified: !!(user && user.is_badge_verified), text: body.text || "", gif_url: body.gif_url || null, created_at: new Date().toISOString() };
       setComments(function(prev) { return prev.map(function(c) { return c.id === parentId ? Object.assign({}, c, { replies: (c.replies || []).concat([tempReply]) }) : c; }); });
       setCommentText(""); setCommentGifUrl(null); setReplyingTo(null);
       setExpandedReplies(function(prev) { return Object.assign({}, prev, { [parentId]: true }); });
@@ -30318,7 +30318,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
         });
     } else {
       var tempId = "temp_" + Date.now();
-      var tempComment = { id: tempId, user_id: user.id, user_name: user.name, user_handle: user.handle, avatar_bg: user.avatar_bg, avatar_letter: user.avatar_letter, avatar_photo: user.avatar_photo, text: body.text || "", gif_url: body.gif_url || null, created_at: new Date().toISOString(), likes: [], replies: [] };
+      var tempComment = { id: tempId, user_id: user.id, user_name: user.name, user_handle: user.handle, avatar_bg: user.avatar_bg, avatar_letter: user.avatar_letter, avatar_photo: user.avatar_photo, is_badge_verified: !!(user && user.is_badge_verified), text: body.text || "", gif_url: body.gif_url || null, created_at: new Date().toISOString(), likes: [], replies: [] };
       setComments(function(prev) {
         var updated = prev.concat([tempComment]);
         commentCacheRef.current[activeReelId] = updated; // cache optimistic immediately
@@ -30784,6 +30784,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                       React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between" } },
                         React.createElement("div", null,
                           React.createElement("span", { style: { fontWeight: 700, fontSize: 14, color: "#111" } }, c.user_name || c.user_handle || "User"),
+                          c.is_badge_verified && React.createElement(VerifiedBadge, { size: 14 }),
                           React.createElement("span", { style: { color: "#999", fontSize: 12, marginLeft: 7 } }, c.created_at ? (function(ts){var d=new Date(ts),s=Math.floor((Date.now()-d)/1000);return s<5?"just now":s<60?s+"s":s<3600?Math.floor(s/60)+"m":s<86400?Math.floor(s/3600)+"h":s<604800?Math.floor(s/86400)+"d":s<2592000?Math.floor(s/604800)+"w":Math.floor(s/2592000)+"mo";})(c.created_at) : ""))),
                       React.createElement("div", { style: { fontSize: 16, color: "#222", marginTop: 3, wordBreak: "break-word", lineHeight: 1.4 } }, commentTextValue),
                       c.gif_url && React.createElement("img", { src: c.gif_url, alt: "GIF", style: { maxWidth: 180, borderRadius: 8, marginTop: 5, display: "block" }, loading: "lazy" }),
@@ -30808,6 +30809,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                             React.createElement("div", { style: { flex: 1, minWidth: 0 } },
                               React.createElement("div", null,
                                 React.createElement("span", { style: { fontWeight: 700, fontSize: 12, color: "#111" } }, r.user_name || r.user_handle || "User"),
+                                r.is_badge_verified && React.createElement(VerifiedBadge, { size: 12 }),
                                 React.createElement("span", { style: { color: "#999", fontSize: 10, marginLeft: 6 } }, r.created_at ? (function(ts){var d=new Date(ts),s=Math.floor((Date.now()-d)/1000);return s<5?"just now":s<60?s+"s":s<3600?Math.floor(s/60)+"m":s<86400?Math.floor(s/3600)+"h":s<604800?Math.floor(s/86400)+"d":s<2592000?Math.floor(s/604800)+"w":Math.floor(s/2592000)+"mo";})(r.created_at) : "")),
                               r.gif_url && React.createElement("img", { src: r.gif_url, alt: "GIF", style: { maxWidth: 140, borderRadius: 6, marginTop: 3, display: "block" }, loading: "lazy" }),
                               React.createElement("div", { style: { fontSize: 13, color: "#222", marginTop: 2, wordBreak: "break-word", lineHeight: 1.4 } }, r.text)));
