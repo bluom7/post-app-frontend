@@ -30799,8 +30799,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                       "View " + cReplies.length + " " + (cReplies.length === 1 ? "reply" : "replies")),
                     // When expanded: show first 2 (or all if showAllReplies)
                     expandedReplies[c.id] && (function() {
-                      var visibleReplies = showAllReplies[c.id] ? cReplies : cReplies.slice(0, 2);
-                      var hiddenCount = cReplies.length - 2;
+                      var visibleReplies = cReplies;
                       return React.createElement(React.Fragment, null,
                         visibleReplies.map(function(r) {
                           return React.createElement("div", { key: r.id, style: { display: "flex", gap: 8, padding: "7px 0", alignItems: "flex-start" } },
@@ -30814,13 +30813,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                               r.gif_url && React.createElement("img", { src: r.gif_url, alt: "GIF", style: { maxWidth: 140, borderRadius: 6, marginTop: 3, display: "block" }, loading: "lazy" }),
                               React.createElement("div", { style: { fontSize: 13, color: "#222", marginTop: 2, wordBreak: "break-word", lineHeight: 1.4 } }, r.text)));
                         }),
-                        // Show more / Show less button
-                        cReplies.length > 2 && React.createElement("button", {
-                          onClick: function() { setShowAllReplies(function(prev) { return Object.assign({}, prev, { [c.id]: !prev[c.id] }); }); },
-                          style: { background: "none", border: "none", cursor: "pointer", color: "#0D9FF3", fontSize: 12, fontWeight: 700, padding: "4px 0", display: "flex", alignItems: "center", gap: 5 }
-                        },
-                          React.createElement("span", { style: { display: "inline-block", width: 16, height: 1, background: "#c5d8f7", verticalAlign: "middle" } }),
-                          showAllReplies[c.id] ? "Show less" : ("Show more (" + hiddenCount + " more)")));
+
                     })()));
               })),
 
