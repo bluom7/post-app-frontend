@@ -30829,7 +30829,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
         ),
 
         // ── comment list ──
-        React.createElement("div", { ref: commentListRef, style: { flex: 1, overflowY: "auto", padding: "6px 14px", background: "#fff" } },
+        React.createElement("div", { ref: commentListRef, className: "no-scrollbar", style: { flex: 1, overflowY: "auto", padding: "6px 14px", background: "#fff", scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" } },
           commentsFetching
             ? ["one", "two", "three"].map(function(key) { return renderReelCommentSkeleton(key); })
             : comments.length === 0
