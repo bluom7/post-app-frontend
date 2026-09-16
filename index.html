@@ -29833,6 +29833,12 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
     if (item) list.scrollTop += item.getBoundingClientRect().top - pending.top;
     replyPositionRef.current = null;
   }, [expandedReplies]);
+  function rememberReelCommentPosition(commentId) {
+    var list = commentListRef.current;
+    var selector = '[data-reel-comment-id="' + String(commentId) + '"]';
+    var item = list && list.querySelector(selector);
+    replyPositionRef.current = item ? { commentId: commentId, top: item.getBoundingClientRect().top } : null;
+  }
   function toggleReelCommentReplies(commentId) {
     rememberReelCommentPosition(commentId);
     setExpandedReplies(function(prev) { return Object.assign({}, prev, { [commentId]: !prev[commentId] }); });
@@ -30521,7 +30527,6 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
     return function() { finishGridViewSession("leave_reels"); };
   }, []);
 
-  var activeCommentReel = reels.find(function(r) { return r && String(r.id) === String(activeReelId); }) || null;
   // Main render — TikTok-style full-screen scroll snap
   return React.createElement("div", { style: { position: "fixed", inset: 0, background: "#000", zIndex: 100, overflow: "hidden" } },
 
@@ -30778,21 +30783,6 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
         },
           React.createElement("div", { style: { width: 38, height: 4, borderRadius: 2, background: "#ccc" } })),
 
-        activeCommentReel && React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "8px 16px 10px", borderBottom: "1px solid #e0e0e0" } },
-          React.createElement("div", { style: { width: 44, height: 44, borderRadius: "50%", background: activeCommentReel.avatar_bg || "#FFD600", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", fontWeight: 800, fontSize: 17, color: "#111" } },
-            activeCommentReel.avatar_photo
-              ? React.createElement("img", { src: activeCommentReel.avatar_photo, alt: "", style: { width: "100%", height: "100%", objectFit: "cover" } })
-              : ((activeCommentReel.avatar_letter || (activeCommentReel.user_name || activeCommentReel.user_handle || "?").charAt(0) || "?").toString().charAt(0).toUpperCase())
-          ),
-          React.createElement("div", { style: { minWidth: 0, flex: 1 } },
-            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, minWidth: 0 } },
-              React.createElement("span", { style: { color: "#111", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 800, fontSize: 16, lineHeight: "20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, activeCommentReel.user_name || activeCommentReel.user_handle || "User"),
-              activeCommentReel.is_badge_verified && React.createElement(VerifiedBadge, { size: 16 })
-            ),
-            activeCommentReel.user_handle && React.createElement("div", { style: { color: "#666", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 500, fontSize: 13, lineHeight: "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + activeCommentReel.user_handle.replace(/^@/, ""))
-          ),
-          activeCommentReel.user_id != null && String(activeCommentReel.user_id) !== "" && !(activeCommentReel.is_own || (user && String(activeCommentReel.user_id) === String(user.id))) && React.createElement("button", { onClick: function() { followUser(activeCommentReel.user_id); }, "aria-label": activeCommentReel.is_follow_pending ? "Requested" : activeCommentReel.is_following ? "Following" : "Follow", style: { background: "#EFF0F2", color: "#111", border: "none", borderRadius: 6, padding: "7px 14px", minWidth: 78, height: 34, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: 15, lineHeight: "20px", fontWeight: 650, cursor: "pointer", flexShrink: 0 } }, activeCommentReel.is_follow_pending ? "Requested" : activeCommentReel.is_following ? "Following" : "Follow")
-        ),
         // ── header ──
         React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "2px 16px 10px", borderBottom: "1px solid #e0e0e0" } },
           React.createElement("span", { style: { fontWeight: 800, fontSize: 15, color: "#111" } }, "Comments"),
