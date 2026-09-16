@@ -7707,8 +7707,7 @@ function BentoPostCard({
         }, React.createElement("div", { style: { width: 38, height: 4, borderRadius: 2, background: "var(--border)" } })),
         // header
         React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "2px 16px 10px", borderBottom: "1px solid var(--border)" } },
-          React.createElement("span", { style: { fontWeight: 800, fontSize: 15, color: "var(--text)" } }, "Comments"),
-          React.createElement("button", { onClick: closeCommentSheet, style: { background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 24, lineHeight: 1, padding: 0 } }, "\u00d7")),
+          React.createElement("span", { style: { fontWeight: 800, fontSize: 15, color: "var(--text)" } }, "Comments")),
         // comment list
         React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "6px 14px" } },
           (!localComments || localComments.length === 0)
@@ -7738,7 +7737,6 @@ function BentoPostCard({
                         c.user_id === user.id && React.createElement("button", { onClick: () => deleteCommentSheet(c.id), style: { background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 12, padding: 0 } }, "Delete")))),
                   cReplies.length > 0 && React.createElement("div", { style: { marginLeft: 44, marginTop: 4 } },
                     React.createElement("button", { onClick: () => setExpandedReplies(prev => ({ ...prev, [c.id]: !prev[c.id] })), style: { background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: 12, fontWeight: 600, padding: "2px 0", display: "flex", alignItems: "center", gap: 6 } },
-                      React.createElement("span", { style: { display: "inline-block", width: 22, height: 1, background: "var(--border)", verticalAlign: "middle" } }),
                       expandedReplies[c.id] ? "Hide replies" : ("View " + cReplies.length + " " + (cReplies.length === 1 ? "reply" : "replies"))),
                     expandedReplies[c.id] && cReplies.map(r =>
                       React.createElement("div", { key: r.id, style: { display: "flex", gap: 8, padding: "7px 0", alignItems: "flex-start" } },
