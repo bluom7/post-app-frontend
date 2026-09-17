@@ -29009,7 +29009,7 @@ function ReelMentionSheet({ reel, token, user, showToast, onClose, onMentioned }
         React.createElement("button", {
           onClick: submit, disabled: !Object.keys(selected).length || submitting,
           style: { width: "100%", border: 0, borderRadius: 24, padding: 13, background: Object.keys(selected).length ? "#0D9FF3" : "#d8d8d8", color: "#fff", fontSize: 15, fontWeight: 800, cursor: Object.keys(selected).length ? "pointer" : "default" }
-        }, submitting ? "Mentioning…" : "Mention"))
+        }, submitting ? React.createElement(React.Fragment, null, React.createElement("span", { style: { display: "inline-block", width: 15, height: 15, border: "2px solid rgba(255,255,255,0.45)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.75s linear infinite", verticalAlign: "-2px", marginRight: 7 } }), "Mentioning…") : "Mention"))
     )
   );
 }
@@ -29342,6 +29342,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
         // The feed request also carries limit/skip query params, so invalidating
         // only the exact /posts?feed=true prefix leaves stale results behind.
         invalidateCache("/posts");
+        invalidateCache("/reels/feed");
         try { localStorage.removeItem("feed_cache_" + user.id); } catch (_) {}
         var nextMentionCount = response && typeof response.mention_count === "number"
           ? response.mention_count
@@ -29511,11 +29512,12 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 1 } },
           React.createElement("button", {
             "aria-label": "Mention people",
+            "aria-busy": mentionSubmitting,
             onClick: mentionReelToFeed,
             disabled: mentionSubmitting,
-            style: { background: "none", border: "none", cursor: mentionSubmitting ? "default" : "pointer", opacity: mentionSubmitting ? 0.55 : 1, padding: 4 }
+            style: { background: "none", border: "none", cursor: mentionSubmitting ? "default" : "pointer", opacity: mentionSubmitting ? 0.8 : 1, padding: 4 }
           },
-            React.createElement("svg", { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" },
+            React.createElement("svg", { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round", style: { display: "block", transformOrigin: "50% 50%", animation: mentionSubmitting ? "spin 0.75s linear infinite" : "none" } },
               React.createElement("path", { d: "M4.5 12.25V9.25A4.75 4.75 0 0 1 7.75 4.5H16.75" }),
               React.createElement("path", { d: "M16.75 4.5H20.25" }),
               React.createElement("path", { d: "M16.25 2 20.25 4.5 16.25 7" }),
