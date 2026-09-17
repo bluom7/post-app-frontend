@@ -29131,6 +29131,9 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   var [reportSubmitting, setReportSubmitting] = React.useState(false);
   var [reportStep, setReportStep] = React.useState("reasons");
   var [mentionSubmitting, setMentionSubmitting] = React.useState(false);
+  var [mentionConfirmed, setMentionConfirmed] = React.useState(false);
+  var [mentionSpinKey, setMentionSpinKey] = React.useState(0);
+  var mentionRollbackRef = React.useRef({ mentioned: false });
   var [mentionCount, setMentionCount] = React.useState(Number(reel.mention_count) || 0);
   // Preserve the follow target across parent refreshes. A follow request can
   // briefly reconcile the reel object without its user_id; the control must
@@ -29335,6 +29338,11 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   var mentionReelToFeed = function(e) {
     if (e) e.stopPropagation();
     if (mentionSubmitting || !user || !reel || !reel.id) return;
+    var previousMentioned = mentionConfirmed;
+    var optimisticMentioned = !previousMentioned;
+    mentionRollbackRef.current = { mentioned: previousMentioned };
+    setMentionConfirmed(optimisticMentioned);
+    setMentionSpinKey(function(value) { return value + 1; });
     setMentionSubmitting(true);
     api("/reels/" + reel.id + "/mention", "POST", { target_user_id: user.id }, token)
       .then(function(response) {
@@ -29344,6 +29352,8 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
         invalidateCache("/posts");
         invalidateCache("/reels/feed");
         try { localStorage.removeItem("feed_cache_" + user.id); } catch (_) {}
+        var nextMentioned = !(response && response.mentioned === false);
+        setMentionConfirmed(nextMentioned);
         var nextMentionCount = response && typeof response.mention_count === "number"
           ? response.mention_count
           : mentionCount;
@@ -29356,6 +29366,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
         );
       })
       .catch(function(error) {
+        setMentionConfirmed(mentionRollbackRef.current.mentioned);
         showToast && showToast(error.message || "Could not repost reel", "#FF3B5C");
       })
       .finally(function() { setMentionSubmitting(false); });
@@ -29517,10 +29528,11 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
             disabled: mentionSubmitting,
             style: { background: "none", border: "none", cursor: mentionSubmitting ? "default" : "pointer", opacity: mentionSubmitting ? 0.8 : 1, padding: 4 }
           },
-            React.createElement("svg", { width: 26, height: 26, viewBox: "97 45 186 230", xmlns: "http://www.w3.org/2000/svg", style: { display: "block", transformOrigin: "50% 50%", animation: mentionSubmitting ? "spin 0.75s linear infinite" : "none" } },
+            React.createElement("svg", { key: "mention-spin-" + mentionSpinKey, width: 26, height: 26, viewBox: "97 45 186 230", xmlns: "http://www.w3.org/2000/svg", style: { display: "block", transformOrigin: "50% 50%", animation: mentionSpinKey ? "spin 0.75s linear 1" : "none" } },
               React.createElement("g", { fill: "none", stroke: "white", strokeWidth: "16", strokeLinecap: "round", strokeLinejoin: "round" },
                 React.createElement("path", { d: "M110 195 V145 C110 112 138 88 172 88 H270 M238 55 L273 88" }),
-                React.createElement("path", { d: "M270 125 V175 C270 208 242 232 208 232 H110 M142 265 L107 232" })))),
+                React.createElement("path", { d: "M270 125 V175 C270 208 242 232 208 232 H110 M142 265 L107 232" }),
+                mentionConfirmed && React.createElement("path", { d: "M157 151 L177 171 L217 128", stroke: "white", strokeWidth: "16" })))),
           React.createElement("span", { style: Object.assign({}, reelOverlayTextStyle, { fontSize: 15, marginTop: -2 }) }, fmtCount(mentionCount))),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 1 } },
           React.createElement("button", { onClick: function(e) { e.stopPropagation(); shareReel(); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4 } },
