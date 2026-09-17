@@ -29132,6 +29132,17 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   var [mentionSpinKey, setMentionSpinKey] = React.useState(0);
   var mentionRollbackRef = React.useRef({ mentioned: false });
   var mentionPendingRef = React.useRef(null);
+  var mentionAnimationTimerRef = React.useRef(null);
+  var markMentionAnimationDone = function(spinKey) {
+    var pendingMention = mentionPendingRef.current;
+    if (!pendingMention || pendingMention.spinKey !== spinKey || pendingMention.animationDone) return;
+    pendingMention.animationDone = true;
+    if (!pendingMention.failed) setMentionConfirmed(pendingMention.mentioned);
+    if (mentionAnimationTimerRef.current) {
+      clearTimeout(mentionAnimationTimerRef.current);
+      mentionAnimationTimerRef.current = null;
+    }
+  };
   var [mentionCount, setMentionCount] = React.useState(Number(reel.mention_count) || 0);
   // Preserve the follow target across parent refreshes. A follow request can
   // briefly reconcile the reel object without its user_id; the control must
@@ -29345,7 +29356,9 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
     mentionPendingRef.current = { spinKey: nextMentionSpinKey, responseReady: false, animationDone: false, failed: false, mentioned: optimisticMentioned };
     setMentionConfirmed(false);
     setMentionCount(optimisticMentionCount);
+    if (mentionAnimationTimerRef.current) clearTimeout(mentionAnimationTimerRef.current);
     setMentionSpinKey(nextMentionSpinKey);
+    mentionAnimationTimerRef.current = setTimeout(function() { markMentionAnimationDone(nextMentionSpinKey); }, 650);
     setMentionSubmitting(true);
     api("/reels/" + reel.id + "/mention", "POST", { target_user_id: user.id }, token)
       .then(function(response) {
@@ -29538,7 +29551,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
             disabled: mentionSubmitting,
             style: { background: "none", border: "none", cursor: mentionSubmitting ? "default" : "pointer", opacity: mentionSubmitting ? 0.8 : 1, padding: 4 }
           },
-            React.createElement("svg", { width: 28, height: 28, viewBox: "105 48 175 225", xmlns: "http://www.w3.org/2000/svg", style: { display: "block", transition: "transform 0.6s ease-in-out", transform: "rotate(" + (mentionSpinKey * 180) + "deg)", transformOrigin: "50% 50%", overflow: "hidden", WebkitTapHighlightColor: "transparent", outline: "none" }, onTransitionEnd: function() { var pendingMention = mentionPendingRef.current; if (pendingMention && pendingMention.spinKey === mentionSpinKey) { pendingMention.animationDone = true; if (pendingMention.responseReady && !pendingMention.failed) setMentionConfirmed(pendingMention.mentioned); } } }, React.createElement("g", { fill: "none", stroke: "white", strokeWidth: "14", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M112 180 V145 C112 112 140 88 174 88 H242" }), React.createElement("path", { d: "M210 55 L245 88" }), React.createElement("path", { d: "M268 140 V175 C268 208 240 232 206 232 H138" }), React.createElement("path", { d: "M170 265 L135 232" })), mentionConfirmed && React.createElement("path", { d: "M125 165 L155 195 L225 120", transform: "rotate(" + ((mentionSpinKey % 2) * 180) + " 175 157.5)", fill: "none", stroke: "white", strokeWidth: "14", strokeLinecap: "round", strokeLinejoin: "round" }))), React.createElement("span", { style: Object.assign({}, reelOverlayTextStyle, { fontSize: 15, marginTop: -2 }) }, fmtCount(mentionCount))), React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 1 } },
+            React.createElement("svg", { width: 28, height: 28, viewBox: "105 48 175 225", xmlns: "http://www.w3.org/2000/svg", style: { display: "block", transition: "transform 0.6s ease-in-out", transform: "rotate(" + (mentionSpinKey * 180) + "deg)", transformOrigin: "50% 50%", overflow: "hidden", WebkitTapHighlightColor: "transparent", outline: "none" }, onTransitionEnd: function() { markMentionAnimationDone(mentionSpinKey); } }, React.createElement("g", { fill: "none", stroke: "white", strokeWidth: "14", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M112 180 V145 C112 112 140 88 174 88 H242" }), React.createElement("path", { d: "M210 55 L245 88" }), React.createElement("path", { d: "M268 140 V175 C268 208 240 232 206 232 H138" }), React.createElement("path", { d: "M170 265 L135 232" })), mentionConfirmed && React.createElement("path", { d: "M125 165 L155 195 L225 120", transform: "rotate(" + ((mentionSpinKey % 2) * 180) + " 175 157.5)", fill: "none", stroke: "white", strokeWidth: "14", strokeLinecap: "round", strokeLinejoin: "round" }))), React.createElement("span", { style: Object.assign({}, reelOverlayTextStyle, { fontSize: 15, marginTop: -2 }) }, fmtCount(mentionCount))), React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 1 } },
           React.createElement("button", { onClick: function(e) { e.stopPropagation(); shareReel(); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4 } },
             React.createElement("svg", { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" },
               React.createElement("path", { d: "M21.05 2.85 15.25 20.8q-.2.7-.6 0l-3.7-7.05q-.1-.2-.35-.3L3.15 9.8q-.8-.4-.05-.9l17.55-6.35q.7-.25.4.3Z" }),
