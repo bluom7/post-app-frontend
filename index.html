@@ -29543,20 +29543,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
             disabled: mentionSubmitting,
             style: { background: "none", border: "none", cursor: mentionSubmitting ? "default" : "pointer", opacity: mentionSubmitting ? 0.8 : 1, padding: 4 }
           },
-            React.createElement("svg", { key: "mention-spin-" + mentionSpinKey, width: 26, height: 26, viewBox: "97 45 186 230", xmlns: "http://www.w3.org/2000/svg", style: { display: "block" } },
-              React.createElement("g", { fill: "none", stroke: "white", strokeWidth: "16", strokeLinecap: "round", strokeLinejoin: "round" },
-                React.createElement("g", { style: { transformOrigin: "50% 50%", transformBox: "view-box", animation: mentionSpinKey ? "mentionArrowTop 0.7s cubic-bezier(0.4, 0, 0.2, 1) 1" : "none" } },
-                  React.createElement("path", { d: "M110 195 V145 C110 112 138 88 172 88 H270 M238 55 L273 88" })),
-                React.createElement("g", { style: { transformOrigin: "50% 50%", transformBox: "view-box", animation: mentionSpinKey ? "mentionArrowBottom 0.7s cubic-bezier(0.4, 0, 0.2, 1) 1" : "none", animationDelay: mentionSpinKey ? "0.12s" : "0s" }, onAnimationEnd: function() {
-                  var pendingMention = mentionPendingRef.current;
-                  if (pendingMention && pendingMention.spinKey === mentionSpinKey) {
-                    pendingMention.animationDone = true;
-                    if (pendingMention.responseReady && !pendingMention.failed) setMentionConfirmed(pendingMention.mentioned);
-                  }
-                } },
-                  React.createElement("path", { d: "M270 125 V175 C270 208 242 232 208 232 H110 M142 265 L107 232" })),
-                mentionConfirmed && React.createElement("path", { d: "M157 151 L177 171 L217 128", stroke: "white", strokeWidth: "16" })))),
-          React.createElement("span", { style: Object.assign({}, reelOverlayTextStyle, { fontSize: 15, marginTop: -2 }) }, fmtCount(mentionCount))),
+            React.createElement("svg", { width: 420, height: 320, viewBox: "0 0 420 320", xmlns: "http://www.w3.org/2000/svg", style: { display: "block", width: 26, height: 20 } }, React.createElement("g", { fill: "none", stroke: "white", strokeWidth: "10", strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("path", { d: "M110 180 V145 C110 112 138 88 172 88 H240" }), React.createElement("path", { d: "M208 55 L243 88" }), React.createElement("path", { d: "M270 140 V175 C270 208 242 232 208 232 H140" }), React.createElement("path", { d: "M172 265 L137 232" })))React.createElement("span", { style: Object.assign({}, reelOverlayTextStyle, { fontSize: 15, marginTop: -2 }) }, fmtCount(mentionCount))),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 1 } },
           React.createElement("button", { onClick: function(e) { e.stopPropagation(); shareReel(); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4 } },
             React.createElement("svg", { width: 26, height: 26, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.6", strokeLinecap: "round", strokeLinejoin: "round" },
