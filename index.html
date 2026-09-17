@@ -29339,9 +29339,12 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
     if (e) e.stopPropagation();
     if (mentionSubmitting || !user || !reel || !reel.id) return;
     var previousMentioned = mentionConfirmed;
+    var previousMentionCount = mentionCount;
     var optimisticMentioned = !previousMentioned;
-    mentionRollbackRef.current = { mentioned: previousMentioned };
+    var optimisticMentionCount = Math.max(0, previousMentionCount + (optimisticMentioned ? 1 : -1));
+    mentionRollbackRef.current = { mentioned: previousMentioned, count: previousMentionCount, optimisticCount: optimisticMentionCount };
     setMentionConfirmed(optimisticMentioned);
+    setMentionCount(optimisticMentionCount);
     setMentionSpinKey(function(value) { return value + 1; });
     setMentionSubmitting(true);
     api("/reels/" + reel.id + "/mention", "POST", { target_user_id: user.id }, token)
@@ -29356,7 +29359,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
         setMentionConfirmed(nextMentioned);
         var nextMentionCount = response && typeof response.mention_count === "number"
           ? response.mention_count
-          : mentionCount;
+          : mentionRollbackRef.current.optimisticCount;
         setMentionCount(nextMentionCount);
         showToast && showToast(
           response && response.mentioned === false
@@ -29367,6 +29370,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
       })
       .catch(function(error) {
         setMentionConfirmed(mentionRollbackRef.current.mentioned);
+        setMentionCount(mentionRollbackRef.current.count);
         showToast && showToast(error.message || "Could not repost reel", "#FF3B5C");
       })
       .finally(function() { setMentionSubmitting(false); });
