@@ -29151,6 +29151,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   if (reel && reel.user_id != null) followTargetIdRef.current = reel.user_id;
   var followTargetId = followTargetIdRef.current;
   var isOwn = reel.is_own || (user && followTargetId != null && String(followTargetId) === String(user.id));
+  var reelMentionAvatar = reel.mentioned_by || (mentionConfirmed && user ? { avatar_photo: user.avatar_photo, avatar_bg: user.avatar_bg, avatar_letter: user.avatar_letter, name: user.name, handle: user.handle } : null);
   // A custom song has its own artwork; direct video uploads use the uploader as original audio.
     var hasCustomSong = !!(reel.music_url || reel.music_preview_url || (reel.music_title && reel.music_title !== "Original Audio") || (reel.audio_label && reel.audio_label !== "Original Audio"));
     var showOriginalAudioProfileTile = !!reel.video_url && !hasCustomSong;
@@ -29609,8 +29610,13 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
     showRemixPage && React.createElement(RemixSequencePage, { reel: reel, token: token, onClose: function() { setShowRemixPage(false); }, onTryRemix: onTryRemix }),
     React.createElement("div", { style: { position: "absolute", left: 0, right: 70, bottom: hasReelHashtag ? 38 : 16, padding: "0 16px", zIndex: 5 } },
       React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 8 } },
-        React.createElement("div", { onClick: openReelProfile, style: { width: 36, height: 36, marginTop: 1, borderRadius: "50%", background: reel.avatar_bg || "#FFD600", flexShrink: 0, border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15, color: "#111", overflow: "hidden", cursor: "pointer", boxShadow: "0 1px 5px rgba(0,0,0,0.45)", WebkitTapHighlightColor: "transparent", touchAction: "manipulation", outline: "none" } },
-          reel.avatar_photo ? React.createElement("img", { src: reel.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" } }) : (reel.avatar_letter || "?")),
+        React.createElement("div", { style: { position: "relative", width: 36, height: 36, marginTop: 1, flexShrink: 0 } },
+          React.createElement("div", { onClick: openReelProfile, style: { width: "100%", height: "100%", borderRadius: "50%", background: reel.avatar_bg || "#FFD600", border: "none", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 15, color: "#111", overflow: "hidden", cursor: "pointer", boxShadow: "0 1px 5px rgba(0,0,0,0.45)", WebkitTapHighlightColor: "transparent", touchAction: "manipulation", outline: "none" } },
+            reel.avatar_photo ? React.createElement("img", { src: reel.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" } }) : (reel.avatar_letter || "?")),
+          reelMentionAvatar && React.createElement("div", { style: { position: "absolute", top: -9, right: -8, width: 21, height: 21, borderRadius: "50%", background: reelMentionAvatar.avatar_bg || "#FFD600", border: "2px solid #fff", boxSizing: "border-box", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", fontWeight: 800, fontSize: 9, color: "#111", zIndex: 2, boxShadow: "0 1px 4px rgba(0,0,0,0.6)", pointerEvents: "none" } },
+            reelMentionAvatar.avatar_photo ? React.createElement("img", { src: reelMentionAvatar.avatar_photo, alt: "", style: { width: "100%", height: "100%", objectFit: "cover" } }) : ((reelMentionAvatar.avatar_letter || reelMentionAvatar.name || reelMentionAvatar.handle || "?").toString().charAt(0).toUpperCase())
+          )
+        ),
         React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 3, flex: 1, minWidth: 0 } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, minWidth: 0 } },
               React.createElement("span", { onClick: openReelProfile, style: { color: "#fff", WebkitTextFillColor: "#fff", fontFamily: "Arial Black, Arial, Helvetica, sans-serif", fontWeight: 900, fontSize: 16, lineHeight: "20px", fontStyle: "normal", fontStretch: "normal", cursor: "pointer", WebkitTextStroke: "1.5px #000", paintOrder: "stroke fill", textShadow: "none", letterSpacing: "0.1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", WebkitTapHighlightColor: "transparent", touchAction: "manipulation", outline: "none" } }, (reel.user_name || reel.user_handle || "User").replace(/^@/, "")),
