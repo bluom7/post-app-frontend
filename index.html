@@ -1788,6 +1788,48 @@ async function uploadVideoFile(file, token, timeoutMs = 120000, startOffset = nu
   }
 }
 
+// Convert a local Compose photo preview into a real uploadable file.
+function dataUriToFile(dataUri, name = "photo.jpg") {
+  const parts = String(dataUri || "").split(",");
+  if (parts.length !== 2 || !parts[0].startsWith("data:")) return null;
+  const match = parts[0].match(/^data:([^;]+);base64$/i);
+  const mime = match ? match[1] : "image/jpeg";
+  const binary = atob(parts[1]);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new File([bytes], name, { type: mime });
+}
+
+// Upload Compose photos to Cloudinary through the backend. Posts must never
+// persist browser-only data URLs because feeds and profiles cannot reliably
+// serve those large legacy values.
+async function uploadPhotoFile(file, token, timeoutMs = 60000) {
+  if (!file) throw new Error("Photo upload failed. Please choose the photo again.");
+  const form = new FormData();
+  form.append("file", file, file.name || "photo.jpg");
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API}/upload/photo`, {
+      method: "POST",
+      headers: token ? { "Authorization": "Bearer " + token } : {},
+      body: form,
+      signal: controller.signal
+    });
+    let data;
+    try { data = await res.json(); } catch (_) { data = null; }
+    if (!res.ok || !data || !data.url) {
+      throw new Error((data && (typeof data.detail === "string" ? data.detail : data.detail && data.detail.message)) || "Photo upload failed. Try again.");
+    }
+    return data;
+  } catch (e) {
+    if (e.name === "AbortError") throw new Error("Photo upload timed out. Try again.");
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Upload reel video directly to Cloudinary after receiving a short-lived server signature.
 // This removes the old browser -> backend -> Cloudinary double hop.
 async function uploadReelVideoDirect(file, token, timeoutMs = 120000, onProgress = null) {
@@ -11545,14 +11587,24 @@ function ComposeModal({
     let postPhotoUrls = photoUrls;
     try {
       if (photoUrls.length) {
-        const resolvedPhotos = (await Promise.all(photoUrls.map(async src => {
-          const file = photoFileMapRef.current.get(src);
-          if (!file) return src;
-          const compressed = await compressPhoto(file);
-          return compressed ? compressed.src : null;
+        const resolvedPhotos = (await Promise.all(photoUrls.map(async (src, index) => {
+          const mappedFile = photoFileMapRef.current.get(src);
+          let uploadFile = mappedFile || null;
+          if (mappedFile) {
+            const compressed = await compressPhoto(mappedFile);
+            uploadFile = compressed ? dataUriToFile(compressed.src, mappedFile.name || ("photo-" + index + ".jpg")) : mappedFile;
+          } else if (typeof src === "string" && src.startsWith("data:")) {
+            uploadFile = dataUriToFile(src, "photo-" + index + ".jpg");
+          }
+          if (uploadFile) {
+            const uploaded = await uploadPhotoFile(uploadFile, token, 60000);
+            return uploaded.url;
+          }
+          if (typeof src === "string" && /^https?:\/\//i.test(src)) return src;
+          return null;
         }))).filter(Boolean);
         if (!resolvedPhotos.length) {
-          showToast("Photo processing failed", COLORS.red);
+          showToast("Photo upload failed. Please try again.", COLORS.red);
           setLoading(false);
           return;
         }
