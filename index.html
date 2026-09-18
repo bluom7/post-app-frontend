@@ -5871,11 +5871,9 @@ function HomeTab({
   const [newNotificationQueue, setNewNotificationQueue] = useState([]);
   const postsRef = React.useRef(posts);
   const newPostsQueueRef = React.useRef(newPostsQueue);
-  const newNotificationQueueRef = React.useRef(newNotificationQueue);
   const notificationSeenRef = React.useRef(null);
   postsRef.current = posts;
   newPostsQueueRef.current = newPostsQueue;
-  newNotificationQueueRef.current = newNotificationQueue;
 
   // Sync count updates from other sections (profile, reels, etc.)
   usePostSync(setPosts);
@@ -5906,11 +5904,16 @@ function HomeTab({
 
   // ── Poll new posts and all user activity for the Posted banner ──
   useEffect(() => {
-    if (!token) return;
+    notificationSeenRef.current = null;
+    if (!token) {
+      setNewPostsQueue([]);
+      setNewNotificationQueue([]);
+      return;
+    }
     const poll = async () => {
       const [feedResult, notificationResult] = await Promise.allSettled([
-        api("/posts?feed=true&limit=10", "GET", null, token, 15000),
-        api("/notifications", "GET", null, token, 15000)
+        _apiFetch("/posts?feed=true&limit=10", "GET", null, token, 15000),
+        _apiFetch("/notifications", "GET", null, token, 15000)
       ]);
       if (feedResult.status === "fulfilled") {
         const d = feedResult.value;
@@ -5921,7 +5924,7 @@ function HomeTab({
           setNewPostsQueue(prev => {
             const prevIds = new Set(prev.map(p => p.id));
             const add = fresh.filter(p => !prevIds.has(p.id));
-            return add.length ? [...add, ...prev] : prev;
+            return add.length ? [...add, ...prev].slice(0, 50) : prev;
           });
         }
       }
@@ -5935,7 +5938,7 @@ function HomeTab({
           setNewNotificationQueue(prev => {
             const prevIds = new Set(prev.map(n => n.id));
             const add = freshNotifications.filter(n => !prevIds.has(n.id));
-            return add.length ? [...add, ...prev] : prev;
+            return add.length ? [...add, ...prev].slice(0, 50) : prev;
           });
         }
         notificationSeenRef.current = new Set(rows.map(n => n && n.id).filter(Boolean));
