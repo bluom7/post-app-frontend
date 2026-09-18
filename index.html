@@ -13577,7 +13577,10 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
   const [openedPost, setOpenedPost] = useState(null);
   const [openedPostIdx, setOpenedPostIdx] = useState(-1);
   const _postSwipeY = React.useRef(null);
-  const [showVerifiedInfo, setShowVerifiedInfo] = useState(false);
+  const [showVerifiedInfo, setShowVerifiedInfo] = useState(fal
+  const [profileSection, setProfileSection] = useState("posts");
+  const [savedPosts, setSavedPosts] = useState([]);
+  const [savedLoading, setSavedLoading] = useState(false);se);
   useEffect(() => {
     const h = e => {
       const d = e.detail || {};
@@ -13634,6 +13637,14 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
     })();
     return () => { cancelled = true; };
   }, [userId, initialProfile, token, currentUser && currentUser.id]);
+  const loadSavedPosts = async () => {
+    setSavedLoading(true);
+    try {
+      const d = await api("/users/" + encodeURIComponent(userId) + "/saved-posts", "GET", null, token);
+      setSavedPosts(d.posts || []);
+    } catch (_) { setSavedPosts([]); }
+    setSavedLoading(false);
+  };
   const fmtNum = n => n >= 1000 ? (n / 1000).toFixed(1) + "K" : n || 0;
   const toggleFollow = async () => {
     if (followLoading) return;
@@ -14094,85 +14105,17 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
       fontSize: 13,
       lineHeight: 1.5
     }
-  }, profile.has_pending_request ? "Follow request sent — waiting for approval" : "Follow this account to see their posts")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 700,
-      color: COLORS.yellow,
-      fontSize: 13,
-      letterSpacing: 2
-    }
-  }, t("posts")), profile.user_status && (()=>{ const sCat=STATUS_CATEGORIES.find(c=>c.id===profile.user_status); return sCat ? /*#__PURE__*/React.createElement("div",{style:{display:"inline-flex",alignItems:"center",gap:6,background:"#22C55E",borderRadius:20,padding:"5px 13px",boxShadow:"0 2px 8px #22C55E55"}},getStatusIcon(sCat.id,14,"#fff"),React.createElement("span",{style:{fontSize:12,fontWeight:700,color:"#fff"}},sCat.label)) : null; })()), posts.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: "center",
-      color: "var(--muted)",
-      padding: 30
-    }
-  }, t("noPostsYet")) : /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 0
-    }
-  }, posts.map(post => /*#__PURE__*/React.createElement("div", {
-    key: post.id,
-    onClick: () => { const idx = posts.findIndex(p => p.id === post.id); setOpenedPost(post); setOpenedPostIdx(idx); },
-    style: {
-      background: "var(--card-bg)",
-      borderBottom: "1px solid var(--border)",
-      padding: "14px 16px",
-      cursor: "pointer"
-    }
-  }, post.content && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 14,
-      lineHeight: 1.6,
-      color: "var(--text)",
-      whiteSpace: "pre-wrap",
-      marginBottom: 8
-    }
-  }, renderContent(post.content, null, null)), React.createElement(PostMedia,{post,maxHeight:380,borderRadius:10}), post.location && /*#__PURE__*/React.createElement("div", {
-    style: {
-      color: "var(--muted)",
-      fontSize: 12,
-      marginTop: 4
-    }
-  }, /*#__PURE__*/React.createElement("svg", { width:11, height:11, viewBox:"0 0 24 24", fill:"currentColor", stroke:"none", style:{display:"inline",verticalAlign:"middle",marginRight:3} }, /*#__PURE__*/React.createElement("path", {d:"M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"})), " ", post.location), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 16,
-      marginTop: 8,
-      color: "var(--muted)",
-      fontSize: 12
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 3
-    }
-  }, /*#__PURE__*/React.createElement("svg", {
-    width: "12",
-    height: "12",
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: "2",
-    strokeLinecap: "round",
-    strokeLinejoin: "round"
-  }, /*#__PURE__*/React.createElement("path", {
-    d: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"
-  }), /*#__PURE__*/React.createElement("circle", {
-    cx: "12",
-    cy: "12",
-    r: "3"
-  })), " ", post.views?.length || 0))))), showVerifiedInfo && profile && React.createElement(VerifiedInfoModal, {
+  }, profile.has_pending_request ? "Follow request sent — waiting for approval" : "Follow this account to see their posts")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", { style: { display: "flex", borderBottom: "2px solid var(--border)", marginBottom: 14 } },
+     ["posts", "videos", "saved"].map(sec => React.createElement("button", { key: sec, onClick: () => { setProfileSection(sec); if (sec === "saved" && savedPosts.length === 0 && !savedLoading) loadSavedPosts(); }, style: { flex: 1, background: "none", border: "none", borderBottom: profileSection === sec ? "2.5px solid " + COLORS.yellow : "2.5px solid transparent", marginBottom: -2, padding: "9px 0", fontWeight: profileSection === sec ? 800 : 500, fontSize: 14, color: profileSection === sec ? COLORS.yellow : "var(--muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 } }, React.createElement("span", { style: { fontSize: 16, lineHeight: 1 } }, sec === "posts" ? "▦" : sec === "videos" ? "▷" : "🔖"), sec === "posts" ? "My Posts" : sec === "videos" ? "Videos" : "Saved"))
+   ),
+   profileSection === "posts"
+     ? /*#__PURE__*/React.createElement(React.Fragment, null,
+         /*#__PURE__*/React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 } }, /*#__PURE__*/React.createElement("span", { style: { fontWeight: 700, color: COLORS.yellow, fontSize: 13, letterSpacing: 2 } }, t("posts")), profile.user_status && (()=>{ const sCat=STATUS_CATEGORIES.find(c=>c.id===profile.user_status); return sCat ? /*#__PURE__*/React.createElement("div", { style: { display: "inline-flex", alignItems: "center", gap: 6, background: "#22C55E", borderRadius: 20, padding: "5px 13px" } }, getStatusIcon(sCat.id, 14, "#fff"), /*#__PURE__*/React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "#fff" } }, sCat.label)) : null; })()),
+         posts.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, t("noPostsYet")) : /*#__PURE__*/React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, posts.map((post, idx) => /*#__PURE__*/React.createElement("div", { key: post.id, onClick: () => { setOpenedPost(post); setOpenedPostIdx(idx); }, style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px", cursor: "pointer" } }, post.content && /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post: post, maxHeight: 380, borderRadius: 10 }), post.location && /*#__PURE__*/React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 4 } }, "📍 ", post.location), /*#__PURE__*/React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 8 } }, "👁 ", post.views?.length || 0))))
+       )
+     : profileSection === "videos"
+       ? (() => { const videoPosts = posts.filter(p => p.video_url); return videoPosts.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 40 } }, "No videos yet") : /*#__PURE__*/React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, videoPosts.map(post => /*#__PURE__*/React.createElement("div", { key: post.id, onClick: () => { setOpenedPost(post); setOpenedPostIdx(posts.findIndex(p => p.id === post.id)); }, style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px", cursor: "pointer" } }, post.content && /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), /*#__PURE__*/React.createElement("video", { src: post.video_url, controls: true, playsInline: true, style: { width: "100%", borderRadius: 12, maxHeight: 420, background: "#000", display: "block" } })))); })()
+       : savedLoading ? /*#__PURE__*/React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, t("loading")) : savedPosts.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 40 } }, "No saved posts yet") : /*#__PURE__*/React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, savedPosts.map(post => /*#__PURE__*/React.createElement("div", { key: post.id, style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } }, /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "var(--text)", marginBottom: 6 } }, post.user_name || "Post"), post.content && /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post: post, maxHeight: 380, borderRadius: 10 })))), showVerifiedInfo && profile && React.createElement(VerifiedInfoModal, {
     name: profile.name,
     category: profile.verified_category || profile.category || "Public Figure",
     onClose: () => setShowVerifiedInfo(false)
