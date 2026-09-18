@@ -29128,10 +29128,13 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   var [reportSubmitting, setReportSubmitting] = React.useState(false);
   var [reportStep, setReportStep] = React.useState("reasons");
   var [mentionSubmitting, setMentionSubmitting] = React.useState(false);
-  var [mentionConfirmed, setMentionConfirmed] = React.useState(!!(reel && (reel.is_mentioned || reel.mentioned_by)));
+  var [mentionConfirmed, setMentionConfirmed] = React.useState(!!(reel && reel.mentioned_by));
   var [mentionSpinKey, setMentionSpinKey] = React.useState(0);
   var mentionRollbackRef = React.useRef({ mentioned: false });
   var mentionPendingRef = React.useRef(null);
+  React.useEffect(function() {
+    setMentionConfirmed(!!(reel && reel.mentioned_by));
+  }, [reel && reel.id, reel && reel.mentioned_by && reel.mentioned_by.id]);
   var mentionAnimationTimerRef = React.useRef(null);
   var markMentionAnimationDone = function(spinKey) {
     var pendingMention = mentionPendingRef.current;
