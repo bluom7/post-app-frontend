@@ -5868,10 +5868,14 @@ function HomeTab({
   const [followingIds, setFollowingIds] = useState(new Set());
   const [pendingFollowIds, setPendingFollowIds] = useState(new Set());
   const [newPostsQueue, setNewPostsQueue] = useState([]);
+  const [newNotificationQueue, setNewNotificationQueue] = useState([]);
   const postsRef = React.useRef(posts);
   const newPostsQueueRef = React.useRef(newPostsQueue);
+  const newNotificationQueueRef = React.useRef(newNotificationQueue);
+  const notificationSeenRef = React.useRef(null);
   postsRef.current = posts;
   newPostsQueueRef.current = newPostsQueue;
+  newNotificationQueueRef.current = newNotificationQueue;
 
   // Sync count updates from other sections (profile, reels, etc.)
   usePostSync(setPosts);
@@ -5900,12 +5904,16 @@ function HomeTab({
     }
   }, [token]);
 
-  // ── Poll for new posts (shows a "N posted" pill like X/Twitter) ──
+  // ── Poll new posts and all user activity for the Posted banner ──
   useEffect(() => {
     if (!token) return;
     const poll = async () => {
-      try {
-        const d = await api("/posts?feed=true&limit=10", "GET", null, token, 15000);
+      const [feedResult, notificationResult] = await Promise.allSettled([
+        api("/posts?feed=true&limit=10", "GET", null, token, 15000),
+        api("/notifications", "GET", null, token, 15000)
+      ]);
+      if (feedResult.status === "fulfilled") {
+        const d = feedResult.value;
         const latest = d.posts || d || [];
         const knownIds = new Set([...postsRef.current, ...newPostsQueueRef.current].map(p => p.id));
         const fresh = latest.filter(p => !knownIds.has(p.id) && p.user_id !== user?.id);
@@ -5916,16 +5924,33 @@ function HomeTab({
             return add.length ? [...add, ...prev] : prev;
           });
         }
-      } catch (e) { /* silent — polling shouldn't surface errors */ }
+      }
+      if (notificationResult.status === "fulfilled") {
+        const rows = notificationResult.value?.notifications || [];
+        const seen = notificationSeenRef.current;
+        const freshNotifications = seen === null
+          ? rows.filter(n => n && n.id && n.read === false)
+          : rows.filter(n => n && n.id && !seen.has(n.id));
+        if (freshNotifications.length) {
+          setNewNotificationQueue(prev => {
+            const prevIds = new Set(prev.map(n => n.id));
+            const add = freshNotifications.filter(n => !prevIds.has(n.id));
+            return add.length ? [...add, ...prev] : prev;
+          });
+        }
+        notificationSeenRef.current = new Set(rows.map(n => n && n.id).filter(Boolean));
+      }
     };
+    poll();
     const interval = setInterval(poll, 20000);
     return () => clearInterval(interval);
   }, [token, user?.id]);
 
   const showNewPosts = () => {
-    if (!newPostsQueue.length) return;
-    setPosts(prev => [...newPostsQueue, ...prev]);
+    if (!newPostsQueue.length && !newNotificationQueue.length) return;
+    if (newPostsQueue.length) setPosts(prev => [...newPostsQueue, ...prev]);
     setNewPostsQueue([]);
+    setNewNotificationQueue([]);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -6153,6 +6178,15 @@ function HomeTab({
 
   const pullProgress = Math.min(pullDist / PULL_THRESHOLD, 1);
   const showIndicator = pullDist > 8 || refreshing;
+  const newActivityAvatarItems = [
+    ...newNotificationQueue.slice(0, 3).map(n => ({
+      id: "notification-" + n.id,
+      avatar_photo: n.from_user_avatar || n.avatar_photo,
+      avatar_bg: n.from_user_bg || n.avatar_bg || COLORS.yellow,
+      avatar_letter: n.from_user_letter || n.avatar_letter || String(n.from_user_name || n.from_name || "?").trim().slice(0, 1).toUpperCase()
+    })),
+    ...newPostsQueue
+  ].slice(0, 3);
 
   return React.createElement("div", {
     style: { maxWidth:"680px", margin:"0 auto", position:"relative" },
@@ -6161,7 +6195,7 @@ function HomeTab({
     onTouchEnd:   onTouchEnd
   },
     // ── Compact new-posts banner ───────────────────────────────────
-    newPostsQueue.length > 0 && React.createElement("div", {
+    (newPostsQueue.length > 0 || newNotificationQueue.length > 0) && React.createElement("div", {
       style: { position:"sticky", top:70, zIndex:80, display:"flex", justifyContent:"center", height:0, overflow:"visible" }
     },
       React.createElement("button", {
@@ -6181,7 +6215,7 @@ function HomeTab({
           React.createElement("polyline", { points:"5 12 12 5 19 12" })
         ),
         React.createElement("div", { style:{ display:"flex", alignItems:"center", flexShrink:0 } },
-          newPostsQueue.slice(0, 3).map((p, i) => React.createElement("div", {
+          newActivityAvatarItems.map((p, i) => React.createElement("div", {
             key: p.id,
             style: {
               width:30, height:30, borderRadius:"50%", background:p.avatar_bg || COLORS.yellow,
@@ -22527,6 +22561,7 @@ let _notifCache = null;
   };
 
   const getText = n => {
+    if (n.type === "message" || n.type === "group_message") return React.createElement("span", null, React.createElement("b", null, n.from_user_name || n.from_name), " sent you a message");
     if (n.type === "like") return React.createElement("span", null, React.createElement("b", null, n.from_user_name), " liked your post");
     if (n.type === "comment") return React.createElement("span", null, React.createElement("b", null, n.from_user_name), " commented on your post");
     if (n.type === "friend_request") return React.createElement("span", null, React.createElement("b", null, n.from_user_name), " sent you a connect request");
