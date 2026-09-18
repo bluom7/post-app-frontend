@@ -29128,7 +29128,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   var [reportSubmitting, setReportSubmitting] = React.useState(false);
   var [reportStep, setReportStep] = React.useState("reasons");
   var [mentionSubmitting, setMentionSubmitting] = React.useState(false);
-  var [mentionConfirmed, setMentionConfirmed] = React.useState(false);
+  var [mentionConfirmed, setMentionConfirmed] = React.useState(!!(reel && (reel.is_mentioned || reel.mentioned_by)));
   var [mentionSpinKey, setMentionSpinKey] = React.useState(0);
   var mentionRollbackRef = React.useRef({ mentioned: false });
   var mentionPendingRef = React.useRef(null);
@@ -29151,7 +29151,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   if (reel && reel.user_id != null) followTargetIdRef.current = reel.user_id;
   var followTargetId = followTargetIdRef.current;
   var isOwn = reel.is_own || (user && followTargetId != null && String(followTargetId) === String(user.id));
-  var reelMentionAvatar = reel.mentioned_by || (mentionConfirmed && user ? { avatar_photo: user.avatar_photo, avatar_bg: user.avatar_bg, avatar_letter: user.avatar_letter, name: user.name, handle: user.handle } : null);
+  var reelMentionAvatar = mentionConfirmed ? (reel.mentioned_by || (user ? { avatar_photo: user.avatar_photo, avatar_bg: user.avatar_bg, avatar_letter: user.avatar_letter, name: user.name, handle: user.handle } : null)) : null;
   // A custom song has its own artwork; direct video uploads use the uploader as original audio.
     var hasCustomSong = !!(reel.music_url || reel.music_preview_url || (reel.music_title && reel.music_title !== "Original Audio") || (reel.audio_label && reel.audio_label !== "Original Audio"));
     var showOriginalAudioProfileTile = !!reel.video_url && !hasCustomSong;
