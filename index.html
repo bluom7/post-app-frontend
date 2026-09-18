@@ -13967,7 +13967,8 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
       fontSize: 18,
       color: "var(--text)",
       textTransform: "uppercase",
-      letterSpacing: "0.02em"
+      letterSpacing: "0.02em",
+      marginLeft: 3
     }
   }, profile.name,
     profile.is_badge_verified && React.createElement("span", {
@@ -13983,7 +13984,8 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
     style: {
       color: "var(--muted)",
       fontSize: 14,
-      marginTop: 2
+      marginTop: 2,
+      marginLeft: 3
     }
   }, "@", profile.username || (profile.handle || "").replace("@", "")),
   !profile.is_badge_verified && profile.category && /*#__PURE__*/React.createElement("div", {
@@ -17714,7 +17716,8 @@ function ProfileTab({
     style: {
       display: "flex", alignItems: "center", gap: 5,
       fontWeight: 900,
-      fontSize: 18
+      fontSize: 18,
+      marginLeft: 3
     }
   }, user.name,
     user.is_badge_verified && React.createElement("span", {
@@ -17726,7 +17729,8 @@ function ProfileTab({
       color: COLORS.muted,
       fontSize: 18,
       fontWeight: 400,
-      marginTop: 2
+      marginTop: 2,
+      marginLeft: 3
     }
   }, "@", user.username || user.handle?.replace("@", "")),
 
