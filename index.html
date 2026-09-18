@@ -13577,10 +13577,10 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
   const [openedPost, setOpenedPost] = useState(null);
   const [openedPostIdx, setOpenedPostIdx] = useState(-1);
   const _postSwipeY = React.useRef(null);
-  const [showVerifiedInfo, setShowVerifiedInfo] = useState(fal
+  const [showVerifiedInfo, setShowVerifiedInfo] = useState(false);
   const [profileSection, setProfileSection] = useState("posts");
   const [savedPosts, setSavedPosts] = useState([]);
-  const [savedLoading, setSavedLoading] = useState(false);se);
+  const [savedLoading, setSavedLoading] = useState(false);
   useEffect(() => {
     const h = e => {
       const d = e.detail || {};
