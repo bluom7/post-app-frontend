@@ -6202,15 +6202,27 @@ function HomeTab({
     },
       React.createElement("div", {
         style: {
-          width: 30, height: 30, borderRadius: "50%",
-          border: "3px solid rgba(13,159,243,0.20)",
-          borderTopColor: COLORS.blue, borderRightColor: COLORS.blue,
+          position: "relative", width: 44, height: 44, borderRadius: "50%",
+          background: "#d8dde5", border: "1px solid #b8c0cb",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+          display: "flex", alignItems: "center", justifyContent: "center",
           opacity: 1,
-          transform: refreshing ? "scale(1)" : "scale(" + (0.88 + pullProgress * 0.12) + ")",
-          animation: refreshing ? "postPullRefreshSpin 0.72s linear infinite" : "none",
+          transform: refreshing ? "scale(1)" : "scale(" + (0.86 + pullProgress * 0.14) + ")",
           transition: "transform 0.1s"
         }
-      })
+      },
+        React.createElement("div", {
+          style: {
+            width: 25, height: 25, borderRadius: "50%",
+            border: "3px solid rgba(13,159,243,0.22)",
+            borderTopColor: COLORS.blue, borderRightColor: COLORS.blue,
+            animation: refreshing ? "postPullRefreshSpin 0.72s linear infinite" : "none",
+            transform: refreshing ? "none" : "rotate(" + (pullProgress * 360) + "deg)",
+            transition: "transform 0.1s"
+          }
+        })
+      ),
+      React.createElement("style", null, "@keyframes postPullRefreshSpin{to{transform:rotate(360deg)}}")
     ),
     // ── Content ─────────────────────────────────────────────────
     React.createElement("div", { style: { padding:0, display:"flex", flexDirection:"column", gap:0 } },
