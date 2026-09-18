@@ -5917,6 +5917,7 @@ function HomeTab({
       ]);
       if (feedResult.status === "fulfilled") {
         const d = feedResult.value;
+        _cacheSet("/posts?feed=true&limit=10", token, d);
         const latest = d.posts || d || [];
         const knownIds = new Set([...postsRef.current, ...newPostsQueueRef.current].map(p => p.id));
         const fresh = latest.filter(p => !knownIds.has(p.id) && p.user_id !== user?.id);
@@ -5929,7 +5930,9 @@ function HomeTab({
         }
       }
       if (notificationResult.status === "fulfilled") {
-        const rows = notificationResult.value?.notifications || [];
+        const notificationData = notificationResult.value;
+        _cacheSet("/notifications", token, notificationData);
+        const rows = notificationData?.notifications || [];
         const seen = notificationSeenRef.current;
         const freshNotifications = seen === null
           ? rows.filter(n => n && n.id && n.read === false)
