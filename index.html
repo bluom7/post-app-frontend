@@ -6149,7 +6149,7 @@ function HomeTab({
   const showIndicator = pullDist > 8 || refreshing;
 
   return React.createElement("div", {
-    style: { maxWidth:"680px", margin:"0 auto" },
+    style: { maxWidth:"680px", margin:"0 auto", position:"relative" },
     onTouchStart: onTouchStart,
     onTouchMove:  onTouchMove,
     onTouchEnd:   onTouchEnd
@@ -6189,22 +6189,32 @@ function HomeTab({
     // ── Pull-to-refresh indicator ────────────────────────────────
     showIndicator && React.createElement("div", {
       style: {
-        display: "flex", alignItems: "center", justifyContent: "center",
-        height: refreshing ? 48 : Math.max(8, pullDist * 0.6),
-        overflow: "hidden", transition: refreshing ? "height 0.2s" : "none"
+        position: "absolute", top: 20, left: 0, right: 0,
+        height: 44, display: "flex", alignItems: "center", justifyContent: "center",
+        zIndex: 90, pointerEvents: "none"
       }
     },
       React.createElement("div", {
         style: {
-          width: 28, height: 28, borderRadius: "50%",
-          border: "3px solid #e0e0e0",
-          borderTopColor: COLORS.yellow,
-          animation: refreshing ? "spin 0.7s linear infinite" : "none",
-          transform: refreshing ? "none" : `rotate(${pullProgress * 300}deg)`,
-          transition: "transform 0.1s",
-          opacity: refreshing ? 1 : pullProgress
+          position: "relative", width: 42, height: 42, borderRadius: "50%",
+          background: "#e8e8e8", boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          opacity: refreshing ? 1 : pullProgress,
+          transform: refreshing ? "scale(1)" : `scale(${0.82 + pullProgress * 0.18})`,
+          transition: "transform 0.1s, opacity 0.1s"
         }
-      }),
+      },
+        React.createElement("div", {
+          style: {
+            width: 24, height: 24, borderRadius: "50%",
+            border: "3px solid rgba(255,255,255,0.78)",
+            borderTopColor: COLORS.blue,
+            animation: refreshing ? "spin 0.7s linear infinite" : "none",
+            transform: refreshing ? "none" : `rotate(${pullProgress * 300}deg)`,
+            transition: "transform 0.1s"
+          }
+        })
+      ),
       React.createElement("style", null, "@keyframes spin{to{transform:rotate(360deg)}}")
     ),
     // ── Content ─────────────────────────────────────────────────
