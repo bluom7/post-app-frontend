@@ -7426,7 +7426,7 @@ function BentoPostCard({
         ? React.createElement(ReelFeedPhoto, { post, onOpenReel })
       : (!post.is_reel && post.video_url)
         ? React.createElement(FeedVideo, { post, topOverlay: reelVideoTopOverlay })
-        : post.music_title
+        : post.music_title && post.music_preview_url
           ? /*#__PURE__*/React.createElement("div", { style:{ position:"relative" } },
               React.createElement(PostMedia,{post,maxHeight:466,borderRadius:0,user,onLike,onComment,onSave,onRepost,onFollow,followingIds,pendingFollowIds,onViewProfile}),
               /*#__PURE__*/React.createElement(PostSpeakerButton, { post }),
@@ -14149,7 +14149,7 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
     ),
     React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "16px" } },
       openedPost.content && React.createElement("div", { style: { fontSize: 15, lineHeight: 1.7, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 12 } }, renderContent(openedPost.content, null, null)),
-      openedPost.music_title
+      openedPost.music_title && openedPost.music_preview_url
         ? /*#__PURE__*/React.createElement("div",{style:{position:"relative"}},
             React.createElement(PostMedia, { post: openedPost, maxHeight: 460, borderRadius: 12 }),
             /*#__PURE__*/React.createElement(PostSpeakerButton, { post: openedPost })
