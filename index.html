@@ -13908,7 +13908,6 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
       fontWeight: 900,
       fontSize: 30,
       overflow: "hidden",
-      border: "4px solid var(--bg)",
       boxShadow: "0 2px 16px rgba(0,0,0,0.22)"
     }
   }, profile.profile_video ? /*#__PURE__*/React.createElement("video", {
@@ -17310,7 +17309,7 @@ function ProfileTab({
     reader.onload = ev => {
       const img = new Image();
       img.onload = () => {
-        const MAX = 600;
+        const MAX = 1200;
         let w = img.width, h = img.height;
         if (w > MAX || h > MAX) {
           if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -17318,8 +17317,11 @@ function ProfileTab({
         }
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        setter(canvas.toDataURL('image/jpeg', 0.75));
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w, h);
+        setter(canvas.toDataURL('image/jpeg', 0.92));
       };
       img.src = ev.target.result;
     };
@@ -17583,7 +17585,6 @@ function ProfileTab({
       fontWeight: 900,
       fontSize: 36,
       overflow: "hidden",
-      border: "4px solid var(--bg)",
       boxShadow: "0 2px 16px rgba(0,0,0,0.22)"
     }
   }, profileVideo ? /*#__PURE__*/React.createElement("video", {
