@@ -17717,7 +17717,7 @@ function ProfileTab({
       display: "flex", alignItems: "center", gap: 5,
       fontWeight: 900,
       fontSize: 18,
-      marginLeft: 3
+      marginLeft: 6
     }
   }, user.name,
     user.is_badge_verified && React.createElement("span", {
@@ -17730,11 +17730,18 @@ function ProfileTab({
       fontSize: 18,
       fontWeight: 400,
       marginTop: 2,
-      marginLeft: 3
+      marginLeft: 6
     }
   }, "@", user.username || user.handle?.replace("@", "")),
 
-  user.category && /*#__PURE__*/React.createElement("div", {
+ user.about && /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      marginTop: 8,
+      lineHeight: 1.55,
+      color: "var(--text)"
+    }
+  }, user.about),  user.category && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "inline-block",
       background: "#f0f0f0",
@@ -17743,21 +17750,16 @@ function ProfileTab({
       fontWeight: 600,
       borderRadius: 20,
       padding: "3px 12px",
-      marginTop: 6
+      marginTop: 0
     }
-  }, getCatIcon(user.category,13,"#555"), React.createElement("span",{style:{marginLeft:4}},user.category)), user.about && /*#__PURE__*/React.createElement("div", {
+  }, getCatIcon(user.category,13,"#555"), React.createElement("span",{style:{marginLeft:4}},user.category)), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
-      marginTop: 8,
-      lineHeight: 1.55,
-      color: "var(--text)"
-    }
-  }, user.about), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 14,
-      marginTop: 8,
-      flexWrap: "wrap"
+      display: "grid",
+      gridTemplateColumns: "minmax(0, 1fr) auto",
+      alignItems: "center",
+      columnGap: 14,
+      rowGap: 6,
+      width: "100%"
     }
   }, user.location && /*#__PURE__*/React.createElement("span", {
     style: {
