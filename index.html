@@ -13975,12 +13975,7 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
       onClick: () => setShowVerifiedInfo(true),
       style: { display:"inline-flex", alignItems:"center", cursor:"pointer" }
     }, React.createElement(VerifiedBadge,{size:20})),
-    /*#__PURE__*/React.createElement("span", {
-    style: {
-      marginLeft: 6,
-      fontSize: 18
-    }
-  }, getFlag(profile.location, currentUser && currentUser.location))), /*#__PURE__*/React.createElement("div", {
+
     style: {
       color: "var(--muted)",
       fontSize: 14,
