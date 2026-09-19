@@ -1572,10 +1572,10 @@ const CATEGORY_LIST = [
   {value:"Other",               path:"M5 12h.01M12 12h.01M19 12h.01"}
 ];
 const CATEGORIES = CATEGORY_LIST.map(c => c.value);
-function getCatIcon(val, size, color) {
+function getCatIcon(val, size, color, strokeWidth) {
   const c = CATEGORY_LIST.find(x => x.value === val);
   if (!c) return null;
-  return React.createElement("svg",{width:size||14,height:size||14,viewBox:"0 0 24 24",fill:"none",stroke:color||"currentColor",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:c.path}));
+  return React.createElement("svg",{width:size||14,height:size||14,viewBox:"0 0 24 24",fill:"none",stroke:color||"currentColor",strokeWidth:strokeWidth || 2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:c.path}));
 }
 function CategoryPicker({value, onChange, inputStyle}) {
   const [open, setOpen] = React.useState(false);
@@ -13985,16 +13985,15 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
   }, "@", profile.username || (profile.handle || "").replace("@", "")),
   !profile.is_badge_verified && profile.category && /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "inline-block",
-      background: "#f0f0f0",
-      color: "#444",
-      fontSize: 12,
-      fontWeight: 600,
-      borderRadius: 20,
-      padding: "3px 12px",
-      marginTop: 6
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+      color: "#111",
+      fontSize: 14,
+      fontWeight: 800,
+      marginTop: 8
     }
-  }, getCatIcon(profile.category,13,"#555"), React.createElement("span",{style:{marginLeft:4}},profile.category)), !profile.is_private_locked && profile.about && /*#__PURE__*/React.createElement("div", {
+  }, getCatIcon(profile.category,14,"#111",2.8), React.createElement("span",{style:{fontWeight:800,color:"#111"}},profile.category)), !profile.is_private_locked && profile.about && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 14,
       marginTop: 8,
@@ -17733,16 +17732,15 @@ function ProfileTab({
     }
   }, user.about),  user.category && /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "inline-block",
-      background: "#f0f0f0",
-      color: "#444",
-      fontSize: 12,
-      fontWeight: 600,
-      borderRadius: 20,
-      padding: "3px 12px",
-      marginTop: 0
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 4,
+      color: "#111",
+      fontSize: 18,
+      fontWeight: 800,
+      marginTop: 8
     }
-  }, getCatIcon(user.category,13,"#555"), React.createElement("span",{style:{marginLeft:4}},user.category)), typeof user.website === "string" && user.website.trim() && /*#__PURE__*/React.createElement("div", {
+  }, getCatIcon(user.category,18,"#111",2.8), React.createElement("span",{style:{fontWeight:800,color:"#111"}},user.category)), typeof user.website === "string" && user.website.trim() && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "minmax(0, 1fr) auto",
