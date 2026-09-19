@@ -14006,19 +14006,14 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
       lineHeight: 1.55,
       color: "var(--text)"
     }
-  }, profile.about), !profile.is_private_locked && /*#__PURE__*/React.createElement("div", {
+  }, profile.about), !profile.is_private_locked && typeof profile.website === "string" && profile.website.trim() && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 14,
       marginTop: 8,
       flexWrap: "wrap"
     }
-  }, profile.location && /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: "var(--muted)",
-      fontSize: 13
-    }
-  }, "📍 ", profile.location), typeof profile.website === "string" && profile.website.trim() && /*#__PURE__*/React.createElement("a", {
+  }, typeof profile.website === "string" && profile.website.trim() && /*#__PURE__*/React.createElement("a", {
     href: profile.website.trim().match(/^https?:\/\//i) ? profile.website.trim() : `https://${profile.website.trim()}`,
     target: "_blank",
     style: {
@@ -17752,7 +17747,7 @@ function ProfileTab({
       padding: "3px 12px",
       marginTop: 0
     }
-  }, getCatIcon(user.category,13,"#555"), React.createElement("span",{style:{marginLeft:4}},user.category)), /*#__PURE__*/React.createElement("div", {
+  }, getCatIcon(user.category,13,"#555"), React.createElement("span",{style:{marginLeft:4}},user.category)), typeof user.website === "string" && user.website.trim() && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "minmax(0, 1fr) auto",
@@ -17761,28 +17756,7 @@ function ProfileTab({
       rowGap: 6,
       width: "100%"
     }
-  }, user.location && /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: COLORS.muted,
-      fontSize: 13,
-      display: "flex",
-      alignItems: "center",
-      gap: 4
-    }
-  }, /*#__PURE__*/React.createElement("svg", {
-    width: "13",
-    height: "13",
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: "2"
-  }, /*#__PURE__*/React.createElement("path", {
-    d: "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"
-  }), /*#__PURE__*/React.createElement("circle", {
-    cx: "12",
-    cy: "10",
-    r: "3"
-  })), user.location), typeof user.website === "string" && user.website.trim() && /*#__PURE__*/React.createElement("a", {
+  }, typeof user.website === "string" && user.website.trim() && /*#__PURE__*/React.createElement("a", {
     href: user.website.trim().match(/^https?:\/\//i) ? user.website.trim() : `https://${user.website.trim()}`,
     target: "_blank",
     style: {
