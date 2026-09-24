@@ -12862,6 +12862,7 @@ function DiscoverTab({ token, user, showToast, onViewProfile, onBack }) {
 
   // ── render user card ──────────────────────────────────────────────────────
   function renderUserCard(u, compact){
+    if (!u || !u.id) return null;
     const isFriend=friendIds.has(u.id); const isReq=requestedIds.has(u.id);
     const hasInc=incomingIds.has(u.id); const isFollowing=followingIds.has(u.id);
     const isPending=pendingFollowIds.has(u.id);
