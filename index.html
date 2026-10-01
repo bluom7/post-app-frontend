@@ -1577,66 +1577,140 @@ function getCatIcon(val, size, color, strokeWidth) {
   if (!c) return null;
   return React.createElement("svg",{width:size||14,height:size||14,viewBox:"0 0 24 24",fill:"none",stroke:color||"currentColor",strokeWidth:strokeWidth || 2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("path",{d:c.path}));
 }
-function CategoryPicker({value, onChange, inputStyle}) {
+function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVisible, onCategoryVisibleChange}) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
+  const [draftValue, setDraftValue] = React.useState(value || "");
+  const [draftVisible, setDraftVisible] = React.useState(categoryVisible !== false);
   const selected = CATEGORY_LIST.find(c => c.value === value);
   const filtered = search ? CATEGORY_LIST.filter(c => c.value.toLowerCase().includes(search.toLowerCase())) : CATEGORY_LIST;
-  return React.createElement(React.Fragment, null,
-    React.createElement("div", {
-      onClick: () => setOpen(true),
-      style: {...inputStyle, cursor:"pointer", display:"flex", alignItems:"center", gap:8, userSelect:"none"}
-    },
-      selected ? React.createElement(React.Fragment, null,
-        getCatIcon(selected.value, 20, "#111111", 2.2),
-        React.createElement("span", {style:{flex:1}}, selected.value)
-      ) : React.createElement("span", {style:{color:"var(--muted)"}}, "Select category..."),
-      React.createElement("svg",{width:14,height:14,viewBox:"0 0 24 24",fill:"none",stroke:"var(--muted)",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("polyline",{points:"6 9 12 15 18 9"}))
-    ),
-    open && React.createElement("div", {
-      style:{position:"fixed",inset:0,zIndex:9999,display:"flex",flexDirection:"column",background:"var(--card-bg)"}
-    },
-      React.createElement("div", {
-        style:{display:"flex",flexDirection:"column",height:"100vh",overflow:"hidden"}
+  const openPicker = () => {
+    setDraftValue(value || "");
+    setDraftVisible(categoryVisible !== false);
+    setSearch("");
+    setOpen(true);
+  };
+  const trigger = React.createElement("div", {
+    onClick: openPicker,
+    style: {...inputStyle, cursor:"pointer", display:"flex", alignItems:"center", gap:8, userSelect:"none"}
+  },
+    selected ? React.createElement(React.Fragment, null,
+      getCatIcon(selected.value, 18, "#111111", 2),
+      React.createElement("span", {style:{flex:1}}, selected.value)
+    ) : React.createElement("span", {style:{color:"var(--muted)"}}, "Select category..."),
+    React.createElement("svg", {width:14, height:14, viewBox:"0 0 24 24", fill:"none", stroke:"var(--muted)", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round"},
+      React.createElement("polyline", {points:"6 9 12 15 18 9"})
+    )
+  );
+  if (profileLayout) {
+    const suggestedValues = ["Artist", "Musician", "Blogger", "Brand", "Community Figure", "Content Creator", "Educator", "Entrepreneur", "Healthcare"];
+    const suggested = suggestedValues.map(name => CATEGORY_LIST.find(c => c.value === name)).filter(Boolean);
+    if (value && !suggested.some(c => c.value === value)) {
+      const current = CATEGORY_LIST.find(c => c.value === value);
+      if (current) suggested.unshift(current);
+    }
+    const suggestedSet = new Set(suggested.map(c => c.value));
+    const remaining = CATEGORY_LIST.filter(c => !suggestedSet.has(c.value));
+    const commit = () => {
+      if (onChange) onChange(draftValue);
+      if (onCategoryVisibleChange) onCategoryVisibleChange(draftVisible);
+      setOpen(false);
+    };
+    const renderRow = c => {
+      const active = draftValue === c.value;
+      return React.createElement("button", {
+        key:c.value,
+        type:"button",
+        role:"radio",
+        "aria-checked":active,
+        onClick:() => setDraftValue(active ? "" : c.value),
+        style:{width:"100%", minHeight:54, display:"flex", alignItems:"center", gap:13, padding:"9px 0", border:0, borderRadius:10, background:active ? "rgba(75,183,255,.09)" : "transparent", color:"#111", textAlign:"left", cursor:"pointer"}
       },
-        React.createElement("div",{style:{padding:"16px 16px 12px",flexShrink:0}},
-          React.createElement("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
-            React.createElement("span",{style:{fontWeight:900,fontSize:18,color:"var(--text)"}},"Category"),
-            React.createElement("button",{onClick:()=>setOpen(false),style:{background:"none",border:"none",cursor:"pointer",color:"var(--muted)",display:"flex",alignItems:"center",justifyContent:"center",padding:4}},
-              React.createElement("svg",{width:22,height:22,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2.2",strokeLinecap:"round"},
-                React.createElement("line",{x1:"18",y1:"6",x2:"6",y2:"18"}),
-                React.createElement("line",{x1:"6",y1:"6",x2:"18",y2:"18"})
+        getCatIcon(c.value, 16, "#111111", 2),
+        React.createElement("span", {style:{flex:1, fontSize:18, fontWeight:active ? 600 : 400, lineHeight:1.25}}, c.value),
+        React.createElement("span", {style:{width:23, height:23, boxSizing:"border-box", borderRadius:"50%", border:"2px solid " + (active ? "#4BB7FF" : "#8A9098"), background:active ? "#4BB7FF" : "transparent", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginRight:2}},
+          active ? React.createElement("span", {style:{width:7, height:7, borderRadius:"50%", background:"#fff"}}) : null
+        )
+      );
+    };
+    const options = search
+      ? React.createElement("section", {style:{marginTop:24}},
+          React.createElement("h2", {style:{fontSize:18, fontWeight:700, margin:"0 0 8px"}}, "Results"),
+          filtered.length ? filtered.map(renderRow) : React.createElement("p", {style:{fontSize:16, color:"#686D73", padding:"14px 0"}}, "No categories found")
+        )
+      : React.createElement(React.Fragment, null,
+          React.createElement("section", {style:{marginTop:24}},
+            React.createElement("h2", {style:{fontSize:18, fontWeight:700, margin:"0 0 8px"}}, "Suggested"),
+            suggested.map(renderRow)
+          ),
+          React.createElement("section", {style:{marginTop:24}},
+            React.createElement("h2", {style:{fontSize:18, fontWeight:700, margin:"0 0 8px"}}, "All categories"),
+            remaining.map(renderRow)
+          )
+        );
+    const profilePage = open ? React.createElement("div", {
+      style:{position:"fixed", inset:0, zIndex:9999, background:"#fff", color:"#111", display:"flex", flexDirection:"column", fontFamily:"inherit"}
+    },
+      React.createElement("header", {style:{height:62, flexShrink:0, display:"flex", alignItems:"center", padding:"0 16px", gap:18, background:"#fff"}},
+        React.createElement("button", {type:"button", "aria-label":"Back", onClick:() => setOpen(false), style:{width:40, height:44, border:0, padding:0, background:"transparent", color:"#111", display:"flex", alignItems:"center", justifyContent:"flex-start", cursor:"pointer"}},
+          React.createElement("svg", {width:28, height:28, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.8, strokeLinecap:"round", strokeLinejoin:"round"},
+            React.createElement("path", {d:"M19 12H5M12 19l-7-7 7-7"})
+          )
+        ),
+        React.createElement("span", {style:{flex:1, fontSize:23, fontWeight:750, letterSpacing:"-.3px"}}, "Category"),
+        React.createElement("button", {type:"button", "aria-label":"Save category", onClick:commit, style:{width:40, height:44, border:0, padding:0, background:"transparent", color:"#4BB7FF", display:"flex", alignItems:"center", justifyContent:"flex-end", cursor:"pointer"}},
+          React.createElement("svg", {width:28, height:28, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:2.1, strokeLinecap:"round", strokeLinejoin:"round"},
+            React.createElement("path", {d:"m5 12 5 5L20 7"})
+          )
+        )
+      ),
+      React.createElement("main", {style:{flex:1, minHeight:0, overflowY:"auto", overscrollBehavior:"contain", padding:"66px 20px 30px", boxSizing:"border-box"}},
+        React.createElement("h1", {style:{fontSize:34, lineHeight:1.16, fontWeight:750, letterSpacing:"-.6px", margin:0, maxWidth:390}}, "What best describes you?"),
+        React.createElement("p", {style:{fontSize:17, lineHeight:1.35, margin:"12px 0 0", maxWidth:420, color:"#151515"}}, "Categories help people find accounts like yours. You can change this at any time."),
+        React.createElement("div", {style:{marginTop:68, display:"flex", alignItems:"center", justifyContent:"space-between", gap:16}},
+          React.createElement("span", {style:{fontSize:19, lineHeight:1.2}}, "Display on profile"),
+          React.createElement("button", {type:"button", role:"switch", "aria-checked":draftVisible, onClick:() => setDraftVisible(!draftVisible), style:{position:"relative", width:60, height:36, padding:0, border:0, borderRadius:20, background:draftVisible ? "#4BB7FF" : "#D9DDE2", cursor:"pointer", flexShrink:0, transition:"background .18s"}},
+            React.createElement("span", {style:{position:"absolute", top:4, left:draftVisible ? 28 : 4, width:28, height:28, borderRadius:"50%", background:"#fff", boxShadow:"0 1px 3px rgba(0,0,0,.22)", transition:"left .18s"}})
+          )
+        ),
+        React.createElement("div", {style:{position:"relative", marginTop:16, display:"flex", alignItems:"center"}},
+          React.createElement("svg", {width:18, height:18, viewBox:"0 0 24 24", fill:"none", stroke:"#B7BBC1", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round", style:{position:"absolute", left:16, pointerEvents:"none"}},
+            React.createElement("path", {d:"M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"})
+          ),
+          React.createElement("input", {type:"text", placeholder:"Search categories", value:search, onChange:e => setSearch(e.target.value), style:{width:"100%", height:46, boxSizing:"border-box", padding:"0 14px 0 50px", border:0, borderRadius:13, outline:"none", background:"#F0F1F4", color:"#111", fontSize:17}})
+        ),
+        options
+      )
+    ) : null;
+    return React.createElement(React.Fragment, null, trigger, profilePage);
+  }
+  return React.createElement(React.Fragment, null,
+    trigger,
+    open && React.createElement("div", {style:{position:"fixed", inset:0, zIndex:9999, display:"flex", flexDirection:"column", background:"var(--card-bg)"}},
+      React.createElement("div", {style:{display:"flex", flexDirection:"column", height:"100vh", overflow:"hidden"}},
+        React.createElement("div", {style:{padding:"16px 16px 12px", flexShrink:0}},
+          React.createElement("div", {style:{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12}},
+            React.createElement("span", {style:{fontWeight:900, fontSize:18, color:"var(--text)"}}, "Category"),
+            React.createElement("button", {onClick:() => setOpen(false), style:{background:"none", border:"none", cursor:"pointer", color:"var(--muted)", display:"flex", alignItems:"center", justifyContent:"center", padding:4}},
+              React.createElement("svg", {width:22, height:22, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:"2.2", strokeLinecap:"round"},
+                React.createElement("line", {x1:"18", y1:"6", x2:"6", y2:"18"}),
+                React.createElement("line", {x1:"6", y1:"6", x2:"18", y2:"18"})
               )
             )
           ),
-          React.createElement("div",{style:{position:"relative",display:"flex",alignItems:"center"}},
-            React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#111111",strokeWidth:2.1,strokeLinecap:"round",strokeLinejoin:"round",style:{position:"absolute",left:12,pointerEvents:"none"}},
-              React.createElement("path",{d:"M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"})
+          React.createElement("div", {style:{position:"relative", display:"flex", alignItems:"center"}},
+            React.createElement("svg", {width:18, height:18, viewBox:"0 0 24 24", fill:"none", stroke:"#111111", strokeWidth:2.1, strokeLinecap:"round", strokeLinejoin:"round", style:{position:"absolute", left:12, pointerEvents:"none"}},
+              React.createElement("path", {d:"M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"})
             ),
-            React.createElement("input",{
-              type:"text",placeholder:"Search categories...",value:search,autoFocus:true,
-              onChange:e=>setSearch(e.target.value),
-              style:{width:"100%",padding:"11px 14px 11px 42px",borderRadius:14,border:"1px solid var(--border)",background:"var(--input-bg)",color:"var(--text)",fontSize:15,outline:"none",boxSizing:"border-box"}
-            })
+            React.createElement("input", {type:"text", placeholder:"Search categories...", value:search, onChange:e => setSearch(e.target.value), style:{width:"100%", padding:"11px 14px 11px 42px", borderRadius:14, border:"1px solid var(--border)", background:"var(--input-bg)", color:"var(--text)", fontSize:15, outline:"none", boxSizing:"border-box"}})
           )
         ),
-        React.createElement("div",{style:{overflowY:"auto",flex:1}},
-          value && React.createElement("div",{
-            onClick:()=>{onChange("");setSearch("");setOpen(false);},
-            style:{padding:"14px 18px",display:"flex",alignItems:"center",gap:10,cursor:"pointer",color:"var(--muted)",fontSize:15,fontWeight:600}
-          },"Clear selection"),
-          filtered.map(c => React.createElement("div",{
-            key:c.value,
-            onClick:()=>{onChange(c.value);setSearch("");setOpen(false);},
-            style:{
-              padding:"13px 16px",margin:"3px 8px",display:"flex",alignItems:"center",gap:14,cursor:"pointer",
-              background:value===c.value?"rgba(8,102,255,.08)":"transparent",
-              borderRadius:12
-            }
-          },
-            getCatIcon(c.value, 24, "#111111", 2.2),
-            React.createElement("span",{style:{fontSize:16,fontWeight:value===c.value?700:500,color:"var(--text)",lineHeight:1.3}},c.value),
-            value===c.value && React.createElement("svg",{style:{marginLeft:"auto"},width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"#111111",strokeWidth:2.6,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("polyline",{points:"20 6 9 17 4 12"}))
+        React.createElement("div", {style:{overflowY:"auto", flex:1}},
+          value && React.createElement("div", {onClick:() => {onChange(""); setSearch(""); setOpen(false);}, style:{padding:"14px 18px", display:"flex", alignItems:"center", gap:10, cursor:"pointer", color:"var(--muted)", fontSize:15, fontWeight:600}}, "Clear selection"),
+          filtered.map(c => React.createElement("div", {key:c.value, onClick:() => {onChange(c.value); setSearch(""); setOpen(false);}, style:{padding:"13px 16px", margin:"3px 8px", display:"flex", alignItems:"center", gap:14, cursor:"pointer", background:value===c.value ? "rgba(8,102,255,.08)" : "transparent", borderRadius:12}},
+            getCatIcon(c.value, 16, "#111111", 2),
+            React.createElement("span", {style:{fontSize:16, fontWeight:value===c.value ? 700 : 500, color:"var(--text)", lineHeight:1.3}}, c.value),
+            value===c.value && React.createElement("svg", {style:{marginLeft:"auto"}, width:18, height:18, viewBox:"0 0 24 24", fill:"none", stroke:"#4BB7FF", strokeWidth:2.6, strokeLinecap:"round", strokeLinejoin:"round"}, React.createElement("polyline", {points:"20 6 9 17 4 12"}))
           ))
         )
       )
@@ -13984,7 +14058,7 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
       marginLeft: 3
     }
   }, "@", profile.username || (profile.handle || "").replace("@", "")),
-  !profile.is_badge_verified && profile.category && /*#__PURE__*/React.createElement("div", {
+  !profile.is_badge_verified && profile.category && profile.category_visible !== false && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "inline-flex",
       alignItems: "center",
@@ -17220,6 +17294,7 @@ function ProfileTab({
   const [location, setLocation] = useState(user.location || "");
   const [website, setWebsite] = useState(user.website || "");
   const [category, setCategory] = useState(user.category || "");
+  const [categoryVisible, setCategoryVisible] = useState(user.category_visible !== false);
   const [gender, setGender] = useState(user.gender || "");
   const [dob, setDob] = useState(user.dob || "");
   const [avatarBg, setAvatarBg] = useState(user.avatar_bg || COLORS.yellow);
@@ -17364,6 +17439,7 @@ function ProfileTab({
         username: username.toLowerCase().replace(/[^a-z0-9_]/g, ""),
         handle: `@${username.toLowerCase().replace(/[^a-z0-9_]/g, "")}`,
         category,
+        category_visible: categoryVisible,
         gender,
         dob,
         is_private: isPrivate
@@ -18206,7 +18282,7 @@ React.createElement("div", { style: { display:"flex", alignItems:"center", borde
       letterSpacing: 1,
       marginBottom: 5
     }
-  }, "CATEGORY"), React.createElement(CategoryPicker, {value:category, onChange:setCategory, inputStyle})), /*#__PURE__*/React.createElement("div", {
+  }, "CATEGORY"), React.createElement(CategoryPicker, {value:category, onChange:setCategory, inputStyle, profileLayout:true, categoryVisible, onCategoryVisibleChange:setCategoryVisible})), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 12
     }
