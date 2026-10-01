@@ -1739,7 +1739,7 @@ function DobVisibilitySettings({monthDayValue, yearValue, onMonthDayChange, onYe
     {value:"mutuals", label:"You follow each other", icon:"mutuals"},
     {value:"only_you", label:"Only you", icon:"only_you"}
   ];
-  const selected = value => choices.find(option => option.value === value) || choices[0];
+  const selected = (value, field) => choices.find(option => option.value === value) || (field === "month_day" ? choices[3] : choices[4]);
   const icon = kind => {
     const props = {width:21,height:21,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:1.8,strokeLinecap:"round",strokeLinejoin:"round",style:{flexShrink:0,color:"#596873"},"aria-hidden":true};
     if (kind === "public") return React.createElement("svg",props,React.createElement("circle",{cx:12,cy:12,r:9}),React.createElement("path",{d:"M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"}));
@@ -1748,7 +1748,7 @@ function DobVisibilitySettings({monthDayValue, yearValue, onMonthDayChange, onYe
     return React.createElement("svg",props,React.createElement("circle",{cx:9,cy:8,r:3}),React.createElement("path",{d:"M3 20v-1a6 6 0 0 1 12 0v1"}),kind === "followers" ? React.createElement("path",{d:"M19 8v6M16 11h6"}) : React.createElement("path",{d:"m17 12 2 2 3-4"}));
   };
   const audienceRow = (field, title, value, onChange) => {
-    const option = selected(value);
+    const option = selected(value, field);
     const isOpen = active === field;
     return React.createElement(React.Fragment,{key:field},
       React.createElement("button",{type:"button",onClick:()=>setActive(isOpen?null:field),"aria-expanded":isOpen,"aria-controls":"dob-audience-"+field,"aria-label":title+": "+option.label,style:{width:"100%",padding:"12px 0",display:"flex",flexDirection:"column",alignItems:"stretch",gap:7,border:0,background:"transparent",color:"var(--text)",cursor:"pointer",textAlign:"left"}},
@@ -1768,11 +1768,11 @@ function DobVisibilitySettings({monthDayValue, yearValue, onMonthDayChange, onYe
 
 function BirthDatePicker({value, onChange, inputStyle, monthDayVisibility, yearVisibility, onMonthDayChange, onYearChange}) {
   const e = React.createElement, months = ["January","February","March","April","May","June","July","August","September","October","November","December"], weekdays = ["S","M","T","W","T","F","S"];
-  const [open,setOpen]=React.useState(false), [draft,setDraft]=React.useState(""), [draftMonthDayVisibility,setDraftMonthDayVisibility]=React.useState(monthDayVisibility || "public"), [draftYearVisibility,setDraftYearVisibility]=React.useState(yearVisibility || "public"), [year,setYear]=React.useState(new Date().getFullYear()), [month,setMonth]=React.useState(new Date().getMonth()), [view,setView]=React.useState("");
+  const [open,setOpen]=React.useState(false), [draft,setDraft]=React.useState(""), [draftMonthDayVisibility,setDraftMonthDayVisibility]=React.useState(monthDayVisibility || "mutuals"), [draftYearVisibility,setDraftYearVisibility]=React.useState(yearVisibility || "only_you"), [year,setYear]=React.useState(new Date().getFullYear()), [month,setMonth]=React.useState(new Date().getMonth()), [view,setView]=React.useState("");
   const now=new Date(), cy=now.getFullYear(), cm=now.getMonth(), pad=n=>String(n).padStart(2,"0"), key=(y,m,d)=>String(y).padStart(4,"0")+"-"+pad(m+1)+"-"+pad(d), today=key(cy,cm,now.getDate());
   const parse=s=>{const m=String(s||"").match(/^(\d{4})-(\d{2})-(\d{2})/);if(!m)return null;const y=+m[1],mo=+m[2]-1,d=+m[3];if(y<1||mo<0||mo>11||d<1||d>31)return null;const x=new Date(0);x.setHours(0,0,0,0);x.setFullYear(y,mo,d);return x.getFullYear()===y&&x.getMonth()===mo&&x.getDate()===d?{y,mo,d,k:key(y,mo,d)}:null;};
   const field=s=>{const p=parse(s);return p?pad(p.mo+1)+"/"+pad(p.d)+"/"+p.y:"Select birth date";}, selected=parse(draft), existing=parse(value);
-  const openPage=()=>{const usable=existing&&existing.k<=today?existing:null;setDraft(usable?usable.k:"");setDraftMonthDayVisibility(monthDayVisibility || "public");setDraftYearVisibility(yearVisibility || "public");setYear(usable?usable.y:cy);setMonth(usable?usable.mo:cm);setView("");setOpen(true);};
+  const openPage=()=>{const usable=existing&&existing.k<=today?existing:null;setDraft(usable?usable.k:"");setDraftMonthDayVisibility(monthDayVisibility || "mutuals");setDraftYearVisibility(yearVisibility || "only_you");setYear(usable?usable.y:cy);setMonth(usable?usable.mo:cm);setView("");setOpen(true);};
   const close=()=>{setOpen(false);setView("");}, done=()=>{const p=parse(draft);if(onChange)onChange(p&&p.k<=today?p.k:"");if(onMonthDayChange)onMonthDayChange(draftMonthDayVisibility);if(onYearChange)onYearChange(draftYearVisibility);close();};
   const moveMonth=n=>{const d=new Date(year,month+n,1);if(d.getFullYear()<1900||d.getFullYear()>cy||(d.getFullYear()===cy&&d.getMonth()>cm))return;setYear(d.getFullYear());setMonth(d.getMonth());};
   const chooseYear=y=>{setYear(y);if(y===cy&&month>cm)setMonth(cm);setView("month");}, chooseMonth=m=>{if(year===cy&&m>cm)return;setMonth(m);setView("");};
@@ -17428,8 +17428,8 @@ function ProfileTab({
   const [categoryVisible, setCategoryVisible] = useState(user.category_visible !== false);
   const [gender, setGender] = useState(user.gender || "");
   const [dob, setDob] = useState(user.dob || "");
-  const [dobMonthDayVisibility, setDobMonthDayVisibility] = useState(user.dob_month_day_visibility || "public");
-  const [dobYearVisibility, setDobYearVisibility] = useState(user.dob_year_visibility || "public");
+  const [dobMonthDayVisibility, setDobMonthDayVisibility] = useState(user.dob_month_day_visibility || "mutuals");
+  const [dobYearVisibility, setDobYearVisibility] = useState(user.dob_year_visibility || "only_you");
   const [avatarBg, setAvatarBg] = useState(user.avatar_bg || COLORS.yellow);
   const [avatarPhoto, setAvatarPhoto] = useState(user.avatar_photo || null);
   const [coverPhoto, setCoverPhoto] = useState(user.cover_photo || null);
