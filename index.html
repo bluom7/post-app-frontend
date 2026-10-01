@@ -18246,7 +18246,7 @@ React.createElement("div", { style: { display:"flex", alignItems:"center", borde
     placeholder: ph,
     type: type,
     style: editFieldStyle
-  }))), /*#__PURE__*/React.createElement("div", {style:{marginBottom:18}}, /*#__PURE__*/React.createElement("div", {style:{fontSize:16,color:"var(--text)",fontWeight:500,letterSpacing:0,marginBottom:5}}, "Username"), /*#__PURE__*/React.createElement("div", {style:{position:"relative"}}, /*#__PURE__*/React.createElement("span", {style:{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:COLORS.muted,fontSize:16,fontFamily:"inherit"}}, "@"), /*#__PURE__*/React.createElement("input", {value:username, onChange:e=>setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,"")), placeholder:"username", style:{...editFieldStyle,paddingLeft:30}}))), [["Location", location, setLocation, "City, Country", "text"], ["Website", website, setWebsite, "https://yoursite.com", "url"]].map(([label, val, setter, ph, type]) => /*#__PURE__*/React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {style:{marginBottom:18}}, /*#__PURE__*/React.createElement("div", {style:{fontSize:16,color:"var(--text)",fontWeight:500,letterSpacing:0,marginBottom:5}}, "Username"), /*#__PURE__*/React.createElement("div", {style:{display:"flex",alignItems:"center",borderBottom:"1px solid var(--border)"}}, /*#__PURE__*/React.createElement("span", {style:{fontSize:16,fontFamily:"inherit",lineHeight:1.35,color:COLORS.muted,padding:"4px 0 3px"}}, "@"), /*#__PURE__*/React.createElement("input", {value:username, onChange:e=>setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,"")), placeholder:"username", style:{...editFieldStyle,borderBottom:"none",paddingLeft:6,width:"auto",flex:1,minWidth:0}}))), [["Location", location, setLocation, "City, Country", "text"], ["Website", website, setWebsite, "https://yoursite.com", "url"]].map(([label, val, setter, ph, type]) => /*#__PURE__*/React.createElement("div", {
     key: label,
     style: {
       marginBottom:18
@@ -18271,7 +18271,7 @@ React.createElement("div", { style: { display:"flex", alignItems:"center", borde
       fontSize:16,color:"var(--text)",fontWeight:500,letterSpacing:0,
       marginBottom: 5
     }
-  }, "Category"), React.createElement(CategoryPicker, {value:category, onChange:setCategory, editFieldStyle, profileLayout:true, categoryVisible, onCategoryVisibleChange:setCategoryVisible})), /*#__PURE__*/React.createElement("div", {
+  }, "Category"), React.createElement(CategoryPicker, {value:category, onChange:setCategory, inputStyle:editFieldStyle, profileLayout:true, categoryVisible, onCategoryVisibleChange:setCategoryVisible})), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom:18
     }
@@ -18320,11 +18320,14 @@ React.createElement("div", { style: { display:"flex", alignItems:"center", borde
     }
   }, "Bio"), /*#__PURE__*/React.createElement("textarea", {
     value: about,
-    onChange: e => setAbout(e.target.value),
+    ref: e => { if (e) { e.style.height = "auto"; e.style.height = e.scrollHeight + "px"; } },
+    onChange: e => { setAbout(e.target.value); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; },
     placeholder: "Write something about yourself...",
     style: {
       ...editFieldStyle,
-      height: 80,
+      minHeight: 32,
+      height: "auto",
+      overflow: "hidden",
       resize: "none"
     }
   })), /*#__PURE__*/React.createElement("div", {
