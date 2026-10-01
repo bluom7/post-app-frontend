@@ -17518,6 +17518,30 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
   const [profileVideo, setProfileVideo] = useState(user.profile_video || null);
   const [coverVideo, setCoverVideo] = useState(user.cover_video || null);
   const [profileMediaSheet, setProfileMediaSheet] = useState(null);
+      const [pendingProfileCrop, setPendingProfileCrop] = useState(null);
+      const [profileCropZoom, setProfileCropZoom] = useState(1);
+      const [profileCropOffset, setProfileCropOffset] = useState({ x: 0.5, y: 0.5 });
+      const [profileCropReady, setProfileCropReady] = useState(false);
+      const [profileCropViewportSize, setProfileCropViewportSize] = useState({ width: 0, height: 0 });
+      const profileCropImageRef = React.useRef(null);
+      const profileCropViewportRef = React.useRef(null);
+      const profileCropDragRef = React.useRef(null);
+      React.useEffect(() => {
+        const source = pendingProfileCrop && pendingProfileCrop.src;
+        if (!source) return undefined;
+        const measureViewport = () => {
+          const viewport = profileCropViewportRef.current;
+          if (!viewport) return;
+          const rect = viewport.getBoundingClientRect();
+          setProfileCropViewportSize({ width: rect.width, height: rect.height });
+        };
+        measureViewport();
+        window.addEventListener("resize", measureViewport);
+        return () => {
+          window.removeEventListener("resize", measureViewport);
+          URL.revokeObjectURL(source);
+        };
+      }, [pendingProfileCrop && pendingProfileCrop.src]);
   const avatarMediaInputRef = React.useRef(null);
   const coverMediaInputRef = React.useRef(null);
   const [profileVideoUploading, setProfileVideoUploading] = useState(false);
@@ -17653,22 +17677,174 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
     input.click();
   };
   const handleProfileMediaSelection = (e, type) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) { e.target.value = ""; setProfileMediaSheet(null); return; }
-    const setPhoto = type === "cover" ? setCoverPhoto : setAvatarPhoto;
-    const setVideo = type === "cover" ? setCoverVideo : setProfileVideo;
-    const setUploading = type === "cover" ? setCoverVideoUploading : setProfileVideoUploading;
-    if (file.type && file.type.startsWith("video/")) {
-      handleVideo(e, setVideo, 10, setUploading);
-      setPhoto(null);
-    } else {
-      handlePhoto(e, setPhoto);
-      setVideo(null);
-    }
-    e.target.value = "";
-    setProfileMediaSheet(null);
-  };
-  const save = async () => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) { e.target.value = ""; setProfileMediaSheet(null); return; }
+        const setPhoto = type === "cover" ? setCoverPhoto : setAvatarPhoto;
+        const setVideo = type === "cover" ? setCoverVideo : setProfileVideo;
+        const setUploading = type === "cover" ? setCoverVideoUploading : setProfileVideoUploading;
+        if (file.type && file.type.startsWith("video/")) {
+          handleVideo(e, setVideo, 10, setUploading);
+          setPhoto(null);
+        } else if (file.type && !file.type.startsWith("image/")) {
+          showToast("Please choose an image or video.", COLORS.red);
+          e.target.value = "";
+          setProfileMediaSheet(null);
+          return;
+        } else {
+          const src = URL.createObjectURL(file);
+          setPendingProfileCrop({ type, src, name: file.name || "Profile photo" });
+          setProfileCropZoom(1);
+          setProfileCropOffset({ x: 0.5, y: 0.5 });
+          setProfileCropReady(false);
+          setProfileCropViewportSize({ width: 0, height: 0 });
+        }
+        e.target.value = "";
+        setProfileMediaSheet(null);
+      };
+      const closeProfileMediaCrop = () => {
+        profileCropDragRef.current = null;
+        setPendingProfileCrop(null);
+        setProfileCropReady(false);
+        setProfileCropZoom(1);
+        setProfileCropOffset({ x: 0.5, y: 0.5 });
+        setProfileCropViewportSize({ width: 0, height: 0 });
+      };
+      const getProfileCropMetrics = () => {
+        const image = profileCropImageRef.current;
+        const viewport = profileCropViewportRef.current;
+        if (!image || !image.naturalWidth || !image.naturalHeight || !viewport) return null;
+        const rect = viewport.getBoundingClientRect();
+        if (!rect.width || !rect.height) return null;
+        const scale = Math.max(rect.width / image.naturalWidth, rect.height / image.naturalHeight) * profileCropZoom;
+        const renderedWidth = image.naturalWidth * scale;
+        const renderedHeight = image.naturalHeight * scale;
+        return { rect, scale, renderedWidth, renderedHeight, overflowX: Math.max(0, renderedWidth - rect.width), overflowY: Math.max(0, renderedHeight - rect.height) };
+      };
+      const startProfileCropDrag = e => {
+        const metrics = getProfileCropMetrics();
+        if (!metrics || !profileCropReady) return;
+        e.preventDefault();
+        profileCropDragRef.current = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, offsetX: profileCropOffset.x, offsetY: profileCropOffset.y, overflowX: metrics.overflowX, overflowY: metrics.overflowY };
+        try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+      };
+      const moveProfileCropDrag = e => {
+        const drag = profileCropDragRef.current;
+        if (!drag || drag.pointerId !== e.pointerId) return;
+        const dx = e.clientX - drag.x;
+        const dy = e.clientY - drag.y;
+        const clamp = n => Math.max(0, Math.min(1, n));
+        setProfileCropOffset({
+          x: drag.overflowX > 0 ? clamp(drag.offsetX - dx / drag.overflowX) : 0.5,
+          y: drag.overflowY > 0 ? clamp(drag.offsetY - dy / drag.overflowY) : 0.5
+        });
+      };
+      const endProfileCropDrag = e => {
+        const drag = profileCropDragRef.current;
+        if (!drag || drag.pointerId !== e.pointerId) return;
+        profileCropDragRef.current = null;
+        try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (_) {}
+      };
+      const applyProfileMediaCrop = () => {
+        const crop = pendingProfileCrop;
+        const image = profileCropImageRef.current;
+        const metrics = getProfileCropMetrics();
+        if (!crop || !image || !profileCropReady || !metrics) {
+          showToast("Please wait for the photo to finish loading.", COLORS.red);
+          return;
+        }
+        const sourceWidth = metrics.rect.width / metrics.scale;
+        const sourceHeight = metrics.rect.height / metrics.scale;
+        const sx = Math.max(0, Math.min(image.naturalWidth - sourceWidth, (image.naturalWidth - sourceWidth) * profileCropOffset.x));
+        const sy = Math.max(0, Math.min(image.naturalHeight - sourceHeight, (image.naturalHeight - sourceHeight) * profileCropOffset.y));
+        const maxOutput = crop.type === "avatar" ? 1200 : 1600;
+        const outputScale = Math.min(1, maxOutput / Math.max(sourceWidth, sourceHeight));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(sourceWidth * outputScale));
+        canvas.height = Math.max(1, Math.round(sourceHeight * outputScale));
+        const context = canvas.getContext("2d");
+        if (!context) { showToast("Could not crop this photo. Please try another.", COLORS.red); return; }
+        try {
+          context.fillStyle = "#fff";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.imageSmoothingEnabled = true;
+          context.imageSmoothingQuality = "high";
+          context.drawImage(image, sx, sy, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+          const photo = canvas.toDataURL("image/jpeg", 0.92);
+          if (crop.type === "cover") {
+            setCoverPhoto(photo);
+            setCoverVideo(null);
+          } else {
+            setAvatarPhoto(photo);
+            setProfileVideo(null);
+          }
+          closeProfileMediaCrop();
+          showToast("Crop ready — tap Save to update your profile.", COLORS.green);
+        } catch (error) {
+          showToast("Could not crop this photo. Please try another.", COLORS.red);
+        }
+      };
+      const renderProfileCropPage = () => {
+        if (!pendingProfileCrop) return null;
+        const isAvatar = pendingProfileCrop.type === "avatar";
+        const image = profileCropImageRef.current;
+        const boxWidth = profileCropViewportSize.width;
+        const boxHeight = profileCropViewportSize.height;
+        let imageStyle = { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none", userSelect: "none", WebkitUserSelect: "none" };
+        if (profileCropReady && image && image.naturalWidth && boxWidth > 0 && boxHeight > 0) {
+          const scale = Math.max(boxWidth / image.naturalWidth, boxHeight / image.naturalHeight) * profileCropZoom;
+          const renderedWidth = image.naturalWidth * scale;
+          const renderedHeight = image.naturalHeight * scale;
+          const overflowX = Math.max(0, renderedWidth - boxWidth);
+          const overflowY = Math.max(0, renderedHeight - boxHeight);
+          imageStyle = { position: "absolute", left: -overflowX * profileCropOffset.x, top: -overflowY * profileCropOffset.y, width: renderedWidth, height: renderedHeight, maxWidth: "none", objectFit: "fill", pointerEvents: "none", userSelect: "none", WebkitUserSelect: "none" };
+        }
+        return React.createElement("div", {
+          role: "dialog",
+          "aria-modal": true,
+          "aria-label": isAvatar ? "Crop profile photo" : "Crop cover photo",
+          style: { position: "fixed", inset: 0, zIndex: 20000, display: "flex", flexDirection: "column", overflow: "hidden", boxSizing: "border-box", background: "var(--bg)", color: "var(--text)", fontFamily: "var(--post-app-font)", paddingTop: "env(safe-area-inset-top)" }
+        },
+          React.createElement("header", { style: { height: 58, flexShrink: 0, display: "flex", alignItems: "center", gap: 12, padding: "0 16px", borderBottom: "1px solid var(--border)", boxSizing: "border-box", background: "var(--bg)" } },
+            React.createElement("button", { type: "button", onClick: closeProfileMediaCrop, "aria-label": "Back", style: { width: 36, height: 40, padding: 0, border: 0, background: "transparent", color: "var(--text)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" } },
+              React.createElement("svg", { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("path", { d: "M19 12H5M12 19l-7-7 7-7" }))
+            ),
+            React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 17, fontWeight: 700, color: "var(--text)" } }, isAvatar ? "Crop profile photo" : "Crop cover photo"),
+            React.createElement("button", { type: "button", onClick: applyProfileMediaCrop, disabled: !profileCropReady, style: { border: 0, borderRadius: 10, padding: "9px 14px", background: "#0D9FF3", color: "#fff", fontSize: 15, fontWeight: 700, opacity: profileCropReady ? 1 : 0.55, cursor: profileCropReady ? "pointer" : "wait" } }, "Done")
+          ),
+          React.createElement("main", { style: { flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, padding: "20px 14px", boxSizing: "border-box", background: "#17191c" } },
+            React.createElement("div", { style: { color: "rgba(255,255,255,.82)", fontSize: 14, fontWeight: 500, textAlign: "center" } }, "Drag the photo to position it inside the frame"),
+            React.createElement("div", {
+              ref: profileCropViewportRef,
+              role: "application",
+              "aria-label": isAvatar ? "Square avatar crop area" : "Wide cover crop area",
+              onPointerDown: startProfileCropDrag,
+              onPointerMove: moveProfileCropDrag,
+              onPointerUp: endProfileCropDrag,
+              onPointerCancel: endProfileCropDrag,
+              style: { position: "relative", flexShrink: 0, width: isAvatar ? "min(78vw, 360px)" : "min(92vw, 520px)", aspectRatio: isAvatar ? "1 / 1" : "2.6 / 1", overflow: "hidden", touchAction: "none", cursor: profileCropReady ? "grab" : "wait", background: "#222", borderRadius: isAvatar ? 0 : 12, boxShadow: "0 8px 32px rgba(0,0,0,.35)" }
+            },
+              React.createElement("img", { ref: profileCropImageRef, src: pendingProfileCrop.src, alt: "Photo crop preview", draggable: false, onLoad: () => { setProfileCropReady(true); const viewport = profileCropViewportRef.current; if (viewport) { const rect = viewport.getBoundingClientRect(); setProfileCropViewportSize({ width: rect.width, height: rect.height }); } }, onError: () => { showToast("Could not open this photo. Please choose another.", COLORS.red); closeProfileMediaCrop(); }, style: imageStyle }),
+              isAvatar ? React.createElement("svg", { viewBox: "0 0 100 100", preserveAspectRatio: "none", style: { position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" } },
+                React.createElement("defs", null, React.createElement("mask", { id: "profile-avatar-crop-mask", maskUnits: "userSpaceOnUse", x: 0, y: 0, width: 100, height: 100 }, React.createElement("rect", { x: 0, y: 0, width: 100, height: 100, fill: "white" }), React.createElement("circle", { cx: 50, cy: 50, r: 49, fill: "black" }))),
+                React.createElement("rect", { x: 0, y: 0, width: 100, height: 100, fill: "rgba(0,0,0,.58)", mask: "url(#profile-avatar-crop-mask)" }),
+                React.createElement("circle", { cx: 50, cy: 50, r: 49, fill: "none", stroke: "#0D9FF3", strokeWidth: 0.8 }),
+                React.createElement("line", { x1: 50, y1: 1, x2: 50, y2: 99, stroke: "rgba(255,255,255,.28)", strokeWidth: 0.35 }),
+                React.createElement("line", { x1: 1, y1: 50, x2: 99, y2: 50, stroke: "rgba(255,255,255,.28)", strokeWidth: 0.35 })
+              ) : React.createElement("div", { style: { position: "absolute", inset: 0, border: "2px solid #0D9FF3", borderRadius: 12, boxSizing: "border-box", pointerEvents: "none", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.18)" } })
+            ),
+            React.createElement("div", { style: { color: "rgba(255,255,255,.62)", fontSize: 13, textAlign: "center" } }, isAvatar ? "Your avatar will be shown as a circle." : "This wide crop will fill your profile cover.")
+          ),
+          React.createElement("footer", { style: { flexShrink: 0, padding: "18px 20px calc(16px + env(safe-area-inset-bottom))", background: "var(--bg)", borderTop: "1px solid var(--border)", boxSizing: "border-box" } },
+            React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, fontSize: 15, fontWeight: 600, color: "var(--text)" } }, React.createElement("span", null, "Zoom"), React.createElement("span", { style: { color: "var(--muted)" } }, Math.round(profileCropZoom * 100) + "%")),
+            React.createElement("input", { type: "range", min: 1, max: 3, step: 0.01, value: profileCropZoom, "aria-label": "Zoom photo", onChange: e => setProfileCropZoom(Number(e.target.value) || 1), disabled: !profileCropReady, style: { width: "100%", accentColor: "#0D9FF3", cursor: profileCropReady ? "pointer" : "wait" } }),
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, color: "var(--muted)", fontSize: 13 } },
+              React.createElement("span", null, "Drag to reposition"),
+              React.createElement("button", { type: "button", onClick: () => { setProfileCropZoom(1); setProfileCropOffset({ x: 0.5, y: 0.5 }); }, disabled: !profileCropReady, style: { border: "1px solid var(--border)", borderRadius: 8, padding: "7px 12px", background: "var(--bg)", color: "var(--text)", font: "inherit", fontWeight: 600, cursor: profileCropReady ? "pointer" : "wait" } }, "Reset")
+            )
+          )
+        );
+      };
+      const save = async () => {
     if (profileVideoUploading || coverVideoUploading) {
       showToast("Video is still uploading — please wait a moment.", COLORS.red);
       return;
@@ -17746,7 +17922,7 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
         React.createElement("button", {type:"button", "aria-label":"Back", onClick:() => setEditing(false), style:{width:32, height:40, padding:0, border:0, background:"transparent", color:"var(--text)", display:"flex", alignItems:"center", justifyContent:"flex-start", cursor:"pointer"}}, React.createElement("svg", {width:24, height:24, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round"}, React.createElement("path", {d:"M19 12H5M12 19l-7-7 7-7"}))),
         React.createElement("span", {style:{flex:1, fontSize:18, fontWeight:700, color:"var(--text)"}}, "Edit profile"),
         React.createElement("button", {type:"button", onClick:save, disabled:saving, style:{border:0, background:"transparent", color:"var(--text)", padding:"8px 0 8px 8px", fontSize:16, fontWeight:700, cursor:saving?"wait":"pointer", opacity:saving?0.7:1}}, saving ? "Saving..." : "Save")
-      ), editing && profileMediaSheet && renderProfileMediaSheet(), showVerifiedInfo && React.createElement(VerifiedInfoModal, {
+      ), editing && profileMediaSheet && renderProfileMediaSheet(), pendingProfileCrop && renderProfileCropPage(), showVerifiedInfo && React.createElement(VerifiedInfoModal, {
     name: user.name,
     category: user.verified_category || user.category || "Public Figure",
     onClose: () => setShowVerifiedInfo(false)
