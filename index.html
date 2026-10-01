@@ -1508,10 +1508,10 @@ function getStatusIcon(id, size, color) {
 }
 const CATEGORY_LIST = [
   {value:"Actor",               path:"M3 8h18v12H3zM3 4h18v4H3zM7 4l4 4m2-4 4 4m2-4 2 2"},
-  {value:"Actress",             path:"M20 21a8 8 0 0 0-16 0M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"},
+  {value:"Actress",             path:"M2.5 8a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0M10.5 16a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0M6 6.5h.01M10 6.5h.01M5 10c1.5 1.5 4.5 1.5 6 0M14.5 14.5h.01M18.5 14.5h.01M14 18c1.5 1.5 4.5 1.5 6 0"},
   {value:"Architect",           path:"M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10"},
   {value:"Artist",              path:"M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"},
-  {value:"Athlete",             path:"M8 21h8m-4-4v4m7-12a4 4 0 0 1-4 4h-1a5 5 0 0 1-10 0H8a4 4 0 0 1-4-4V5h16zM4 8H2v4a4 4 0 0 0 4 4m12-8h2v4a4 4 0 0 1-4 4"},
+  {value:"Athlete",             path:"M7 3h10v5a5 5 0 0 1-10 0V3zM7 5H4v2a4 4 0 0 0 4 4m9-6h3v2a4 4 0 0 1-4 4M12 13v6M8 22h8m-4-3v3"},
   {value:"Author",              path:"M12 7v14M3 18V5a2 2 0 0 1 2-2h4a3 3 0 0 1 3 3 3 3 0 0 1 3-3h4a2 2 0 0 1 2 2v13h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3H3z"},
   {value:"Blogger",             path:"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"},
   {value:"Brand",               path:"M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82zM7 7h.01"},
@@ -1522,8 +1522,8 @@ const CATEGORY_LIST = [
   {value:"Comedian",            path:"M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01M22 12c0 5.52-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2s10 4.48 10 10z"},
   {value:"Community Figure",    path:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"},
   {value:"Content Creator",     path:"M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58zM9.75 15.02V8.98L15.5 12l-5.75 3.02z"},
-  {value:"DJ",                  path:"M9 18V5l12-2v13M5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4M17 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4"},
-  {value:"Dancer",              path:"M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM5 20l2-4 3 1 1 3M19 20l-2-4-3 1-1 3M12 15v7"},
+  {value:"DJ",                  path:"M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM12 12h.01"},
+  {value:"Dancer",              path:"M13 5a2 2 0 1 0-4 0 2 2 0 0 0 4 0zM12 7l-3 4-5-2M9 11l4 3 5-4M12 14l-2 7M12 14l6 2 2 4"},
   {value:"Designer",            path:"M12 19l7-7 3 3-7 7-3-3zM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5zM2 2l7.586 7.586M11 13a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"},
   {value:"Dietitian",           path:"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0h10m-10 0H3m0 0v4a2 2 0 0 0 2 2h4"},
   {value:"Doctor",              path:"M22 12h-4l-3 9L9 3l-3 9H2"},
@@ -1545,7 +1545,7 @@ const CATEGORY_LIST = [
   {value:"Mentor",              path:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"},
   {value:"Model",               path:"M20 21a8 8 0 0 0-16 0M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"},
   {value:"Motivational Speaker",path:"M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"},
-  {value:"Musician",            path:"M9 18V5l12-2v13M9 9l12-2"},
+  {value:"Musician",            path:"M9 18V5l12-2v13M9 9l12-2M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"},
   {value:"NGO",                 path:"M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"},
   {value:"Non-Profit",          path:"M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"},
   {value:"Nurse",               path:"M22 12h-4l-3 9L9 3l-3 9H2"},
@@ -1557,8 +1557,8 @@ const CATEGORY_LIST = [
   {value:"Public Figure",       path:"M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"},
   {value:"Real Estate",         path:"M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10"},
   {value:"Religious Leader",    path:"M12 22V12M12 12C12 7 7 4 7 4s0 5 5 8M12 12c0-5 5-8 5-8s0 5-5 8"},
-  {value:"Researcher",          path:"M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0h10m-10 0H3m0 0v4a2 2 0 0 0 2 2h4"},
-  {value:"Scientist",           path:"M6 2v6a6 6 0 0 0 12 0V2M6 14a6 6 0 0 0 12 0v-2H6v2zM8 2h8"},
+  {value:"Researcher",          path:"M10.5 17a6.5 6.5 0 1 1 4.6-11.1A6.5 6.5 0 0 1 10.5 17zM15.5 15.5 21 21M8 9h5M8 12h3"},
+  {value:"Scientist",           path:"M9 3h6M10 3v6l-5.2 8.8A2 2 0 0 0 6.5 21h11a2 2 0 0 0 1.7-3.2L14 9V3M8 15h8"},
   {value:"Singer",              path:"M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zM19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"},
   {value:"Social Worker",       path:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"},
   {value:"Software Developer",  path:"M16 18l6-6-6-6M8 6l-6 6 6 6"},
@@ -1588,7 +1588,7 @@ function CategoryPicker({value, onChange, inputStyle}) {
       style: {...inputStyle, cursor:"pointer", display:"flex", alignItems:"center", gap:8, userSelect:"none"}
     },
       selected ? React.createElement(React.Fragment, null,
-        getCatIcon(selected.value, 20, "#0866FF", 2.2),
+        getCatIcon(selected.value, 20, "#111111", 2.2),
         React.createElement("span", {style:{flex:1}}, selected.value)
       ) : React.createElement("span", {style:{color:"var(--muted)"}}, "Select category..."),
       React.createElement("svg",{width:14,height:14,viewBox:"0 0 24 24",fill:"none",stroke:"var(--muted)",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("polyline",{points:"6 9 12 15 18 9"}))
@@ -1610,7 +1610,7 @@ function CategoryPicker({value, onChange, inputStyle}) {
             )
           ),
           React.createElement("div",{style:{position:"relative",display:"flex",alignItems:"center"}},
-            React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#0866FF",strokeWidth:2.1,strokeLinecap:"round",strokeLinejoin:"round",style:{position:"absolute",left:12,pointerEvents:"none"}},
+            React.createElement("svg",{width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#111111",strokeWidth:2.1,strokeLinecap:"round",strokeLinejoin:"round",style:{position:"absolute",left:12,pointerEvents:"none"}},
               React.createElement("path",{d:"M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"})
             ),
             React.createElement("input",{
@@ -1634,9 +1634,9 @@ function CategoryPicker({value, onChange, inputStyle}) {
               borderRadius:12
             }
           },
-            getCatIcon(c.value, 24, "#0866FF", 2.2),
+            getCatIcon(c.value, 24, "#111111", 2.2),
             React.createElement("span",{style:{fontSize:16,fontWeight:value===c.value?700:500,color:"var(--text)",lineHeight:1.3}},c.value),
-            value===c.value && React.createElement("svg",{style:{marginLeft:"auto"},width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"#0866FF",strokeWidth:2.6,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("polyline",{points:"20 6 9 17 4 12"}))
+            value===c.value && React.createElement("svg",{style:{marginLeft:"auto"},width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"#111111",strokeWidth:2.6,strokeLinecap:"round",strokeLinejoin:"round"},React.createElement("polyline",{points:"20 6 9 17 4 12"}))
           ))
         )
       )
