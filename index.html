@@ -17785,12 +17785,12 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
     }
   }), editing && /*#__PURE__*/React.createElement("label", {
     "aria-label": "Change cover media",
-    title: "Change cover photo or video"
+    title: "Change cover photo or video",
     onClick: e => {
       if (e.target && e.target.tagName === "INPUT") return;
       e.preventDefault();
       setProfileMediaSheet("cover");
-    },,
+    },
     style: {
       position: "absolute",
       right: 16,
@@ -17869,12 +17869,12 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
     }
   }) : user.avatar_letter), editing && /*#__PURE__*/React.createElement("label", {
     "aria-label": "Change profile media",
-    title: "Change profile photo or video"
+    title: "Change profile photo or video",
     onClick: e => {
       if (e.target && e.target.tagName === "INPUT") return;
       e.preventDefault();
       setProfileMediaSheet("avatar");
-    },,
+    },
     style: {
       position: "absolute",
       right: 3,
