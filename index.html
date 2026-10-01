@@ -1751,7 +1751,7 @@ function DobVisibilitySettings({monthDayValue, yearValue, onMonthDayChange, onYe
     const option = selected(value, field);
     const isOpen = active === field;
     return React.createElement(React.Fragment,{key:field},
-      React.createElement("button",{type:"button",onClick:()=>setActive(isOpen?null:field),"aria-expanded":isOpen,"aria-controls":"dob-audience-"+field,"aria-label":title+": "+option.label,style:{width:"100%",padding:"12px 0",display:"flex",flexDirection:"column",alignItems:"stretch",gap:7,border:0,background:"transparent",color:"var(--text)",cursor:"pointer",textAlign:"left"}},
+      React.createElement("button",{type:"button",onClick:()=>setActive(isOpen?null:field),"aria-expanded":isOpen,"aria-controls":"dob-audience-"+field,"aria-label":title+": "+option.label,style:{width:"100%",padding:"12px 0",display:"flex",flexDirection:"column",alignItems:"stretch",gap:7,border:0,borderBottom:"1px solid var(--border)",background:"transparent",color:"var(--text)",cursor:"pointer",textAlign:"left"}},
         React.createElement("span",{style:{fontSize:15,fontWeight:500}},title),
         React.createElement("span",{style:{display:"flex",alignItems:"center",gap:10,fontSize:15,color:"var(--text)"}},icon(option.icon),React.createElement("span",{style:{flex:1}},option.label),React.createElement("span",{style:{fontSize:19,color:"var(--muted)"}},isOpen?"⌃":"⌄"))
       ),
