@@ -1714,6 +1714,67 @@ function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVis
     )
   );
 }
+function GenderPicker({value, onChange, inputStyle}) {
+  const [open, setOpen] = React.useState(false);
+  const [draftValue, setDraftValue] = React.useState(value || "");
+  const GENDER_OPTIONS = [
+    {value:"", label:"Select gender..."},
+    {value:"Male", label:"Male"},
+    {value:"Female", label:"Female"},
+    {value:"Non-binary", label:"Non-binary"},
+    {value:"Transgender", label:"Transgender"},
+    {value:"Prefer not to say", label:"Prefer not to say"}
+  ];
+  const selected = GENDER_OPTIONS.find(option => option.value === value) || GENDER_OPTIONS[0];
+  const openPicker = () => { setDraftValue(value || ""); setOpen(true); };
+  const commit = () => { if (onChange) onChange(draftValue); setOpen(false); };
+  const trigger = React.createElement("div", {
+    role:"button", tabIndex:0, "aria-haspopup":"dialog", onClick:openPicker,
+    onKeyDown:e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPicker(); } },
+    style:{...inputStyle, cursor:"pointer", display:"flex", alignItems:"center", gap:8, userSelect:"none"}
+  },
+    React.createElement("span", {style:{flex:1, color:value ? "var(--text)" : "var(--muted)"}}, selected.label),
+    React.createElement("svg", {width:14, height:14, viewBox:"0 0 24 24", fill:"none", stroke:"var(--muted)", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round"},
+      React.createElement("polyline", {points:"6 9 12 15 18 9"})
+    )
+  );
+  const profilePage = open ? React.createElement("div", {
+    role:"dialog", "aria-modal":true, "aria-label":"Choose gender",
+    style:{position:"fixed", inset:0, zIndex:9999, background:"#fff", color:"#111", display:"flex", flexDirection:"column", fontFamily:"inherit"}
+  },
+    React.createElement("style", null, ".gender-picker-scroll{scrollbar-width:none;-ms-overflow-style:none}.gender-picker-scroll::-webkit-scrollbar{display:none;width:0;height:0}"),
+    React.createElement("header", {style:{height:62, flexShrink:0, display:"flex", alignItems:"center", padding:"0 16px", gap:18, background:"#fff"}},
+      React.createElement("button", {type:"button", "aria-label":"Back", onClick:() => setOpen(false), style:{width:40, height:44, border:0, padding:0, background:"transparent", color:"#111", display:"flex", alignItems:"center", justifyContent:"flex-start", cursor:"pointer"}},
+        React.createElement("svg", {width:28, height:28, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.8, strokeLinecap:"round", strokeLinejoin:"round"},
+          React.createElement("path", {d:"M19 12H5M12 19l-7-7 7-7"})
+        )
+      ),
+      React.createElement("span", {style:{flex:1, fontSize:23, fontWeight:750, letterSpacing:"-.3px"}}, "Gender"),
+      React.createElement("button", {type:"button", "aria-label":"Done", onClick:commit, style:{minWidth:58, height:36, border:0, borderRadius:8, padding:"0 12px", background:"#4BB7FF", color:"#fff", fontSize:15, fontWeight:700, cursor:"pointer"}}, "Done")
+    ),
+    React.createElement("main", {className:"gender-picker-scroll", style:{flex:1, minHeight:0, overflowY:"auto", overscrollBehavior:"contain", padding:"66px 20px 30px", boxSizing:"border-box"}},
+      React.createElement("h1", {style:{fontSize:34, lineHeight:1.16, fontWeight:750, letterSpacing:"-.6px", margin:0, maxWidth:390}}, "Choose your gender"),
+      React.createElement("p", {style:{fontSize:17, lineHeight:1.35, margin:"12px 0 0", maxWidth:420, color:"#151515"}}, "Choose the option you want on your profile. You can change it at any time."),
+      React.createElement("section", {role:"radiogroup", "aria-label":"Gender options", style:{marginTop:34}},
+        React.createElement("h2", {style:{fontSize:18, fontWeight:700, margin:"0 0 8px"}}, "Select one option"),
+        GENDER_OPTIONS.map(option => {
+          const active = draftValue === option.value;
+          return React.createElement("button", {
+            key:option.value || "empty", type:"button", role:"radio", "aria-checked":active,
+            onClick:() => setDraftValue(option.value),
+            style:{width:"100%", minHeight:62, display:"flex", alignItems:"center", gap:13, padding:"10px 2px", border:0, borderBottom:"1px solid #E5E7EB", borderRadius:0, background:"transparent", color:"#111", textAlign:"left", cursor:"pointer"}
+          },
+            React.createElement("span", {style:{flex:1, fontSize:19, fontWeight:active ? 600 : 400, lineHeight:1.25}}, option.label),
+            React.createElement("span", {style:{width:23, height:23, boxSizing:"border-box", borderRadius:"50%", border:"2px solid " + (active ? "#4BB7FF" : "#8A9098"), background:"#fff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginRight:2}},
+              active ? React.createElement("span", {style:{width:10, height:10, borderRadius:"50%", background:"#4BB7FF"}}) : null
+            )
+          );
+        })
+      )
+    )
+  ) : null;
+  return React.createElement(React.Fragment, null, trigger, profilePage);
+}
 // ── GET response cache (stale-while-revalidate, 45s TTL) ─────────────────���──
 const _apiCache = new Map(); // key → { data, ts, inflight }
 const CACHE_TTL = 45000; // 45 seconds
@@ -18280,21 +18341,7 @@ React.createElement("div", { style: { display:"flex", alignItems:"center", borde
       fontSize:16,color:"var(--text)",fontWeight:500,letterSpacing:0,
       marginBottom: 5
     }
-  }, "Gender"), /*#__PURE__*/React.createElement("select", {
-    value: gender,
-    onChange: e => setGender(e.target.value),
-    style: {
-      ...editFieldStyle,
-      appearance: "auto",
-      WebkitAppearance: "menulist",
-      cursor: "pointer"
-    }
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "Select gender..."), ["Male", "Female", "Non-binary", "Transgender", "Prefer not to say"].map(g => /*#__PURE__*/React.createElement("option", {
-    key: g,
-    value: g
-  }, g)))), /*#__PURE__*/React.createElement("div", {
+  }, "Gender"), /*#__PURE__*/React.createElement(GenderPicker, {value:gender, onChange:setGender, inputStyle:editFieldStyle})), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom:18
     }
