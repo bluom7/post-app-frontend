@@ -4938,14 +4938,14 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
           const hasPostVideo = draft && draft.kind === "post" && Boolean(draft.video_url || draft.videoUrl || draft.video_blob || draft.media);
           setPostDraftToEdit(hasPostPhoto ? Object.assign({}, draft, {openDirectImageEditor: true}) : hasPostVideo ? Object.assign({}, draft, {openDirectVideoTrim: true}) : draft);
           setTab("home");
-        }, onEditReel: draft => { setReelDraftToEdit(draft); setTab("reels"); } }), tab === "profile" && /*#__PURE__*/React.createElement(ProfileTab, {
+        }, onEditReel: draft => { setReelDraftToEdit(draft); setTab("reels"); } }), tab === "profile" && (user && user.id ? /*#__PURE__*/React.createElement(ProfileTab, {
     token: token,
     user: user,
     setUser: setUser,
     showToast: showToast,
     onBack: () => setTab("home"),
     onViewProfile: onViewProfile
-  }), tab === "settings" && /*#__PURE__*/React.createElement(SettingsScreen, {
+  }) : /*#__PURE__*/React.createElement(AppShellSpinner, null)), tab === "settings" && /*#__PURE__*/React.createElement(SettingsScreen, {
     token: token,
     user: user,
     setUser: setUser,
