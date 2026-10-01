@@ -17461,7 +17461,7 @@ function ProfileTab({
       setSaving(false);
     }
   };
-  const editFieldStyle = {width:"100%", background:"transparent", border:"none", borderBottom:"1px solid var(--border)", borderRadius:0, padding:"4px 0 3px", color:"var(--text)", fontSize:20, lineHeight:1.35, fontWeight:400, outline:"none", boxSizing:"border-box"};
+  const editFieldStyle = {width:"100%", background:"transparent", border:"none", borderBottom:"1px solid var(--border)", borderRadius:0, padding:"4px 0 3px", color:"var(--text)", fontSize:16, lineHeight:1.35, fontWeight:400, fontFamily:"inherit", outline:"none", boxSizing:"border-box"};
   const fmtNum = n => n >= 1000 ? (n / 1000).toFixed(1) + "K" : n;
   return /*#__PURE__*/React.createElement("div", {
         className: editing ? "profile-edit-fullscreen" : undefined,
@@ -18246,7 +18246,7 @@ React.createElement("div", { style: { display:"flex", alignItems:"center", borde
     placeholder: ph,
     type: type,
     style: editFieldStyle
-  }))), /*#__PURE__*/React.createElement("div", {style:{marginBottom:18}}, /*#__PURE__*/React.createElement("div", {style:{fontSize:16,color:"var(--text)",fontWeight:500,letterSpacing:0,marginBottom:5}}, "Username"), /*#__PURE__*/React.createElement("div", {style:{position:"relative"}}, /*#__PURE__*/React.createElement("span", {style:{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:COLORS.muted,fontSize:15}}, "@"), /*#__PURE__*/React.createElement("input", {value:username, onChange:e=>setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,"")), placeholder:"username", style:{...editFieldStyle,paddingLeft:30}}))), [["Location", location, setLocation, "City, Country", "text"], ["Website", website, setWebsite, "https://yoursite.com", "url"]].map(([label, val, setter, ph, type]) => /*#__PURE__*/React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {style:{marginBottom:18}}, /*#__PURE__*/React.createElement("div", {style:{fontSize:16,color:"var(--text)",fontWeight:500,letterSpacing:0,marginBottom:5}}, "Username"), /*#__PURE__*/React.createElement("div", {style:{position:"relative"}}, /*#__PURE__*/React.createElement("span", {style:{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",color:COLORS.muted,fontSize:16,fontFamily:"inherit"}}, "@"), /*#__PURE__*/React.createElement("input", {value:username, onChange:e=>setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,"")), placeholder:"username", style:{...editFieldStyle,paddingLeft:30}}))), [["Location", location, setLocation, "City, Country", "text"], ["Website", website, setWebsite, "https://yoursite.com", "url"]].map(([label, val, setter, ph, type]) => /*#__PURE__*/React.createElement("div", {
     key: label,
     style: {
       marginBottom:18
