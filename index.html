@@ -1651,6 +1651,7 @@ function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVis
     const profilePage = open ? React.createElement("div", {
       style:{position:"fixed", inset:0, zIndex:9999, background:"#fff", color:"#111", display:"flex", flexDirection:"column", fontFamily:"inherit"}
     },
+      React.createElement("style", null, ".category-picker-scroll{scrollbar-width:none;-ms-overflow-style:none}.category-picker-scroll::-webkit-scrollbar{display:none;width:0;height:0}"),
       React.createElement("header", {style:{height:62, flexShrink:0, display:"flex", alignItems:"center", padding:"0 16px", gap:18, background:"#fff"}},
         React.createElement("button", {type:"button", "aria-label":"Back", onClick:() => setOpen(false), style:{width:40, height:44, border:0, padding:0, background:"transparent", color:"#111", display:"flex", alignItems:"center", justifyContent:"flex-start", cursor:"pointer"}},
           React.createElement("svg", {width:28, height:28, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.8, strokeLinecap:"round", strokeLinejoin:"round"},
@@ -1660,13 +1661,13 @@ function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVis
         React.createElement("span", {style:{flex:1, fontSize:23, fontWeight:750, letterSpacing:"-.3px"}}, "Category"),
         React.createElement("button", {type:"button", "aria-label":"Done", onClick:commit, style:{minWidth:58, height:36, border:0, borderRadius:8, padding:"0 12px", background:"#4BB7FF", color:"#fff", fontSize:15, fontWeight:700, cursor:"pointer"}}, "Done")
       ),
-      React.createElement("main", {style:{flex:1, minHeight:0, overflowY:"auto", overscrollBehavior:"contain", padding:"66px 20px 30px", boxSizing:"border-box"}},
+      React.createElement("main", {className:"category-picker-scroll", style:{flex:1, minHeight:0, overflowY:"auto", overscrollBehavior:"contain", padding:"66px 20px 30px", boxSizing:"border-box"}},
         React.createElement("h1", {style:{fontSize:34, lineHeight:1.16, fontWeight:750, letterSpacing:"-.6px", margin:0, maxWidth:390}}, "What best describes you?"),
         React.createElement("p", {style:{fontSize:17, lineHeight:1.35, margin:"12px 0 0", maxWidth:420, color:"#151515"}}, "Categories help people find accounts like yours. You can change this at any time."),
         React.createElement("div", {style:{marginTop:68, display:"flex", alignItems:"center", justifyContent:"space-between", gap:16}},
           React.createElement("span", {style:{fontSize:19, lineHeight:1.2}}, "Display on profile"),
-          React.createElement("button", {type:"button", role:"switch", "aria-checked":draftVisible, onClick:() => setDraftVisible(!draftVisible), style:{position:"relative", width:60, height:36, padding:0, border:0, borderRadius:20, background:draftVisible ? "#4BB7FF" : "#D9DDE2", cursor:"pointer", flexShrink:0, transition:"background .18s"}},
-            React.createElement("span", {style:{position:"absolute", top:7, left:draftVisible ? 33 : 5, width:22, height:22, borderRadius:"50%", background:"#fff", boxShadow:"0 1px 3px rgba(0,0,0,.22)", transition:"left .18s"}})
+          React.createElement("button", {type:"button", role:"switch", "aria-checked":draftVisible, onClick:() => setDraftVisible(!draftVisible), style:{position:"relative", width:44, height:26, padding:0, border:0, borderRadius:999, background:draftVisible ? "#0D9FF3" : "#C8C8C8", cursor:"pointer", flexShrink:0, transition:"background .18s"}},
+            React.createElement("span", {style:{position:"absolute", top:5, left:draftVisible ? 25 : 3, width:16, height:16, borderRadius:5, background:"#fff", boxShadow:"0 1px 3px rgba(0,0,0,.22)", transition:"left .18s"}})
           )
         ),
         React.createElement("div", {style:{position:"relative", marginTop:16, display:"flex", alignItems:"center"}},
