@@ -1762,7 +1762,7 @@ function GenderPicker({value, onChange, inputStyle}) {
           return React.createElement("button", {
             key:option.value || "empty", type:"button", role:"radio", "aria-checked":active,
             onClick:() => setDraftValue(option.value),
-            style:{width:"100%", minHeight:62, display:"flex", alignItems:"center", gap:13, padding:"10px 2px", border:0, borderBottom:"1px solid #E5E7EB", borderRadius:0, background:"transparent", color:"#111", textAlign:"left", cursor:"pointer"}
+            style:{width:"100%", minHeight:62, display:"flex", alignItems:"center", gap:13, padding:"10px 2px", border:0, borderRadius:0, background:"transparent", color:"#111", textAlign:"left", cursor:"pointer"}
           },
             React.createElement("span", {style:{flex:1, fontSize:19, fontWeight:active ? 600 : 400, lineHeight:1.25}}, option.label),
             React.createElement("span", {style:{width:23, height:23, boxSizing:"border-box", borderRadius:"50%", border:"2px solid " + (active ? "#4BB7FF" : "#8A9098"), background:"#fff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginRight:2}},
