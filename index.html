@@ -17407,14 +17407,14 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
   );
 }
 
-function ProfileCameraIcon({ size = 20 }) {
+function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
       return React.createElement("svg", {
         width: size,
         height: size,
         viewBox: "0 0 24 24",
         fill: "none",
         stroke: "#111111",
-        strokeWidth: 1.5,
+        strokeWidth,
         strokeLinecap: "round",
         strokeLinejoin: "round",
         "aria-hidden": true,
@@ -17747,7 +17747,7 @@ function ProfileCameraIcon({ size = 20 }) {
       padding: 0,
       zIndex: 3
     }
-  }, /*#__PURE__*/React.createElement(ProfileCameraIcon, { size: 24 }), /*#__PURE__*/React.createElement("input", {
+  }, /*#__PURE__*/React.createElement(ProfileCameraIcon, { size: 24, strokeWidth: 2 }), /*#__PURE__*/React.createElement("input", {
     type: "file",
     accept: "image/*,video/*",
     style: { display: "none" },
@@ -17821,8 +17821,8 @@ function ProfileCameraIcon({ size = 20 }) {
       position: "absolute",
       right: 3,
       bottom: 3,
-      width: 24,
-      height: 24,
+      width: 28,
+      height: 28,
       borderRadius: "50%",
       background: "rgba(255,255,255,.96)",
       border: "1px solid rgba(17,24,39,.14)",
