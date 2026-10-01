@@ -1714,6 +1714,69 @@ function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVis
     )
   );
 }
+function formatVisibleBirthDate(user) {
+  if (!user) return "";
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  let monthDay = String(user.dob_month_day || "");
+  let year = String(user.dob_year || "");
+  const full = String(user.dob || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (full) { if (!monthDay) monthDay = full[2] + "-" + full[3]; if (!year) year = full[1]; }
+  const parts = [];
+  const parsed = monthDay.match(/^(\d{2})-(\d{2})$/);
+  if (parsed) {
+    const month = Number(parsed[1]), day = Number(parsed[2]);
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) parts.push(months[month - 1] + " " + day);
+  }
+  if (/^\d{4}$/.test(year)) parts.push(year);
+  return parts.join(", ");
+}
+function DobVisibilitySettings({monthDayValue, yearValue, onMonthDayChange, onYearChange}) {
+  const [active, setActive] = React.useState(null);
+  const choices = [
+    {value:"public", label:"Public", icon:"public"},
+    {value:"followers", label:"Your followers", icon:"followers"},
+    {value:"following", label:"People you follow", icon:"following"},
+    {value:"mutuals", label:"You follow each other", icon:"mutuals"},
+    {value:"only_you", label:"Only you", icon:"only_you"}
+  ];
+  const selected = value => choices.find(option => option.value === value) || choices[4];
+  const icon = kind => {
+    const props = {width:21,height:21,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:1.8,strokeLinecap:"round",strokeLinejoin:"round",style:{flexShrink:0,color:"#596873"},"aria-hidden":true};
+    if (kind === "public") return React.createElement("svg",props,React.createElement("circle",{cx:12,cy:12,r:9}),React.createElement("path",{d:"M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"}));
+    if (kind === "mutuals") return React.createElement("svg",props,React.createElement("path",{d:"M4 7h15l-3-3M20 17H5l3 3"}));
+    if (kind === "only_you") return React.createElement("svg",props,React.createElement("rect",{x:4,y:10,width:16,height:11,rx:2}),React.createElement("path",{d:"M8 10V7a4 4 0 0 1 8 0v3M12 14v3"}));
+    return React.createElement("svg",props,React.createElement("circle",{cx:9,cy:8,r:3}),React.createElement("path",{d:"M3 20v-1a6 6 0 0 1 12 0v1"}),kind === "followers" ? React.createElement("path",{d:"M19 8v6M16 11h6"}) : React.createElement("path",{d:"m17 12 2 2 3-4"}));
+  };
+  const audienceRow = (field, title, value) => {
+    const option = selected(value);
+    return React.createElement("button",{type:"button",onClick:()=>setActive(field),"aria-haspopup":"dialog","aria-expanded":active===field,"aria-label":title+": "+option.label,style:{width:"100%",padding:"12px 0",display:"flex",flexDirection:"column",alignItems:"stretch",gap:7,border:0,borderBottom:"1px solid var(--border)",background:"transparent",color:"var(--text)",cursor:"pointer",textAlign:"left"}},
+      React.createElement("span",{style:{fontSize:15,fontWeight:500}},title),
+      React.createElement("span",{style:{display:"flex",alignItems:"center",gap:10,fontSize:15,color:"var(--text)"}},icon(option.icon),React.createElement("span",{style:{flex:1}},option.label),React.createElement("span",{style:{fontSize:19,color:"var(--muted)"}},"⌄"))
+    );
+  };
+  React.useEffect(()=>{
+    if (!active) return;
+    const closeOnEscape = event => { if (event.key === "Escape") setActive(null); };
+    window.addEventListener("keydown",closeOnEscape);
+    return () => window.removeEventListener("keydown",closeOnEscape);
+  },[active]);
+  const currentValue = active === "month_day" ? monthDayValue : yearValue;
+  const updateValue = active === "month_day" ? onMonthDayChange : onYearChange;
+  const sheet = active ? React.createElement("div",{onClick:()=>setActive(null),style:{position:"fixed",inset:0,zIndex:20000,background:"rgba(0,0,0,.42)",display:"flex",alignItems:"flex-end",justifyContent:"center"}},
+    React.createElement("div",{role:"dialog","aria-modal":true,"aria-label":"Who can see "+(active === "month_day" ? "month and day" : "year"),onClick:event=>event.stopPropagation(),style:{width:"100%",maxWidth:560,maxHeight:"82vh",overflowY:"auto",boxSizing:"border-box',background:"var(--bg)",color:"var(--text)",borderRadius:"20px 20px 0 0",padding:"9px 20px calc(22px + env(safe-area-inset-bottom))",boxShadow:"0 -8px 30px rgba(0,0,0,.16)"}},
+      React.createElement("div",{style:{width:38,height:4,borderRadius:4,background:"#C9CDD2",margin:"2px auto 17px"}}),
+      React.createElement("div",{style:{fontSize:19,fontWeight:750,marginBottom:8}},active === "month_day" ? "Month and day" : "Year"),
+      choices.map(option=>React.createElement("button",{key:option.value,type:"button",onClick:()=>{updateValue(option.value);setActive(null);},"aria-pressed":currentValue===option.value,style:{width:"100%",minHeight:54,display:"flex",alignItems:"center",gap:14,padding:"12px 2px",border:0,borderBottom:"1px solid var(--border)",background:"transparent",color:"var(--text)",fontSize:16,textAlign:"left",cursor:"pointer"}},icon(option.icon),React.createElement("span",{style:{flex:1}},option.label),currentValue===option.value&&React.createElement("span",{style:{fontSize:20,color:"#0D9FF3",fontWeight:700},"aria-label":"Selected"},"✓")))
+    )) : null;
+  return React.createElement(React.Fragment,null,
+    React.createElement("section",{style:{margin:"14px 0 18px"}},
+      React.createElement("div",{style:{fontSize:15,fontWeight:600,color:"var(--text)",marginBottom:3}},"Who can see this?"),
+      audienceRow("month_day","Month and day",monthDayValue),
+      audienceRow("year","Year",yearValue),
+      React.createElement("div",{style:{fontSize:13,lineHeight:1.45,color:"var(--muted)",marginTop:9}},"You can control who sees your birthday. Changes save when you tap Save.")
+    ),sheet
+  );
+}
 function BirthDatePicker({value, onChange, inputStyle}) {
   const e = React.createElement, months = ["January","February","March","April","May","June","July","August","September","October","November","December"], weekdays = ["S","M","T","W","T","F","S"];
   const [open,setOpen]=React.useState(false), [draft,setDraft]=React.useState(""), [year,setYear]=React.useState(new Date().getFullYear()), [month,setMonth]=React.useState(new Date().getMonth()), [view,setView]=React.useState("");
@@ -17376,6 +17439,8 @@ function ProfileTab({
   const [categoryVisible, setCategoryVisible] = useState(user.category_visible !== false);
   const [gender, setGender] = useState(user.gender || "");
   const [dob, setDob] = useState(user.dob || "");
+  const [dobMonthDayVisibility, setDobMonthDayVisibility] = useState(user.dob_month_day_visibility || "mutuals");
+  const [dobYearVisibility, setDobYearVisibility] = useState(user.dob_year_visibility || "only_you");
   const [avatarBg, setAvatarBg] = useState(user.avatar_bg || COLORS.yellow);
   const [avatarPhoto, setAvatarPhoto] = useState(user.avatar_photo || null);
   const [coverPhoto, setCoverPhoto] = useState(user.cover_photo || null);
@@ -17521,6 +17586,8 @@ function ProfileTab({
         category_visible: categoryVisible,
         gender,
         dob,
+        dob_month_day_visibility: dobMonthDayVisibility,
+        dob_year_visibility: dobYearVisibility,
         is_private: isPrivate
       };
       if (avatarPhoto !== (user.avatar_photo || null)) payload.avatar_photo = avatarPhoto;
@@ -17792,7 +17859,9 @@ function ProfileTab({
       marginLeft: 6
     }
   }, "@", user.username || user.handle?.replace("@", "")),
-
+  formatVisibleBirthDate(user) && /*#__PURE__*/React.createElement("div", {
+    style: { display:"flex", alignItems:"center", gap:6, fontSize:14, color:"var(--muted)", marginTop:8 }
+  }, /*#__PURE__*/React.createElement("svg", { width:16, height:16, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:"1.8", strokeLinecap:"round", strokeLinejoin:"round", "aria-hidden":true }, /*#__PURE__*/React.createElement("rect", { x:"3", y:"4", width:"18", height:"17", rx:"2" }), /*#__PURE__*/React.createElement("path", { d:"M16 2v4M8 2v4M3 10h18" })), "Birthday · " + formatVisibleBirthDate(user)),
  user.about && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 16,
@@ -18371,7 +18440,7 @@ React.createElement("div", { style: { display:"flex", alignItems:"center", borde
       fontSize:16,color:"var(--text)",fontWeight:500,letterSpacing:0,
       marginBottom: 5
     }
-  }, "Birth date"), /*#__PURE__*/React.createElement(BirthDatePicker, {value:dob, onChange:setDob, inputStyle:editFieldStyle})), /*#__PURE__*/React.createElement("div", {
+  }, "Birth date"), /*#__PURE__*/React.createElement(BirthDatePicker, {value:dob, onChange:setDob, inputStyle:editFieldStyle})), /*#__PURE__*/React.createElement(DobVisibilitySettings, {monthDayValue:dobMonthDayVisibility, yearValue:dobYearVisibility, onMonthDayChange:setDobMonthDayVisibility, onYearChange:setDobYearVisibility}), /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom:18
     }
