@@ -17517,6 +17517,9 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
   const [coverPhoto, setCoverPhoto] = useState(user.cover_photo || null);
   const [profileVideo, setProfileVideo] = useState(user.profile_video || null);
   const [coverVideo, setCoverVideo] = useState(user.cover_video || null);
+  const [profileMediaSheet, setProfileMediaSheet] = useState(null);
+  const avatarMediaInputRef = React.useRef(null);
+  const coverMediaInputRef = React.useRef(null);
   const [profileVideoUploading, setProfileVideoUploading] = useState(false);
   const [coverVideoUploading, setCoverVideoUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -17635,6 +17638,36 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
     };
     vid.src = URL.createObjectURL(file);
   };
+  const openProfileMediaSource = (type, source) => {
+    const input = type === "cover" ? coverMediaInputRef.current : avatarMediaInputRef.current;
+    if (!input) { setProfileMediaSheet(null); return; }
+    input.value = "";
+    if (source === "camera") {
+      input.accept = "image/*";
+      input.setAttribute("capture", "environment");
+    } else {
+      input.accept = "image/*,video/*";
+      input.removeAttribute("capture");
+    }
+    setProfileMediaSheet(null);
+    input.click();
+  };
+  const handleProfileMediaSelection = (e, type) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) { e.target.value = ""; setProfileMediaSheet(null); return; }
+    const setPhoto = type === "cover" ? setCoverPhoto : setAvatarPhoto;
+    const setVideo = type === "cover" ? setCoverVideo : setProfileVideo;
+    const setUploading = type === "cover" ? setCoverVideoUploading : setProfileVideoUploading;
+    if (file.type && file.type.startsWith("video/")) {
+      handleVideo(e, setVideo, 10, setUploading);
+      setPhoto(null);
+    } else {
+      handlePhoto(e, setPhoto);
+      setVideo(null);
+    }
+    e.target.value = "";
+    setProfileMediaSheet(null);
+  };
   const save = async () => {
     if (profileVideoUploading || coverVideoUploading) {
       showToast("Video is still uploading — please wait a moment.", COLORS.red);
@@ -17683,6 +17716,29 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
   };
   const editFieldStyle = {width:"100%", background:"transparent", border:"none", borderBottom:"1px solid var(--border)", borderRadius:0, padding:"4px 0 3px", color:"var(--text)", fontSize:16, lineHeight:1.35, fontWeight:400, fontFamily:"inherit", outline:"none", boxSizing:"border-box"};
   const fmtNum = n => n >= 1000 ? (n / 1000).toFixed(1) + "K" : n;
+  const renderProfileMediaSheet = () => {
+    if (!profileMediaSheet) return null;
+    const option = (label, path, action) => React.createElement("button", {
+      type: "button",
+      onClick: action,
+      style: { width: "100%", minHeight: 64, display: "flex", alignItems: "center", gap: 20, padding: "0 20px", border: 0, background: "transparent", color: "#17191c", fontSize: 19, fontWeight: 500, fontFamily: "inherit", textAlign: "left", cursor: "pointer", WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }
+    }, React.createElement("svg", { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "#5b7179", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("path", { d: path })), React.createElement("span", null, label));
+    return React.createElement("div", {
+      role: "presentation",
+      onClick: () => setProfileMediaSheet(null),
+      style: { position: "fixed", inset: 0, zIndex: 10050, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(0,0,0,.34)", WebkitTapHighlightColor: "transparent" }
+    }, React.createElement("div", {
+      role: "dialog",
+      "aria-modal": true,
+      "aria-label": profileMediaSheet === "cover" ? "Cover photo options" : "Profile photo options",
+      onClick: e => e.stopPropagation(),
+      style: { width: "100%", maxWidth: 600, boxSizing: "border-box", padding: "8px 0 calc(12px + env(safe-area-inset-bottom))", borderRadius: "28px 28px 0 0", background: "#fff", boxShadow: "0 -6px 28px rgba(0,0,0,.18)" }
+    }, React.createElement("div", { style: { width: 36, height: 4, margin: "3px auto 14px", borderRadius: 4, background: "#d0d3d7" } }),
+      option("Take photo", "M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z M12 9.5a3.25 3.25 0 1 0 0 6.5a3.25 3.25 0 1 0 0-6.5", () => openProfileMediaSource(profileMediaSheet, "camera")),
+      option("Choose existing photo", "M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M8.5 10a1.5 1.5 0 1 0 0-3a1.5 1.5 0 0 0 0 3z M21 15l-5-5L5 20", () => openProfileMediaSource(profileMediaSheet, "gallery")),
+      profileMediaSheet === "cover" && option("Remove header", "M4 7h16 M10 11v6 M14 11v6 M5 7l1 14h12l1-14 M9 7V4h6v3", () => { setCoverPhoto(null); setCoverVideo(null); setProfileMediaSheet(null); })
+    ));
+  };
   return /*#__PURE__*/React.createElement("div", {
         className: editing ? "profile-edit-fullscreen" : undefined,
         style: editing ? {position:"fixed", inset:0, width:"100%", maxWidth:"none", margin:0, paddingBottom:0, background:"var(--bg)", color:"var(--text)", zIndex:10000, overflowY:"auto", boxSizing:"border-box"} : {maxWidth:600, margin:"0 auto", paddingBottom:20, position:"relative"}
@@ -17690,7 +17746,7 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
         React.createElement("button", {type:"button", "aria-label":"Back", onClick:() => setEditing(false), style:{width:32, height:40, padding:0, border:0, background:"transparent", color:"var(--text)", display:"flex", alignItems:"center", justifyContent:"flex-start", cursor:"pointer"}}, React.createElement("svg", {width:24, height:24, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round"}, React.createElement("path", {d:"M19 12H5M12 19l-7-7 7-7"}))),
         React.createElement("span", {style:{flex:1, fontSize:18, fontWeight:700, color:"var(--text)"}}, "Edit profile"),
         React.createElement("button", {type:"button", onClick:save, disabled:saving, style:{border:0, background:"transparent", color:"var(--text)", padding:"8px 0 8px 8px", fontSize:16, fontWeight:700, cursor:saving?"wait":"pointer", opacity:saving?0.7:1}}, saving ? "Saving..." : "Save")
-      ), showVerifiedInfo && React.createElement(VerifiedInfoModal, {
+      ), editing && profileMediaSheet && renderProfileMediaSheet(), showVerifiedInfo && React.createElement(VerifiedInfoModal, {
     name: user.name,
     category: user.verified_category || user.category || "Public Figure",
     onClose: () => setShowVerifiedInfo(false)
@@ -17729,7 +17785,12 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
     }
   }), editing && /*#__PURE__*/React.createElement("label", {
     "aria-label": "Change cover media",
-    title: "Change cover photo or video",
+    title: "Change cover photo or video"
+    onClick: e => {
+      if (e.target && e.target.tagName === "INPUT") return;
+      e.preventDefault();
+      setProfileMediaSheet("cover");
+    },,
     style: {
       position: "absolute",
       right: 16,
@@ -17749,20 +17810,11 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
       zIndex: 3
     }
   }, /*#__PURE__*/React.createElement(ProfileCameraIcon, { size: 24, strokeWidth: 2 }), /*#__PURE__*/React.createElement("input", {
+    ref: coverMediaInputRef,
     type: "file",
     accept: "image/*,video/*",
     style: { display: "none" },
-    onChange: e => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      if (file.type && file.type.startsWith("video/")) {
-        handleVideo(e, setCoverVideo, 10, setCoverVideoUploading);
-        setCoverPhoto(null);
-      } else {
-        handlePhoto(e, setCoverPhoto);
-        setCoverVideo(null);
-      }
-    }
+    onChange: e => handleProfileMediaSelection(e, "cover")
   }))), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: "0 16px"
@@ -17817,7 +17869,12 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
     }
   }) : user.avatar_letter), editing && /*#__PURE__*/React.createElement("label", {
     "aria-label": "Change profile media",
-    title: "Change profile photo or video",
+    title: "Change profile photo or video"
+    onClick: e => {
+      if (e.target && e.target.tagName === "INPUT") return;
+      e.preventDefault();
+      setProfileMediaSheet("avatar");
+    },,
     style: {
       position: "absolute",
       right: 3,
@@ -17837,20 +17894,11 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
       zIndex: 3
     }
   }, /*#__PURE__*/React.createElement(ProfileCameraIcon, { size: 18, strokeWidth: 2 }), /*#__PURE__*/React.createElement("input", {
+    ref: avatarMediaInputRef,
     type: "file",
     accept: "image/*,video/*",
     style: { display: "none" },
-    onChange: e => {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      if (file.type && file.type.startsWith("video/")) {
-        handleVideo(e, setProfileVideo, 10, setProfileVideoUploading);
-        setAvatarPhoto(null);
-      } else {
-        handlePhoto(e, setAvatarPhoto);
-        setProfileVideo(null);
-      }
-    }
+    onChange: e => handleProfileMediaSelection(e, "avatar")
   }))), !editing && /*#__PURE__*/React.createElement("button", {
     onClick: () => setEditing(true),
     style: {
