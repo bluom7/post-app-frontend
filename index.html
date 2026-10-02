@@ -1602,7 +1602,7 @@ function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVis
     style: {...inputStyle, cursor:"pointer", display:"flex", alignItems:"center", gap:8, userSelect:"none"}
   },
     selected ? React.createElement(React.Fragment, null,
-      getCatIcon(selected.value, 18, "#111111", 2),
+      getCatIcon(selected.value, 18, "var(--text)", 2),
       React.createElement("span", {style:{flex:1}}, selected.value)
     ) : React.createElement("span", {style:{color:"var(--muted)"}}, "Select category..."),
     React.createElement("svg", {width:14, height:14, viewBox:"0 0 24 24", fill:"none", stroke:"var(--muted)", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round"},
@@ -1631,11 +1631,11 @@ function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVis
         role:"radio",
         "aria-checked":active,
         onClick:() => setDraftValue(active ? "" : c.value),
-        style:{width:"100%", minHeight:54, display:"flex", alignItems:"center", gap:13, padding:"9px 0", border:0, borderRadius:10, background:"transparent", color:"#111", textAlign:"left", cursor:"pointer"}
+        style:{width:"100%", minHeight:54, display:"flex", alignItems:"center", gap:13, padding:"9px 0", border:0, borderRadius:10, background:"transparent", color:"var(--text)", textAlign:"left", cursor:"pointer"}
       },
-        getCatIcon(c.value, 16, "#111111", 2),
+        getCatIcon(c.value, 16, "var(--text)", 2),
         React.createElement("span", {style:{flex:1, fontSize:18, fontWeight:active ? 600 : 400, lineHeight:1.25}}, c.value),
-        React.createElement("span", {style:{width:23, height:23, boxSizing:"border-box", borderRadius:"50%", border:"2px solid " + (active ? "#4BB7FF" : "#8A9098"), background:"#fff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginRight:2}},
+        React.createElement("span", {style:{width:23, height:23, boxSizing:"border-box", borderRadius:"50%", border:"2px solid " + (active ? "#4BB7FF" : "var(--muted)"), background:"var(--card-bg)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginRight:2}},
           active ? React.createElement("span", {style:{width:10, height:10, borderRadius:"50%", background:"#4BB7FF"}}) : null
         )
       );
@@ -1643,7 +1643,7 @@ function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVis
     const options = search
       ? React.createElement("section", {style:{marginTop:24}},
           React.createElement("h2", {style:{fontSize:18, fontWeight:700, margin:"0 0 8px"}}, "Results"),
-          filtered.length ? filtered.map(renderRow) : React.createElement("p", {style:{fontSize:16, color:"#686D73", padding:"14px 0"}}, "No categories found")
+          filtered.length ? filtered.map(renderRow) : React.createElement("p", {style:{fontSize:16, color:"var(--muted)", padding:"14px 0"}}, "No categories found")
         )
       : React.createElement(React.Fragment, null,
           React.createElement("section", {style:{marginTop:24}},
@@ -1656,11 +1656,11 @@ function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVis
           )
         );
     const profilePage = open ? React.createElement("div", {
-      style:{position:"fixed", inset:0, zIndex:9999, background:"#fff", color:"#111", display:"flex", flexDirection:"column", fontFamily:"inherit"}
+      style:{position:"fixed", inset:0, zIndex:9999, background:"var(--bg)", color:"var(--text)", display:"flex", flexDirection:"column", fontFamily:"inherit"}
     },
       React.createElement("style", null, ".category-picker-scroll{scrollbar-width:none;-ms-overflow-style:none}.category-picker-scroll::-webkit-scrollbar{display:none;width:0;height:0}"),
-      React.createElement("header", {style:{height:62, flexShrink:0, display:"flex", alignItems:"center", padding:"0 16px", gap:18, background:"#fff"}},
-        React.createElement("button", {type:"button", "aria-label":"Back", onClick:() => setOpen(false), style:{width:40, height:44, border:0, padding:0, background:"transparent", color:"#111", display:"flex", alignItems:"center", justifyContent:"flex-start", cursor:"pointer"}},
+      React.createElement("header", {style:{height:62, flexShrink:0, display:"flex", alignItems:"center", padding:"0 16px", gap:18, background:"var(--bg)"}},
+        React.createElement("button", {type:"button", "aria-label":"Back", onClick:() => setOpen(false), style:{width:40, height:44, border:0, padding:0, background:"transparent", color:"var(--text)", display:"flex", alignItems:"center", justifyContent:"flex-start", cursor:"pointer"}},
           React.createElement("svg", {width:28, height:28, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.8, strokeLinecap:"round", strokeLinejoin:"round"},
             React.createElement("path", {d:"M19 12H5M12 19l-7-7 7-7"})
           )
@@ -1670,7 +1670,7 @@ function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVis
       ),
       React.createElement("main", {className:"category-picker-scroll", style:{flex:1, minHeight:0, overflowY:"auto", overscrollBehavior:"contain", padding:"66px 20px 30px", boxSizing:"border-box"}},
         React.createElement("h1", {style:{fontSize:34, lineHeight:1.16, fontWeight:750, letterSpacing:"-.6px", margin:0, maxWidth:390}}, "What best describes you?"),
-        React.createElement("p", {style:{fontSize:17, lineHeight:1.35, margin:"12px 0 0", maxWidth:420, color:"#151515"}}, "Categories help people find accounts like yours. You can change this at any time."),
+        React.createElement("p", {style:{fontSize:17, lineHeight:1.35, margin:"12px 0 0", maxWidth:420, color:"var(--text)"}}, "Categories help people find accounts like yours. You can change this at any time."),
         React.createElement("div", {style:{marginTop:68, display:"flex", alignItems:"center", justifyContent:"space-between", gap:16}},
           React.createElement("span", {style:{fontSize:19, lineHeight:1.2}}, "Display on profile"),
           React.createElement("button", {type:"button", role:"switch", "aria-checked":draftVisible, onClick:() => setDraftVisible(!draftVisible), style:{position:"relative", width:44, height:26, padding:0, border:0, borderRadius:999, background:draftVisible ? "#0D9FF3" : "#C8C8C8", cursor:"pointer", flexShrink:0, transition:"background .18s"}},
@@ -1678,10 +1678,10 @@ function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVis
           )
         ),
         React.createElement("div", {style:{position:"relative", marginTop:16, display:"flex", alignItems:"center"}},
-          React.createElement("svg", {width:18, height:18, viewBox:"0 0 24 24", fill:"none", stroke:"#B7BBC1", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round", style:{position:"absolute", left:16, pointerEvents:"none"}},
+          React.createElement("svg", {width:18, height:18, viewBox:"0 0 24 24", fill:"none", stroke:"var(--muted)", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round", style:{position:"absolute", left:16, pointerEvents:"none"}},
             React.createElement("path", {d:"M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"})
           ),
-          React.createElement("input", {type:"text", placeholder:"Search categories", value:search, onChange:e => setSearch(e.target.value), style:{width:"100%", height:46, boxSizing:"border-box", padding:"0 14px 0 50px", border:0, borderRadius:13, outline:"none", background:"#F0F1F4", color:"#111", fontSize:17}})
+          React.createElement("input", {type:"text", placeholder:"Search categories", value:search, onChange:e => setSearch(e.target.value), style:{width:"100%", height:46, boxSizing:"border-box", padding:"0 14px 0 50px", border:0, borderRadius:13, outline:"none", background:"var(--input-bg)", color:"var(--text)", fontSize:17}})
         ),
         options
       )
@@ -1703,7 +1703,7 @@ function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVis
             )
           ),
           React.createElement("div", {style:{position:"relative", display:"flex", alignItems:"center"}},
-            React.createElement("svg", {width:18, height:18, viewBox:"0 0 24 24", fill:"none", stroke:"#111111", strokeWidth:2.1, strokeLinecap:"round", strokeLinejoin:"round", style:{position:"absolute", left:12, pointerEvents:"none"}},
+            React.createElement("svg", {width:18, height:18, viewBox:"0 0 24 24", fill:"none", stroke:"var(--text)", strokeWidth:2.1, strokeLinecap:"round", strokeLinejoin:"round", style:{position:"absolute", left:12, pointerEvents:"none"}},
               React.createElement("path", {d:"M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"})
             ),
             React.createElement("input", {type:"text", placeholder:"Search categories...", value:search, onChange:e => setSearch(e.target.value), style:{width:"100%", padding:"11px 14px 11px 42px", borderRadius:14, border:"1px solid var(--border)", background:"var(--input-bg)", color:"var(--text)", fontSize:15, outline:"none", boxSizing:"border-box"}})
@@ -1712,7 +1712,7 @@ function CategoryPicker({value, onChange, inputStyle, profileLayout, categoryVis
         React.createElement("div", {style:{overflowY:"auto", flex:1}},
           value && React.createElement("div", {onClick:() => {onChange(""); setSearch(""); setOpen(false);}, style:{padding:"14px 18px", display:"flex", alignItems:"center", gap:10, cursor:"pointer", color:"var(--muted)", fontSize:15, fontWeight:600}}, "Clear selection"),
           filtered.map(c => React.createElement("div", {key:c.value, onClick:() => {onChange(c.value); setSearch(""); setOpen(false);}, style:{padding:"13px 16px", margin:"3px 8px", display:"flex", alignItems:"center", gap:14, cursor:"pointer", background:value===c.value ? "rgba(8,102,255,.08)" : "transparent", borderRadius:12}},
-            getCatIcon(c.value, 16, "#111111", 2),
+            getCatIcon(c.value, 16, "var(--text)", 2),
             React.createElement("span", {style:{fontSize:16, fontWeight:value===c.value ? 700 : 500, color:"var(--text)", lineHeight:1.3}}, c.value),
             value===c.value && React.createElement("svg", {style:{marginLeft:"auto"}, width:18, height:18, viewBox:"0 0 24 24", fill:"none", stroke:"#4BB7FF", strokeWidth:2.6, strokeLinecap:"round", strokeLinejoin:"round"}, React.createElement("polyline", {points:"20 6 9 17 4 12"}))
           ))
@@ -1748,7 +1748,7 @@ function DobVisibilitySettings({monthDayValue, yearValue, onMonthDayChange, onYe
   ];
   const selected = (value, field) => choices.find(option => option.value === value) || (field === "month_day" ? choices[3] : choices[4]);
   const icon = kind => {
-    const props = {width:21,height:21,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:1.8,strokeLinecap:"round",strokeLinejoin:"round",style:{flexShrink:0,color:"#596873"},"aria-hidden":true};
+    const props = {width:21,height:21,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:1.8,strokeLinecap:"round",strokeLinejoin:"round",style:{flexShrink:0,color:"var(--muted)"},"aria-hidden":true};
     if (kind === "public") return React.createElement("svg",props,React.createElement("circle",{cx:12,cy:12,r:9}),React.createElement("path",{d:"M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"}));
     if (kind === "mutuals") return React.createElement("svg",props,React.createElement("path",{d:"M4 7h15l-3-3M20 17H5l3 3"}));
     if (kind === "only_you") return React.createElement("svg",props,React.createElement("rect",{x:4,y:10,width:16,height:11,rx:2}),React.createElement("path",{d:"M8 10V7a4 4 0 0 1 8 0v3M12 14v3"}));
@@ -1801,11 +1801,11 @@ function BirthDatePicker({value, onChange, inputStyle, monthDayVisibility, yearV
   const trigger=e("button",{type:"button","aria-haspopup":"dialog","aria-label":value?"Edit birth date, "+field(value):"Select birth date",onClick:openPage,style:{...inputStyle,width:"100%",border:"none",borderBottom:"1px solid var(--border)",borderRadius:0,display:"flex",alignItems:"center",justifyContent:"space-between",background:"transparent",cursor:"pointer",textAlign:"left",boxSizing:"border-box"}},e("span",{style:{flex:1,color:value?"var(--text)":"var(--muted)"}},field(value)),e("svg",{width:14,height:14,viewBox:"0 0 24 24",fill:"none",stroke:"var(--muted)",strokeWidth:2,strokeLinecap:"round",strokeLinejoin:"round","aria-hidden":true},e("polyline",{points:"6 9 12 15 18 9"})));
   if(!open)return trigger;
   const first=new Date(year,month,1).getDay(), count=new Date(year,month+1,0).getDate(), total=Math.ceil((first+count)/7)*7;
-  const days=Array.from({length:total},(_,i)=>{const d=i-first+1;if(d<1||d>count)return e("span",{key:"blank"+i,"aria-hidden":true});const k=key(year,month,d),active=draft===k,disabled=k>today;return e("button",{key:k,type:"button",className:"birth-date-day",role:"gridcell","aria-label":"Choose "+months[month]+" "+d+", "+year,"aria-pressed":active,disabled,onClick:()=>{if(!disabled)setDraft(k);},style:{width:44,height:44,justifySelf:"center",borderRadius:"50%",border:active?"none":k===today?"1px solid #4BB7FF":"1px solid transparent",background:active?"#4BB7FF":"transparent",color:disabled?"#C4C8CE":active?"#fff":"#111",fontSize:17,fontWeight:active?700:500,cursor:disabled?"not-allowed":"pointer",padding:0}},d);});
-  const monthYear=e("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,margin:"24px 0 14px"}},e("button",{type:"button","aria-label":"Previous month",disabled:year===1900&&month===0,onClick:()=>moveMonth(-1),style:{width:44,height:44,border:0,background:"transparent",fontSize:25,cursor:"pointer"}},"‹"),e("button",{type:"button","aria-label":"Choose month and year",onClick:()=>setView(view?"":"month"),style:{flex:1,minHeight:44,border:0,borderRadius:10,background:"#F0F1F4",fontSize:17,fontWeight:700,cursor:"pointer"}},months[month]+" "+year+"  "+(view?"▴":"▾")),e("button",{type:"button","aria-label":"Next month",disabled:year===cy&&month===cm,onClick:()=>moveMonth(1),style:{width:44,height:44,border:0,background:"transparent",fontSize:25,cursor:"pointer"}},"›"));
+  const days=Array.from({length:total},(_,i)=>{const d=i-first+1;if(d<1||d>count)return e("span",{key:"blank"+i,"aria-hidden":true});const k=key(year,month,d),active=draft===k,disabled=k>today;return e("button",{key:k,type:"button",className:"birth-date-day",role:"gridcell","aria-label":"Choose "+months[month]+" "+d+", "+year,"aria-pressed":active,disabled,onClick:()=>{if(!disabled)setDraft(k);},style:{width:44,height:44,justifySelf:"center",borderRadius:"50%",border:active?"none":k===today?"1px solid #4BB7FF":"1px solid transparent",background:active?"#4BB7FF":"transparent",color:disabled?"var(--muted)":active?"#fff":"var(--text)",fontSize:17,fontWeight:active?700:500,cursor:disabled?"not-allowed":"pointer",padding:0}},d);});
+  const monthYear=e("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,margin:"24px 0 14px"}},e("button",{type:"button","aria-label":"Previous month",disabled:year===1900&&month===0,onClick:()=>moveMonth(-1),style:{width:44,height:44,border:0,background:"transparent",fontSize:25,cursor:"pointer"}},"‹"),e("button",{type:"button","aria-label":"Choose month and year",onClick:()=>setView(view?"":"month"),style:{flex:1,minHeight:44,border:0,borderRadius:10,background:"var(--input-bg)",fontSize:17,fontWeight:700,cursor:"pointer"}},months[month]+" "+year+"  "+(view?"▴":"▾")),e("button",{type:"button","aria-label":"Next month",disabled:year===cy&&month===cm,onClick:()=>moveMonth(1),style:{width:44,height:44,border:0,background:"transparent",fontSize:25,cursor:"pointer"}},"›"));
   const years=[];for(let y=year;y>=1900;y--)years.push(y);for(let y=cy;y>year;y--)years.push(y);
-  const monthPanel=view==="month"?e("div",{style:{padding:"12px 4px"}},e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},e("b",null,"Choose month"),e("button",{type:"button",onClick:()=>setView("year"),style:{border:0,borderRadius:10,padding:"9px 13px",background:"#F0F1F4",fontSize:16,fontWeight:700}},year)),e("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:8}},months.map((m,i)=>e("button",{key:m,type:"button",disabled:year===cy&&i>cm,onClick:()=>chooseMonth(i),style:{minHeight:52,border:0,borderRadius:12,background:i===month?"#4BB7FF":"#F5F6F8",color:year===cy&&i>cm?"#C4C8CE":i===month?"#fff":"#111",fontWeight:i===month?700:500}},m.slice(0,3))))) : view==="year"?e("div",{style:{padding:"12px 4px"}},e("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:10}},e("b",null,"Choose year"),e("button",{type:"button",onClick:()=>setView("month")},"Months")),e("div",{style:{maxHeight:300,overflowY:"auto",display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:8}},years.map(y=>e("button",{key:y,type:"button",onClick:()=>chooseYear(y),style:{height:46,border:0,borderRadius:11,background:y===year?"#4BB7FF":"#F5F6F8",color:y===year?"#fff":"#111",fontWeight:y===year?700:500}},y)))):e(React.Fragment,null,e("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",textAlign:"center",marginBottom:5}},weekdays.map((d,i)=>e("span",{key:i,style:{height:36,display:"flex",alignItems:"center",justifyContent:"center",color:"#747982",fontSize:14,fontWeight:600}},d))),e("div",{role:"grid","aria-label":months[month]+" "+year,style:{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",rowGap:5,textAlign:"center"}},days));
-  const page=e("div",{style:{position:"fixed",inset:0,zIndex:10001,background:"#fff",color:"#111",display:"flex",flexDirection:"column",fontFamily:"inherit",overscrollBehavior:"contain"}},e("style",null,".birth-date-picker-scroll{scrollbar-width:none;-ms-overflow-style:none}.birth-date-picker-scroll::-webkit-scrollbar{display:none}.birth-date-picker-scroll [style*='overflow-y: auto']{scrollbar-width:none;-ms-overflow-style:none}.birth-date-picker-scroll [style*='overflow-y: auto']::-webkit-scrollbar{display:none;width:0;height:0}.birth-date-day:focus-visible{outline:3px solid rgba(75,183,255,.45);outline-offset:2px}"),e("header",{style:{height:62,flexShrink:0,display:"flex",alignItems:"center",padding:"0 16px",gap:16}},e("button",{type:"button","aria-label":"Cancel date selection",onClick:close,style:{width:40,height:44,border:0,padding:0,background:"transparent",color:"#111",display:"flex",alignItems:"center",justifyContent:"flex-start",cursor:"pointer"}},e("svg",{width:28,height:28,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:1.8,strokeLinecap:"round",strokeLinejoin:"round"},e("path",{d:"M19 12H5M12 19l-7-7 7-7"}))),e("span",{style:{flex:1,fontSize:20,fontWeight:750}},view==="year"?"Choose year":view==="month"?"Choose month":"Birth date"),e("button",{type:"button","aria-label":"Done",onClick:done,style:{minWidth:62,height:38,border:0,borderRadius:9,padding:"0 14px",background:"#4BB7FF",color:"#fff",fontSize:15,fontWeight:700}},"Done")),e("main",{className:"birth-date-picker-scroll",role:"dialog","aria-modal":true,"aria-labelledby":"birth-date-title",style:{flex:1,minHeight:0,overflowY:"auto",padding:"34px 20px calc(28px + env(safe-area-inset-bottom))",boxSizing:"border-box",maxWidth:560,width:"100%",alignSelf:"center"}},e("h1",{id:"birth-date-title",style:{fontSize:32,lineHeight:1.15,fontWeight:750,margin:0}},"Select your birth date"),e("p",{style:{fontSize:16,lineHeight:1.45,color:"#60656D",margin:"10px 0 0"}},"Choose a date on or before today."),e("div",{style:{marginTop:26,padding:"17px 18px",borderRadius:16,background:"#F5F6F8"}},e("div",{style:{fontSize:13,fontWeight:600,color:"#777D85",marginBottom:5}},"Selected date"),e("div",{style:{fontSize:27,lineHeight:1.25,fontWeight:700,color:selected?"#111":"#9AA0A8",minHeight:34,"aria-live":"polite"}},selected?months[selected.mo]+" "+selected.d+", "+selected.y:"Choose a date")),e(DobVisibilitySettings,{monthDayValue:draftMonthDayVisibility,yearValue:draftYearVisibility,onMonthDayChange:setDraftMonthDayVisibility,onYearChange:setDraftYearVisibility}),monthYear,monthPanel,draft&&e("button",{type:"button",onClick:()=>{setDraft("");setView("");},style:{marginTop:20,padding:"10px 0",border:0,background:"transparent",color:"#4B5563",fontSize:15,fontWeight:600}},"Clear date")));
+  const monthPanel=view==="month"?e("div",{style:{padding:"12px 4px"}},e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},e("b",null,"Choose month"),e("button",{type:"button",onClick:()=>setView("year"),style:{border:0,borderRadius:10,padding:"9px 13px",background:"var(--input-bg)",fontSize:16,fontWeight:700}},year)),e("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:8}},months.map((m,i)=>e("button",{key:m,type:"button",disabled:year===cy&&i>cm,onClick:()=>chooseMonth(i),style:{minHeight:52,border:0,borderRadius:12,background:i===month?"#4BB7FF":"var(--input-bg)",color:year===cy&&i>cm?"var(--muted)":i===month?"#fff":"var(--text)",fontWeight:i===month?700:500}},m.slice(0,3))))) : view==="year"?e("div",{style:{padding:"12px 4px"}},e("div",{style:{display:"flex",justifyContent:"space-between",marginBottom:10}},e("b",null,"Choose year"),e("button",{type:"button",onClick:()=>setView("month")},"Months")),e("div",{style:{maxHeight:300,overflowY:"auto",display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:8}},years.map(y=>e("button",{key:y,type:"button",onClick:()=>chooseYear(y),style:{height:46,border:0,borderRadius:11,background:y===year?"#4BB7FF":"var(--input-bg)",color:y===year?"#fff":"var(--text)",fontWeight:y===year?700:500}},y)))):e(React.Fragment,null,e("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",textAlign:"center",marginBottom:5}},weekdays.map((d,i)=>e("span",{key:i,style:{height:36,display:"flex",alignItems:"center",justifyContent:"center",color:"var(--muted)",fontSize:14,fontWeight:600}},d))),e("div",{role:"grid","aria-label":months[month]+" "+year,style:{display:"grid",gridTemplateColumns:"repeat(7,minmax(0,1fr))",rowGap:5,textAlign:"center"}},days));
+  const page=e("div",{style:{position:"fixed",inset:0,zIndex:10001,background:"var(--bg)",color:"var(--text)",display:"flex",flexDirection:"column",fontFamily:"inherit",overscrollBehavior:"contain"}},e("style",null,".birth-date-picker-scroll{scrollbar-width:none;-ms-overflow-style:none}.birth-date-picker-scroll::-webkit-scrollbar{display:none}.birth-date-picker-scroll [style*='overflow-y: auto']{scrollbar-width:none;-ms-overflow-style:none}.birth-date-picker-scroll [style*='overflow-y: auto']::-webkit-scrollbar{display:none;width:0;height:0}.birth-date-day:focus-visible{outline:3px solid rgba(75,183,255,.45);outline-offset:2px}"),e("header",{style:{height:62,flexShrink:0,display:"flex",alignItems:"center",padding:"0 16px",gap:16}},e("button",{type:"button","aria-label":"Cancel date selection",onClick:close,style:{width:40,height:44,border:0,padding:0,background:"transparent",color:"var(--text)",display:"flex",alignItems:"center",justifyContent:"flex-start",cursor:"pointer"}},e("svg",{width:28,height:28,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:1.8,strokeLinecap:"round",strokeLinejoin:"round"},e("path",{d:"M19 12H5M12 19l-7-7 7-7"}))),e("span",{style:{flex:1,fontSize:20,fontWeight:750}},view==="year"?"Choose year":view==="month"?"Choose month":"Birth date"),e("button",{type:"button","aria-label":"Done",onClick:done,style:{minWidth:62,height:38,border:0,borderRadius:9,padding:"0 14px",background:"#4BB7FF",color:"#fff",fontSize:15,fontWeight:700}},"Done")),e("main",{className:"birth-date-picker-scroll",role:"dialog","aria-modal":true,"aria-labelledby":"birth-date-title",style:{flex:1,minHeight:0,overflowY:"auto",padding:"34px 20px calc(28px + env(safe-area-inset-bottom))",boxSizing:"border-box",maxWidth:560,width:"100%",alignSelf:"center"}},e("h1",{id:"birth-date-title",style:{fontSize:32,lineHeight:1.15,fontWeight:750,margin:0}},"Select your birth date"),e("p",{style:{fontSize:16,lineHeight:1.45,color:"var(--muted)",margin:"10px 0 0"}},"Choose a date on or before today."),e("div",{style:{marginTop:26,padding:"17px 18px",borderRadius:16,background:"var(--input-bg)"}},e("div",{style:{fontSize:13,fontWeight:600,color:"var(--muted)",marginBottom:5}},"Selected date"),e("div",{style:{fontSize:27,lineHeight:1.25,fontWeight:700,color:selected?"var(--text)":"var(--muted)",minHeight:34,"aria-live":"polite"}},selected?months[selected.mo]+" "+selected.d+", "+selected.y:"Choose a date")),e(DobVisibilitySettings,{monthDayValue:draftMonthDayVisibility,yearValue:draftYearVisibility,onMonthDayChange:setDraftMonthDayVisibility,onYearChange:setDraftYearVisibility}),monthYear,monthPanel,draft&&e("button",{type:"button",onClick:()=>{setDraft("");setView("");},style:{marginTop:20,padding:"10px 0",border:0,background:"transparent",color:"var(--muted)",fontSize:15,fontWeight:600}},"Clear date")));
   return e(React.Fragment,null,trigger,page);
 }
 function GenderPicker({value, onChange, inputStyle}) {
@@ -1834,11 +1834,11 @@ function GenderPicker({value, onChange, inputStyle}) {
   );
   const profilePage = open ? React.createElement("div", {
     role:"dialog", "aria-modal":true, "aria-label":"Choose gender",
-    style:{position:"fixed", inset:0, zIndex:9999, background:"#fff", color:"#111", display:"flex", flexDirection:"column", fontFamily:"inherit"}
+    style:{position:"fixed", inset:0, zIndex:9999, background:"var(--bg)", color:"var(--text)", display:"flex", flexDirection:"column", fontFamily:"inherit"}
   },
     React.createElement("style", null, ".gender-picker-scroll{scrollbar-width:none;-ms-overflow-style:none}.gender-picker-scroll::-webkit-scrollbar{display:none;width:0;height:0}"),
-    React.createElement("header", {style:{height:62, flexShrink:0, display:"flex", alignItems:"center", padding:"0 16px", gap:18, background:"#fff"}},
-      React.createElement("button", {type:"button", "aria-label":"Back", onClick:() => setOpen(false), style:{width:40, height:44, border:0, padding:0, background:"transparent", color:"#111", display:"flex", alignItems:"center", justifyContent:"flex-start", cursor:"pointer"}},
+    React.createElement("header", {style:{height:62, flexShrink:0, display:"flex", alignItems:"center", padding:"0 16px", gap:18, background:"var(--bg)"}},
+      React.createElement("button", {type:"button", "aria-label":"Back", onClick:() => setOpen(false), style:{width:40, height:44, border:0, padding:0, background:"transparent", color:"var(--text)", display:"flex", alignItems:"center", justifyContent:"flex-start", cursor:"pointer"}},
         React.createElement("svg", {width:28, height:28, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:1.8, strokeLinecap:"round", strokeLinejoin:"round"},
           React.createElement("path", {d:"M19 12H5M12 19l-7-7 7-7"})
         )
@@ -1848,7 +1848,7 @@ function GenderPicker({value, onChange, inputStyle}) {
     ),
     React.createElement("main", {className:"gender-picker-scroll", style:{flex:1, minHeight:0, overflowY:"auto", overscrollBehavior:"contain", padding:"66px 20px 30px", boxSizing:"border-box"}},
       React.createElement("h1", {style:{fontSize:34, lineHeight:1.16, fontWeight:750, letterSpacing:"-.6px", margin:0, maxWidth:390}}, "Choose your gender"),
-      React.createElement("p", {style:{fontSize:17, lineHeight:1.35, margin:"12px 0 0", maxWidth:420, color:"#151515"}}, "Choose the option you want on your profile. You can change it at any time."),
+      React.createElement("p", {style:{fontSize:17, lineHeight:1.35, margin:"12px 0 0", maxWidth:420, color:"var(--text)"}}, "Choose the option you want on your profile. You can change it at any time."),
       React.createElement("section", {role:"radiogroup", "aria-label":"Gender options", style:{marginTop:34}},
         React.createElement("h2", {style:{fontSize:18, fontWeight:700, margin:"0 0 8px"}}, "Select one option"),
         GENDER_OPTIONS.map(option => {
@@ -1856,10 +1856,10 @@ function GenderPicker({value, onChange, inputStyle}) {
           return React.createElement("button", {
             key:option.value || "empty", type:"button", role:"radio", "aria-checked":active,
             onClick:() => setDraftValue(option.value),
-            style:{width:"100%", minHeight:62, display:"flex", alignItems:"center", gap:13, padding:"10px 2px", border:0, borderRadius:0, background:"transparent", color:"#111", textAlign:"left", cursor:"pointer"}
+            style:{width:"100%", minHeight:62, display:"flex", alignItems:"center", gap:13, padding:"10px 2px", border:0, borderRadius:0, background:"transparent", color:"var(--text)", textAlign:"left", cursor:"pointer"}
           },
             React.createElement("span", {style:{flex:1, fontSize:19, fontWeight:active ? 600 : 400, lineHeight:1.25}}, option.label),
-            React.createElement("span", {style:{width:23, height:23, boxSizing:"border-box", borderRadius:"50%", border:"2px solid " + (active ? "#4BB7FF" : "#8A9098"), background:"#fff", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginRight:2}},
+            React.createElement("span", {style:{width:23, height:23, boxSizing:"border-box", borderRadius:"50%", border:"2px solid " + (active ? "#4BB7FF" : "var(--muted)"), background:"var(--card-bg)", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, marginRight:2}},
               active ? React.createElement("span", {style:{width:10, height:10, borderRadius:"50%", background:"#4BB7FF"}}) : null
             )
           );
@@ -17977,8 +17977,8 @@ function ProfileCameraIcon({ size = 20, color = "#000000" }) {
     const option = (label, path, action, iconStrokeWidth = 2.2, useCameraIcon = false) => React.createElement("button", {
       type: "button",
       onClick: action,
-      style: { width: "100%", minHeight: 64, display: "flex", alignItems: "center", gap: 20, padding: "0 20px", border: 0, background: "transparent", color: "#536471", fontSize: 18, fontWeight: 400, fontFamily: "var(--post-app-font)", letterSpacing: "inherit", textAlign: "left", cursor: "pointer", WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }
-    }, useCameraIcon ? React.createElement(ProfileCameraIcon, { size: 24, color: "#536471" }) : React.createElement("svg", { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "#536471", strokeWidth: iconStrokeWidth, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("path", { d: path })), React.createElement("span", null, label));
+      style: { width: "100%", minHeight: 64, display: "flex", alignItems: "center", gap: 20, padding: "0 20px", border: 0, background: "transparent", color: "var(--text)", fontSize: 18, fontWeight: 400, fontFamily: "var(--post-app-font)", letterSpacing: "inherit", textAlign: "left", cursor: "pointer", WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }
+    }, useCameraIcon ? React.createElement(ProfileCameraIcon, { size: 24, color: "var(--text)" }) : React.createElement("svg", { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "var(--text)", strokeWidth: iconStrokeWidth, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, React.createElement("path", { d: path })), React.createElement("span", null, label));
     return React.createElement("div", {
       role: "presentation",
       onClick: () => setProfileMediaSheet(null),
@@ -17988,8 +17988,8 @@ function ProfileCameraIcon({ size = 20, color = "#000000" }) {
       "aria-modal": true,
       "aria-label": profileMediaSheet === "cover" ? "Cover photo options" : "Profile photo options",
       onClick: e => e.stopPropagation(),
-      style: { width: "100%", maxWidth: 600, boxSizing: "border-box", padding: "8px 0 calc(12px + env(safe-area-inset-bottom))", borderRadius: "28px 28px 0 0", background: "#fff", boxShadow: "0 -6px 28px rgba(0,0,0,.18)" }
-    }, React.createElement("div", { style: { width: 36, height: 4, margin: "3px auto 14px", borderRadius: 4, background: "#d0d3d7" } }),
+      style: { width: "100%", maxWidth: 600, boxSizing: "border-box", padding: "8px 0 calc(12px + env(safe-area-inset-bottom))", borderRadius: "28px 28px 0 0", background: "var(--card-bg)", boxShadow: "0 -6px 28px rgba(0,0,0,.18)" }
+    }, React.createElement("div", { style: { width: 36, height: 4, margin: "3px auto 14px", borderRadius: 4, background: "var(--muted)" } }),
       option("Take photo", "M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z M12 9.5a3.25 3.25 0 1 0 0 6.5a3.25 3.25 0 1 0 0-6.5", () => openProfileMediaSource(profileMediaSheet, "camera"), 2.2, true),
       option("Choose existing photo", "M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M8.5 10a1.5 1.5 0 1 0 0-3a1.5 1.5 0 0 0 0 3z M21 15l-5-5L5 20", () => openProfileMediaSource(profileMediaSheet, "gallery")),
       profileMediaSheet === "cover" && option("Remove header", "M9 4h6 M5 7h14 M7 7v11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7", () => { setCoverPhoto(null); setCoverVideo(null); setProfileMediaSheet(null); }, 2.3)
@@ -17997,7 +17997,7 @@ function ProfileCameraIcon({ size = 20, color = "#000000" }) {
   };
   return /*#__PURE__*/React.createElement("div", {
         className: editing ? "profile-edit-fullscreen" : undefined,
-        style: editing ? {position:"fixed", inset:0, width:"100%", maxWidth:"none", margin:0, paddingBottom:0, background:"var(--bg)", color:"var(--text)", "--bg":"#ffffff", "--text":"#111827", "--muted":"#4b5563", "--border":"#cbd5e1", "--card-bg":"#ffffff", "--input-bg":"#f8fafc", colorScheme:"light", zIndex:10000, overflowY:"auto", boxSizing:"border-box"} : {maxWidth:600, margin:"0 auto", paddingBottom:20, position:"relative"}
+        style: editing ? {position:"fixed", inset:0, width:"100%", maxWidth:"none", margin:0, paddingBottom:0, background:"var(--bg)", color:"var(--text)", colorScheme: document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light", zIndex:10000, overflowY:"auto", boxSizing:"border-box"} : {maxWidth:600, margin:"0 auto", paddingBottom:20, position:"relative"}
       }, editing && React.createElement("style", null, ".profile-edit-fullscreen{scrollbar-width:none;-ms-overflow-style:none}.profile-edit-fullscreen::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}.profile-edit-fullscreen::-webkit-scrollbar-track{display:none!important;background:transparent!important}.profile-edit-fullscreen::-webkit-scrollbar-thumb{display:none!important;background:transparent!important}.profile-edit-fullscreen input:focus-visible,.profile-edit-fullscreen textarea:focus-visible{outline:none!important;outline-offset:0!important;box-shadow:none!important}.profile-edit-fullscreen button:focus-visible{outline:2px solid #4BB7FF!important;outline-offset:2px}.profile-edit-fullscreen input::placeholder,.profile-edit-fullscreen textarea::placeholder{color:#6b7280!important;opacity:1}"), editing && React.createElement("header", {style:{position:"sticky", top:0, zIndex:30, height:56, display:"flex", alignItems:"center", gap:14, padding:"0 16px", boxSizing:"border-box", background:"var(--bg)", borderBottom:"1px solid var(--border)"}},
         React.createElement("button", {type:"button", "aria-label":"Back", onClick:() => setEditing(false), style:{width:32, height:40, padding:0, border:0, background:"transparent", color:"var(--text)", display:"flex", alignItems:"center", justifyContent:"flex-start", cursor:"pointer"}}, React.createElement("svg", {width:24, height:24, viewBox:"0 0 24 24", fill:"none", stroke:"currentColor", strokeWidth:2, strokeLinecap:"round", strokeLinejoin:"round"}, React.createElement("path", {d:"M19 12H5M12 19l-7-7 7-7"}))),
         React.createElement("span", {style:{flex:1, fontSize:18, fontWeight:700, color:"var(--text)"}}, "Edit profile"),
@@ -18015,7 +18015,7 @@ function ProfileCameraIcon({ size = 20, color = "#000000" }) {
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       height: editing ? 150 : 150,
-      background: coverPhoto || coverVideo ? "transparent" : `linear-gradient(135deg, ${normalizeColor(avatarBg)}44 0%, #f5f5f5 100%)`,
+      background: coverPhoto || coverVideo ? "transparent" : `linear-gradient(135deg, ${normalizeColor(avatarBg)}44 0%, var(--input-bg) 100%)`,
       boxShadow: coverPhoto || coverVideo ? `inset 0 -6px 0 ${normalizeColor(avatarBg)}` : "none",
       position: "relative",
       overflow: "hidden"
@@ -18055,8 +18055,8 @@ function ProfileCameraIcon({ size = 20, color = "#000000" }) {
       width: 40,
       height: 40,
       borderRadius: "50%",
-      background: "#ffffff",
-      border: "1px solid rgba(17,24,39,.24)",
+      background: "var(--card-bg)",
+      border: "1px solid var(--border)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -18066,7 +18066,7 @@ function ProfileCameraIcon({ size = 20, color = "#000000" }) {
       padding: 0,
       zIndex: 3
     }
-  }, /*#__PURE__*/React.createElement(ProfileCameraIcon, { size: 24, strokeWidth: 2.2 }), /*#__PURE__*/React.createElement("input", {
+  }, /*#__PURE__*/React.createElement(ProfileCameraIcon, { size: 24, strokeWidth: 2.2, color: "var(--text)" }), /*#__PURE__*/React.createElement("input", {
     ref: coverMediaInputRef,
     type: "file",
     accept: "image/*,video/*",
@@ -18139,8 +18139,8 @@ function ProfileCameraIcon({ size = 20, color = "#000000" }) {
       width: 28,
       height: 28,
       borderRadius: "50%",
-      background: "#ffffff",
-      border: "1px solid rgba(17,24,39,.24)",
+      background: "var(--card-bg)",
+      border: "1px solid var(--border)",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
@@ -18150,7 +18150,7 @@ function ProfileCameraIcon({ size = 20, color = "#000000" }) {
       padding: 0,
       zIndex: 3
     }
-  }, /*#__PURE__*/React.createElement(ProfileCameraIcon, { size: 18, strokeWidth: 2.2 }), /*#__PURE__*/React.createElement("input", {
+  }, /*#__PURE__*/React.createElement(ProfileCameraIcon, { size: 18, strokeWidth: 2.2, color: "var(--text)" }), /*#__PURE__*/React.createElement("input", {
     ref: avatarMediaInputRef,
     type: "file",
     accept: "image/*,video/*",
