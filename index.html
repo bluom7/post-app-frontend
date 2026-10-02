@@ -17525,7 +17525,7 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
       const [profileCropViewportSize, setProfileCropViewportSize] = useState({ width: 0, height: 0 });
       const profileCropImageRef = React.useRef(null);
       const profileCropViewportRef = React.useRef(null);
-      const profileCropDragRef = React.useRef(null);
+      const profileCropDragRef = React.useRef({ pointers: new Map(), mode: null, zoom: 1, offset: { x: 0.5, y: 0.5 } });
       React.useEffect(() => {
         const source = pendingProfileCrop && pendingProfileCrop.src;
         if (!source) return undefined;
@@ -17702,49 +17702,126 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
         setProfileMediaSheet(null);
       };
       const closeProfileMediaCrop = () => {
-        profileCropDragRef.current = null;
+        profileCropDragRef.current = { pointers: new Map(), mode: null, zoom: 1, offset: { x: 0.5, y: 0.5 } };
         setPendingProfileCrop(null);
         setProfileCropReady(false);
         setProfileCropZoom(1);
         setProfileCropOffset({ x: 0.5, y: 0.5 });
         setProfileCropViewportSize({ width: 0, height: 0 });
       };
-      const getProfileCropMetrics = () => {
+      const getProfileCropMetrics = (zoomValue = profileCropZoom) => {
         const image = profileCropImageRef.current;
         const viewport = profileCropViewportRef.current;
         if (!image || !image.naturalWidth || !image.naturalHeight || !viewport) return null;
         const rect = viewport.getBoundingClientRect();
         if (!rect.width || !rect.height) return null;
-        const scale = Math.max(rect.width / image.naturalWidth, rect.height / image.naturalHeight) * profileCropZoom;
+        const scale = Math.max(rect.width / image.naturalWidth, rect.height / image.naturalHeight) * zoomValue;
         const renderedWidth = image.naturalWidth * scale;
         const renderedHeight = image.naturalHeight * scale;
         return { rect, scale, renderedWidth, renderedHeight, overflowX: Math.max(0, renderedWidth - rect.width), overflowY: Math.max(0, renderedHeight - rect.height) };
       };
-      const startProfileCropDrag = e => {
-        const metrics = getProfileCropMetrics();
-        if (!metrics || !profileCropReady) return;
-        e.preventDefault();
-        profileCropDragRef.current = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, offsetX: profileCropOffset.x, offsetY: profileCropOffset.y, overflowX: metrics.overflowX, overflowY: metrics.overflowY };
-        try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
-      };
-      const moveProfileCropDrag = e => {
-        const drag = profileCropDragRef.current;
-        if (!drag || drag.pointerId !== e.pointerId) return;
-        const dx = e.clientX - drag.x;
-        const dy = e.clientY - drag.y;
-        const clamp = n => Math.max(0, Math.min(1, n));
-        setProfileCropOffset({
-          x: drag.overflowX > 0 ? clamp(drag.offsetX - dx / drag.overflowX) : 0.5,
-          y: drag.overflowY > 0 ? clamp(drag.offsetY - dy / drag.overflowY) : 0.5
-        });
-      };
-      const endProfileCropDrag = e => {
-        const drag = profileCropDragRef.current;
-        if (!drag || drag.pointerId !== e.pointerId) return;
-        profileCropDragRef.current = null;
-        try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (_) {}
-      };
-      const applyProfileMediaCrop = () => {
+            const startProfileCropDrag = e => {
+            const metrics = getProfileCropMetrics();
+            if (!metrics || !profileCropReady) return;
+            e.preventDefault();
+            const gesture = profileCropDragRef.current || { pointers: new Map(), mode: null, zoom: profileCropZoom, offset: { ...profileCropOffset } };
+            if (!gesture.pointers) gesture.pointers = new Map();
+            if (gesture.pointers.size >= 2 && !gesture.pointers.has(e.pointerId)) return;
+            gesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            gesture.zoom = profileCropZoom;
+            gesture.offset = { ...profileCropOffset };
+            try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+            if (gesture.pointers.size >= 2 && gesture.mode?.type !== "pinch") {
+              const points = Array.from(gesture.pointers.entries()).slice(0, 2);
+              const first = points[0][1];
+              const second = points[1][1];
+              const image = profileCropImageRef.current;
+              const rect = metrics.rect;
+              const baseScale = Math.max(rect.width / image.naturalWidth, rect.height / image.naturalHeight);
+              const sourceWidth = rect.width / (baseScale * profileCropZoom);
+              const sourceHeight = rect.height / (baseScale * profileCropZoom);
+              const centerX = (first.x + second.x) / 2;
+              const centerY = (first.y + second.y) / 2;
+              const relativeX = Math.max(0, Math.min(1, (centerX - rect.left) / rect.width));
+              const relativeY = Math.max(0, Math.min(1, (centerY - rect.top) / rect.height));
+              gesture.mode = {
+                type: "pinch",
+                pointerIds: [points[0][0], points[1][0]],
+                startDistance: Math.max(1, Math.hypot(second.x - first.x, second.y - first.y)),
+                startZoom: profileCropZoom,
+                focalX: (image.naturalWidth - sourceWidth) * profileCropOffset.x + relativeX * sourceWidth,
+                focalY: (image.naturalHeight - sourceHeight) * profileCropOffset.y + relativeY * sourceHeight
+              };
+            } else if (gesture.mode?.type !== "pinch") {
+              gesture.mode = { type: "drag", pointerId: e.pointerId, x: e.clientX, y: e.clientY, offsetX: profileCropOffset.x, offsetY: profileCropOffset.y, overflowX: metrics.overflowX, overflowY: metrics.overflowY };
+            }
+            profileCropDragRef.current = gesture;
+          };
+          const moveProfileCropDrag = e => {
+            const gesture = profileCropDragRef.current;
+            if (!gesture || !gesture.pointers || !gesture.pointers.has(e.pointerId)) return;
+            gesture.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+            const clamp = n => Math.max(0, Math.min(1, n));
+            if (gesture.mode?.type === "pinch") {
+              const first = gesture.pointers.get(gesture.mode.pointerIds[0]);
+              const second = gesture.pointers.get(gesture.mode.pointerIds[1]);
+              const image = profileCropImageRef.current;
+              const viewport = profileCropViewportRef.current;
+              if (!first || !second || !image || !viewport || !image.naturalWidth) return;
+              const rect = viewport.getBoundingClientRect();
+              if (!rect.width || !rect.height) return;
+              const distance = Math.max(1, Math.hypot(second.x - first.x, second.y - first.y));
+              const nextZoom = Math.max(1, Math.min(3, gesture.mode.startZoom * distance / gesture.mode.startDistance));
+              const baseScale = Math.max(rect.width / image.naturalWidth, rect.height / image.naturalHeight);
+              const sourceWidth = rect.width / (baseScale * nextZoom);
+              const sourceHeight = rect.height / (baseScale * nextZoom);
+              const centerX = (first.x + second.x) / 2;
+              const centerY = (first.y + second.y) / 2;
+              const relativeX = clamp((centerX - rect.left) / rect.width);
+              const relativeY = clamp((centerY - rect.top) / rect.height);
+              const maxSourceX = Math.max(0, image.naturalWidth - sourceWidth);
+              const maxSourceY = Math.max(0, image.naturalHeight - sourceHeight);
+              const offset = {
+                x: maxSourceX > 0 ? clamp((gesture.mode.focalX - relativeX * sourceWidth) / maxSourceX) : 0.5,
+                y: maxSourceY > 0 ? clamp((gesture.mode.focalY - relativeY * sourceHeight) / maxSourceY) : 0.5
+              };
+              gesture.zoom = nextZoom;
+              gesture.offset = offset;
+              setProfileCropZoom(nextZoom);
+              setProfileCropOffset(offset);
+              return;
+            }
+            const mode = gesture.mode;
+            if (!mode || mode.type !== "drag" || mode.pointerId !== e.pointerId) return;
+            const dx = e.clientX - mode.x;
+            const dy = e.clientY - mode.y;
+            const offset = {
+              x: mode.overflowX > 0 ? clamp(mode.offsetX - dx / mode.overflowX) : 0.5,
+              y: mode.overflowY > 0 ? clamp(mode.offsetY - dy / mode.overflowY) : 0.5
+            };
+            gesture.offset = offset;
+            setProfileCropOffset(offset);
+          };
+          const endProfileCropDrag = e => {
+            const gesture = profileCropDragRef.current;
+            if (!gesture || !gesture.pointers || !gesture.pointers.has(e.pointerId)) return;
+            gesture.pointers.delete(e.pointerId);
+            try { e.currentTarget.releasePointerCapture(e.pointerId); } catch (_) {}
+            if (gesture.mode?.type === "pinch") {
+              const remaining = Array.from(gesture.pointers.entries())[0];
+              if (remaining) {
+                const metrics = getProfileCropMetrics(gesture.zoom || profileCropZoom);
+                const point = remaining[1];
+                gesture.mode = { type: "drag", pointerId: remaining[0], x: point.x, y: point.y, offsetX: gesture.offset.x, offsetY: gesture.offset.y, overflowX: metrics ? metrics.overflowX : 0, overflowY: metrics ? metrics.overflowY : 0 };
+              } else {
+                gesture.mode = null;
+              }
+            } else if (gesture.mode?.pointerId === e.pointerId) {
+              gesture.mode = null;
+            }
+            if (gesture.pointers.size === 0) gesture.mode = null;
+          };
+    const applyProfileMediaCrop = () => {
         const crop = pendingProfileCrop;
         const image = profileCropImageRef.current;
         const metrics = getProfileCropMetrics();
@@ -17812,7 +17889,7 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
             React.createElement("button", { type: "button", onClick: applyProfileMediaCrop, disabled: !profileCropReady, style: { border: 0, borderRadius: 10, padding: "9px 14px", background: "#0D9FF3", color: "#fff", fontSize: 15, fontWeight: 700, opacity: profileCropReady ? 1 : 0.55, cursor: profileCropReady ? "pointer" : "wait" } }, "Done")
           ),
           React.createElement("main", { style: { flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, padding: "20px 14px", boxSizing: "border-box", background: "#17191c" } },
-            React.createElement("div", { style: { color: "rgba(255,255,255,.82)", fontSize: 14, fontWeight: 500, textAlign: "center" } }, "Drag the photo to position it inside the frame"),
+            React.createElement("div", { style: { color: "rgba(255,255,255,.82)", fontSize: 14, fontWeight: 500, textAlign: "center" } }, "Pinch to zoom and drag to position the photo inside the frame"),
             React.createElement("div", {
               ref: profileCropViewportRef,
               role: "application",
@@ -17835,11 +17912,9 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
             React.createElement("div", { style: { color: "rgba(255,255,255,.62)", fontSize: 13, textAlign: "center" } }, isAvatar ? "Your avatar will be shown as a circle." : "This wide crop will fill your profile cover.")
           ),
           React.createElement("footer", { style: { flexShrink: 0, padding: "18px 20px calc(16px + env(safe-area-inset-bottom))", background: "var(--bg)", borderTop: "1px solid var(--border)", boxSizing: "border-box" } },
-            React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, fontSize: 15, fontWeight: 600, color: "var(--text)" } }, React.createElement("span", null, "Zoom"), React.createElement("span", { style: { color: "var(--muted)" } }, Math.round(profileCropZoom * 100) + "%")),
-            React.createElement("input", { type: "range", min: 1, max: 3, step: 0.01, value: profileCropZoom, "aria-label": "Zoom photo", onChange: e => setProfileCropZoom(Number(e.target.value) || 1), disabled: !profileCropReady, style: { width: "100%", accentColor: "#0D9FF3", cursor: profileCropReady ? "pointer" : "wait" } }),
-            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10, color: "var(--muted)", fontSize: 13 } },
-              React.createElement("span", null, "Drag to reposition"),
-              React.createElement("button", { type: "button", onClick: () => { setProfileCropZoom(1); setProfileCropOffset({ x: 0.5, y: 0.5 }); }, disabled: !profileCropReady, style: { border: "1px solid var(--border)", borderRadius: 8, padding: "7px 12px", background: "var(--bg)", color: "var(--text)", font: "inherit", fontWeight: 600, cursor: profileCropReady ? "pointer" : "wait" } }, "Reset")
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 0, color: "var(--muted)", fontSize: 13 } },
+              React.createElement("span", null, "Pinch to zoom · drag to reposition"),
+              React.createElement("button", { type: "button", onClick: () => { setProfileCropZoom(1); setProfileCropOffset({ x: 0.5, y: 0.5 }); profileCropDragRef.current = { pointers: new Map(), mode: null, zoom: 1, offset: { x: 0.5, y: 0.5 } }; }, disabled: !profileCropReady, style: { border: "1px solid var(--border)", borderRadius: 8, padding: "7px 12px", background: "var(--bg)", color: "var(--text)", font: "inherit", fontWeight: 600, cursor: profileCropReady ? "pointer" : "wait" } }, "Reset")
             )
           )
         );
