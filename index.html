@@ -17904,10 +17904,10 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
               isAvatar ? React.createElement("svg", { viewBox: "0 0 100 100", preserveAspectRatio: "none", style: { position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" } },
                 React.createElement("defs", null, React.createElement("mask", { id: "profile-avatar-crop-mask", maskUnits: "userSpaceOnUse", x: 0, y: 0, width: 100, height: 100 }, React.createElement("rect", { x: 0, y: 0, width: 100, height: 100, fill: "white" }), React.createElement("circle", { cx: 50, cy: 50, r: 49, fill: "black" }))),
                 React.createElement("rect", { x: 0, y: 0, width: 100, height: 100, fill: "rgba(0,0,0,.58)", mask: "url(#profile-avatar-crop-mask)" }),
-                React.createElement("circle", { cx: 50, cy: 50, r: 49, fill: "none", stroke: "#0D9FF3", strokeWidth: 0.8 }),
+                React.createElement("circle", { cx: 50, cy: 50, r: 49, fill: "none", stroke: normalizeColor(avatarBg), strokeWidth: 0.8 }),
                 React.createElement("line", { x1: 50, y1: 1, x2: 50, y2: 99, stroke: "rgba(255,255,255,.28)", strokeWidth: 0.35 }),
                 React.createElement("line", { x1: 1, y1: 50, x2: 99, y2: 50, stroke: "rgba(255,255,255,.28)", strokeWidth: 0.35 })
-              ) : React.createElement("div", { style: { position: "absolute", inset: 0, border: "2px solid #0D9FF3", borderRadius: 12, boxSizing: "border-box", pointerEvents: "none", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.18)" } })
+              ) : React.createElement("div", { style: { position: "absolute", inset: 0, border: "2px solid " + normalizeColor(avatarBg), borderRadius: 12, boxSizing: "border-box", pointerEvents: "none", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.18)" } })
             ),
             React.createElement("div", { style: { color: "rgba(255,255,255,.62)", fontSize: 13, textAlign: "center" } }, isAvatar ? "Your avatar will be shown as a circle." : "")
           ),
@@ -18022,6 +18022,7 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
     style: {
       height: editing ? 150 : 150,
       background: coverPhoto || coverVideo ? "transparent" : `linear-gradient(135deg, ${normalizeColor(avatarBg)}44 0%, #f5f5f5 100%)`,
+      boxShadow: coverPhoto || coverVideo ? `inset 0 -6px 0 ${normalizeColor(avatarBg)}` : "none",
       position: "relative",
       overflow: "hidden"
     }
@@ -18106,7 +18107,7 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
       fontWeight: 900,
       fontSize: 36,
       overflow: "hidden",
-      border: "4px solid #fff",
+      border: "4px solid " + normalizeColor(avatarBg),
       boxShadow: "0 2px 16px rgba(0,0,0,0.22)"
     }
   }, profileVideo ? /*#__PURE__*/React.createElement("video", {
