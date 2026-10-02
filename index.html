@@ -17996,7 +17996,7 @@ function ProfileCameraIcon({ size = 20, color = "#000000" }) {
       onClick: e => e.stopPropagation(),
       style: { width: "100%", maxWidth: 600, boxSizing: "border-box", padding: "8px 0 calc(12px + env(safe-area-inset-bottom))", borderRadius: "28px 28px 0 0", background: "#fff", boxShadow: "0 -6px 28px rgba(0,0,0,.18)" }
     }, React.createElement("div", { style: { width: 36, height: 4, margin: "3px auto 14px", borderRadius: 4, background: "#d0d3d7" } }),
-      option("Take photo", "M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z M12 9.5a3.25 3.25 0 1 0 0 6.5a3.25 3.25 0 1 0 0-6.5", () => openProfileMediaSource(profileMediaSheet, "camera")), 2.2, true,
+      option("Take photo", "M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z M12 9.5a3.25 3.25 0 1 0 0 6.5a3.25 3.25 0 1 0 0-6.5", () => openProfileMediaSource(profileMediaSheet, "camera"), 2.2, true),
       option("Choose existing photo", "M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z M8.5 10a1.5 1.5 0 1 0 0-3a1.5 1.5 0 0 0 0 3z M21 15l-5-5L5 20", () => openProfileMediaSource(profileMediaSheet, "gallery")),
       profileMediaSheet === "cover" && option("Remove header", "M9 4h6 M5 7h14 M7 7v11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7", () => { setCoverPhoto(null); setCoverVideo(null); setProfileMediaSheet(null); }, 2.3)
     ));
