@@ -49,6 +49,12 @@ button, [role="button"], [onclick] { -webkit-tap-highlight-color: transparent; }
 .bell-shake { animation: bellShake 0.6s ease; }
 button:focus:not([data-follow-control]) { outline: none !important; box-shadow: none !important; border: none !important; }
 button:focus-visible:not([data-follow-control]) { outline: none !important; box-shadow: none !important; border: none !important; }
+button[data-profile-color-swatch="true"][aria-pressed="true"],
+button[data-profile-color-swatch="true"][aria-pressed="true"]:focus,
+button[data-profile-color-swatch="true"][aria-pressed="true"]:focus-visible { border: 3px solid #111 !important; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px #111 !important; }
+button[data-profile-crop-reset="true"],
+button[data-profile-crop-reset="true"]:focus,
+button[data-profile-crop-reset="true"]:focus-visible { border: 1px solid var(--border) !important; box-shadow: 0 0 0 1px var(--border) !important; }
 button[data-help-spin]:focus, button[data-help-spin]:focus-visible, button[data-help-spin]:active { outline: none !important; box-shadow: none !important; border: 2px solid var(--help-spin-bg) !important; background: var(--help-spin-bg) !important; color: var(--help-spin-fg) !important; }
  .post-settings-language-scroll { scrollbar-width: none; -ms-overflow-style: none; }
  .post-settings-language-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
@@ -17915,7 +17921,7 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
           React.createElement("footer", { style: { flexShrink: 0, padding: "18px 20px calc(16px + env(safe-area-inset-bottom))", background: "var(--bg)", borderTop: "1px solid var(--border)", boxSizing: "border-box" } },
             React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 0, color: "var(--muted)", fontSize: 13 } },
               React.createElement("span", null, "Pinch to zoom · drag to reposition"),
-              React.createElement("button", { type: "button", onClick: () => { setProfileCropZoom(1); setProfileCropOffset({ x: 0.5, y: 0.5 }); profileCropDragRef.current = { pointers: new Map(), mode: null, zoom: 1, offset: { x: 0.5, y: 0.5 } }; }, disabled: !profileCropReady, style: { border: "1px solid var(--border)", borderRadius: 8, padding: "7px 12px", background: "var(--bg)", color: "var(--text)", font: "inherit", fontWeight: 600, cursor: profileCropReady ? "pointer" : "wait" } }, "Reset")
+              React.createElement("button", { type: "button", "data-profile-crop-reset": "true", onClick: () => { setProfileCropZoom(1); setProfileCropOffset({ x: 0.5, y: 0.5 }); profileCropDragRef.current = { pointers: new Map(), mode: null, zoom: 1, offset: { x: 0.5, y: 0.5 } }; }, disabled: !profileCropReady, style: { border: "1px solid var(--border)", borderRadius: 8, padding: "7px 12px", background: "var(--bg)", color: "var(--text)", font: "inherit", fontWeight: 600, cursor: profileCropReady ? "pointer" : "wait" } }, "Reset")
                 ),
                 React.createElement("div", { style: { marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border)" } },
                   React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 } },
@@ -17925,6 +17931,7 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
                   React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, ACCENTS.map(c => React.createElement("button", {
                     key: c,
                     type: "button",
+                    "data-profile-color-swatch": "true",
                     onClick: () => setAvatarBg(avatarBg === c ? DEFAULT_PROFILE_COLOR : c),
                     "aria-label": (isAvatar ? "Set avatar colour " : "Set cover colour ") + c,
                     "aria-pressed": avatarBg === c,
