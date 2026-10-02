@@ -1486,6 +1486,7 @@ async function translateText(text, targetLang, withTone = false) {
     };
   }
 }
+const DEFAULT_PROFILE_COLOR = "#FFFFFF";
 const ACCENTS = [COLORS.yellow, COLORS.green, COLORS.red, COLORS.blue];
 const normalizeColor = c => c && c.toUpperCase() === "#0D9FF3" ? "#0D9FF3" : c;
 const STATUS_CATEGORIES = [
@@ -3736,7 +3737,7 @@ function AccountSwitcherSheet({open, onClose, user, onCreateAccount, onAddAccoun
   const name = (user && user.name) || "User";
   const handleValue = (user && (user.handle || user.username)) || "";
   const handle = handleValue ? "@" + handleValue.replace(/^@/, "") : "";
-  const avatarBg = (user && user.avatar_bg) || "#6C5CE7";
+  const avatarBg = (user && user.avatar_bg) || DEFAULT_PROFILE_COLOR;
   const avatarLetter = (user && user.avatar_letter) || name.charAt(0).toUpperCase();
 
   const actionButton = (label, onClick) => React.createElement("button", {
@@ -3986,7 +3987,7 @@ function DrawerPanel({open, onClose, user, onNavigate, isDark, onToggleDark, onO
   const handle = (user && (user.handle || user.username)) ? "@" + (user.handle || user.username).replace(/^@/,"") : "";
   const followingCount = (user && user.following) ? (Array.isArray(user.following) ? user.following.length : user.following) : 0;
   const followersCount = (user && user.followers) ? (Array.isArray(user.followers) ? user.followers.length : user.followers) : 0;
-  const avatarBg = user && user.avatar_bg ? user.avatar_bg : "#6C5CE7";
+  const avatarBg = user && user.avatar_bg ? user.avatar_bg : DEFAULT_PROFILE_COLOR;
 
   const menuItem = (icon, label, onClick, badge, primary) =>
     React.createElement("button", {
@@ -17512,7 +17513,7 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
   const [dob, setDob] = useState(user.dob || "");
   const [dobMonthDayVisibility, setDobMonthDayVisibility] = useState(user.dob_month_day_visibility || "mutuals");
   const [dobYearVisibility, setDobYearVisibility] = useState(user.dob_year_visibility || "only_you");
-  const [avatarBg, setAvatarBg] = useState(user.avatar_bg || COLORS.yellow);
+  const [avatarBg, setAvatarBg] = useState(user.avatar_bg || DEFAULT_PROFILE_COLOR);
   const [avatarPhoto, setAvatarPhoto] = useState(user.avatar_photo || null);
   const [coverPhoto, setCoverPhoto] = useState(user.cover_photo || null);
   const [profileVideo, setProfileVideo] = useState(user.profile_video || null);
@@ -17917,7 +17918,10 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
               React.createElement("button", { type: "button", onClick: () => { setProfileCropZoom(1); setProfileCropOffset({ x: 0.5, y: 0.5 }); profileCropDragRef.current = { pointers: new Map(), mode: null, zoom: 1, offset: { x: 0.5, y: 0.5 } }; }, disabled: !profileCropReady, style: { border: "1px solid var(--border)", borderRadius: 8, padding: "7px 12px", background: "var(--bg)", color: "var(--text)", font: "inherit", fontWeight: 600, cursor: profileCropReady ? "pointer" : "wait" } }, "Reset")
                 ),
                 React.createElement("div", { style: { marginTop: 14, paddingTop: 12, borderTop: "1px solid var(--border)" } },
-                  React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 10 } }, isAvatar ? "Avatar colour" : "Cover colour"),
+                  React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 } },
+                  React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: "var(--text)" } }, isAvatar ? "Avatar colour" : "Cover colour"),
+                  React.createElement("button", { type: "button", onClick: () => setAvatarBg(DEFAULT_PROFILE_COLOR), "aria-label": "Use default white colour", "aria-pressed": avatarBg === DEFAULT_PROFILE_COLOR, title: "Default white", style: { border: "1px solid var(--border)", borderRadius: 6, padding: "4px 8px", background: avatarBg === DEFAULT_PROFILE_COLOR ? "rgba(0,0,0,.04)" : "transparent", color: "var(--text)", fontSize: 12, fontWeight: 600, cursor: "pointer" } }, "Default white")
+                ),
                   React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, ACCENTS.map(c => React.createElement("button", {
                     key: c,
                     type: "button",
@@ -18100,7 +18104,7 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
       height: editing ? 100 : 80,
       borderRadius: "50%",
       position: "relative",
-      background: normalizeColor(avatarBg) || COLORS.yellow,
+      background: normalizeColor(avatarBg) || DEFAULT_PROFILE_COLOR,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
