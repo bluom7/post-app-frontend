@@ -17408,14 +17408,17 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
   );
 }
 
-function ProfileCameraIcon({ size = 20, color = "#000000" }) {
-  return React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: color, stroke: color, strokeWidth: 1, strokeLinejoin: "round", "aria-hidden": true, focusable: "false" },
+function ProfileCameraIcon({ size = 20, color = "var(--text)" }) {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  const cameraColor = isDark ? "#ffffff" : color;
+  const lensColor = isDark ? "#000000" : color;
+  return React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: cameraColor, stroke: cameraColor, strokeWidth: 1, strokeLinejoin: "round", "aria-hidden": true, focusable: "false" },
     React.createElement("path", { d: "M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.5-2h5L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z" }),
     React.createElement("circle", { cx: 12, cy: 12.75, r: 3.85, fill: "#ffffff", stroke: "#ffffff" }),
-    React.createElement("circle", { cx: 12, cy: 12.75, r: 2.55, fill: color, stroke: color })
+    React.createElement("circle", { cx: 12, cy: 12.75, r: 2.55, fill: lensColor, stroke: lensColor })
   );
 }
-    function ProfileTabSkeleton() {
+function ProfileTabSkeleton() {
       const block = (width, height, borderRadius = 8, extra = {}) => React.createElement("div", {
         className: "profile-loading-shimmer",
         style: { width, height, borderRadius, flexShrink: 0, ...extra }
