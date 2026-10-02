@@ -17889,7 +17889,7 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
             React.createElement("button", { type: "button", onClick: applyProfileMediaCrop, disabled: !profileCropReady, style: { border: 0, borderRadius: 10, padding: "9px 14px", background: "#0D9FF3", color: "#fff", fontSize: 15, fontWeight: 700, opacity: profileCropReady ? 1 : 0.55, cursor: profileCropReady ? "pointer" : "wait" } }, "Done")
           ),
           React.createElement("main", { style: { flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, padding: "20px 14px", boxSizing: "border-box", background: "#17191c" } },
-            React.createElement("div", { style: { color: "rgba(255,255,255,.82)", fontSize: 14, fontWeight: 500, textAlign: "center" } }, "Pinch to zoom and drag to position the photo inside the frame"),
+            React.createElement("div", { style: { color: "rgba(255,255,255,.82)", fontSize: 14, fontWeight: 500, textAlign: "center" } }, ""),
             React.createElement("div", {
               ref: profileCropViewportRef,
               role: "application",
@@ -17909,7 +17909,7 @@ function ProfileCameraIcon({ size = 20, strokeWidth = 1.5 }) {
                 React.createElement("line", { x1: 1, y1: 50, x2: 99, y2: 50, stroke: "rgba(255,255,255,.28)", strokeWidth: 0.35 })
               ) : React.createElement("div", { style: { position: "absolute", inset: 0, border: "2px solid #0D9FF3", borderRadius: 12, boxSizing: "border-box", pointerEvents: "none", boxShadow: "inset 0 0 0 1px rgba(255,255,255,.18)" } })
             ),
-            React.createElement("div", { style: { color: "rgba(255,255,255,.62)", fontSize: 13, textAlign: "center" } }, isAvatar ? "Your avatar will be shown as a circle." : "This wide crop will fill your profile cover.")
+            React.createElement("div", { style: { color: "rgba(255,255,255,.62)", fontSize: 13, textAlign: "center" } }, isAvatar ? "Your avatar will be shown as a circle." : "")
           ),
           React.createElement("footer", { style: { flexShrink: 0, padding: "18px 20px calc(16px + env(safe-area-inset-bottom))", background: "var(--bg)", borderTop: "1px solid var(--border)", boxSizing: "border-box" } },
             React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 0, color: "var(--muted)", fontSize: 13 } },
