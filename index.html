@@ -2059,6 +2059,13 @@ async function uploadPhotoFile(file, token, timeoutMs = 60000) {
   }
 }
 
+async function uploadProfileMediaPhoto(value, token, filename) {
+  if (!value || !String(value).toLowerCase().startsWith("data:image/")) return value || null;
+  const file = dataUriToFile(value, filename || "profile-photo.jpg");
+  if (!file) throw new Error("Could not prepare this photo. Please choose it again.");
+  const uploaded = await uploadPhotoFile(file, token);
+  return uploaded.url;
+}
 // Upload reel video directly to Cloudinary after receiving a short-lived server signature.
 // This removes the old browser -> backend -> Cloudinary double hop.
 async function uploadReelVideoDirect(file, token, timeoutMs = 120000, onProgress = null) {
@@ -5784,7 +5791,7 @@ function ProfileSetupScreen({
       const body = {
         about: bio
       };
-      if (photo) body.avatar_photo = photo;
+      if (photo) body.avatar_photo = await uploadProfileMediaPhoto(photo, token, "profile-photo.jpg");
       const updatedUser = await api("/profile", "PATCH", body, token);
       onDone(updatedUser);
     } catch (e) {
@@ -17957,14 +17964,14 @@ function ProfileTabSkeleton() {
         dob_year_visibility: dobYearVisibility,
         is_private: isPrivate
       };
-      if (avatarPhoto !== (user.avatar_photo || null)) payload.avatar_photo = avatarPhoto;
-      if (coverPhoto !== (user.cover_photo || null)) payload.cover_photo = coverPhoto;
+      const avatarPhotoChanged = avatarPhoto !== (user.avatar_photo || null) || String(avatarPhoto || "").toLowerCase().startsWith("data:image/"); if (avatarPhotoChanged) payload.avatar_photo = await uploadProfileMediaPhoto(avatarPhoto, token, "profile-avatar.jpg");
+      const coverPhotoChanged = coverPhoto !== (user.cover_photo || null) || String(coverPhoto || "").toLowerCase().startsWith("data:image/"); if (coverPhotoChanged) payload.cover_photo = await uploadProfileMediaPhoto(coverPhoto, token, "cover-photo.jpg");
       if (profileVideo !== (user.profile_video || null)) payload.profile_video = profileVideo;
       if (coverVideo !== (user.cover_video || null)) payload.cover_video = coverVideo;
       // Use longer timeout only when a new video was actually picked this time
       const hasNewVideo = payload.profile_video !== undefined || payload.cover_video !== undefined;
       const timeoutMs = hasNewVideo ? 60000 : 20000;
-      const u = await api("/profile", "PATCH", payload, token, timeoutMs);
+      const u = await api("/profile", "PATCH", payload, token, timeoutMs); setAvatarPhoto(u.avatar_photo || null); setCoverPhoto(u.cover_photo || null); setProfileVideo(u.profile_video || null); setCoverVideo(u.cover_video || null);
       setUser(u);
       setEditing(false);
       // Clear all post caches so feed/profile posts re-fetch with updated name/avatar
