@@ -2059,7 +2059,15 @@ async function uploadPhotoFile(file, token, timeoutMs = 60000) {
   }
 }
 
-// Upload reel video directly to Cloudinary after receiving a short-lived server signature.
+async function uploadProfileMediaPhoto(value, token, filename = "profile-photo.jpg") {
+      if (!value || typeof value !== "string" || !value.toLowerCase().startsWith("data:image/")) return value;
+      const file = dataUriToFile(value, filename);
+      if (!file) throw new Error("Could not read the selected profile photo. Please choose it again.");
+      const uploaded = await uploadPhotoFile(file, token, 60000);
+      return uploaded.url;
+    }
+
+    // Upload reel video directly to Cloudinary after receiving a short-lived server signature.
 // This removes the old browser -> backend -> Cloudinary double hop.
 async function uploadReelVideoDirect(file, token, timeoutMs = 120000, onProgress = null) {
   if (!file || file.size > 100 * 1024 * 1024) throw new Error("Video is too large. Max 100 MB.");
@@ -5784,7 +5792,7 @@ function ProfileSetupScreen({
       const body = {
         about: bio
       };
-      if (photo) body.avatar_photo = photo;
+      if (photo) body.avatar_photo = await uploadProfileMediaPhoto(photo, token, "profile-avatar.jpg");
       const updatedUser = await api("/profile", "PATCH", body, token);
       onDone(updatedUser);
     } catch (e) {
@@ -17957,19 +17965,34 @@ function ProfileTabSkeleton() {
         dob_year_visibility: dobYearVisibility,
         is_private: isPrivate
       };
-      if (avatarPhoto !== (user.avatar_photo || null)) payload.avatar_photo = avatarPhoto;
-      if (coverPhoto !== (user.cover_photo || null)) payload.cover_photo = coverPhoto;
+      const avatarPhotoNeedsUpload = typeof avatarPhoto === "string" && avatarPhoto.toLowerCase().startsWith("data:image/");
+          const coverPhotoNeedsUpload = typeof coverPhoto === "string" && coverPhoto.toLowerCase().startsWith("data:image/");
+          if (avatarPhoto !== (user.avatar_photo || null) || avatarPhotoNeedsUpload) {
+            payload.avatar_photo = avatarPhotoNeedsUpload ? await uploadProfileMediaPhoto(avatarPhoto, token, "profile-avatar.jpg") : avatarPhoto;
+          }
+          if (coverPhoto !== (user.cover_photo || null) || coverPhotoNeedsUpload) {
+            payload.cover_photo = coverPhotoNeedsUpload ? await uploadProfileMediaPhoto(coverPhoto, token, "profile-cover.jpg") : coverPhoto;
+          }
       if (profileVideo !== (user.profile_video || null)) payload.profile_video = profileVideo;
       if (coverVideo !== (user.cover_video || null)) payload.cover_video = coverVideo;
       // Use longer timeout only when a new video was actually picked this time
       const hasNewVideo = payload.profile_video !== undefined || payload.cover_video !== undefined;
       const timeoutMs = hasNewVideo ? 60000 : 20000;
       const u = await api("/profile", "PATCH", payload, token, timeoutMs);
-      setUser(u);
-      setEditing(false);
-      // Clear all post caches so feed/profile posts re-fetch with updated name/avatar
-      invalidateCache("/posts");
-      invalidateCache("/users");
+          setUser(u);
+          setAvatarPhoto(u.avatar_photo || null);
+          setCoverPhoto(u.cover_photo || null);
+          setProfileVideo(u.profile_video || null);
+          setCoverVideo(u.cover_video || null);
+          setEditing(false);
+          // Refresh every cached surface that can show this user's identity.
+          invalidateCache("/posts");
+          invalidateCache("/users");
+          invalidateCache("/messages");
+          invalidateCache("/groups");
+          invalidateCache("/reels");
+          invalidateCache("/notifications");
+          invalidateCache("/world/reports");
       showToast("Profile updated!", COLORS.green);
     } catch (e) {
       showToast(e.message, COLORS.red);
