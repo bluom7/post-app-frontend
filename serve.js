@@ -6,6 +6,10 @@ const { URL } = require('url');
 const PORT = Number(process.env.PORT) || 3000;
 const ROOT = path.resolve(__dirname);
 const INDEX_FILE = path.join(ROOT, 'index.html');
+const VIDEO_PRELOAD_GUARD = Buffer.from(
+  '<script>(function(){if(!window.React)return;var createElement=React.createElement;React.createElement=function(type,props){var args=Array.prototype.slice.call(arguments);if(type==="video"){var src=props&&props.src;var remote=typeof src==="string"&&(src.indexOf("https://")===0||src.indexOf("http://")===0);if(remote&&!(props&&Object.prototype.hasOwnProperty.call(props,"preload"))){args[1]=Object.assign({},props,{preload:"none"});}}return createElement.apply(this,args);};})();</script>'
+);
+const HEAD_CLOSE = Buffer.from('</head>');
 const mime = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'application/javascript; charset=utf-8',
@@ -41,6 +45,15 @@ function sendFile(res, filePath, fallbackToIndex = true) {
         'X-Content-Type-Options': 'nosniff',
         ...(filePath === INDEX_FILE || path.basename(filePath) === 'sw.js' ? { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } : {}),
       });
+      if (filePath === INDEX_FILE) {
+        const headEnd = data.indexOf(HEAD_CLOSE);
+        if (headEnd >= 0) {
+          res.write(data.subarray(0, headEnd));
+          res.write(VIDEO_PRELOAD_GUARD);
+          res.end(data.subarray(headEnd));
+          return;
+        }
+      }
       res.end(data);
       return;
     }
