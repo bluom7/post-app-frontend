@@ -18231,7 +18231,8 @@ function ProfileTabSkeleton() {
       alignItems: "center",
       columnGap: 14,
       rowGap: 6,
-      width: "100%"
+      width: "100%",
+      marginTop: 8
     }
   }, typeof user.website === "string" && user.website.trim() && /*#__PURE__*/React.createElement("a", {
     href: user.website.trim().match(/^https?:\/\//i) ? user.website.trim() : `https://${user.website.trim()}`,
