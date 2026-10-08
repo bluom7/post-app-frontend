@@ -14283,10 +14283,10 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
   }, /*#__PURE__*/React.createElement("span", {
     onClick: () => { if (!profile.is_private_locked) setShowFollowList("followers"); },
     style: { cursor: !profile.is_private_locked ? "pointer" : "default", fontSize: 14, display: "inline-flex", alignItems: "center", gap: 4 }
-  }, /*#__PURE__*/React.createElement("span", { style: { fontWeight: 900, color: "var(--text)", fontSize: 16 } }, fmtNum(stats.followers)), /*#__PURE__*/React.createElement("span", { style: { color: "var(--muted)" } }, " Followers")), /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", { style: { fontWeight: 900, color: "var(--text)", fontSize: 14 } }, fmtNum(stats.followers)), /*#__PURE__*/React.createElement("span", { style: { color: "var(--muted)" } }, " Followers")), /*#__PURE__*/React.createElement("span", {
     onClick: () => { if (!profile.is_private_locked) setShowFollowList("following"); },
     style: { cursor: !profile.is_private_locked ? "pointer" : "default", fontSize: 14, display: "inline-flex", alignItems: "center", gap: 4 }
-  }, /*#__PURE__*/React.createElement("span", { style: { fontWeight: 900, color: "var(--text)", fontSize: 16 } }, fmtNum(stats.following)), /*#__PURE__*/React.createElement("span", { style: { color: "var(--muted)" } }, " Following"))), profile.is_private_locked ? /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", { style: { fontWeight: 900, color: "var(--text)", fontSize: 14 } }, fmtNum(stats.following)), /*#__PURE__*/React.createElement("span", { style: { color: "var(--muted)" } }, " Following"))), profile.is_private_locked ? /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       padding: "40px 20px",
@@ -18284,10 +18284,10 @@ function ProfileTabSkeleton() {
   }, /*#__PURE__*/React.createElement("span", {
     onClick: () => setShowFollowListOwn("followers"),
     style: { cursor: "pointer", fontSize: 14, display: "inline-flex", alignItems: "center", gap: 4 }
-  }, /*#__PURE__*/React.createElement("span", { style: { fontWeight: 900, color: "var(--text)", fontSize: 16 } }, fmtNum(stats.followers)), /*#__PURE__*/React.createElement("span", { style: { color: COLORS.muted } }, " Followers")), /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement("span", { style: { fontWeight: 900, color: "var(--text)", fontSize: 14 } }, fmtNum(stats.followers)), /*#__PURE__*/React.createElement("span", { style: { color: COLORS.muted } }, " Followers")), /*#__PURE__*/React.createElement("span", {
     onClick: () => setShowFollowListOwn("following"),
     style: { cursor: "pointer", fontSize: 14, display: "inline-flex", alignItems: "center", gap: 4 }
-  }, /*#__PURE__*/React.createElement("span", { style: { fontWeight: 900, color: "var(--text)", fontSize: 16 } }, fmtNum(stats.following)), /*#__PURE__*/React.createElement("span", { style: { color: COLORS.muted } }, " Following"))), !editing && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", { style: { fontWeight: 900, color: "var(--text)", fontSize: 14 } }, fmtNum(stats.following)), /*#__PURE__*/React.createElement("span", { style: { color: COLORS.muted } }, " Following"))), !editing && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 8
     }
