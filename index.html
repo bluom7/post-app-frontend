@@ -18213,10 +18213,9 @@ function ProfileTabSkeleton() {
     }
   }, user.about),  (user.category || formatJoinedMonthYear(user)) && /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "grid",
-      gridTemplateColumns: "minmax(0, 1fr) auto",
+      display: "flex",
       alignItems: "center",
-      columnGap: 12,
+      gap: 8,
       width: "100%",
       marginTop: 8
     }
@@ -18224,7 +18223,7 @@ function ProfileTabSkeleton() {
     style: { display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, color: "#111", fontSize: 14, fontWeight: 800 }
   }, getCatIcon(user.category,14,"#111",2.8), React.createElement("span",{style:{fontWeight:800,color:"#111",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},user.category)) : null,
     formatJoinedMonthYear(user) && /*#__PURE__*/React.createElement("div", {
-      style: { display: "inline-flex", alignItems: "center", justifyContent: "flex-end", gap: 4, minWidth: 0, whiteSpace: "nowrap", color: "var(--text)", fontSize: 13, fontWeight: 400 }
+      style: { display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, whiteSpace: "nowrap", color: "var(--text)", fontSize: 14, fontWeight: 400 }
     }, /*#__PURE__*/React.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, /*#__PURE__*/React.createElement("rect", { x: "3", y: "4", width: "18", height: "17", rx: "2" }), /*#__PURE__*/React.createElement("path", { d: "M16 2v4M8 2v4M3 10h18" })), "Joined " + formatJoinedMonthYear(user))), typeof user.website === "string" && user.website.trim() && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
