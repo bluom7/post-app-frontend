@@ -53,7 +53,16 @@ function applyProfileReposts(html) {
   function replaceUnique(text, oldText, newText, label) { const at=text.indexOf(oldText); if(at<0||text.indexOf(oldText,at+oldText.length)>=0)throw new Error('Profile repost patch anchor missing/duplicated: '+label); return text.slice(0,at)+newText+text.slice(at+oldText.length); }
   function replaceCount(text, oldText, newText, expected, label) { const count=text.split(oldText).length-1; if(count!==expected)throw new Error('Profile repost patch count mismatch: '+label+' ('+count+')'); return text.split(oldText).join(newText); }
   const oldIcon=`function MentionTabIcon({ size = 20 }) {\n      return React.createElement("svg", { width: size, height: size, viewBox: "105 48 175 225", fill: "none", stroke: "currentColor", strokeWidth: 22, strokeLinecap: "round", strokeLinejoin: "round", role: "img", "aria-label": "Mentions", style: { display: "block", flexShrink: 0 } },\n        React.createElement("path", { d: "M112 180 V145 C112 112 140 88 174 88 H242" }), React.createElement("path", { d: "M210 55 L245 88" }), React.createElement("path", { d: "M268 140 V175 C268 208 240 232 206 232 H138" }), React.createElement("path", { d: "M170 265 L135 232" })\n      );\n    }`;
-  const newIcons=`function MentionTabIcon({ size = 20 }) {\n      return React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", role: "img", "aria-label": "Mentions", style: { display: "block", flexShrink: 0 } },\n        React.createElement("path", { d: "M5 2.5h14A3.5 3.5 0 0 1 22.5 6v8.2a3.5 3.5 0 0 1-3.5 3.5h-3.2l-2.75 3.1a1.3 1.3 0 0 1-2 0L8.3 17.7H5a3.5 3.5 0 0 1-3.5-3.5V6A3.5 3.5 0 0 1 5 2.5Z" }),\n        React.createElement("circle", { cx: 12, cy: 7.8, r: 2.05 }),\n        React.createElement("path", { d: "M8.4 14.1c.55-1.65 1.75-2.55 3.6-2.55s3.05.9 3.6 2.55a.65.65 0 0 1-.62.85H9.02a.65.65 0 0 1-.62-.85Z" })\n      );\n    }\n    function RepostTabIcon({ size = 20 }) {\n      return React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", role: "img", "aria-label": "Reposts", style: { display: "block", flexShrink: 0 } },\n        React.createElement("polyline", { points: "17 1 21 5 17 9" }),\n        React.createElement("path", { d: "M3 11V9a4 4 0 0 1 4-4h14" }),\n        React.createElement("polyline", { points: "7 23 3 19 7 15" }),\n        React.createElement("path", { d: "M21 13v2a4 4 0 0 1-4 4H3" })\n      );\n    }`;
+  const newIcons=oldIcon + `
+    function RepostTabIcon({ size = 20 }) {
+      return React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", role: "img", "aria-label": "Reposts", style: { display: "block", flexShrink: 0 } },
+        React.createElement("polyline", { points: "17 1 21 5 17 9" }),
+        React.createElement("path", { d: "M3 11V9a4 4 0 0 1 4-4h14" }),
+        React.createElement("polyline", { points: "7 23 3 19 7 15" }),
+        React.createElement("path", { d: "M21 13v2a4 4 0 0 1-4 4H3" })
+      );
+    }
+`;
   html=replaceUnique(html,oldIcon,newIcons,'tab icons');
   html=replaceCount(html,'["posts", "videos", "mentions"]','["posts", "videos", "mentions", "reposts"]',2,'profile tab rows');
   html=replaceUnique(html,': React.createElement(MentionTabIcon, { size: 16 })',': sec === "mentions" ? React.createElement(MentionTabIcon, { size: 16 }) : React.createElement(RepostTabIcon, { size: 16 })','viewed-profile icon');
@@ -137,6 +146,26 @@ function applyProfileTaggedPosts(html) {
   }
   html = combineTaggedWithReposts(html, '(() => { const repostedPosts = posts.filter(post => post && post.repost_of);', ', showVerifiedInfo && profile && React.createElement(VerifiedInfoModal', 'profile', "viewed-profile");
   html = combineTaggedWithReposts(html, '(() => { const repostedPosts = myPosts.filter(post => post && post.repost_of);', '  )) : /*#__PURE__*/React.createElement("div", {\n    style: {\n      marginTop: 8', 'user', "own-profile");
+  const rowMarker = '["posts", "videos", "mentions", "reposts"].map(sec => React.createElement("button"';
+  const rowPositions = [];
+  let rowSearchFrom = 0;
+  while (true) { const at = html.indexOf(rowMarker, rowSearchFrom); if (at < 0) break; rowPositions.push(at); rowSearchFrom = at + rowMarker.length; }
+  if (rowPositions.length !== 2) throw new Error("Profile tab row count mismatch: " + rowPositions.length);
+  const buttonNeedle = 'style: { flex: 1, background: "none", border: "none"';
+  for (const rowAt of rowPositions.sort((a, b) => b - a)) {
+    const nextRow = rowPositions.find(position => position > rowAt);
+    const buttonAt = html.indexOf(buttonNeedle, rowAt);
+    if (buttonAt < 0 || (nextRow !== undefined && buttonAt > nextRow)) throw new Error("Profile tab button style anchor missing");
+    html = html.slice(0, buttonAt) + 'style: { flex: "0 0 auto", whiteSpace: "nowrap", background: "none", border: "none"' + html.slice(buttonAt + buttonNeedle.length);
+    const styleAt = html.lastIndexOf('style: { display: "flex", borderBottom:', rowAt);
+    if (styleAt < 0) throw new Error("Profile tab row container anchor missing");
+    const styleEnd = html.indexOf("} },", styleAt);
+    if (styleEnd < 0 || styleEnd > rowAt) throw new Error("Profile tab row container end missing");
+    const rowStyle = html.slice(styleAt, styleEnd + 1);
+    if (!rowStyle.includes("marginBottom: 14") || rowStyle.includes("gap: 12")) throw new Error("Profile tab row spacing anchor mismatch");
+    const spacedStyle = rowStyle.replace("marginBottom: 14", 'marginBottom: 14, gap: 12, overflowX: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none"');
+    html = html.slice(0, styleAt) + spacedStyle + html.slice(styleEnd + 1);
+  }
   if (!html.includes(marker) || !html.includes("/tagged-posts?skip=0&limit=50") || !html.includes('const taggedView = taggedPostsLoading')) throw new Error("Reposts/tagged-post patch verification failed");
   return html;
 }
