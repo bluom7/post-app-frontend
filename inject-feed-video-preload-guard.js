@@ -239,8 +239,8 @@ function applyProfileTabSlideTransitions(html) {
     if (start < 0 || end < 0 || text.indexOf(startMarker, start + startMarker.length) >= 0) throw new Error('Profile tab slide panel boundary missing/duplicated: ' + label);
     const expression = text.slice(start, end);
     const wrapper = 'React.createElement("div", { "data-profile-tab-slide-panel": "v1", ' +
-      'onTouchStart: event => { const target = event.target; if (target && typeof target.closest === "function" && target.closest("button,a,input,textarea,select,video,[role=\\\"button\\\"],[data-profile-no-swipe]")) { profileTabTouchRef.current = null; return; } const touch = event.touches && event.touches.length === 1 ? event.touches[0] : null; profileTabTouchRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null; }, ' +
-      'onTouchEnd: event => { const startTouch = profileTabTouchRef.current; if (!startTouch || startTouch.suppressClick) return; profileTabTouchRef.current = null; const touch = event.changedTouches && event.changedTouches[0]; if (!touch) return; const dx = touch.clientX - startTouch.x; const dy = touch.clientY - startTouch.y; if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.25) return; const sections = ["posts", "videos", "mentions", "reposts"]; const currentIndex = sections.indexOf(profileSection); const nextIndex = currentIndex + (dx < 0 ? 1 : -1); if (nextIndex < 0 || nextIndex >= sections.length) return; profileTabTouchRef.current = { suppressClick: true }; window.setTimeout(() => { if (profileTabTouchRef.current && profileTabTouchRef.current.suppressClick) profileTabTouchRef.current = null; }, 400); changeProfileSection(sections[nextIndex]); }, ' +
+      'onTouchStart: event => { const target = event.target; if (target && typeof target.closest === "function" && target.closest("button,a,input,textarea,select,[role=\\\"button\\\"],[data-profile-no-swipe]")) { profileTabTouchRef.current = null; return; } const touch = event.touches && event.touches.length === 1 ? event.touches[0] : null; profileTabTouchRef.current = touch ? { x: touch.clientX, y: touch.clientY, startedOnVideo: !!(target && target.tagName === "VIDEO") } : null; }, ' +
+      'onTouchEnd: event => { const startTouch = profileTabTouchRef.current; if (!startTouch || startTouch.suppressClick) return; profileTabTouchRef.current = null; const touch = event.changedTouches && event.changedTouches[0]; if (!touch) return; const dx = touch.clientX - startTouch.x; const dy = touch.clientY - startTouch.y; const absX = Math.abs(dx); const absY = Math.abs(dy); const minSwipe = startTouch.startedOnVideo ? 76 : 56; if (absX < minSwipe || absX < absY * 1.25) return; const sections = ["posts", "videos", "mentions", "reposts"]; const currentIndex = sections.indexOf(profileSection); const nextIndex = currentIndex + (dx < 0 ? 1 : -1); if (nextIndex < 0 || nextIndex >= sections.length) return; profileTabTouchRef.current = { suppressClick: true }; window.setTimeout(() => { if (profileTabTouchRef.current && profileTabTouchRef.current.suppressClick) profileTabTouchRef.current = null; }, 400); changeProfileSection(sections[nextIndex]); }, ' +
       'onTouchCancel: () => { if (profileTabTouchRef.current && !profileTabTouchRef.current.suppressClick) profileTabTouchRef.current = null; }, ' +
       'onClickCapture: event => { if (profileTabTouchRef.current && profileTabTouchRef.current.suppressClick) { profileTabTouchRef.current = null; event.preventDefault(); event.stopPropagation(); } }, ' +
       'style: { position: "relative", minWidth: 0, width: "100%", overflow: "hidden", touchAction: "pan-y", viewTransitionName: "' + transitionName + '", WebkitTapHighlightColor: "transparent" } }, ' +
@@ -251,10 +251,11 @@ function applyProfileTabSlideTransitions(html) {
   html = wrapPanel(html, 'profileSection === "posts" ? postsLoading', '  )) : /*#__PURE__*/React.createElement("div", {\n    style: {\n      marginTop: 8', 'own-profile-tab-panel', 'own profile');
   if (html.split('"data-profile-tab-slide-panel": "v1"').length - 1 !== 2 ||
       html.split('onClick: () => changeProfileSection(sec),').length - 1 !== 2 ||
-      html.split('profileTabTouchRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null;').length - 1 !== 2 ||
+      html.split('startedOnVideo: !!(target && target.tagName === "VIDEO")').length - 1 !== 2 ||
+      !html.includes('const minSwipe = startTouch.startedOnVideo ? 76 : 56;') ||
       !html.includes('::view-transition-new(own-profile-tab-panel)') ||
       !html.includes('::view-transition-new(viewed-profile-tab-panel)')) {
-    throw new Error('Profile tab slide patch verification failed');
+    throw new Error('Profile tab horizontal swipe patch verification failed');
   }
   return html;
 }
