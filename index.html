@@ -13408,7 +13408,8 @@ function DiscoverTab({ token, user, showToast, onViewProfile, onBack }) {
 
 function StatusPickerModal({currentStatus, onSelect, onClose}) {
   return /*#__PURE__*/React.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:onClose},
-    React.createElement("div",{style:{background:"var(--card-bg)",borderRadius:"28px 28px 0 0",width:"100%",maxWidth:520,paddingBottom:32,maxHeight:"88vh",overflowY:"auto",overscrollBehavior:"contain",WebkitOverflowScrolling:"touch"},onClick:e=>e.stopPropagation()},
+    React.createElement("style",null,".status-picker-scroll{scrollbar-width:none!important;-ms-overflow-style:none!important}.status-picker-scroll::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}"),
+    React.createElement("div",{className:"status-picker-scroll",style:{background:"var(--card-bg)",borderRadius:"28px 28px 0 0",width:"100%",maxWidth:520,paddingBottom:32,maxHeight:"88vh",overflowY:"auto",overscrollBehavior:"contain",WebkitOverflowScrolling:"touch"},onClick:e=>e.stopPropagation()},
       React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 20px 14px"}},
         React.createElement("div",{style:{width:36,height:4,background:"var(--border)",borderRadius:2,margin:"0 auto"}}),
       ),
