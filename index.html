@@ -4456,6 +4456,11 @@ function PostApp() {
         try {
           const u = await api("/auth/me", "GET", null, token);
           setUser(u);
+          const sharedProfileId = new URLSearchParams(window.location.search).get("profile");
+          if (sharedProfileId) {
+            if (String(sharedProfileId) === String(u.id)) setTab("profile");
+            else setViewUser(sharedProfileId);
+          }
           if (u.theme) applyTheme(u.theme);
           setDrawerOpen(false);
           setScreen("app");
@@ -18197,19 +18202,7 @@ function ProfileTabSkeleton() {
     accept: "image/*,video/*",
     style: { display: "none" },
     onChange: e => handleProfileMediaSelection(e, "avatar")
-  }))), !editing && /*#__PURE__*/React.createElement("button", {
-    onClick: () => setEditing(true),
-    style: {
-      background: "#fff",
-      border: "1.5px solid #ddd",
-      borderRadius: 10,
-      padding: "8px 18px",
-      fontWeight: 700,
-      fontSize: 13,
-      cursor: "pointer",
-      color: "#111"
-    }
-  }, t("editProfile"))), !editing ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+  }))), null), !editing ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex", alignItems: "center", gap: 5,
       fontWeight: 900,
@@ -18314,6 +18307,30 @@ function ProfileTabSkeleton() {
     onClick: () => setShowFollowListOwn("following"),
     style: { cursor: "pointer", fontSize: 14, display: "inline-flex", alignItems: "center", gap: 4 }
   }, /*#__PURE__*/React.createElement("span", { style: { fontWeight: 900, color: "var(--text)", fontSize: 14 } }, fmtNum(stats.following)), /*#__PURE__*/React.createElement("span", { style: { color: COLORS.muted } }, " Following")), /*#__PURE__*/React.createElement("span", { style: { fontSize: 14, display: "inline-flex", alignItems: "center", gap: 4 } }, /*#__PURE__*/React.createElement("span", { style: { fontWeight: 900, color: "var(--text)", fontSize: 14 } }, fmtNum(Number(stats.posts) || 0)), /*#__PURE__*/React.createElement("span", { style: { color: COLORS.muted } }, (Number(stats.posts) || 0) === 1 ? " Post" : " Posts"))), !editing && /*#__PURE__*/React.createElement("div", {
+    "data-profile-actions": "true",
+    style: { display: "flex", width: "100%", gap: 10, margin: "8px 0 14px", boxSizing: "border-box" }
+  },
+    /*#__PURE__*/React.createElement("button", {
+      type: "button",
+      onClick: async () => {
+        const profileUrl = new URL(window.location.pathname || "/", window.location.origin);
+        profileUrl.search = "";
+        profileUrl.searchParams.set("profile", String(user.id));
+        const url = profileUrl.toString();
+        const profileName = user.name || user.username || "BluOm user";
+        try {
+          if (navigator.share) await navigator.share({ title: profileName + " on BluOm", text: "View " + profileName + "’s profile on BluOm", url });
+          else if (navigator.clipboard && window.isSecureContext) { await navigator.clipboard.writeText(url); showToast("Profile link copied", COLORS.green); }
+          else window.prompt("Copy this profile link", url);
+        } catch (error) { if (!error || error.name !== "AbortError") showToast("Could not share profile", COLORS.red); }
+      },
+      style: { flex: 1, minWidth: 0, minHeight: 46, border: "1px solid var(--border)", borderRadius: 999, background: "transparent", color: "var(--text)", fontFamily: "inherit", fontSize: 17, fontWeight: 700, cursor: "pointer", WebkitTapHighlightColor: "transparent" }
+    }, t("share")),
+    /*#__PURE__*/React.createElement("button", {
+      type: "button", onClick: () => setEditing(true),
+      style: { flex: 1, minWidth: 0, minHeight: 46, border: "1px solid var(--border)", borderRadius: 999, background: "transparent", color: "var(--text)", fontFamily: "inherit", fontSize: 17, fontWeight: 700, cursor: "pointer", WebkitTapHighlightColor: "transparent" }
+    }, t("editProfile"))
+  ), !editing && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 8
     }
