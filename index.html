@@ -18324,11 +18324,11 @@ function ProfileTabSkeleton() {
           else window.prompt("Copy this profile link", url);
         } catch (error) { if (!error || error.name !== "AbortError") showToast("Could not share profile", COLORS.red); }
       },
-      style: { flex: 1, minWidth: 0, minHeight: 46, border: "1px solid var(--border)", borderRadius: 999, background: "transparent", color: "var(--text)", fontFamily: "inherit", fontSize: 17, fontWeight: 700, cursor: "pointer", WebkitTapHighlightColor: "transparent" }
+      style: { flex: 1, minWidth: 0, minHeight: 46, padding: "0 12px", boxSizing: "border-box", border: "1px solid var(--border)", borderRadius: 999, background: "transparent", color: "var(--text)", fontFamily: "inherit", fontSize: 16, lineHeight: 1.2, fontWeight: 700, cursor: "pointer", WebkitTapHighlightColor: "transparent" }
     }, t("share")),
     /*#__PURE__*/React.createElement("button", {
       type: "button", onClick: () => setEditing(true),
-      style: { flex: 1, minWidth: 0, minHeight: 46, border: "1px solid var(--border)", borderRadius: 999, background: "transparent", color: "var(--text)", fontFamily: "inherit", fontSize: 17, fontWeight: 700, cursor: "pointer", WebkitTapHighlightColor: "transparent" }
+      style: { flex: 1, minWidth: 0, minHeight: 46, padding: "0 12px", boxSizing: "border-box", border: "1px solid var(--border)", borderRadius: 999, background: "transparent", color: "var(--text)", fontFamily: "inherit", fontSize: 16, lineHeight: 1.2, fontWeight: 700, cursor: "pointer", WebkitTapHighlightColor: "transparent" }
     }, t("editProfile"))
   ), !editing && /*#__PURE__*/React.createElement("div", {
     style: {
