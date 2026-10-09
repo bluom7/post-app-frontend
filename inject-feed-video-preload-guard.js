@@ -170,6 +170,95 @@ function applyProfileTaggedPosts(html) {
   return html;
 }
 
+function applyProfileTabSlideTransitions(html) {
+  const marker = 'data-profile-tab-slide-style="v1"';
+  if (html.includes(marker)) return html;
+  const css = '<style data-profile-tab-slide-style="v1">' +
+    '@keyframes profileTabSlideOutLeft{to{transform:translate3d(-100%,0,0)}}' +
+    '@keyframes profileTabSlideInRight{from{transform:translate3d(100%,0,0)}to{transform:translate3d(0,0,0)}}' +
+    '@keyframes profileTabSlideOutRight{to{transform:translate3d(100%,0,0)}}' +
+    '@keyframes profileTabSlideInLeft{from{transform:translate3d(-100%,0,0)}to{transform:translate3d(0,0,0)}}' +
+    '@keyframes profileTabPanelInFromRight{from{transform:translate3d(18%,0,0);opacity:.92}to{transform:translate3d(0,0,0);opacity:1}}' +
+    '@keyframes profileTabPanelInFromLeft{from{transform:translate3d(-18%,0,0);opacity:.92}to{transform:translate3d(0,0,0);opacity:1}}' +
+    'html[data-profile-tab-slide-direction="next"]::view-transition-old(own-profile-tab-panel),html[data-profile-tab-slide-direction="next"]::view-transition-old(viewed-profile-tab-panel){animation:profileTabSlideOutLeft 280ms cubic-bezier(.22,.61,.36,1) both}' +
+    'html[data-profile-tab-slide-direction="next"]::view-transition-new(own-profile-tab-panel),html[data-profile-tab-slide-direction="next"]::view-transition-new(viewed-profile-tab-panel){animation:profileTabSlideInRight 280ms cubic-bezier(.22,.61,.36,1) both}' +
+    'html[data-profile-tab-slide-direction="previous"]::view-transition-old(own-profile-tab-panel),html[data-profile-tab-slide-direction="previous"]::view-transition-old(viewed-profile-tab-panel){animation:profileTabSlideOutRight 280ms cubic-bezier(.22,.61,.36,1) both}' +
+    'html[data-profile-tab-slide-direction="previous"]::view-transition-new(own-profile-tab-panel),html[data-profile-tab-slide-direction="previous"]::view-transition-new(viewed-profile-tab-panel){animation:profileTabSlideInLeft 280ms cubic-bezier(.22,.61,.36,1) both}' +
+    '@media(prefers-reduced-motion:reduce){html[data-profile-tab-slide-direction]::view-transition-old(own-profile-tab-panel),html[data-profile-tab-slide-direction]::view-transition-new(own-profile-tab-panel),html[data-profile-tab-slide-direction]::view-transition-old(viewed-profile-tab-panel),html[data-profile-tab-slide-direction]::view-transition-new(viewed-profile-tab-panel){animation-duration:1ms!important}}' +
+    '</style>';
+  const headEnd = html.toLowerCase().indexOf('</head>');
+  if (headEnd < 0) throw new Error('Profile tab slide style: index.html has no closing </head> tag');
+  html = html.slice(0, headEnd) + css + '\n' + html.slice(headEnd);
+  function replaceCount(text, oldText, newText, expected, label) {
+    const count = text.split(oldText).length - 1;
+    if (count !== expected) throw new Error('Profile tab slide patch count mismatch: ' + label + ' (' + count + ')');
+    return text.split(oldText).join(newText);
+  }
+  const stateLine = 'const [profileSection, setProfileSection] = useState("posts");';
+  html = replaceCount(html, stateLine, stateLine + '\n  const [profileTabDirection, setProfileTabDirection] = useState("next");\n  const profileTabTouchRef = useRef(null);\n  const profileTabTransitionIdRef = useRef(0);', 2, 'profile swipe state');
+  const helper = [
+    '  const changeProfileSection = nextSection => {',
+    '    const sections = ["posts", "videos", "mentions", "reposts"];',
+    '    const currentIndex = sections.indexOf(profileSection);',
+    '    const nextIndex = sections.indexOf(nextSection);',
+    '    if (currentIndex < 0 || nextIndex < 0 || currentIndex === nextIndex) return;',
+    '    const direction = nextIndex > currentIndex ? "next" : "previous";',
+    '    setProfileTabDirection(direction);',
+    '    if (nextSection === "mentions" && !mentionsLoaded && !mentionedLoading) loadMentionedReels();',
+    '    if (nextSection === "reposts" && !taggedPostsLoaded && !taggedPostsLoading) loadTaggedPosts();',
+    '    const root = typeof document !== "undefined" ? document.documentElement : null;',
+    '    const reactDom = typeof window !== "undefined" ? window.ReactDOM : null;',
+    '    if (root && typeof document.startViewTransition === "function" && reactDom && typeof reactDom.flushSync === "function") {',
+    '      const transitionId = ++profileTabTransitionIdRef.current;',
+    '      root.setAttribute("data-profile-tab-slide-direction", direction);',
+    '      try {',
+    '        const transition = document.startViewTransition(() => reactDom.flushSync(() => setProfileSection(nextSection)));',
+    '        const clearDirection = () => { if (profileTabTransitionIdRef.current === transitionId && root.getAttribute("data-profile-tab-slide-direction") === direction) root.removeAttribute("data-profile-tab-slide-direction"); };',
+    '        Promise.resolve(transition && transition.finished).then(clearDirection, clearDirection);',
+    '      } catch (_) {',
+    '        root.removeAttribute("data-profile-tab-slide-direction");',
+    '        setProfileSection(nextSection);',
+    '      }',
+    '    } else setProfileSection(nextSection);',
+    '  };',
+    ''
+  ].join('\n');
+  function insertBeforeUnique(text, anchor, added, label) {
+    const at = text.indexOf(anchor);
+    if (at < 0 || text.indexOf(anchor, at + anchor.length) >= 0) throw new Error('Profile tab slide helper anchor missing/duplicated: ' + label);
+    return text.slice(0, at) + added + text.slice(at);
+  }
+  html = insertBeforeUnique(html, '  const toggleFollow = async () => {', helper, 'viewed profile');
+  html = insertBeforeUnique(html, '  // Sync count updates from home feed / discover / reels into profile view', helper, 'own profile');
+  html = replaceCount(html,
+    'onClick: () => { setProfileSection(sec); if (sec === "mentions" && !mentionsLoaded && !mentionedLoading) loadMentionedReels(); if (sec === "reposts" && !taggedPostsLoaded && !taggedPostsLoading) loadTaggedPosts(); },',
+    'onClick: () => changeProfileSection(sec),', 2, 'tab button handlers');
+  function wrapPanel(text, startMarker, endMarker, transitionName, label) {
+    const start = text.indexOf(startMarker);
+    const end = text.indexOf(endMarker, start);
+    if (start < 0 || end < 0 || text.indexOf(startMarker, start + startMarker.length) >= 0) throw new Error('Profile tab slide panel boundary missing/duplicated: ' + label);
+    const expression = text.slice(start, end);
+    const wrapper = 'React.createElement("div", { "data-profile-tab-slide-panel": "v1", ' +
+      'onTouchStart: event => { const target = event.target; if (target && typeof target.closest === "function" && target.closest("button,a,input,textarea,select,video,[role=\\\"button\\\"],[data-profile-no-swipe]")) { profileTabTouchRef.current = null; return; } const touch = event.touches && event.touches.length === 1 ? event.touches[0] : null; profileTabTouchRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null; }, ' +
+      'onTouchEnd: event => { const startTouch = profileTabTouchRef.current; if (!startTouch || startTouch.suppressClick) return; profileTabTouchRef.current = null; const touch = event.changedTouches && event.changedTouches[0]; if (!touch) return; const dx = touch.clientX - startTouch.x; const dy = touch.clientY - startTouch.y; if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.25) return; const sections = ["posts", "videos", "mentions", "reposts"]; const currentIndex = sections.indexOf(profileSection); const nextIndex = currentIndex + (dx < 0 ? 1 : -1); if (nextIndex < 0 || nextIndex >= sections.length) return; profileTabTouchRef.current = { suppressClick: true }; window.setTimeout(() => { if (profileTabTouchRef.current && profileTabTouchRef.current.suppressClick) profileTabTouchRef.current = null; }, 400); changeProfileSection(sections[nextIndex]); }, ' +
+      'onTouchCancel: () => { if (profileTabTouchRef.current && !profileTabTouchRef.current.suppressClick) profileTabTouchRef.current = null; }, ' +
+      'onClickCapture: event => { if (profileTabTouchRef.current && profileTabTouchRef.current.suppressClick) { profileTabTouchRef.current = null; event.preventDefault(); event.stopPropagation(); } }, ' +
+      'style: { position: "relative", minWidth: 0, width: "100%", overflow: "hidden", touchAction: "pan-y", viewTransitionName: "' + transitionName + '", WebkitTapHighlightColor: "transparent" } }, ' +
+      'React.createElement("div", { key: profileSection, style: { minWidth: 0, willChange: "transform, opacity", animation: (typeof document !== "undefined" && typeof document.startViewTransition === "function" && typeof window !== "undefined" && window.ReactDOM && typeof window.ReactDOM.flushSync === "function") ? "none" : (profileTabDirection === "next" ? "profileTabPanelInFromRight 280ms cubic-bezier(.22,.61,.36,1) both" : "profileTabPanelInFromLeft 280ms cubic-bezier(.22,.61,.36,1) both") } }, ' + expression + '))';
+    return text.slice(0, start) + wrapper + text.slice(end);
+  }
+  html = wrapPanel(html, 'profileSection === "posts"\n     ?', ', showVerifiedInfo && profile && React.createElement(VerifiedInfoModal', 'viewed-profile-tab-panel', 'viewed profile');
+  html = wrapPanel(html, 'profileSection === "posts" ? postsLoading', '  )) : /*#__PURE__*/React.createElement("div", {\n    style: {\n      marginTop: 8', 'own-profile-tab-panel', 'own profile');
+  if (html.split('"data-profile-tab-slide-panel": "v1"').length - 1 !== 2 ||
+      html.split('onClick: () => changeProfileSection(sec),').length - 1 !== 2 ||
+      html.split('profileTabTouchRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null;').length - 1 !== 2 ||
+      !html.includes('::view-transition-new(own-profile-tab-panel)') ||
+      !html.includes('::view-transition-new(viewed-profile-tab-panel)')) {
+    throw new Error('Profile tab slide patch verification failed');
+  }
+  return html;
+}
+
 async function main() {
   const original = await fs.promises.readFile(indexPath, 'utf8');
   let html = original;
@@ -184,6 +273,7 @@ async function main() {
   html = applyProfileTabUnderlineFix(html);
   html = applyProfileReposts(html);
   html = applyProfileTaggedPosts(html);
+  html = applyProfileTabSlideTransitions(html);
   if (html !== original) await fs.promises.writeFile(indexPath, html, 'utf8');
 }
 main().catch(error => { console.error('Could not inject app guards/account switcher:', error); process.exitCode = 1; });
