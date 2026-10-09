@@ -22,6 +22,27 @@ function applyPostAccountSwitcher(html) {
   if(!updated.includes("Other accounts") || !updated.includes("Switch account")) throw new Error("Account switcher verification failed");
   return updated;
 }
+function applyProfileTabUnderlineFix(html) {
+      const marker = 'data-profile-tab-underline="v1"';
+      if (html.includes(marker)) return html;
+      const anchor = 'onClick: () => { setProfileSection(sec); if (sec === "saved" && savedPosts.length === 0 && !savedLoading) loadSavedPosts(); },';
+      const label = 'sec === "posts" ? "Posts" : sec === "videos" ? "Videos" : "Saved"';
+      const start = html.indexOf(anchor);
+      if (start < 0 || html.indexOf(anchor, start + anchor.length) >= 0) throw new Error("Profile tab button anchor missing or duplicated");
+      const labelStart = html.indexOf(label, start);
+      if (labelStart < 0) throw new Error("Profile tab label anchor missing");
+      const end = labelStart + label.length;
+      let block = html.slice(start, end);
+      const oldBorder = 'borderBottom: profileSection === sec ? "2.5px solid " + (sec === "posts" || sec === "videos" ? "#000000" : COLORS.yellow) : "2.5px solid transparent"';
+      const align = 'justifyContent: "center", gap: 6 }';
+      if (block.split(oldBorder).length - 1 !== 1 || block.split(align).length - 1 !== 1) throw new Error("Profile tab style anchor mismatch");
+      block = block.replace(oldBorder, 'borderBottom: profileSection === sec ? "2.5px solid #000000" : "2.5px solid transparent"');
+      block = block.replace(align, 'justifyContent: "center", position: "relative", gap: 6 }');
+      const line = 'React.createElement("span", { "aria-hidden": "true", "data-profile-tab-underline": "v1", style: { position: "absolute", left: 0, right: 0, bottom: -0.5, height: 2.5, backgroundColor: profileSection === sec ? "#000000" : "transparent", pointerEvents: "none", zIndex: 2 } })';
+      block = block.replace(label, label + "," + String.fromCharCode(10) + "      " + line);
+      return html.slice(0, start) + block + html.slice(end);
+    }
+    
 async function main() {
   const original = await fs.promises.readFile(indexPath, 'utf8');
   let html = original;
@@ -33,6 +54,7 @@ async function main() {
     html = html.slice(0, headEnd) + injection + '\n' + html.slice(headEnd);
   }
   html = applyPostAccountSwitcher(html);
+  html = applyProfileTabUnderlineFix(html);
   if (html !== original) await fs.promises.writeFile(indexPath, html, 'utf8');
 }
 main().catch(error => { console.error('Could not inject app guards/account switcher:', error); process.exitCode = 1; });
