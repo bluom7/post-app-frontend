@@ -23,12 +23,16 @@ function applyPostAccountSwitcher(html) {
   return updated;
 }
 function applyProfileTabUnderlineFix(html) {
-      const marker = 'data-profile-tab-underline="v1"';
+      const marker = '"data-profile-tab-underline": "v1"';
       if (html.includes(marker)) return html;
       const anchor = 'onClick: () => { setProfileSection(sec); if (sec === "saved" && savedPosts.length === 0 && !savedLoading) loadSavedPosts(); },';
       const label = 'sec === "posts" ? "Posts" : sec === "videos" ? "Videos" : "Saved"';
-      const start = html.indexOf(anchor);
-      if (start < 0 || html.indexOf(anchor, start + anchor.length) >= 0) throw new Error("Profile tab button anchor missing or duplicated");
+      const styleMarker = 'fontSize: sec === "posts" || sec === "videos" ? 17 : 14';
+          const styleAt = html.indexOf(styleMarker);
+          if (styleAt < 0 || html.indexOf(styleMarker, styleAt + styleMarker.length) >= 0) throw new Error("Own profile tab style anchor missing or duplicated");
+          const start = html.lastIndexOf(anchor, styleAt);
+          if (start < 0) throw new Error("Profile tab button anchor missing");
+      
       const labelStart = html.indexOf(label, start);
       if (labelStart < 0) throw new Error("Profile tab label anchor missing");
       const end = labelStart + label.length;
