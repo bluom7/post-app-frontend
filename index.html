@@ -18325,11 +18325,11 @@ function ProfileTabSkeleton() {
         React.createElement("svg",{width:13,height:13,viewBox:"0 0 24 24",fill:"none",stroke:"var(--muted)",strokeWidth:2.5,strokeLinecap:"round"},React.createElement("circle",{cx:12,cy:12,r:3}),React.createElement("path",{d:"M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"}))
       )
   )),
-  React.createElement("div", { style: { display: "flex", borderBottom: "2px solid var(--border)", marginBottom: 14 } },
+  React.createElement("div", { style: { display: "flex", borderBottom: "0.5px solid #EEEEEE", marginBottom: 14 } },
     ["posts", "videos", "saved"].map(sec => React.createElement("button", {
       key: sec,
       onClick: () => { setProfileSection(sec); if (sec === "saved" && savedPosts.length === 0 && !savedLoading) loadSavedPosts(); },
-      style: { flex: 1, background: "none", border: "none", borderBottom: profileSection === sec ? "2.5px solid " + (sec === "posts" ? "#000000" : COLORS.yellow) : "2.5px solid transparent", marginBottom: -2, padding: "9px 0", fontWeight: profileSection === sec ? 800 : 500, fontSize: sec === "posts" ? 17 : 14, color: profileSection === sec ? (sec === "posts" ? "#000000" : COLORS.yellow) : "var(--muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }
+      style: { flex: 1, background: "none", border: "none", borderBottom: profileSection === sec ? "2.5px solid " + (sec === "posts" ? "#000000" : COLORS.yellow) : "2.5px solid transparent", marginBottom: -0.5, padding: "9px 0", fontWeight: profileSection === sec ? 800 : 500, fontSize: sec === "posts" ? 17 : 14, color: profileSection === sec ? (sec === "posts" ? "#000000" : COLORS.yellow) : "var(--muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }
     },
       sec === "posts"
         ? React.createElement("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round" },
