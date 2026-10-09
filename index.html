@@ -18329,7 +18329,7 @@ function ProfileTabSkeleton() {
     ["posts", "videos", "saved"].map(sec => React.createElement("button", {
       key: sec,
       onClick: () => { setProfileSection(sec); if (sec === "saved" && savedPosts.length === 0 && !savedLoading) loadSavedPosts(); },
-      style: { flex: 1, background: "none", border: "none", borderBottom: profileSection === sec ? "2.5px solid " + (sec === "posts" ? "#000000" : COLORS.yellow) : "2.5px solid transparent", marginBottom: -0.5, padding: "9px 0", fontWeight: profileSection === sec ? 800 : 500, fontSize: sec === "posts" ? 17 : 14, color: profileSection === sec ? (sec === "posts" ? "#000000" : COLORS.yellow) : "var(--muted)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }
+      style: { flex: 1, background: "none", border: "none", borderBottom: profileSection === sec ? "2.5px solid " + (sec === "posts" || sec === "videos" ? "#000000" : COLORS.yellow) : "2.5px solid transparent", marginBottom: -0.5, padding: "9px 0", fontWeight: sec === "videos" ? 800 : (profileSection === sec ? 800 : 500), fontSize: sec === "posts" || sec === "videos" ? 17 : 14, color: sec === "videos" ? "#000000" : (profileSection === sec ? (sec === "posts" ? "#000000" : COLORS.yellow) : "var(--muted)"), cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }
     },
       sec === "posts"
         ? React.createElement("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round" },
@@ -18337,9 +18337,9 @@ function ProfileTabSkeleton() {
             React.createElement("path", { d: "M7 9h10M7 14h6" })
           )
         : sec === "videos"
-        ? React.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-            React.createElement("rect", { x: 2, y: 7, width: 15, height: 10, rx: 2, fill: profileSection === "videos" ? "currentColor" : "none" }),
-            React.createElement("polygon", { points: "22 8 22 16 17 12 22 8", fill: profileSection === "videos" ? "currentColor" : "none" })
+        ? React.createElement("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round" },
+            React.createElement("rect", { x: 2, y: 2, width: 20, height: 20, rx: 5.5, ry: 5.5, fill: "none" }),
+            React.createElement("path", { d: "M9.5 8.2 C9.5 7.6 10.15 7.25 10.65 7.58 L16.9 11.38 C17.37 11.69 17.37 12.31 16.9 12.62 L10.65 16.42 C10.15 16.75 9.5 16.4 9.5 15.8 Z", fill: "none" })
           )
         : React.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: profileSection === "saved" ? "currentColor" : "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
             React.createElement("path", { d: "M6.5 2h11A1.5 1.5 0 0 1 19 3.5v17l-7-3.5-7 3.5V3.5A1.5 1.5 0 0 1 6.5 2z" })
