@@ -27,7 +27,7 @@ async function main() {
   let html = original;
   const missing = guards.filter(guard => !html.includes(guard.marker));
   if (missing.length) {
-    const headEnd = html.toLowerCase().lastIndexOf('</head>');
+    const headEnd = html.toLowerCase().indexOf('</head>');
     if (headEnd < 0) throw new Error('index.html has no closing </head> tag');
     const injection = missing.map(guard => guard.marker + '\n' + guard.script).join('\n');
     html = html.slice(0, headEnd) + injection + '\n' + html.slice(headEnd);
