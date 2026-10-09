@@ -29,9 +29,10 @@ function applyProfileTabUnderlineFix(html) {
       const label = 'sec === "posts" ? "Posts" : sec === "videos" ? "Videos" : "Saved"';
       const styleMarker = 'fontSize: sec === "posts" || sec === "videos" ? 17 : 14';
           const styleAt = html.indexOf(styleMarker);
-          if (styleAt < 0 || html.indexOf(styleMarker, styleAt + styleMarker.length) >= 0) throw new Error("Own profile tab style anchor missing or duplicated");
+          if (styleAt < 0) return html;
+          if (html.indexOf(styleMarker, styleAt + styleMarker.length) >= 0) throw new Error("Own profile tab style anchor missing or duplicated");
           const start = html.lastIndexOf(anchor, styleAt);
-          if (start < 0) throw new Error("Profile tab button anchor missing");
+          if (start < 0) return html;
       
       const labelStart = html.indexOf(label, start);
       if (labelStart < 0) throw new Error("Profile tab label anchor missing");
@@ -72,6 +73,74 @@ function applyProfileReposts(html) {
   if(!html.includes('aria-label": "Reposts"')||!html.includes('const repostedPosts = posts.filter')||!html.includes('const repostedPosts = myPosts.filter'))throw new Error('Profile repost patch verification failed');return html;
 }
 
+function applyProfileTaggedPosts(html) {
+  const marker = 'aria-label": "Tag posts"';
+  if (html.includes(marker)) return html;
+  function replaceUnique(text, oldText, newText, label) {
+    const at = text.indexOf(oldText);
+    if (at < 0 || text.indexOf(oldText, at + oldText.length) >= 0) throw new Error("Profile tagged-post patch anchor missing or duplicated: " + label);
+    return text.slice(0, at) + newText + text.slice(at + oldText.length);
+  }
+  function replaceCount(text, oldText, newText, expected, label) {
+    const count = text.split(oldText).length - 1;
+    if (count !== expected) throw new Error("Profile tagged-post patch count mismatch: " + label + " (" + count + ")");
+    return text.split(oldText).join(newText);
+  }
+  const tagComponents = [
+    '    function TagPostsTabIcon({ size = 20 }) {',
+    '      return React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", role: "img", "aria-label": "Tag posts", style: { display: "block", flexShrink: 0 } },',
+    '        React.createElement("path", { d: "M4.5 8.2 8 5h3l1 2 1-2h3l3.5 3.2v9.5a2.3 2.3 0 0 1-2.3 2.3H6.8a2.3 2.3 0 0 1-2.3-2.3Z" }),',
+    '        React.createElement("circle", { cx: 12, cy: 10, r: 2 }),',
+    '        React.createElement("path", { d: "M7.7 17.4c.45-1.8 1.85-2.8 4.3-2.8s3.85 1 4.3 2.8v.6H7.7Z" })',
+    '      );',
+    '    }',
+    '    function TaggedPostCard({ post, targetProfile, onViewProfile }) {',
+    '      const creator = { id: post.user_id, name: post.user_name, handle: post.user_handle, avatar_photo: post.avatar_photo, avatar_bg: post.avatar_bg, avatar_letter: post.avatar_letter };',
+    '      const tagged = post.tagged_user || targetProfile || {};',
+    '      const profileLink = (person, label) => {',
+    '        const info = person || {};',
+    '        const name = String(info.name || info.user_name || info.handle || info.user_handle || "User");',
+    '        const handle = String(info.handle || info.user_handle || info.username || "").replace(/^@/, "");',
+    '        const profileId = info.id || info.user_id;',
+    '        return React.createElement("button", { type: "button", "aria-label": label + " " + name + " profile", onClick: event => { event.stopPropagation(); if (profileId && typeof onViewProfile === "function") onViewProfile(profileId); }, style: { minWidth: 0, maxWidth: "50%", display: "inline-flex", alignItems: "center", gap: 6, padding: 0, border: 0, background: "transparent", color: "var(--text)", textAlign: "left", cursor: "pointer", fontFamily: "inherit" } },',
+    '          React.createElement("span", { style: { width: 30, height: 30, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, background: info.avatar_bg || "var(--input-bg)", color: "var(--text)", fontSize: 12, fontWeight: 800 } }, info.avatar_photo ? React.createElement("img", { src: info.avatar_photo, alt: "", style: { width: "100%", height: "100%", objectFit: "cover" } }) : String(info.avatar_letter || name.charAt(0) || "?").toUpperCase()),',
+    '          React.createElement("span", { style: { minWidth: 0, display: "flex", flexDirection: "column", overflow: "hidden" } }, React.createElement("span", { style: { fontSize: 10, lineHeight: 1.2, color: "var(--muted)", fontWeight: 700 } }, label), React.createElement("span", { style: { fontSize: 12, lineHeight: 1.25, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, name), handle && React.createElement("span", { style: { fontSize: 10, lineHeight: 1.2, color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + handle))',
+    '        );',
+    '      };',
+    '      return React.createElement("div", { style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } },',
+    '        React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10 } }, profileLink(creator, "Posted by"), profileLink(tagged, "Tagged")),',
+    '        post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)),',
+    '        React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })',
+    '      );',
+    '    }',
+    ''
+  ].join("\n");
+  const profileStart = html.indexOf("    function ProfileTab({");
+  if (profileStart < 0 || html.indexOf("    function ProfileTab({", profileStart + 1) >= 0) throw new Error("Profile component anchor missing or duplicated");
+  html = html.slice(0, profileStart) + tagComponents + html.slice(profileStart);
+  html = replaceCount(html, 'if (sec === "mentions" && !mentionsLoaded && !mentionedLoading) loadMentionedReels();', 'if (sec === "mentions" && !mentionsLoaded && !mentionedLoading) loadMentionedReels(); if (sec === "reposts" && !taggedPostsLoaded && !taggedPostsLoading) loadTaggedPosts();', 2, "load tagged posts from Reposts tab");
+  html = replaceUnique(html, ': sec === "mentions" ? React.createElement(MentionTabIcon, { size: 16 }) : React.createElement(RepostTabIcon, { size: 16 })', ': sec === "mentions" ? React.createElement(MentionTabIcon, { size: 16 }) : React.createElement(TagPostsTabIcon, { size: 16 })', "viewed-profile Reposts icon");
+  html = replaceUnique(html, ': sec === "mentions" ? React.createElement(MentionTabIcon, { size: 20 }) : React.createElement(RepostTabIcon, { size: 20 })', ': sec === "mentions" ? React.createElement(MentionTabIcon, { size: 20 }) : React.createElement(TagPostsTabIcon, { size: 20 })', "own-profile Reposts icon");
+  html = replaceCount(html, 'const [mentionsLoaded, setMentionsLoaded] = useState(false);', 'const [mentionsLoaded, setMentionsLoaded] = useState(false);\n  const [taggedPosts, setTaggedPosts] = useState([]);\n  const [taggedPostsLoading, setTaggedPostsLoading] = useState(false);\n  const [taggedPostsLoaded, setTaggedPostsLoaded] = useState(false);', 2, "Reposts tagged-post state");
+  const publicLoader = '  const loadTaggedPosts = async () => {\n    if (taggedPostsLoaded || taggedPostsLoading) return; setTaggedPostsLoading(true);\n    try { const d = await api("/users/" + encodeURIComponent(userId) + "/tagged-posts?skip=0&limit=50", "GET", null, token); setTaggedPosts(d.posts || []); }\n    catch (_) { setTaggedPosts([]); }\n    setTaggedPostsLoaded(true); setTaggedPostsLoading(false);\n  };\n';
+  html = replaceUnique(html, '  const toggleFollow = async () => {', publicLoader + '  const toggleFollow = async () => {', "viewed-profile tagged loader");
+  const ownLoader = '  const loadTaggedPosts = async () => {\n    if (taggedPostsLoaded || taggedPostsLoading) return; setTaggedPostsLoading(true);\n    try { if (!_warmupDone) await Promise.race([warmupReady, new Promise(r => setTimeout(r, 30000))]); const d = await api("/users/" + encodeURIComponent(user.id) + "/tagged-posts?skip=0&limit=50", "GET", null, token); setTaggedPosts(d.posts || []); }\n    catch (_) { setTaggedPosts([]); }\n    setTaggedPostsLoaded(true); setTaggedPostsLoading(false);\n  };\n';
+  html = replaceUnique(html, '  // Sync count updates from home feed / discover / reels into profile view', ownLoader + '  // Sync count updates from home feed / discover / reels into profile view', "own-profile tagged loader");
+  const tagView = target => 'taggedPostsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, "Loading tagged posts...") : taggedPosts.length === 0 ? null : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, taggedPosts.map((post, idx) => React.createElement(TaggedPostCard, { key: post.id || "tagged-" + idx, post, targetProfile: ' + target + ', onViewProfile })))';
+  function combineTaggedWithReposts(text, startMarker, endMarker, target, label) {
+    const start = text.indexOf(startMarker);
+    const end = text.indexOf(endMarker, start);
+    if (start < 0 || end < 0 || text.indexOf(startMarker, start + startMarker.length) >= 0) throw new Error("Reposts/tagged content boundary missing or duplicated: " + label);
+    const repostView = text.slice(start, end);
+    const combined = '(() => { const repostView = ' + repostView + '; const taggedView = ' + tagView(target) + '; return React.createElement(React.Fragment, null, repostView, taggedView); })()';
+    return text.slice(0, start) + combined + text.slice(end);
+  }
+  html = combineTaggedWithReposts(html, '(() => { const repostedPosts = posts.filter(post => post && post.repost_of);', ', showVerifiedInfo && profile && React.createElement(VerifiedInfoModal', 'profile', "viewed-profile");
+  html = combineTaggedWithReposts(html, '(() => { const repostedPosts = myPosts.filter(post => post && post.repost_of);', '  )) : /*#__PURE__*/React.createElement("div", {\n    style: {\n      marginTop: 8', 'user', "own-profile");
+  if (!html.includes(marker) || !html.includes("/tagged-posts?skip=0&limit=50") || !html.includes('const taggedView = taggedPostsLoading')) throw new Error("Reposts/tagged-post patch verification failed");
+  return html;
+}
+
 async function main() {
   const original = await fs.promises.readFile(indexPath, 'utf8');
   let html = original;
@@ -85,6 +154,7 @@ async function main() {
   html = applyPostAccountSwitcher(html);
   html = applyProfileTabUnderlineFix(html);
   html = applyProfileReposts(html);
+  html = applyProfileTaggedPosts(html);
   if (html !== original) await fs.promises.writeFile(indexPath, html, 'utf8');
 }
 main().catch(error => { console.error('Could not inject app guards/account switcher:', error); process.exitCode = 1; });
