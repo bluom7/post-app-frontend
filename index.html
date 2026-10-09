@@ -18196,8 +18196,8 @@ function ProfileTabSkeleton() {
       marginTop: 8
     }
   }, user.category ? /*#__PURE__*/React.createElement("div", {
-    style: { display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, color: "#111", fontSize: 14, fontWeight: 800 }
-  }, getCatIcon(user.category,14,"#111",2.8), React.createElement("span",{style:{fontWeight:800,color:"#111",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},user.category)) : null,
+    style: { display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, color: "var(--text)", fontSize: 14, fontWeight: 800 }
+  }, getCatIcon(user.category,14,"var(--text)",2.8), React.createElement("span",{style:{fontWeight:800,color:"var(--text)",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},user.category)) : null,
     formatJoinedMonthYear(user) && /*#__PURE__*/React.createElement("div", {
       role: "button",
       tabIndex: 0,
@@ -18218,7 +18218,7 @@ function ProfileTabSkeleton() {
     href: user.website.trim().match(/^https?:\/\//i) ? user.website.trim() : `https://${user.website.trim()}`,
     target: "_blank",
     style: {
-      color: "#111",
+      color: "var(--text)",
       fontSize: 14,
       textDecoration: "none",
       display: "flex",
