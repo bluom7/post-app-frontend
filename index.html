@@ -1529,7 +1529,16 @@ const STATUS_CATEGORIES = [
   {id:"education", label:"Education",    color:"#AB47BC", icon:["M22 10v6","M2 10l10-5 10 5-10 5z","M6 12v5c3 3 9 3 12 0v-5"]},
   {id:"health",    label:"Health",       color:"#EF5350", icon:["M22 12h-4l-3 9L9 3l-3 9H2"]},
   {id:"interests", label:"Interests",    color:"#66BB6A", icon:["M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"]},
-  {id:"milestones",label:"Milestones",   color:"#FF7043", icon:["M8 21h8","M12 17v4","M17.5 4a5 5 0 0 1-11 0V4h11z","M5 4h14"]}
+  {id:"milestones",label:"Milestones",   color:"#FF7043", icon:["M8 21h8","M12 17v4","M17.5 4a5 5 0 0 1-11 0V4h11z","M5 4h14"]},
+  {id:"friends",    label:"Friends",     color:"#F06292", icon:["M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2","M23 21v-2a4 4 0 0 0-3-3.87","M16 3.13a4 4 0 0 1 0 7.75"], circle:{cx:9,cy:7,r:4}},
+  {id:"fitness",    label:"Fitness",     color:"#F44336", icon:["M6.5 6.5h11","M6.5 17.5h11","M5 8v8","M19 8v8","M3 10v4","M21 10v4","M8 6v12","M16 6v12"]},
+  {id:"music",      label:"Music",       color:"#7C4DFF", icon:["M9 18V5l12-2v13","M9 18c0 1.1-1.3 2-3 2s-3-.9-3-2 1.3-2 3-2 3 .9 3 2","M21 16c0 1.1-1.3 2-3 2s-3-.9-3-2 1.3-2 3-2 3 .9 3 2"]},
+  {id:"food",       label:"Food",        color:"#FF9800", icon:["M6 2v7","M10 2v7","M6 5h4","M8 9v13","M18 2c-2.2 2-3.5 4.6-3.5 7.5V12H18V2z","M18 12v10"]},
+  {id:"reading",    label:"Reading",     color:"#795548", icon:["M3 5.5A2.5 2.5 0 0 1 5.5 3H12v17H5.5A2.5 2.5 0 0 0 3 22z","M21 5.5A2.5 2.5 0 0 0 18.5 3H12v17h6.5A2.5 2.5 0 0 1 21 22z"]},
+  {id:"gaming",     label:"Gaming",      color:"#2196F3", icon:["M6 11h4","M8 9v4","M15 10h.01","M18 12h.01","M5.5 7h13a3.5 3.5 0 0 1 3.4 4.3l-1 4A3.5 3.5 0 0 1 17.5 18H6.5a3.5 3.5 0 0 1-3.4-2.7l-1-4A3.5 3.5 0 0 1 5.5 7z"]},
+  {id:"creativity", label:"Creativity",  color:"#AB47BC", icon:["M12 3a9 9 0 1 0 0 18h1.2a2.8 2.8 0 0 0 2.3-4.4 1.5 1.5 0 0 1 1.2-2.4h1.1A3.2 3.2 0 0 0 21 11C21 6.6 17 3 12 3z","M7.5 10h.01","M11 7h.01","M15 8h.01","M8 14h.01"]},
+  {id:"pets",        label:"Pets",        color:"#26A69A", icon:["M12 13c-2.8 0-6 2.4-6 5a3 3 0 0 0 3 3c1.1 0 2-.5 3-.5s1.9.5 3 .5a3 3 0 0 0 3-3c0-2.6-3.2-5-6-5z","M5.5 11.5a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6z","M9.5 8.5a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6z","M14.5 8.5a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6z","M18.5 11.5a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6z"]},
+  {id:"nature",      label:"Nature",      color:"#4CAF50", icon:["M20 4c-8 0-14 4.4-14 10a6 6 0 0 0 6 6c5.6 0 8-8 8-16z","M3 21c3-4 7-7 12-10"]}
 ];
 function getStatusIcon(id, size, color) {
   const cat = STATUS_CATEGORIES.find(c=>c.id===id);
@@ -13399,7 +13408,7 @@ function DiscoverTab({ token, user, showToast, onViewProfile, onBack }) {
 
 function StatusPickerModal({currentStatus, onSelect, onClose}) {
   return /*#__PURE__*/React.createElement("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:onClose},
-    React.createElement("div",{style:{background:"var(--card-bg)",borderRadius:"28px 28px 0 0",width:"100%",maxWidth:520,paddingBottom:32},onClick:e=>e.stopPropagation()},
+    React.createElement("div",{style:{background:"var(--card-bg)",borderRadius:"28px 28px 0 0",width:"100%",maxWidth:520,paddingBottom:32,maxHeight:"88vh",overflowY:"auto",overscrollBehavior:"contain",WebkitOverflowScrolling:"touch"},onClick:e=>e.stopPropagation()},
       React.createElement("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"18px 20px 14px"}},
         React.createElement("div",{style:{width:36,height:4,background:"var(--border)",borderRadius:2,margin:"0 auto"}}),
       ),
@@ -18252,7 +18261,7 @@ function ProfileTabSkeleton() {
     onRemove: () => setStats(s => ({...s, followers: Math.max(0,(s.followers||0)-1)})),
     currentUser: user,
     ownerUser: user
-  }), showStatusPicker && /*#__PURE__*/React.createElement(StatusPickerModal, {currentStatus: userStatus, onSelect: async (id) => { const prev=userStatus; setUserStatus(id); setShowStatusPicker(false); try { await api("/profile","PATCH",{user_status: id || ""},token); showToast(id ? "Status updated ✓" : "Status cleared", COLORS.green); } catch(e){ setUserStatus(prev); showToast(e.message,COLORS.red); } }, onClose: ()=>setShowStatusPicker(false)}), /*#__PURE__*/React.createElement("div", {
+  }), showStatusPicker && /*#__PURE__*/React.createElement(StatusPickerModal, {currentStatus: userStatus, onSelect: async (id) => { const prev=userStatus; setUserStatus(id); setShowStatusPicker(false); try { await api("/profile","PATCH",{user_status: id || ""},token); if (typeof setUser === "function") setUser(current => current ? {...current,user_status:id || null} : current); invalidateCache("/auth/me"); invalidateCache(`/users/${user.id}`); showToast(id ? "Status updated ✓" : "Status cleared", COLORS.green); } catch(e){ setUserStatus(prev); showToast(e.message,COLORS.red); } }, onClose: ()=>setShowStatusPicker(false)}), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 18,
