@@ -67,8 +67,8 @@ function applyProfileReposts(html) {
   html=replaceCount(html,'["posts", "videos", "mentions"]','["posts", "videos", "mentions", "reposts"]',2,'profile tab rows');
   html=replaceUnique(html,': React.createElement(MentionTabIcon, { size: 16 })',': sec === "mentions" ? React.createElement(MentionTabIcon, { size: 16 }) : React.createElement(RepostTabIcon, { size: 16 })','viewed-profile icon');
   html=replaceUnique(html,': React.createElement(MentionTabIcon, { size: 20 })',': sec === "mentions" ? React.createElement(MentionTabIcon, { size: 20 }) : React.createElement(RepostTabIcon, { size: 20 })','own-profile icon');
-  html=replaceUnique(html,'sec === "posts" ? "My Posts" : sec === "videos" ? "Videos" : "Mentions"','sec === "posts" ? "My Posts" : sec === "videos" ? "Videos" : sec === "mentions" ? "Mentions" : "Reposts"','viewed-profile labels');
-  html=replaceUnique(html,'sec === "posts" ? "Posts" : sec === "videos" ? "Videos" : "Mentions"','sec === "posts" ? "Posts" : sec === "videos" ? "Videos" : sec === "mentions" ? "Mentions" : "Reposts"','own-profile labels');
+  html=replaceUnique(html,'sec === "posts" ? "My Posts" : sec === "videos" ? "Videos" : "Mentions"','sec === "posts" ? "My Posts" : sec === "videos" ? "Videos" : sec === "mentions" ? "Mentions" : "Tagged"','viewed-profile labels');
+  html=replaceUnique(html,'sec === "posts" ? "Posts" : sec === "videos" ? "Videos" : "Mentions"','sec === "posts" ? "Posts" : sec === "videos" ? "Videos" : sec === "mentions" ? "Mentions" : "Tagged"','own-profile labels');
   html=replaceUnique(html,'sec === "posts" || sec === "videos" || sec === "mentions" ? "#000000" : COLORS.yellow','sec === "posts" || sec === "videos" || sec === "mentions" || sec === "reposts" ? "#000000" : COLORS.yellow','own-profile underline');
   html=replaceUnique(html,'fontWeight: sec === "videos" || sec === "mentions" ? 800','fontWeight: sec === "videos" || sec === "mentions" || sec === "reposts" ? 800','own-profile font weight');
   html=replaceUnique(html,'fontSize: sec === "posts" || sec === "videos" || sec === "mentions" ? 17 : 14','fontSize: sec === "posts" || sec === "videos" || sec === "mentions" || sec === "reposts" ? 17 : 14','own-profile font size');
@@ -83,7 +83,7 @@ function applyProfileReposts(html) {
 }
 
 function applyProfileTaggedPosts(html) {
-  const marker = 'aria-label": "Tag posts"';
+  const marker = 'aria-label": "Tagged posts"';
   if (html.includes(marker)) return html;
   function replaceUnique(text, oldText, newText, label) {
     const at = text.indexOf(oldText);
@@ -97,10 +97,10 @@ function applyProfileTaggedPosts(html) {
   }
   const tagComponents = [
     '    function TagPostsTabIcon({ size = 20 }) {',
-    '      return React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", role: "img", "aria-label": "Tag posts", style: { display: "block", flexShrink: 0 } },',
-    '        React.createElement("path", { d: "M4.5 8.2 8 5h3l1 2 1-2h3l3.5 3.2v9.5a2.3 2.3 0 0 1-2.3 2.3H6.8a2.3 2.3 0 0 1-2.3-2.3Z" }),',
-    '        React.createElement("circle", { cx: 12, cy: 10, r: 2 }),',
-    '        React.createElement("path", { d: "M7.7 17.4c.45-1.8 1.85-2.8 4.3-2.8s3.85 1 4.3 2.8v.6H7.7Z" })',
+    '      return React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", role: "img", "aria-label": "Tagged posts", style: { display: "block", flexShrink: 0 } },',
+    '        React.createElement("path", { d: "M5 2.5h14A3.5 3.5 0 0 1 22.5 6v8.2a3.5 3.5 0 0 1-3.5 3.5h-3.2l-2.75 3.1a1.3 1.3 0 0 1-2 0L8.3 17.7H5a3.5 3.5 0 0 1-3.5-3.5V6A3.5 3.5 0 0 1 5 2.5Z" }),',
+    '        React.createElement("circle", { cx: 12, cy: 7.8, r: 2.05 }),',
+    '        React.createElement("path", { d: "M8.4 14.1c.55-1.65 1.75-2.55 3.6-2.55s3.05.9 3.6 2.55a.65.65 0 0 1-.62.85H9.02a.65.65 0 0 1-.62-.85Z" })',
     '      );',
     '    }',
     '    function TaggedPostCard({ post, targetProfile, onViewProfile }) {',
