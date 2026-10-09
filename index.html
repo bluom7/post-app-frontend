@@ -4295,9 +4295,8 @@ function PostApp() {
   const onViewAccountInfo = (uid, profileData) => {
     // uid is the post/reel owner's user id; never use the content id first.
     const realId = uid || profileData?.user_id || profileData?.author_id || profileData?.owner_id || profileData?.id;
-    if (!realId || !profileData?.is_badge_verified) return;
-    setViewUser(null);
-    setViewUserProfile(null);
+    if (!realId) return;
+    // Keep the current profile mounted beneath About this account so Back returns to it.
     setAccountInfoUser({ id: realId, profile: profileData || null });
     history.pushState({ accountInfo: realId }, "");
   };
@@ -4943,6 +4942,7 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
     showToast: showToast,
     onBack: () => setTab("home"),
     onViewProfile: onViewProfile,
+    onViewAccountInfo: onViewAccountInfo,
     onOpenAccountSwitcher: openAccountSwitcher
   }) : /*#__PURE__*/React.createElement(ProfileTabSkeleton, null)), tab === "settings" && /*#__PURE__*/React.createElement(SettingsScreen, {
     token: token,
@@ -4992,7 +4992,10 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
     userId: accountInfoUser.id,
     initialProfile: accountInfoUser.profile,
     token: token,
-    onClose: () => setAccountInfoUser(null)
+    onClose: () => {
+      if (history.state?.accountInfo) history.back();
+      else setAccountInfoUser(null);
+    }
   }), viewUser && /*#__PURE__*/React.createElement(UserProfileScreen, {
     userId: viewUser,
     initialProfile: viewUserProfile,
@@ -5000,6 +5003,7 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
     currentUser: user,
     onClose: () => { setViewUser(null); setViewUserProfile(null); },
     showToast: showToast,
+    onViewAccountInfo: onViewAccountInfo,
     onGoMessages: profileUser => {
       setOpenChatUser(profileUser);
       setChatReturnTab(tab);
@@ -13783,7 +13787,8 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
   onClose,
   showToast,
   onGoMessages,
-  onViewProfile
+  onViewProfile,
+  onViewAccountInfo
 }) {
   const [profile, setProfile] = useState(initialProfile || null);
   const [posts, setPosts] = useState([]);
@@ -14222,7 +14227,13 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
       lineHeight: 1.55,
       color: "var(--text)"
     }
-  }, profile.about), !profile.is_private_locked && typeof profile.website === "string" && profile.website.trim() && /*#__PURE__*/React.createElement("div", {
+  }, profile.about), formatJoinedMonthYear(profile) && /*#__PURE__*/React.createElement("div", {
+    role: "button",
+    tabIndex: 0,
+    onClick: () => onViewAccountInfo && onViewAccountInfo(userId, profile),
+    onKeyDown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onViewAccountInfo && onViewAccountInfo(userId, profile); } },
+    style: { display: "inline-flex", alignItems: "center", gap: 4, marginTop: 8, color: "var(--muted)", fontSize: 14, cursor: "pointer" }
+  }, /*#__PURE__*/React.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, /*#__PURE__*/React.createElement("rect", { x: 3, y: 4, width: 18, height: 17, rx: 2 }), /*#__PURE__*/React.createElement("path", { d: "M16 2v4M8 2v4M3 10h18" })), "Joined " + formatJoinedMonthYear(profile)), !profile.is_private_locked && typeof profile.website === "string" && profile.website.trim() && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       gap: 14,
@@ -17480,6 +17491,7 @@ function ProfileTabSkeleton() {
   showToast,
   onBack,
   onViewProfile,
+  onViewAccountInfo,
   onOpenAccountSwitcher
 }) {
   const [showFollowListOwn, setShowFollowListOwn] = useState(null);
@@ -18187,7 +18199,11 @@ function ProfileTabSkeleton() {
     style: { display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, color: "#111", fontSize: 14, fontWeight: 800 }
   }, getCatIcon(user.category,14,"#111",2.8), React.createElement("span",{style:{fontWeight:800,color:"#111",minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},user.category)) : null,
     formatJoinedMonthYear(user) && /*#__PURE__*/React.createElement("div", {
-      style: { display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, whiteSpace: "nowrap", color: "var(--text)", fontSize: 14, fontWeight: 400 }
+      role: "button",
+      tabIndex: 0,
+      onClick: () => onViewAccountInfo && onViewAccountInfo(user.id, user),
+      onKeyDown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onViewAccountInfo && onViewAccountInfo(user.id, user); } },
+      style: { display: "inline-flex", alignItems: "center", gap: 4, minWidth: 0, whiteSpace: "nowrap", color: "var(--text)", fontSize: 14, fontWeight: 400, cursor: "pointer" }
     }, /*#__PURE__*/React.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.8", strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, /*#__PURE__*/React.createElement("rect", { x: "3", y: "4", width: "18", height: "17", rx: "2" }), /*#__PURE__*/React.createElement("path", { d: "M16 2v4M8 2v4M3 10h18" })), "Joined " + formatJoinedMonthYear(user))), typeof user.website === "string" && user.website.trim() && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
