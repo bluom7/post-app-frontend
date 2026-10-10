@@ -11855,6 +11855,7 @@ function ComposeModal({
   const photoRef = useRef(null);
   const mediaRef = useRef(null);
   const pickerInputRef = useRef(null);
+  const initialGalleryOpenedRef = React.useRef(false);
   const photoFileMapRef = useRef(new Map());
   const photoProcessingRef = useRef(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
