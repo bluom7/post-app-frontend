@@ -19404,7 +19404,7 @@ React.createElement("div", { style: { display:"flex", alignItems:"center", borde
       : (() => {
           const articlePosts = myPosts.filter(isTextOnlyProfilePost);
           return articlePosts.length === 0
-            ? ProfileEmptyState("No articles yet.", "Articles published by this profile will appear here.")
+            ? ProfileEmptyState("No articles yet.", "Articles published by this profile will appear here.", React.createElement("button", { onClick: () => setShowCompose(true), style: { display: "inline-flex", alignItems: "center", gap: 8, background: COLORS.blue, color: "#fff", border: "none", borderRadius: 24, padding: "12px 24px", fontSize: 15, fontWeight: 700, cursor: "pointer", boxShadow: "0 2px 10px rgba(13,159,243,0.3)" } }, "Post now"))
             : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, articlePosts.map(post => React.createElement("div", {
                 key: post.id,
                 onClick: () => { setOpenedMyPost(post); setOpenedMyPostShowComments(false); },
