@@ -8831,6 +8831,8 @@ function PhotoCarousel({photos, post, borderRadius, user, onLike, onComment, onS
 }
 function getPostPhotos(post) { return (post.photo_urls && post.photo_urls.length) ? post.photo_urls : (post.photo_url ? [post.photo_url] : []); }
 function getPostVideo(post) { return (post && post.video_url) ? post.video_url : null; }
+function isProfilePhotoPost(post) { return !!(post && !post.repost_of && getPostPhotos(post).length > 0 && !getPostVideo(post)); }
+function isTextOnlyProfilePost(post) { return !!(post && String(post.content || "").trim()) && !post.repost_of && getPostPhotos(post).length === 0 && !getPostVideo(post) && !post.music_title && !post.music_preview_url && !post.music_artwork; }
 // Renders a post's media: a single video player if the post has a video, otherwise the photo carousel.
 function PostMedia({ post, maxHeight, borderRadius, user, onLike, onComment, onSave, onRepost, onShare, onFollow, followingIds, pendingFollowIds, onViewProfile }) {
   const [videoFullscreen, setVideoFullscreen] = React.useState(false);
@@ -14806,10 +14808,24 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
       lineHeight: 1.5
     }
   }, profile.has_pending_request ? "Follow request sent — waiting for approval" : "Follow this account to see their posts")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/         /*#__PURE__*/React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 } }, /*#__PURE__*/React.createElement("span", { style: { fontWeight: 700, color: COLORS.yellow, fontSize: 13, letterSpacing: 2 } }, t("posts")), profile.user_status && (()=>{ const sCat=STATUS_CATEGORIES.find(c=>c.id===profile.user_status); return sCat ? /*#__PURE__*/React.createElement("div", { style: { display: "inline-flex", alignItems: "center", gap: 6, background: "#22C55E", borderRadius: 20, padding: "5px 13px" } }, getStatusIcon(sCat.id, 14, "#fff"), /*#__PURE__*/React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "#fff" } }, sCat.label)) : null; })()),
-React.createElement(ProfilePager, { activeColor: COLORS.yellow, lineColor: COLORS.yellow, onSectionChange: changeProfileSection, renderPanel: sec => ((profileSection) => (profileSection === "posts"
-     ?          posts.filter(post => !post.repost_of).length === 0 ? /*#__PURE__*/React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, t("noPostsYet")) : /*#__PURE__*/React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, posts.filter(post => !post.repost_of).map((post, idx) => /*#__PURE__*/React.createElement("div", { key: post.id, onClick: () => { setOpenedPost(post); setOpenedPostIdx(posts.findIndex(item => item.id === post.id)); }, style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px", cursor: "pointer" } }, post.content && /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post: post, maxHeight: 380, borderRadius: 10 }), post.location && /*#__PURE__*/React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 4 } }, "📍 ", post.location), /*#__PURE__*/React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 8 } }, "👁 ", post.views?.length || 0))))
+React.createElement(ProfilePager, { activeColor: COLORS.yellow, lineColor: COLORS.yellow, onSectionChange: changeProfileSection, renderPanel: sec => ((profileSection) => (profileSection === "photos"
+     ?          posts.filter(isProfilePhotoPost).length === 0 ? /*#__PURE__*/React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, "No photos yet") : /*#__PURE__*/React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, posts.filter(isProfilePhotoPost).map((post, idx) => /*#__PURE__*/React.createElement("div", { key: post.id, onClick: () => { setOpenedPost(post); setOpenedPostIdx(posts.findIndex(item => item.id === post.id)); }, style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px", cursor: "pointer" } }, post.content && /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post: post, maxHeight: 380, borderRadius: 10 }), post.location && /*#__PURE__*/React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 4 } }, "📍 ", post.location), /*#__PURE__*/React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 8 } }, "👁 ", post.views?.length || 0))))
      : profileSection === "videos"
        ? (() => { const videoPosts = posts.filter(p => p.video_url && !p.repost_of); return videoPosts.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 40 } }, "No videos yet") : /*#__PURE__*/React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, videoPosts.map(post => /*#__PURE__*/React.createElement("div", { key: post.id, onClick: () => { setOpenedPost(post); setOpenedPostIdx(posts.findIndex(p => p.id === post.id)); }, style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px", cursor: "pointer" } }, post.content && /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), /*#__PURE__*/React.createElement("video", { src: post.video_url + (String(post.video_url).indexOf("#") < 0 ? "#t=0.001" : ""), controls: true, playsInline: true, preload: "metadata", style: { width: "100%", borderRadius: 12, maxHeight: 420, background: "#000", display: "block" } })))); })()
+       : profileSection === "articles" ? (() => {
+          const articlePosts = posts.filter(isTextOnlyProfilePost);
+          return articlePosts.length === 0
+            ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 48 } }, "No articles yet")
+            : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, articlePosts.map(post => React.createElement("div", {
+                key: post.id,
+                onClick: () => { setOpenedPost(post); setOpenedPostIdx(posts.findIndex(item => item.id === post.id)); },
+                style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px", cursor: "pointer" }
+              },
+                React.createElement("div", { style: { fontSize: 14, lineHeight: 1.7, color: "var(--text)", whiteSpace: "pre-wrap" } }, renderContent(post.content, null, null)),
+                post.location && React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 8 } }, "📍 ", post.location),
+                React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 8 } }, "👁 ", post.views?.length || 0)
+              )));
+        })()
        : profileSection === "mentions" ? (mentionedLoading ? /*#__PURE__*/React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, t("loading")) : mentionedReels.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 40 } }, "No remix yet") : /*#__PURE__*/React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, mentionedReels.map(post => { const by = post.mentioned_by || {}; return /*#__PURE__*/React.createElement("div", { key: post.id + "-mention-" + (post.mention_created_at || ""), style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } }, /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "var(--muted)", marginBottom: 6 } }, "Mentioned by ", by.handle ? "@" + by.handle.replace(/^@/, "") : by.name || "Someone"), post.content && /*#__PURE__*/React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post: post, maxHeight: 420, borderRadius: 12 })); })) ) : (() => { const repostView = (() => { const repostedPosts = posts.filter(post => post && post.repost_of); return repostedPosts.length === 0 ? null : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, repostedPosts.map(post => React.createElement("div", { key: post.id + "-repost", onClick: () => { setOpenedPost(post); setOpenedPostIdx(posts.findIndex(item => item.id === post.id)); }, style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px", cursor: "pointer" } }, React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 8 } }, React.createElement(RepostTabIcon, { size: 14 }), post.repost_user_handle ? "Reposted from @" + post.repost_user_handle.replace(/^@/, "") : "Reposted"), post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })))); })(); const taggedView = taggedPostsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, "Loading mentions...") : taggedPosts.length === 0 ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 48 } }, "No mentions yet") : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, taggedPosts.map((post, idx) => React.createElement(TaggedPostCard, { key: post.id || "tagged-" + idx, post, targetProfile: profile, onViewProfile }))); return React.createElement(React.Fragment, null, taggedView, repostView); })()))(sec) }), showVerifiedInfo && profile && React.createElement(VerifiedInfoModal, {
     name: profile.name,
     category: profile.verified_category || profile.category || "Public Figure",
@@ -17939,7 +17955,7 @@ function ProfileTabSkeleton() {
               block(104, 21, 5), block(28, 28, "50%")
             ),
             React.createElement("div", { style: { display: "flex", borderBottom: "2px solid var(--border)", marginBottom: 14 } },
-              [0, 1, 2].map((i) => React.createElement("div", { key: i, style: { flex: 1, borderBottom: i === 0 ? "2.5px solid " + COLORS.yellow : "2.5px solid transparent", marginBottom: -2, padding: "9px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 } }, block(16, 16, 4), block(42, 14, 5)))
+              [0, 1, 2, 3, 4].map((i) => React.createElement("div", { key: i, style: { flex: 1, borderBottom: i === 0 ? "2.5px solid " + COLORS.yellow : "2.5px solid transparent", marginBottom: -2, padding: "9px 0", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 } }, block(16, 16, 4), block(42, 14, 5)))
             ),
             [0, 1].map((i) => React.createElement("div", { key: i, style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } },
               React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } },
@@ -17957,8 +17973,8 @@ function ProfileTabSkeleton() {
     }
 
     function ProfilePager({ renderPanel, onSectionChange, activeColor, lineColor }) {
-      var SECTIONS = ["posts", "videos", "mentions", "reposts"];
-      var LABELS = { posts: "Posts", videos: "Videos", mentions: "Remix", reposts: "Mention" };
+      var SECTIONS = ["photos", "videos", "reposts", "articles", "mentions"];
+      var LABELS = { photos: "Photo", videos: "Video", reposts: "Mention", articles: "Articles", mentions: "Remix" };
       var N = SECTIONS.length;
       var wrapRef = React.useRef(null), trackRef = React.useRef(null), barRef = React.useRef(null);
       var btnRefs = React.useRef([]), labelRefs = React.useRef([]), panelRefs = React.useRef([]), labelW = React.useRef([]);
@@ -17971,7 +17987,8 @@ function ProfileTabSkeleton() {
 
       function icon(sec) {
         var common = { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", style: { display: "block" } };
-        if (sec === "posts") return React.createElement("svg", common, React.createElement("rect", { x: 3, y: 3, width: 18, height: 18, rx: 3 }), React.createElement("path", { d: "M7 9h10M7 14h6" }));
+        if (sec === "photos") return React.createElement(PhotoTabIcon, { size: 22 });
+        if (sec === "articles") return React.createElement("svg", common, React.createElement("rect", { x: 3, y: 3, width: 18, height: 18, rx: 3 }), React.createElement("path", { d: "M7 9h10M7 14h6" }));
         if (sec === "videos") return React.createElement("svg", common, React.createElement("rect", { x: 2, y: 2, width: 20, height: 20, rx: 5.5, ry: 5.5 }), React.createElement("path", { d: "M9.5 8.2 C9.5 7.6 10.15 7.25 10.65 7.58 L16.9 11.38 C17.37 11.69 17.37 12.31 16.9 12.62 L10.65 16.42 C10.15 16.75 9.5 16.4 9.5 15.8 Z" }));
         if (sec === "mentions") return React.createElement(MentionTabIcon, { size: 22 });
         return React.createElement(TagPostsTabIcon, { size: 22 });
@@ -18129,6 +18146,13 @@ function ProfileTabSkeleton() {
       );
     }
 
+    function PhotoTabIcon({ size = 20 }) {
+      return React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", role: "img", "aria-label": "Photo", style: { display: "block", flexShrink: 0 } },
+        React.createElement("rect", { x: 3, y: 3, width: 18, height: 18, rx: 3 }),
+        React.createElement("circle", { cx: 8.5, cy: 8.5, r: 1.5 }),
+        React.createElement("path", { d: "M21 15l-5-5L5 21" })
+      );
+    }
     function MentionTabIcon({ size = 20 }) {
       return React.createElement("svg", { width: size, height: size, viewBox: "105 48 175 225", fill: "none", stroke: "currentColor", strokeWidth: 22, strokeLinecap: "round", strokeLinejoin: "round", role: "img", "aria-label": "Remix", style: { display: "block", flexShrink: 0 } },
         React.createElement("path", { d: "M112 180 V145 C112 112 140 88 174 88 H242" }), React.createElement("path", { d: "M210 55 L245 88" }), React.createElement("path", { d: "M268 140 V175 C268 208 240 232 206 232 H138" }), React.createElement("path", { d: "M170 265 L135 232" })
@@ -19027,7 +19051,7 @@ function ProfileTabSkeleton() {
         React.createElement("svg",{width:13,height:13,viewBox:"0 0 24 24",fill:"none",stroke:"var(--muted)",strokeWidth:2.5,strokeLinecap:"round"},React.createElement("circle",{cx:12,cy:12,r:3}),React.createElement("path",{d:"M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"}))
       )
   )),
-  React.createElement(ProfilePager, { activeColor: "#000000", lineColor: "#000000", onSectionChange: changeProfileSection, renderPanel: sec => ((profileSection) => (profileSection === "posts" ? postsLoading ? /*#__PURE__*/React.createElement("div", {
+  React.createElement(ProfilePager, { activeColor: "#000000", lineColor: "#000000", onSectionChange: changeProfileSection, renderPanel: sec => ((profileSection) => (profileSection === "photos" ? postsLoading ? /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       color: COLORS.muted,
@@ -19037,13 +19061,13 @@ function ProfileTabSkeleton() {
       alignItems: "center",
       gap: 12
     }
-  }, /*#__PURE__*/React.createElement("div", {style:{width:18,height:18,borderRadius:"50%",border:"2px solid var(--border)",borderTop:"2px solid "+COLORS.yellow,animation:"spin 0.8s linear infinite"}}), /*#__PURE__*/React.createElement("div", {style:{fontSize:13}}, t("loading"))) : myPosts.filter(post => !post.repost_of).length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {style:{width:18,height:18,borderRadius:"50%",border:"2px solid var(--border)",borderTop:"2px solid "+COLORS.yellow,animation:"spin 0.8s linear infinite"}}), /*#__PURE__*/React.createElement("div", {style:{fontSize:13}}, t("loading"))) : myPosts.filter(isProfilePhotoPost).length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
       color: COLORS.muted,
       padding: "30px 16px"
     }
-  }, /*#__PURE__*/React.createElement("div", {style:{fontSize:15,marginBottom:18}}, t("noPostsYet")), /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("div", {style:{fontSize:15,marginBottom:18}}, "No photos yet"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowCompose(true),
     style: {
       display: "inline-flex", alignItems: "center", gap: 8,
@@ -19058,7 +19082,7 @@ function ProfileTabSkeleton() {
       flexDirection: "column",
       gap: 0
     }
-  }, myPosts.filter(post => !post.repost_of).map((post, _idx) => /*#__PURE__*/React.createElement("div", {
+  }, myPosts.filter(isProfilePhotoPost).map((post, _idx) => /*#__PURE__*/React.createElement("div", {
     key: post.id,
     style: {
       background: "var(--card-bg)",
@@ -19384,6 +19408,22 @@ React.createElement("div", { style: { display:"flex", alignItems:"center", borde
             ))
           );
     })()
+  : profileSection === "articles" ? (postsLoading
+      ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, t("loading"))
+      : (() => {
+          const articlePosts = myPosts.filter(isTextOnlyProfilePost);
+          return articlePosts.length === 0
+            ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: "48px 16px" } }, "No articles yet")
+            : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, articlePosts.map(post => React.createElement("div", {
+                key: post.id,
+                onClick: () => { setOpenedMyPost(post); setOpenedMyPostShowComments(false); },
+                style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px", cursor: "pointer" }
+              },
+                React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginBottom: 4 } }, React.createElement("button", { type: "button", "aria-label": "Delete article", title: "Delete article", onClick: event => { event.stopPropagation(); confirmDeleteMyPost(post); }, style: { background: "none", border: "none", padding: 4, display: "flex", alignItems: "center", cursor: "pointer", color: "var(--muted)" } }, React.createElement("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("line", { x1: 9, y1: 4, x2: 15, y2: 4 }), React.createElement("line", { x1: 5, y1: 7, x2: 19, y2: 7 }), React.createElement("path", { d: "M7 7v11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V7" })))),
+                React.createElement("div", { style: { fontSize: 14, lineHeight: 1.7, color: "var(--text)", whiteSpace: "pre-wrap" } }, renderContent(post.content, null, null)),
+                post.location && React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 8 } }, "📍 ", post.location)
+              )));
+        })())
   : profileSection === "mentions" ? (mentionedLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, "Loading...") : mentionedReels.length === 0 ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 48 } }, "No remix yet") : React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 0 } }, mentionedReels.map(post => { const by = post.mentioned_by || {}; return React.createElement("div", { key: post.id + "-mention-" + (post.mention_created_at || ""), style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } }, React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: "var(--muted)", marginBottom: 6 } }, "Mentioned by ", by.handle ? "@" + by.handle.replace(/^@/, "") : by.name || "Someone"), post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 10 })); }))
  ) : (() => { const repostView = (() => { const repostedPosts = myPosts.filter(post => post && post.repost_of); return postsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, "Loading...") : repostedPosts.length === 0 ? null : React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 0 } }, repostedPosts.map(post => React.createElement("div", { key: post.id + "-repost", style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } }, React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 8 } }, React.createElement(RepostTabIcon, { size: 14 }), post.repost_user_handle ? "Reposted from @" + post.repost_user_handle.replace(/^@/, "") : "Reposted"), post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })))); })(); const taggedView = taggedPostsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, "Loading mentions...") : taggedPosts.length === 0 ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 48 } }, "No mentions yet") : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, taggedPosts.map((post, idx) => React.createElement(TaggedPostCard, { key: post.id || "tagged-" + idx, post, targetProfile: user, onViewProfile }))); return React.createElement(React.Fragment, null, taggedView, repostView); })()))(sec) })  )) : /*#__PURE__*/React.createElement("div", {
     style: {
