@@ -195,7 +195,7 @@ function applyProfileTabSlideTransitions(html) {
     return text.split(oldText).join(newText);
   }
   const stateLine = 'const [profileSection, setProfileSection] = useState("posts");';
-  html = replaceCount(html, stateLine, stateLine + '\n  const [profileTabDirection, setProfileTabDirection] = useState("next");\n  const profileTabTouchRef = useRef(null);\n  const profileTabTransitionIdRef = useRef(0);', 2, 'profile swipe state');
+  html = replaceCount(html, stateLine, stateLine + '\n  const [profileTabDirection, setProfileTabDirection] = useState("next");\n  const profileTabTouchRef = useRef(null);\n  const profileTabDragRef = useRef(null);\n  const profileTabTransitionIdRef = useRef(0);', 2, 'profile swipe state');
   const helper = [
     '  const changeProfileSection = nextSection => {',
     '    const sections = ["posts", "videos", "mentions", "reposts"];',
@@ -249,7 +249,44 @@ function applyProfileTabSlideTransitions(html) {
   }
   html = wrapPanel(html, 'profileSection === "posts"\n     ?', ', showVerifiedInfo && profile && React.createElement(VerifiedInfoModal', 'viewed-profile-tab-panel', 'viewed profile');
   html = wrapPanel(html, 'profileSection === "posts" ? postsLoading', '  )) : /*#__PURE__*/React.createElement("div", {\n    style: {\n      marginTop: 8', 'own-profile-tab-panel', 'own profile');
-  if (html.split('"data-profile-tab-slide-panel": "v1"').length - 1 !== 2 ||
+  const tabMapMarker = '["posts", "videos", "mentions", "reposts"].map(sec => React.createElement("button"';
+  const tabRowPositions = [];
+  let tabRowSearchAt = -1;
+  while ((tabRowSearchAt = html.indexOf(tabMapMarker, tabRowSearchAt + 1)) >= 0) tabRowPositions.push(tabRowSearchAt);
+  if (tabRowPositions.length !== 2) throw new Error('Expected two profile tab strips, found ' + tabRowPositions.length);
+  const tabRowPositionsAscending = tabRowPositions.slice().sort((a, b) => a - b);
+  const makeDraggableIndicator = colorSource => 'React.createElement("div", { "data-profile-tab-indicator": "v1", role: "slider", tabIndex: 0, "aria-label": "Profile tab selector", "aria-valuemin": 0, "aria-valuemax": 3, "aria-valuenow": ["posts", "videos", "mentions", "reposts"].indexOf(profileSection), onTouchStart: event => { const touch = event.touches && event.touches[0]; const track = event.currentTarget.parentElement; const width = track ? track.getBoundingClientRect().width : 0; const sections = ["posts", "videos", "mentions", "reposts"]; const startIndex = sections.indexOf(profileSection); profileTabDragRef.current = touch && width > 0 ? { startX: touch.clientX, startIndex, progress: startIndex, slotWidth: width / 4 } : null; event.currentTarget.style.transition = "none"; }, onTouchMove: event => { const drag = profileTabDragRef.current; const touch = event.touches && event.touches[0]; if (!drag || !touch || !drag.slotWidth) return; const progress = Math.max(0, Math.min(3, drag.startIndex + (touch.clientX - drag.startX) / drag.slotWidth)); drag.progress = progress; event.currentTarget.style.transform = "translateX(" + (progress * 100) + "%)"; }, onTouchEnd: event => { const drag = profileTabDragRef.current; if (!drag) return; const touch = event.changedTouches && event.changedTouches[0]; const progress = touch && drag.slotWidth ? Math.max(0, Math.min(3, drag.startIndex + (touch.clientX - drag.startX) / drag.slotWidth)) : drag.progress; const index = Math.max(0, Math.min(3, Math.round(progress))); const sections = ["posts", "videos", "mentions", "reposts"]; profileTabDragRef.current = null; event.currentTarget.style.transition = "transform 220ms cubic-bezier(.22,.61,.36,1)"; event.currentTarget.style.transform = "translateX(" + (index * 100) + "%)"; changeProfileSection(sections[index]); }, onTouchCancel: event => { const drag = profileTabDragRef.current; if (!drag) return; profileTabDragRef.current = null; event.currentTarget.style.transition = "transform 220ms cubic-bezier(.22,.61,.36,1)"; event.currentTarget.style.transform = "translateX(" + (drag.startIndex * 100) + "%)"; }, onKeyDown: event => { const sections = ["posts", "videos", "mentions", "reposts"]; const current = sections.indexOf(profileSection); const next = current + (event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0); if (next !== current && next >= 0 && next < sections.length) { event.preventDefault(); changeProfileSection(sections[next]); } }, style: { position: "absolute", left: 0, bottom: -10, width: "25%", height: 28, zIndex: 5, background: "transparent", transform: "translateX(" + (["posts", "videos", "mentions", "reposts"].indexOf(profileSection) * 100) + "%)", transition: "transform 220ms cubic-bezier(.22,.61,.36,1)", touchAction: "pan-y", userSelect: "none", WebkitUserSelect: "none", cursor: "ew-resize", WebkitTapHighlightColor: "transparent" } }, React.createElement("div", { style: { position: "absolute", left: 0, right: 0, bottom: 9, height: 2.5, background: ' + colorSource + ', borderRadius: 2, pointerEvents: "none" } }))';
+  for (const tabRowAt of tabRowPositions.slice().sort((a, b) => b - a)) {
+    const containerAt = html.lastIndexOf('React.createElement("div", { style: { display: "flex", borderBottom:', tabRowAt);
+    const panelAt = html.indexOf('React.createElement("div", { "data-profile-tab-slide-panel": "v1",', tabRowAt);
+    if (containerAt < 0 || panelAt < 0) throw new Error('Profile tab strip boundary missing container=' + containerAt + ' panel=' + panelAt + ' row=' + tabRowAt);
+    let segment = html.slice(containerAt, panelAt);
+    segment = replaceCount(segment, 'React.createElement("div", { style: { display: "flex", borderBottom:', 'React.createElement("div", { "data-profile-tab-strip": "v1", style: { position: "relative", display: "flex", borderBottom:', 1, 'tab strip positioning');
+    segment = replaceCount(segment, 'gap: 12, overflowX: "auto"', 'gap: 0, overflowX: "hidden", touchAction: "pan-y"', 1, 'tab strip layout');
+    segment = replaceCount(segment, 'flex: "0 0 auto", whiteSpace: "nowrap"', 'flex: "1 1 0", minWidth: 0, whiteSpace: "nowrap"', 1, 'equal tab widths');
+    const underlineStart = segment.indexOf('borderBottom: profileSection === sec ?');
+    const underlineTail = ': "2.5px solid transparent"';
+    const underlineTailAt = segment.indexOf(underlineTail, underlineStart);
+    if (underlineStart < 0 || underlineTailAt < 0) throw new Error('Active tab underline style missing');
+    segment = segment.slice(0, underlineStart) + 'borderBottom: "2.5px solid transparent"' + segment.slice(underlineTailAt + underlineTail.length);
+    const panelLineStart = segment.lastIndexOf("\n") + 1;
+    const closeLineStart = segment.lastIndexOf("\n", panelLineStart - 2) + 1;
+    if (panelLineStart <= 0 || closeLineStart < 0) throw new Error('Tab strip closing line missing');
+    const closeLineEnd = segment.indexOf("\n", closeLineStart);
+    const closeLine = segment.slice(closeLineStart, closeLineEnd < 0 ? segment.length : closeLineEnd);
+    if (closeLine.trim() !== '),') throw new Error('Unexpected tab strip close: ' + closeLine.trim());
+    const indent = closeLine.slice(0, closeLine.indexOf(')'));
+    const isPublicStrip = tabRowAt === tabRowPositionsAscending[0];
+    const indicator = makeDraggableIndicator(isPublicStrip ? 'COLORS.yellow' : '"#000000"');
+    const mapBreakAt = closeLineStart - 1;
+    segment = segment.slice(0, mapBreakAt) + "," + segment.slice(mapBreakAt);
+    const indicatorLineStart = closeLineStart + 1;
+    segment = segment.slice(0, indicatorLineStart) + indent + indicator + "," + String.fromCharCode(10) + segment.slice(indicatorLineStart);
+    html = html.slice(0, containerAt) + segment + html.slice(panelAt);
+  }
+  if (html.split('"data-profile-tab-indicator": "v1"').length - 1 !== 2 ||
+      html.split('"data-profile-tab-strip": "v1"').length - 1 !== 2 ||
+      html.split('"data-profile-tab-slide-panel": "v1"').length - 1 !== 2 ||
       html.split('onClick: () => changeProfileSection(sec),').length - 1 !== 2 ||
       html.split('startedOnVideo: !!(target && target.tagName === "VIDEO")').length - 1 !== 2 ||
       !html.includes('const minSwipe = startTouch.startedOnVideo ? 76 : 56;') ||
