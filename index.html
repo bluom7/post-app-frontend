@@ -17976,7 +17976,7 @@ function ProfileTabSkeleton() {
       var SECTIONS = ["photos", "videos", "reposts", "articles", "mentions"];
       var LABELS = { photos: "Photo", videos: "Video", reposts: "Mention", articles: "Articles", mentions: "Remix" };
       var N = SECTIONS.length;
-      var wrapRef = React.useRef(null), trackRef = React.useRef(null), barRef = React.useRef(null);
+      var wrapRef = React.useRef(null), trackRef = React.useRef(null), barRef = React.useRef(null), stripRef = React.useRef(null);
       var btnRefs = React.useRef([]), labelRefs = React.useRef([]), panelRefs = React.useRef([]), labelW = React.useRef([]);
       var posRef = React.useRef(0), idxRef = React.useRef(0), animRef = React.useRef(0), dragRef = React.useRef(null), suppressRef = React.useRef(0), slidingRef = React.useRef(false);
       var propsRef = React.useRef({});
@@ -18004,7 +18004,9 @@ function ProfileTabSkeleton() {
         for (var i = 0; i < N; i++) {
           var b = btnRefs.current[i]; if (!b) continue;
           var prox = Math.max(0, 1 - Math.abs(p - i));
-          b.style.flexGrow = String(1 + 0.5 * prox);
+          var tabWidth = 84 + ((labelW.current[i] || 0) + 6) * prox;
+          b.style.flex = "0 0 " + tabWidth + "px";
+          b.style.width = tabWidth + "px";
           b.style.color = prox >= 0.5 ? ac : "var(--muted)";
           var l = labelRefs.current[i];
           if (l) { l.style.maxWidth = ((labelW.current[i] || 72) * prox) + "px"; l.style.opacity = String(prox); l.style.marginLeft = (6 * prox) + "px"; }
@@ -18042,11 +18044,22 @@ function ProfileTabSkeleton() {
         }
       }
 
+      function ensureTabVisible(index, behavior) {
+        var strip = stripRef.current, btn = btnRefs.current[index];
+        if (!strip || !btn) return;
+        var max = Math.max(0, strip.scrollWidth - strip.clientWidth);
+        var left = clamp(btn.offsetLeft + btn.offsetWidth / 2 - strip.clientWidth / 2, 0, max);
+        if (Math.abs(strip.scrollLeft - left) < 2) return;
+        if (typeof strip.scrollTo === "function") strip.scrollTo({ left: left, behavior: behavior || "smooth" });
+        else strip.scrollLeft = left;
+      }
+
       function notify(idx) {
         idx = clamp(idx, 0, N - 1);
         if (idx === idxRef.current) return;
         idxRef.current = idx;
         var cb = propsRef.current.onSectionChange; if (cb) cb(SECTIONS[idx]);
+        ensureTabVisible(idx, "smooth");
       }
 
       function animateTo(target, dur, ease) {
@@ -18062,7 +18075,7 @@ function ProfileTabSkeleton() {
           var t = Math.min(1, (now - t0) / D);
           apply(from + delta * ease(t));
           if (t < 1) animRef.current = requestAnimationFrame(step);
-          else { animRef.current = 0; apply(target); setSliding(false); }
+          else { animRef.current = 0; apply(target); setSliding(false); ensureTabVisible(target, "smooth"); }
         };
         animRef.current = requestAnimationFrame(step);
       }
@@ -18110,6 +18123,7 @@ function ProfileTabSkeleton() {
       function onClickCapture(e) { if (performance.now() < suppressRef.current) { e.preventDefault(); e.stopPropagation(); } }
       function onTab(i) {
         if (performance.now() < suppressRef.current) return;
+        ensureTabVisible(i, "smooth");
         var dist = Math.abs(i - posRef.current);
         animateTo(i, 260 + 70 * Math.min(3, dist), easeInOut);
       }
@@ -18118,23 +18132,23 @@ function ProfileTabSkeleton() {
         for (var i = 0; i < N; i++) { var l = labelRefs.current[i]; if (l) labelW.current[i] = Math.ceil(l.scrollWidth) + 2; }
         if (!slidingRef.current) setSliding(false);
         apply(posRef.current);
-      });
+        ensureTabVisible(idxRef.current, "auto");
+      }, []);
       React.useEffect(function () {
-        var onResize = function () { apply(posRef.current); };
+        var onResize = function () { apply(posRef.current); ensureTabVisible(idxRef.current, "auto"); };
         window.addEventListener("resize", onResize);
         return function () { window.removeEventListener("resize", onResize); cancelAnimationFrame(animRef.current); };
       }, []);
 
       var touchProps = { onTouchStart: onTouchStart, onTouchMove: onTouchMove, onTouchEnd: function (e) { finishTouch(e, false); }, onTouchCancel: function (e) { finishTouch(e, true); }, onClickCapture: onClickCapture };
       return React.createElement(React.Fragment, null,
-        React.createElement("div", Object.assign({ "data-profile-tab-strip": "v2", role: "tablist", style: { position: "relative", display: "flex", borderBottom: "2px solid transparent", marginBottom: 14, touchAction: "pan-y", userSelect: "none", WebkitUserSelect: "none" } }, touchProps),
+        React.createElement("div", { ref: stripRef, "data-profile-tab-strip": "v2", role: "tablist", style: { position: "relative", display: "flex", flexWrap: "nowrap", width: "100%", minWidth: 0, overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch", overscrollBehaviorX: "contain", borderBottom: "1px solid var(--border)", marginBottom: 14, touchAction: "pan-x pan-y", userSelect: "none", WebkitUserSelect: "none" } },
           SECTIONS.map(function (sec, i) {
-            return React.createElement("button", { key: sec, type: "button", role: "tab", "aria-label": LABELS[sec], ref: function (el) { btnRefs.current[i] = el; }, onClick: function () { onTab(i); }, style: { flex: "1 1 0", minWidth: 0, background: "none", border: "none", padding: "10px 6px 12px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", color: "var(--muted)", transition: "color 140ms", fontFamily: "inherit", WebkitTapHighlightColor: "transparent" } },
+            return React.createElement("button", { key: sec, type: "button", role: "tab", "aria-label": LABELS[sec], ref: function (el) { btnRefs.current[i] = el; }, onClick: function () { onTab(i); }, style: { flex: "0 0 84px", width: 84, boxSizing: "border-box", minWidth: 0, background: "none", border: "none", padding: "10px 10px 12px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", color: "var(--muted)", transition: "color 140ms", fontFamily: "inherit", WebkitTapHighlightColor: "transparent" } },
               React.createElement("span", { style: { display: "flex", flexShrink: 0 } }, icon(sec)),
               React.createElement("span", { ref: function (el) { labelRefs.current[i] = el; }, style: { display: "inline-block", overflow: "hidden", whiteSpace: "nowrap", maxWidth: 0, opacity: 0, fontSize: 17, fontWeight: 800, lineHeight: "22px" } }, LABELS[sec]));
           }),
-          React.createElement("div", { "aria-hidden": "true", style: { position: "absolute", left: "50%", bottom: -2, width: "100vw", height: 0.5, transform: "translateX(-50%)", background: "var(--border)", pointerEvents: "none" } }),
-          React.createElement("div", { ref: barRef, "data-profile-tab-indicator": "v2", style: { position: "absolute", left: 0, bottom: -2, height: 2.5, width: 0, borderRadius: 2, background: lineColor || "#000", pointerEvents: "none" } })
+          React.createElement("div", { ref: barRef, "data-profile-tab-indicator": "v2", style: { position: "absolute", left: 0, bottom: -1, height: 2.5, width: 0, borderRadius: 2, background: lineColor || "#000", pointerEvents: "none" } })
         ),
         React.createElement("div", Object.assign({ ref: wrapRef, "data-profile-tab-slide-panel": "v2", style: { position: "relative", width: "100%", minWidth: 0, overflowX: "hidden", touchAction: "pan-y", WebkitTapHighlightColor: "transparent" } }, touchProps),
           React.createElement("div", { ref: trackRef, style: { display: "flex", alignItems: "flex-start", width: "100%" } },
