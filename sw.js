@@ -211,6 +211,147 @@ function applyProfileMediaSeparations(html) {
   return html;
 }
 
+function applyProfileArticles(html) {if(html.includes("function ArticlePostDetailScreen("))return html;function replaceUnique(text,oldText,newText,label){const at=text.indexOf(oldText);if(at<0||text.indexOf(oldText,at+oldText.length)>=0)throw new Error("Article patch anchor missing/duplicated: "+label);return text.slice(0,at)+newText+text.slice(at+oldText.length);}const cardSignature=`function BentoPostCard({
+  post, user, onLike, onDelete, onComment, onSave, onRepost, onShare, onMention, isLarge, onViewProfile, onViewAccountInfo,
+  followingIds, pendingFollowIds, onFollow, token, onTagInPost, showToast, onNotInterested, onOpenReel
+}) {
+  const [showComments, setShowComments] = React.useState(false);`;const cardSignatureNew=`function BentoPostCard({
+  post, user, onLike, onDelete, onComment, onSave, onRepost, onShare, onMention, isLarge, onViewProfile, onViewAccountInfo,
+  followingIds, pendingFollowIds, onFollow, token, onTagInPost, showToast, onNotInterested, onOpenReel, contentPreviewWords, onOpenPost, inlineComments
+}) {
+  const [showComments, setShowComments] = React.useState(false);`;html=replaceUnique(html,cardSignature,cardSignatureNew,"post card options");const openAnchor='  const openCommentSheet = () => {\n    setShowComments(true);\n    setCommentSheetExpanded(false);';html=replaceUnique(html,openAnchor,openAnchor.replace("setCommentSheetExpanded(false);","setCommentSheetExpanded(!!inlineComments);"),"inline comment sheet open");const effect='  React.useEffect(() => {\n    if (!inlineComments || !post || !post.id) return;\n    setShowComments(true);\n    setCommentSheetExpanded(true);\n    setLocalComments(post.comments || []);\n    api(`/posts/${post.id}/comments`, "GET", null, token)\n      .then(data => {\n        const comments = data.comments || data || [];\n        setLocalComments(comments);\n        const expanded = {};\n        comments.forEach(comment => { if ((comment.replies || []).length) expanded[comment.id] = true; });\n        setExpandedReplies(expanded);\n      })\n      .catch(() => {});\n  }, [inlineComments, post && post.id, token]);\n';html=replaceUnique(html,'  const closeCommentSheet = () => {',effect+'  const closeCommentSheet = () => {',"load detail comments");const oldContent=`    !post.is_reel && post.content && React.createElement("div", { style: { padding: "0 14px 10px", fontSize: isLarge ? 16 : 14, lineHeight: 1.65, color: "var(--text)", wordBreak: "break-word", whiteSpace: "pre-wrap" } },
+      renderContent(post.content,
+        handle => onTagInPost && onTagInPost(handle),
+        tag => {}
+      )
+    ),`;const newContent=`    !post.is_reel && post.content && (() => {
+      const articleText = String(post.content);
+      const requestedLimit = Number(contentPreviewWords);
+      let visibleText = articleText;
+      let hasMore = false;
+      if (Number.isFinite(requestedLimit) && requestedLimit > 0) {
+        const wordPattern = /\\S+/g;
+        let wordCount = 0;
+        let lastWordEnd = 0;
+        let wordMatch;
+        const limit = Math.floor(requestedLimit);
+        while ((wordMatch = wordPattern.exec(articleText)) && wordCount < limit) {
+          wordCount += 1;
+          lastWordEnd = wordPattern.lastIndex;
+        }
+        hasMore = wordCount === limit && /\\S/.test(articleText.slice(lastWordEnd));
+        if (hasMore) visibleText = articleText.slice(0, lastWordEnd);
+      }
+      const openArticle = contentPreviewWords && onOpenPost ? () => onOpenPost(post) : undefined;
+      return React.createElement("div", {
+        onClick: openArticle,
+        onKeyDown: openArticle ? event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); openArticle(); } } : undefined,
+        tabIndex: openArticle ? 0 : undefined,
+        style: { padding: "0 14px 10px", fontSize: isLarge ? 16 : 14, lineHeight: 1.65, color: "var(--text)", wordBreak: "break-word", whiteSpace: "pre-wrap", cursor: openArticle ? "pointer" : "auto" }
+      },
+        renderContent(visibleText, handle => onTagInPost && onTagInPost(handle), tag => {}),
+        hasMore && onOpenPost && React.createElement("span", { onClick: event => { event.stopPropagation(); onOpenPost(post); }, style: { color: COLORS.blue, fontWeight: 700, whiteSpace: "nowrap", marginLeft: 4, cursor: "pointer" } }, "More")
+      );
+    })(),`;html=replaceUnique(html,oldContent,newContent,"60-word article preview");const oldLike='api(`/posts/${post.id}/comments/${cid}/like`, "POST", {}, token).catch(() => {});';const newLike='api(`/posts/${post.id}/comments/${cid}/like`, "POST", {}, token)\n      .then(data => { if (data && Array.isArray(data.likes)) setLocalComments(prev => (prev || []).map(c => c.id === cid ? { ...c, likes: data.likes } : c)); })\n      .catch(() => {});';html=replaceUnique(html,oldLike,newLike,"persist comment likes");const oldDelete='api(`/posts/${post.id}/comments/${cid}`, "DELETE", null, token)\n      .then(() => setLocalComments(prev => (prev || []).filter(c => c.id !== cid)))\n      .catch(() => {});';const newDelete='api(`/posts/${post.id}/comments/${cid}`, "DELETE", null, token)\n      .then(() => { setLocalComments(prev => (prev || []).filter(c => c.id !== cid)); onComment && onComment(post.id, ""); })\n      .catch(() => {});';html=replaceUnique(html,oldDelete,newDelete,"refresh deleted comment count");const oldSheetRoot=`    showComments && React.createElement("div", {
+      style: { position: "fixed", inset: 0, zIndex: 500 },
+      onClick: e => { if (e.target === e.currentTarget) closeCommentSheet(); }
+    },
+      React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, background: "var(--card-bg)", borderRadius: commentSheetExpanded ? "0" : "16px 16px 0 0", height: commentSheetExpanded ? "100vh" : "56vh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 -4px 32px rgba(0,0,0,0.18)", transition: "height 0.32s cubic-bezier(0.4,0,0.2,1), border-radius 0.32s" } },`;const newSheetRoot=`    showComments && React.createElement("div", {
+      style: inlineComments ? { position: "relative", zIndex: 1, width: "100%", background: "var(--card-bg)" } : { position: "fixed", inset: 0, zIndex: 500 },
+      onClick: inlineComments ? undefined : e => { if (e.target === e.currentTarget) closeCommentSheet(); }
+    },
+      React.createElement("div", { style: inlineComments
+        ? { position: "relative", bottom: "auto", left: "auto", right: "auto", width: "100%", background: "var(--card-bg)", borderRadius: 0, height: "min(62vh, 620px)", minHeight: 280, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "none", transition: "none" }
+        : { position: "absolute", bottom: 0, left: 0, right: 0, background: "var(--card-bg)", borderRadius: commentSheetExpanded ? "0" : "16px 16px 0 0", height: commentSheetExpanded ? "100vh" : "56vh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 -4px 32px rgba(0,0,0,0.18)", transition: "height 0.32s cubic-bezier(0.4,0,0.2,1), border-radius 0.32s" } },`;html=replaceUnique(html,oldSheetRoot,newSheetRoot,"inline comment thread layout");const dragHandleStyle = 'style: { display: "flex", justifyContent: "center", padding: "10px 0 6px", cursor: "ns-resize", touchAction: "none", userSelect: "none" },';
+const dragHandleAt = html.indexOf(dragHandleStyle, html.indexOf("// drag handle", html.indexOf("function BentoPostCard({")));
+if (dragHandleAt < 0) throw new Error("Article patch anchor missing: comment drag handle");
+html = html.slice(0, dragHandleAt) + 'style: { display: inlineComments ? "none" : "flex", justifyContent: "center", padding: "10px 0 6px", cursor: "ns-resize", touchAction: "none", userSelect: "none" },' + html.slice(dragHandleAt + dragHandleStyle.length);const detailComponent=`function ArticlePostDetailScreen({ post, user, token, showToast, onClose, onLike, onDelete, onComment, onSave, onRepost, onShare, onMention, onViewProfile, onViewAccountInfo }) {
+  if (!post) return null;
+  return React.createElement("div", {
+    role: "dialog",
+    "aria-modal": "true",
+    "aria-label": "Post",
+    style: { position: "fixed", inset: 0, zIndex: 12000, background: "var(--bg)", display: "flex", flexDirection: "column" }
+  },
+    React.createElement("div", { style: { flexShrink: 0, display: "flex", alignItems: "center", gap: 14, minHeight: 54, padding: "env(safe-area-inset-top) 14px 0", background: "var(--bg)", borderBottom: "1px solid var(--border)" } },
+      React.createElement("button", { type: "button", "aria-label": "Back to profile", onClick: onClose, style: { width: 40, height: 40, padding: 0, display: "flex", alignItems: "center", justifyContent: "center", border: "none", background: "none", color: "var(--text)", cursor: "pointer" } },
+        React.createElement("svg", { width: 24, height: 24, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round" },
+          React.createElement("path", { d: "M19 12H5" }), React.createElement("path", { d: "m12 19-7-7 7-7" })
+        )
+      ),
+      React.createElement("div", { style: { fontSize: 18, fontWeight: 800, color: "var(--text)" } }, "Post")
+    ),
+    React.createElement("div", { style: { flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", paddingBottom: "env(safe-area-inset-bottom)" } },
+      React.createElement(BentoPostCard, {
+        key: String(post.id) + "-article-detail", post, user, token, showToast, isLarge: true, inlineComments: true,
+        onLike, onDelete, onComment, onSave, onRepost, onShare, onMention, onViewProfile, onViewAccountInfo
+      })
+    )
+  );
+}`;html=replaceUnique(html,"function PhotoLightbox(",detailComponent+"\nfunction PhotoLightbox(","article detail screen");const profileStart=html.indexOf("const confirmDeleteMyPost = (post) => {");if(profileStart<0||html.indexOf("const confirmDeleteMyPost = (post) => {",profileStart+1)>=0)throw new Error("Profile article action insertion point missing/duplicated");const effectAt=html.indexOf("  useEffect(() => {",profileStart);if(effectAt<0)throw new Error("Profile article action insertion boundary missing");const profileActions=`  const updateMyArticle = (postId, updates) => {
+    setMyPosts(current => current.map(post => {
+      if (String(post.id) !== String(postId)) return post;
+      const patch = typeof updates === "function" ? updates(post) : updates;
+      return { ...post, ...patch };
+    }));
+  };
+  const handleProfileArticleLike = async (postId, color) => {
+    try {
+      const result = await api("/posts/" + encodeURIComponent(postId) + "/like", "POST", { color }, token);
+      if (Array.isArray(result.likes)) updateMyArticle(postId, { likes: result.likes });
+    } catch (error) { showToast(error.message || "Could not update like", COLORS.red); }
+  };
+  const handleProfileArticleSave = async postId => {
+    try {
+      const result = await api("/posts/" + encodeURIComponent(postId) + "/save", "POST", null, token);
+      if (typeof result.saved === "boolean") updateMyArticle(postId, post => {
+        const saves = (post.saves || []).filter(id => String(id) !== String(user.id));
+        return { saves: result.saved ? [...saves, user.id] : saves };
+      });
+    } catch (error) { showToast(error.message || "Could not update saved post", COLORS.red); }
+  };
+  const handleProfileArticleRepost = async postOrId => {
+    if (postOrId && typeof postOrId === "object" && postOrId._tagFriend) return;
+    const postId = postOrId && typeof postOrId === "object" ? postOrId.id : postOrId;
+    if (!postId) return;
+    try {
+      const result = await api("/posts/" + encodeURIComponent(postId) + "/repost", "POST", null, token);
+      updateMyArticle(postId, post => {
+        const reposts = (post.reposts || []).filter(id => String(id) !== String(user.id));
+        return { reposts: result.reposted ? [...reposts, user.id] : reposts };
+      });
+    } catch (error) { showToast(error.message || "Could not repost", COLORS.red); }
+  };
+  const handleProfileArticleComment = async postId => {
+    try {
+      const result = await api("/posts/" + encodeURIComponent(postId) + "/comments", "GET", null, token);
+      if (Array.isArray(result.comments)) updateMyArticle(postId, { comments: result.comments });
+    } catch (_) {}
+  };
+  const openMyArticle = post => {
+    if (!post) return;
+    setOpenedMyPost(post);
+    api("/posts/" + encodeURIComponent(post.id) + "/view", "POST", null, token)
+      .then(() => updateMyArticle(post.id, current => {
+        const views = Array.isArray(current.views) ? current.views : [];
+        return { views: views.some(id => String(id) === String(user.id)) ? views : [...views, user.id] };
+      }))
+      .catch(() => {});
+  };
+`;html=html.slice(0,effectAt)+profileActions+html.slice(effectAt);const ownArticleAnchor='articlePosts.map(post => React.createElement("div", {\n                key: post.id,\n                onClick: () => { setOpenedMyPost(post); setOpenedMyPostShowComments(false); },';const ownArticleAt=html.indexOf(ownArticleAnchor);if(ownArticleAt<0||html.indexOf(ownArticleAnchor,ownArticleAt+ownArticleAnchor.length)>=0)throw new Error("Own Articles list anchor missing/duplicated");const listStart=html.lastIndexOf(': React.createElement("div", { style: { display: "flex", flexDirection: "column" } },',ownArticleAt);const listEndMarker='              )));';const listEndAt=html.indexOf(listEndMarker,ownArticleAt);if(listStart<0||listEndAt<0)throw new Error("Own Articles list boundary missing");const oldOwnBranch=html.slice(listStart,listEndAt+listEndMarker.length);const newOwnBranch=`: React.createElement(React.Fragment, null,
+            React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, articlePosts.map(post => React.createElement(BentoPostCard, {
+              key: post.id, post, user, token, showToast, isLarge: false, contentPreviewWords: 60, onOpenPost: openMyArticle,
+              onLike: handleProfileArticleLike, onComment: handleProfileArticleComment, onSave: handleProfileArticleSave,
+              onRepost: handleProfileArticleRepost, onDelete: handleDeleteMyPost, onViewProfile, onViewAccountInfo
+            }))),
+            openedMyPost && React.createElement(ArticlePostDetailScreen, {
+              post: myPosts.find(item => String(item.id) === String(openedMyPost.id)) || openedMyPost,
+              user, token, showToast, onClose: () => setOpenedMyPost(null),
+              onLike: handleProfileArticleLike, onComment: handleProfileArticleComment, onSave: handleProfileArticleSave,
+              onRepost: handleProfileArticleRepost, onDelete: handleDeleteMyPost, onViewProfile, onViewAccountInfo
+            })
+          )`;html=replaceUnique(html,oldOwnBranch,newOwnBranch,"own profile Articles cards/detail");return html;}
+
 self.addEventListener('fetch', function(event) {
   if (event.request.mode !== 'navigate') return;
   event.respondWith(fetch(event.request, {cache: "no-store"}).then(async function(response) {
@@ -220,7 +361,8 @@ self.addEventListener('fetch', function(event) {
     var oldMarkup = 'secSessionsLoading ? React.createElement("div", {style:{textAlign:"center",padding:40,color:"var(--muted)"}}, "Loading sessions...") :';
     var newMarkup = 'secSessionsLoading ? React.createElement("div", {style:{display:"flex",alignItems:"center",justifyContent:"center",padding:40}}, React.createElement("span", {role:"status","aria-label":"Loading sessions",style:{width:22,height:22,borderRadius:"50%",border:"2.5px solid #dbeafe",borderTopColor:"#1877F2",display:"inline-block",animation:"_rpt_spin 0.75s linear infinite"}})) :';
     var separatedProfileHtml = applyProfileMediaSeparations(html);
-    var patchedHtml = separatedProfileHtml.indexOf(oldMarkup) === -1 ? separatedProfileHtml : separatedProfileHtml.replace(oldMarkup, newMarkup);
+    var articleProfileHtml = applyProfileArticles(separatedProfileHtml);
+    var patchedHtml = articleProfileHtml.indexOf(oldMarkup) === -1 ? articleProfileHtml : articleProfileHtml.replace(oldMarkup, newMarkup);
     var injectedHtml = patchedHtml.replace(/<head([^>]*)>/i, '<head$1>' + LOGIN_LOCATION_BOOTSTRAP);
     if (injectedHtml === html) return new Response(html, {status: response.status, statusText: response.statusText, headers: response.headers});
     var headers = new Headers(response.headers);
