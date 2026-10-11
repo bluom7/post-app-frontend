@@ -8189,7 +8189,7 @@ function BentoPostCard({
       ),
       // Repost / Tag-a-friend (always visible)
       React.createElement("button", { onClick: handleRepostSheetOpen, style: { ...S.btn, color: (isReposted || mentionReposted) ? COLORS.green : "var(--muted)" } },
-        React.createElement("svg", { width: 28, height: 28, viewBox: "105 48 175 225", xmlns: "http://www.w3.org/2000/svg", style: { display: "block", overflow: "hidden", WebkitTapHighlightColor: "transparent", outline: "none" } },
+        React.createElement("svg", { width: 26, height: 26, viewBox: "105 48 175 225", xmlns: "http://www.w3.org/2000/svg", style: { display: "block", overflow: "hidden", WebkitTapHighlightColor: "transparent", outline: "none" } },
           React.createElement("g", { fill: "none", stroke: (isReposted || mentionReposted) ? COLORS.green : "currentColor", strokeWidth: "14", strokeLinecap: "round", strokeLinejoin: "round" },
             React.createElement("path", { d: "M112 180 V145 C112 112 140 88 174 88 H242" }),
             React.createElement("path", { d: "M210 55 L245 88" }),
