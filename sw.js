@@ -170,6 +170,32 @@ function applyProfileTaggedPosts(html) {
   return html;
 }
 
+function applyProfileMediaSeparations(html) {
+  if (html.includes("function isProfileRemixReel(post)")) return html;
+  function replaceUnique(text, oldText, newText, label) { const at = text.indexOf(oldText); if (at < 0 || text.indexOf(oldText, at + oldText.length) >= 0) throw new Error("Anchor missing/duplicated: " + label); return text.slice(0, at) + newText + text.slice(at + oldText.length); }
+  function replaceCount(text, oldText, newText, expected, label) { const count = text.split(oldText).length - 1; if (count !== expected) throw new Error("Count mismatch: " + label + " (" + count + ")"); return text.split(oldText).join(newText); }
+  const gridHelper = 'function isProfileGridPost(post) { return !!(post && !post.repost_of && !post.is_reel && (getPostPhotos(post).length > 0 || !!getPostVideo(post))); }';
+  html = replaceUnique(html, gridHelper, gridHelper + '\nfunction isProfileVideoReel(post) { return !!(post && post.is_reel && !post.repost_of && (post.video_url || post.photo_url)); }\nfunction isProfileRemixReel(post) { return !!(post && post.is_reel && post.remix_of && (post.video_url || post.photo_url)); }', 'profile predicates');
+  html = replaceUnique(html, 'const videoPosts = posts.filter(p => p.video_url && !p.repost_of);', 'const videoPosts = posts.filter(isProfileVideoReel);', 'public video filter');
+  html = replaceUnique(html, 'const videoPosts = myPosts.filter(p => p.video_url && !p.repost_of);', 'const videoPosts = myPosts.filter(isProfileVideoReel);', 'own video filter');
+  html = replaceUnique(html, 'React.createElement("video", { src: post.video_url + (String(post.video_url).indexOf("#") < 0 ? "#t=0.001" : ""), controls: true, playsInline: true, preload: "metadata", style: { width: "100%", borderRadius: 12, maxHeight: 420, background: "#000", display: "block" } })', 'React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })', 'public media renderer');
+  html = replaceUnique(html, 'React.createElement("video", {\n                src: post.video_url + (String(post.video_url).indexOf("#") < 0 ? "#t=0.001" : ""),\n                controls: true,\n                playsInline: true,\n                preload: "metadata",\n                style: { width: "100%", borderRadius: 12, maxHeight: 420, background: "#000", display: "block" }\n              })', 'React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })', 'own media renderer');
+  const oldChange = 'const changeProfileSection = nextSection => {\n    if (nextSection === "mentions" && !mentionsLoaded && !mentionedLoading) loadMentionedReels();\n    if (nextSection === "reposts" && !taggedPostsLoaded && !taggedPostsLoading) loadTaggedPosts();\n  };';
+  html = replaceCount(html, oldChange, 'const changeProfileSection = () => {};', 2, 'section loaders');
+  const starts = []; const needle = ': profileSection === "mentions" ?'; let from = 0;
+  while (true) { const at = html.indexOf(needle, from); if (at < 0) break; starts.push(at); from = at + needle.length; }
+  if (starts.length !== 2) throw new Error('Expected two Reposted panels; found ' + starts.length);
+  function branchFor(collection, own) {
+    const cards = 'React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 0 } }, remixReels.map(post => React.createElement("div", { key: post.id + "-remix", style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } }, post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 }))))';
+    const inner = '(() => { const remixReels = ' + collection + '.filter(isProfileRemixReel); return remixReels.length === 0 ? ProfileEmptyState("No remixed reels yet.", "Reels remixed from the Reels feed will appear here.") : ' + cards + '; })()';
+    return own ? ': profileSection === "mentions" ? (postsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, t("loading")) : ' + inner + ')' : ': profileSection === "mentions" ? ' + inner;
+  }
+  for (let i = starts.length - 1; i >= 0; i--) { const at = starts[i]; const end = html.indexOf(': (() => { const repostView', at); if (end < 0) throw new Error('Reposted panel boundary missing'); html = html.slice(0, at) + branchFor(i === 0 ? 'posts' : 'myPosts', i === 1) + html.slice(end); }
+  html = replaceUnique(html, 'const reel = await api("/reels", "POST", { photo_url: pData.url, caption: caption.trim(), audio_label: audioLabel, music_url:', 'const reel = await api("/reels", "POST", { photo_url: pData.url, remix_of: initialReel && initialReel.id ? String(initialReel.id) : undefined, caption: caption.trim(), audio_label: audioLabel, music_url:', 'photo Remix source');
+  html = replaceUnique(html, 'const reel = await api("/reels", "POST", { video_url: upData.video_url, caption: caption.trim(), audio_label: audioLabel, music_url:', 'const reel = await api("/reels", "POST", { video_url: upData.video_url, remix_of: initialReel && initialReel.id ? String(initialReel.id) : undefined, caption: caption.trim(), audio_label: audioLabel, music_url:', 'video Remix source');
+  return html;
+}
+
 self.addEventListener('fetch', function(event) {
   if (event.request.mode !== 'navigate') return;
   event.respondWith(fetch(event.request, {cache: "no-store"}).then(async function(response) {
@@ -178,9 +204,8 @@ self.addEventListener('fetch', function(event) {
     var html = await response.text();
     var oldMarkup = 'secSessionsLoading ? React.createElement("div", {style:{textAlign:"center",padding:40,color:"var(--muted)"}}, "Loading sessions...") :';
     var newMarkup = 'secSessionsLoading ? React.createElement("div", {style:{display:"flex",alignItems:"center",justifyContent:"center",padding:40}}, React.createElement("span", {role:"status","aria-label":"Loading sessions",style:{width:22,height:22,borderRadius:"50%",border:"2.5px solid #dbeafe",borderTopColor:"#1877F2",display:"inline-block",animation:"_rpt_spin 0.75s linear infinite"}})) :';
-    var repostPatchedHtml = applyProfileReposts(html);
-    var taggedPatchedHtml = applyProfileTaggedPosts(repostPatchedHtml);
-    var patchedHtml = taggedPatchedHtml.indexOf(oldMarkup) === -1 ? taggedPatchedHtml : taggedPatchedHtml.replace(oldMarkup, newMarkup);
+    var separatedProfileHtml = applyProfileMediaSeparations(html);
+    var patchedHtml = separatedProfileHtml.indexOf(oldMarkup) === -1 ? separatedProfileHtml : separatedProfileHtml.replace(oldMarkup, newMarkup);
     var injectedHtml = patchedHtml.replace(/<head([^>]*)>/i, '<head$1>' + LOGIN_LOCATION_BOOTSTRAP);
     if (injectedHtml === html) return new Response(html, {status: response.status, statusText: response.statusText, headers: response.headers});
     var headers = new Headers(response.headers);
