@@ -17985,8 +17985,8 @@ function ProfileTabSkeleton() {
       return React.createElement("div", { style: { width: "100%", minHeight: 240, boxSizing: "border-box", padding: "40px 24px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" } },
         React.createElement("div", { style: { maxWidth: 360, fontSize: 28, fontWeight: 800, lineHeight: 1.15, color: "var(--text)", marginBottom: 12 } }, title),
         action
-          ? React.createElement("div", { style: { width: "100%", maxWidth: 420, display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: 12, marginTop: 12 } },
-              React.createElement("div", { style: { flex: "1 1 180px", minWidth: 180, maxWidth: 360, fontSize: 15, lineHeight: 1.5, color: "var(--muted)", textAlign: "center" } }, subtitle),
+          ? React.createElement("div", { style: { width: "100%", maxWidth: 360, display: "flex", flexDirection: "column", alignItems: "center", gap: 14, marginTop: 12 } },
+              React.createElement("div", { style: { width: "100%", fontSize: 15, lineHeight: 1.5, color: "var(--muted)", textAlign: "center" } }, subtitle),
               action)
           : React.createElement("div", { style: { maxWidth: 360, fontSize: 15, lineHeight: 1.5, color: "var(--muted)" } }, subtitle)
       );
