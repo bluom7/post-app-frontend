@@ -8874,7 +8874,7 @@ function getProfileGridThumbnail(post) {
 function ProfileMediaGrid({ posts, onOpenPost }) {
   const mediaPosts = (posts || []).filter(isProfileGridPost);
   const mediaStyle = { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" };
-  return React.createElement("div", { "data-profile-media-grid": "true", style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, width: "calc(100% + 32px)", marginLeft: -16, marginRight: -16, boxSizing: "border-box" } }, mediaPosts.map(post => {
+  return React.createElement("div", { "data-profile-media-grid": "true", style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2, width: "100vw", marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)", boxSizing: "border-box" } }, mediaPosts.map(post => {
     const video = getPostVideo(post);
     const thumbnail = getProfileGridThumbnail(post);
     const photos = getPostPhotos(post);
@@ -18106,6 +18106,7 @@ function ProfileTabSkeleton() {
       // sliding=true: all panels side by side on a transformed track. sliding=false: only the active panel, no transform (keeps position:fixed overlays working).
       function setSliding(on) {
         slidingRef.current = on;
+        var wrap = wrapRef.current; if (wrap) wrap.style.overflowX = on ? "hidden" : "visible";
         var track = trackRef.current; if (!track) return;
         if (on) {
           track.style.width = (N * 100) + "%"; track.style.willChange = "transform";
@@ -18228,7 +18229,7 @@ function ProfileTabSkeleton() {
           }),
           React.createElement("div", { ref: barRef, "data-profile-tab-indicator": "v2", style: { position: "absolute", left: 0, bottom: -1, height: 2.5, width: 0, borderRadius: 2, background: lineColor || "#000", pointerEvents: "none" } })
         ),
-        React.createElement("div", Object.assign({ ref: wrapRef, "data-profile-tab-slide-panel": "v2", style: { position: "relative", width: "100%", minWidth: 0, overflowX: "hidden", touchAction: "pan-y", WebkitTapHighlightColor: "transparent" } }, touchProps),
+        React.createElement("div", Object.assign({ ref: wrapRef, "data-profile-tab-slide-panel": "v2", style: { position: "relative", width: "100%", minWidth: 0, overflowX: "visible", touchAction: "pan-y", WebkitTapHighlightColor: "transparent" } }, touchProps),
           React.createElement("div", { ref: trackRef, style: { display: "flex", alignItems: "flex-start", width: "100%" } },
             SECTIONS.map(function (sec, i) {
               return React.createElement("div", { key: sec, ref: function (el) { panelRefs.current[i] = el; }, style: { minWidth: 0 } }, renderPanel(sec));
