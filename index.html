@@ -6695,26 +6695,41 @@ function HomeTab({
   };
 
   const handleRepost = async post => {
-    if (post.is_reel) { showToast("Reels can't be reposted", COLORS.muted); return; }
-    try {
-      const res = await api(`/posts/${post.id}/repost`, "POST", null, token);
-      if (res.reposted) {
-        setPosts(prev => [res.post, ...prev]);
-        const newReposts = [...((postsRef.current.find(p=>p.id===post.id)?.reposts)||[]), user?.id];
-        const sync = prev => prev.map(p => p.id !== post.id ? p : { ...p, reposts: newReposts });
-        setPosts(sync);
-        dispatchPostUpdate(post.id, { reposts: newReposts });
-        showToast("Reposted! ↻", COLORS.green);
-      } else {
-        setPosts(prev => prev.filter(p => !(p.repost_of === post.id && p.user_id === user?.id)));
-        const filteredReposts = ((postsRef.current.find(p=>p.id===post.id)?.reposts)||[]).filter(id => id !== user?.id);
-        const sync = prev => prev.map(p => p.id !== post.id ? p : { ...p, reposts: filteredReposts });
-        setPosts(sync);
-        dispatchPostUpdate(post.id, { reposts: filteredReposts });
-        showToast("Repost removed", "#999");
-      }
-    } catch (e) { showToast(e.message, COLORS.red); }
-  };
+        const targetId = post.repost_of || post.id;
+        const isReel = !!post.is_reel;
+        try {
+          const endpoint = (isReel ? "/reels/" : "/posts/") + targetId + "/repost";
+          const res = await api(endpoint, "POST", null, token);
+          const didRepost = !!(res && res.reposted);
+          const original = (postsRef.current || []).find(item => String(item.id) === String(targetId)) || post;
+          const currentReposts = Array.isArray(original.reposts) ? original.reposts : [];
+          const alreadyReposted = currentReposts.some(id => String(id) === String(user && user.id));
+          const nextReposts = didRepost ? (alreadyReposted ? currentReposts : currentReposts.concat(user && user.id)) : currentReposts.filter(id => String(id) !== String(user && user.id));
+          const actor = { id: user && user.id, name: user && user.name, handle: user && user.handle, avatar_photo: user && user.avatar_photo, avatar_bg: user && user.avatar_bg, avatar_letter: user && user.avatar_letter };
+          const updated = { ...original, reposts: nextReposts, repost_count: Number.isFinite(Number(res && res.repost_count)) ? Number(res.repost_count) : nextReposts.length, is_reposted_by_viewer: didRepost };
+          if (didRepost) {
+            updated.repost_of = targetId;
+            updated.is_repost_event = true;
+            updated.repost_user_name = original.user_name;
+            updated.repost_user_handle = original.user_handle;
+            updated.reposted_by = res.repost || actor;
+            updated.original_created_at = original.original_created_at || original.created_at;
+            updated.created_at = (res.repost && res.repost.created_at) || new Date().toISOString();
+            updated.feed_event_id = (isReel ? "reel-repost:" : "post-repost:") + ((res.repost && res.repost.id) || (targetId + ":" + (user && user.id)));
+          } else if (original.is_repost_event && String(original.reposted_by && original.reposted_by.id) === String(user && user.id)) {
+            updated.repost_of = null;
+            updated.is_repost_event = false;
+            updated.reposted_by = null;
+            updated.repost_user_name = null;
+            updated.repost_user_handle = null;
+            updated.feed_event_id = String(targetId);
+          }
+          setPosts(prev => didRepost ? [updated, ...prev.filter(item => String(item.id) !== String(targetId))] : prev.map(item => String(item.id) === String(targetId) ? updated : item));
+          dispatchPostUpdate(targetId, { reposts: nextReposts, repost_count: updated.repost_count, is_reposted_by_viewer: didRepost, is_repost_event: updated.is_repost_event, repost_of: updated.repost_of, reposted_by: updated.reposted_by, repost_user_name: updated.repost_user_name, repost_user_handle: updated.repost_user_handle, original_created_at: updated.original_created_at, created_at: updated.created_at, feed_event_id: updated.feed_event_id });
+          showToast(didRepost ? "Reposted! ↻" : "Repost removed", didRepost ? COLORS.green : "#999");
+          return true;
+        } catch (e) { showToast(e.message, COLORS.red); return false; }
+      };
 
   const handleShare = pid => {};
   const handleMention = (pid, handle) => {
@@ -7802,7 +7817,7 @@ function BentoPostCard({
     onLike(post.id, likeColor ? null : "#FF3B5C");
   };
   const handleSaveClick = () => { setIsSaved(s => !s); onSave && onSave(post.id); };
-  const handleRepostClick = () => { if (post.is_reel) return; setIsReposted(s => !s); onRepost && onRepost(post); };
+  const handleRepostClick = async () => { if (!onRepost) return; const previous = isReposted; setIsReposted(!previous); const result = await onRepost(post); if (result === false) setIsReposted(previous); };
   const handleRepostSheetOpen = () => { setShowRepostSheet(true); };
   const handleTagFriendOpen = async () => {
     setShowRepostSheet(false);
@@ -8025,7 +8040,7 @@ function BentoPostCard({
   };
   const likeCountText = formatActionCount(Array.isArray(post.likes) ? post.likes.length : (post.likes_count || post.like_count));
   const commentCountText = formatActionCount(Array.isArray(post.comments) ? post.comments.length : (post.comments_count || post.comment_count));
-  const repostCountText = formatActionCount(Array.isArray(post.reposts) ? post.reposts.length : (post.reposts_count || post.repost_count));
+  const repostCountText = formatActionCount((Array.isArray(post.reposts) && post.reposts.length) || post.reposts_count || post.repost_count);
   const viewCountText = formatActionCount(post.views?.length || post.views_count || post.view_count) || "0";
   // Instagram-style fit: icons stay together; gaps/font shrink only when big counts (e.g. +105M) would overflow the row.
   const actionFit = (() => {
@@ -8167,11 +8182,17 @@ function BentoPostCard({
       React.createElement("button", { onClick: () => { setShowDeleteConfirm(false); setShowMenu(s => !s); }, "aria-label": "More options", style: { background: "none", border: "none", cursor: "pointer", color: "var(--muted)", padding: "4px 10px", display:"flex",alignItems:"center", flexShrink:0, marginRight:"-6px" } }, React.createElement("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"currentColor"},React.createElement("circle",{cx:"12",cy:"5",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"12",r:"1.5"}),React.createElement("circle",{cx:"12",cy:"19",r:"1.5"})))
     ),
     // ── Repost banner ──────────────────────────────────────────
-    post.repost_of && React.createElement("div", { style: { padding: "0 14px 6px", fontSize: 12, color: "var(--muted)", display: "flex", alignItems: "center", gap: 4 } },
-      React.createElement("svg", { width: 13, height: 13, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round" }, React.createElement("polyline", { points: "17 1 21 5 17 9" }), React.createElement("path", { d: "M3 11V9a4 4 0 0 1 4-4h14" }), React.createElement("polyline", { points: "7 23 3 19 7 15" }), React.createElement("path", { d: "M21 13v2a4 4 0 0 1-4 4H3" })),
-      "Reposted from ", post.repost_user_name || "someone"
-    ),
-    // ── Content ────────────────────────────────────────────────
+        post.repost_of && (() => {
+          const actor = post.reposted_by || post.mentioned_by || {};
+          return React.createElement("div", { style: { padding: "0 14px 6px", fontSize: 12, color: "var(--muted)", display: "flex", alignItems: "center", gap: 7 } },
+            React.createElement("span", { style: { position: "relative", width: 23, height: 23, flexShrink: 0, borderRadius: "50%" } },
+              actor.avatar_photo ? React.createElement("img", { src: actor.avatar_photo, alt: "", style: { width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" } }) : React.createElement("span", { style: { width: "100%", height: "100%", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: actor.avatar_bg || "var(--accent)", color: "#fff", fontSize: 11, fontWeight: 700 } }, String(actor.avatar_letter || actor.name || "U").slice(0, 1).toUpperCase()),
+              React.createElement("span", { style: { position: "absolute", right: -2, bottom: -2, width: 12, height: 12, borderRadius: "50%", background: "#16a34a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" } }, React.createElement(RepostTabIcon, { size: 9 }))
+            ),
+            React.createElement("span", null, (actor.name || "Someone") + " reposted")
+          );
+        })(),
+        // ── Content ────────────────────────────────────────────────
     !post.is_reel && post.content && (() => {
       const articleText = String(post.content);
       const requestedLimit = Number(contentPreviewWords);
@@ -8229,7 +8250,7 @@ function BentoPostCard({
         React.createElement("span", { style: actionCountStyle }, commentCountText)
       ),
       // Repost / Tag-a-friend (always visible)
-      React.createElement("button", { onClick: handleRepostSheetOpen, style: actionBtnStyle((isReposted || mentionReposted) ? COLORS.green : "var(--muted)") },
+      React.createElement("button", { onClick: handleRepostClick, style: actionBtnStyle((isReposted || mentionReposted) ? COLORS.green : "var(--muted)") },
         React.createElement("svg", { width: 26, height: 26, viewBox: "105 48 175 225", xmlns: "http://www.w3.org/2000/svg", style: { display: "block", width: actionIconSize, height: actionIconSize, flexShrink: 0, overflow: "hidden", WebkitTapHighlightColor: "transparent", outline: "none" } },
           React.createElement("g", { fill: "none", stroke: (isReposted || mentionReposted) ? COLORS.green : "#000", strokeWidth: "18.3", strokeLinecap: "round", strokeLinejoin: "round" },
             React.createElement("path", { d: "M112 180 V145 C112 112 140 88 174 88 H242" }),
@@ -8922,7 +8943,7 @@ async function loadAllProfilePosts(userId, token) {
     const page = Array.isArray(data && data.posts) ? data.posts : (Array.isArray(data) ? data : []);
     for (const post of page) {
       if (!post || post.id == null) continue;
-      const id = String(post.id);
+      const id = String(post.feed_event_id || post.id);
       if (seenIds.has(id)) continue;
       seenIds.add(id);
       allPosts.push(post);
@@ -14463,7 +14484,7 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
         const isFollowing = !!currentId && (prof.followers || []).includes(currentId);
         const isPendingFollow = (frData.outgoing || []).some(r => r.to_id === userId);
         setFollowStatus(isFollowing ? "following" : isPendingFollow ? "pending" : "none");
-        setPosts((postsData.posts || []).filter(p => String(p.user_id) === String(userId)));
+        setPosts((postsData.posts || []).filter(p => String(p.user_id) === String(userId) || (p.repost_of && String((p.reposted_by || {}).id) === String(userId))));
       } catch (_) {
         // Keep the reel preview visible if the profile request fails.
         if (!cancelled) setLoading(false);
@@ -14958,7 +14979,7 @@ React.createElement(ProfilePager, { activeColor: COLORS.yellow, lineColor: COLOR
             ? ProfileEmptyState("No articles yet.", "Articles published by this profile will appear here.")
             : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, articlePosts.map(post => React.createElement("div", {
                 key: post.id,
-                onClick: () => { setOpenedPost(post); setOpenedPostIdx(posts.findIndex(item => item.id === post.id)); },
+                onClick: () => { setOpenedPost(post); setOpenedPostIdx(posts.findIndex(item => String(item.feed_event_id || item.id) === String(post.feed_event_id || post.id))); },
                 style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px", cursor: "pointer" }
               },
                 React.createElement("div", { style: { fontSize: 14, lineHeight: 1.7, color: "var(--text)", whiteSpace: "pre-wrap" } }, renderContent(post.content, null, null)),
@@ -14966,7 +14987,7 @@ React.createElement(ProfilePager, { activeColor: COLORS.yellow, lineColor: COLOR
                 React.createElement("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 8 } }, "👁 ", post.views?.length || 0)
               )));
         })()
-       : profileSection === "mentions" ? (() => { const remixReels = posts.filter(isProfileRemixReel); return remixReels.length === 0 ? ProfileEmptyState("No remixed reels yet.", "Reels remixed from the Reels feed will appear here.") : React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 0 } }, remixReels.map(post => React.createElement("div", { key: post.id + "-remix", style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } }, post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })))); })(): (() => { const repostView = (() => { const repostedPosts = posts.filter(post => post && post.repost_of); return repostedPosts.length === 0 ? null : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, repostedPosts.map(post => React.createElement("div", { key: post.id + "-repost", onClick: () => { setOpenedPost(post); setOpenedPostIdx(posts.findIndex(item => item.id === post.id)); }, style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px", cursor: "pointer" } }, React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 8 } }, React.createElement(RepostTabIcon, { size: 14 }), post.repost_user_handle ? "Reposted from @" + post.repost_user_handle.replace(/^@/, "") : "Reposted"), post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })))); })(); const taggedView = taggedPostsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, "Loading mentions...") : taggedPosts.length === 0 ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 48 } }, "No mentions yet") : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, taggedPosts.map((post, idx) => React.createElement(TaggedPostCard, { key: post.id || "tagged-" + idx, post, targetProfile: profile, onViewProfile }))); return React.createElement(React.Fragment, null, taggedView, repostView); })()))(sec) }), showVerifiedInfo && profile && React.createElement(VerifiedInfoModal, {
+       : profileSection === "mentions" ? (() => { const remixReels = posts.filter(isProfileRemixReel); return remixReels.length === 0 ? ProfileEmptyState("No remixed reels yet.", "Reels remixed from the Reels feed will appear here.") : React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 0 } }, remixReels.map(post => React.createElement("div", { key: post.id + "-remix", style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } }, post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })))); })(): (() => { const repostView = (() => { const repostedPosts = posts.filter(post => post && post.repost_of && (post.is_repost_event || post.repost_of)); return repostedPosts.length === 0 ? null : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, repostedPosts.map(post => React.createElement("div", { key: (post.feed_event_id || post.id) + "-repost", onClick: () => { setOpenedPost(post); setOpenedPostIdx(posts.findIndex(item => String(item.feed_event_id || item.id) === String(post.feed_event_id || post.id))); }, style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px", cursor: "pointer" } }, (() => { const actor = post.reposted_by || post.mentioned_by || {}; return React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 8 } }, React.createElement("span", { style: { position: "relative", width: 23, height: 23, flexShrink: 0, borderRadius: "50%" } }, actor.avatar_photo ? React.createElement("img", { src: actor.avatar_photo, alt: "", style: { width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" } }) : React.createElement("span", { style: { width: "100%", height: "100%", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: actor.avatar_bg || "var(--accent)", color: "#fff", fontSize: 11, fontWeight: 700 } }, String(actor.avatar_letter || actor.name || "U").slice(0, 1).toUpperCase()), React.createElement("span", { style: { position: "absolute", right: -2, bottom: -2, width: 12, height: 12, borderRadius: "50%", background: "#16a34a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" } }, React.createElement(RepostTabIcon, { size: 9 }))), React.createElement("span", null, (actor.name || "Someone") + " reposted", post.repost_user_handle ? " · from @" + post.repost_user_handle.replace(/^@/, "") : "")); })(), post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })))); })(); const taggedView = taggedPostsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, "Loading mentions...") : taggedPosts.length === 0 ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 48 } }, "No mentions yet") : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, taggedPosts.map((post, idx) => React.createElement(TaggedPostCard, { key: post.id || "tagged-" + idx, post, targetProfile: profile, onViewProfile }))); return React.createElement(React.Fragment, null, taggedView, repostView); })()))(sec) }), showVerifiedInfo && profile && React.createElement(VerifiedInfoModal, {
     name: profile.name,
     category: profile.verified_category || profile.category || "Public Figure",
     onClose: () => setShowVerifiedInfo(false)
@@ -18455,7 +18476,7 @@ function ProfileTabSkeleton() {
     try {
       if (!_warmupDone) await Promise.race([warmupReady, new Promise(r => setTimeout(r, 30000))]);
       const allPosts = await loadAllProfilePosts(user.id, token);
-      setMyPosts(allPosts.filter(p => String(p.user_id) === String(user.id)));
+      setMyPosts(allPosts.filter(p => String(p.user_id) === String(user.id) || (p.repost_of && String((p.reposted_by || {}).id) === String(user.id))));
     } catch (e) {}
     setPostsLoading(false);
   };
@@ -19277,7 +19298,7 @@ function ProfileTabSkeleton() {
             })
           )
         })())
-  : profileSection === "mentions" ? (postsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, t("loading")) : (() => { const remixReels = myPosts.filter(isProfileRemixReel); return remixReels.length === 0 ? ProfileEmptyState("No remixed reels yet.", "Reels remixed from the Reels feed will appear here.") : React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 0 } }, remixReels.map(post => React.createElement("div", { key: post.id + "-remix", style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } }, post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })))); })()): (() => { const repostView = (() => { const repostedPosts = myPosts.filter(post => post && post.repost_of); return postsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, "Loading...") : repostedPosts.length === 0 ? null : React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 0 } }, repostedPosts.map(post => React.createElement("div", { key: post.id + "-repost", style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } }, React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 8 } }, React.createElement(RepostTabIcon, { size: 14 }), post.repost_user_handle ? "Reposted from @" + post.repost_user_handle.replace(/^@/, "") : "Reposted"), post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })))); })(); const taggedView = taggedPostsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, "Loading mentions...") : taggedPosts.length === 0 ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 48 } }, "No mentions yet") : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, taggedPosts.map((post, idx) => React.createElement(TaggedPostCard, { key: post.id || "tagged-" + idx, post, targetProfile: user, onViewProfile }))); return React.createElement(React.Fragment, null, taggedView, repostView); })()))(sec) })  )) : /*#__PURE__*/React.createElement("div", {
+  : profileSection === "mentions" ? (postsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, t("loading")) : (() => { const remixReels = myPosts.filter(isProfileRemixReel); return remixReels.length === 0 ? ProfileEmptyState("No remixed reels yet.", "Reels remixed from the Reels feed will appear here.") : React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 0 } }, remixReels.map(post => React.createElement("div", { key: post.id + "-remix", style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } }, post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })))); })()): (() => { const repostView = (() => { const repostedPosts = myPosts.filter(post => post && post.repost_of && (post.is_repost_event || post.repost_of)); return postsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, "Loading...") : repostedPosts.length === 0 ? null : React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 0 } }, repostedPosts.map(post => React.createElement("div", { key: (post.feed_event_id || post.id) + "-repost", style: { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", padding: "14px 16px" } }, (() => { const actor = post.reposted_by || post.mentioned_by || {}; return React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7, fontSize: 12, fontWeight: 700, color: "var(--muted)", marginBottom: 8 } }, React.createElement("span", { style: { position: "relative", width: 23, height: 23, flexShrink: 0, borderRadius: "50%" } }, actor.avatar_photo ? React.createElement("img", { src: actor.avatar_photo, alt: "", style: { width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" } }) : React.createElement("span", { style: { width: "100%", height: "100%", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: actor.avatar_bg || "var(--accent)", color: "#fff", fontSize: 11, fontWeight: 700 } }, String(actor.avatar_letter || actor.name || "U").slice(0, 1).toUpperCase()), React.createElement("span", { style: { position: "absolute", right: -2, bottom: -2, width: 12, height: 12, borderRadius: "50%", background: "#16a34a", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" } }, React.createElement(RepostTabIcon, { size: 9 }))), React.createElement("span", null, (actor.name || "Someone") + " reposted", post.repost_user_handle ? " · from @" + post.repost_user_handle.replace(/^@/, "") : "")); })(), post.content && React.createElement("div", { style: { fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 8 } }, renderContent(post.content, null, null)), React.createElement(PostMedia, { post, maxHeight: 420, borderRadius: 12 })))); })(); const taggedView = taggedPostsLoading ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 30 } }, "Loading mentions...") : taggedPosts.length === 0 ? React.createElement("div", { style: { textAlign: "center", color: "var(--muted)", padding: 48 } }, "No mentions yet") : React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, taggedPosts.map((post, idx) => React.createElement(TaggedPostCard, { key: post.id || "tagged-" + idx, post, targetProfile: user, onViewProfile }))); return React.createElement(React.Fragment, null, taggedView, repostView); })()))(sec) })  )) : /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 8
     }
