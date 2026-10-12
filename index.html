@@ -14663,6 +14663,7 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
     }, actLoading ? "Sending Request..." : t("connect"));
   };
   return /*#__PURE__*/React.createElement("div", {
+    className: openedPost && profileSection === "articles" && isTextOnlyProfilePost(openedPost) ? "no-scrollbar" : undefined,
     style: {
       position: "fixed",
       inset: 0,
@@ -15008,7 +15009,7 @@ React.createElement(ProfilePager, { activeColor: COLORS.yellow, lineColor: COLOR
       ),
       posts.length > 1 && React.createElement("div", { style: { fontSize: 12, color: COLORS.muted, fontWeight: 600, flexShrink: 0 } }, (openedPostIdx + 1) + " / " + posts.length)
     ),
-    React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "16px" } },
+    React.createElement("div", { className: openedPost && profileSection === "articles" && isTextOnlyProfilePost(openedPost) ? "no-scrollbar" : undefined, style: { flex: 1, overflowY: "auto", padding: "16px" } },
       openedPost.content && React.createElement("div", { style: { fontSize: 15, lineHeight: 1.7, color: "var(--text)", whiteSpace: "pre-wrap", marginBottom: 12 } }, renderContent(openedPost.content, null, null)),
       openedPost.music_title && openedPost.music_preview_url
         ? /*#__PURE__*/React.createElement("div",{style:{position:"relative"}},
@@ -15022,8 +15023,8 @@ React.createElement(ProfilePager, { activeColor: COLORS.yellow, lineColor: COLOR
       ),
       openedPost.created_at && React.createElement("div", { style: { color: COLORS.muted, fontSize: 11, marginTop: 10 } }, new Date(openedPost.created_at).toLocaleDateString()),
       openedPost && profileSection === "articles" && isTextOnlyProfilePost(openedPost) && React.createElement("section", { "aria-label": "Article comments", style: { marginTop: 16, paddingBottom: 8 } },
-        React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 0 10px", borderTop: "1px solid var(--border)" } },
-          React.createElement("button", { type: "button", onClick: () => setProfileArticleQuotesExpanded(value => !value), "aria-expanded": profileArticleQuotesExpanded, style: { display: "inline-flex", alignItems: "center", gap: 7, padding: 0, border: 0, background: "none", color: "var(--text)", font: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" } }, "View quotes", React.createElement("svg", { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" }, React.createElement("polyline", { points: profileArticleQuotesExpanded ? "6 15 12 9 18 15" : "6 9 12 15 18 9" }))),
+        React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 0 10px" } },
+          React.createElement("button", { type: "button", onClick: () => setProfileArticleQuotesExpanded(value => !value), "aria-expanded": profileArticleQuotesExpanded, style: { display: "inline-flex", alignItems: "center", gap: 7, padding: 0, border: 0, background: "none", color: "var(--text)", font: "inherit", fontSize: 16, fontWeight: 800, cursor: "pointer" } }, "View quotes", React.createElement("svg", { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.3, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" }, React.createElement("polyline", { points: "6 9 12 15 18 9" }))),
           React.createElement("button", { type: "button", onClick: () => { if (profileArticleCommentInputRef.current) profileArticleCommentInputRef.current.focus(); }, style: { display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 0 5px 8px", border: 0, background: "none", color: "var(--text)", font: "inherit", fontSize: 15, fontWeight: 700, cursor: "pointer" } }, "Reply", React.createElement("svg", { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" }, React.createElement("polyline", { points: "9 6 15 12 9 18" })))),
         profileArticleQuotesExpanded && (profileArticleCommentsLoading
           ? React.createElement("div", { style: { padding: "24px 0", textAlign: "center", color: "var(--muted)", fontSize: 14 } }, "Loading comments…")
