@@ -29,7 +29,7 @@
     var method = (init && init.method) || (input && input.method) || 'GET';
     var pathname = '';
     try { pathname = new URL(requestUrl, window.location.href).pathname; } catch (_) {}
-    if (method.toUpperCase() !== 'POST' || !//auth/(?:login|phone-login)$/.test(pathname) || !init || typeof init.body !== 'string') {
+    if (method.toUpperCase() !== 'POST' || !/^\/auth\/(?:login|phone-login)$/.test(pathname) || !init || typeof init.body !== 'string') {
       return originalFetch(input, init);
     }
     return getLoginLocation().then(function(clientLocation) {
@@ -2100,6 +2100,8 @@ function invalidateCache(pathPrefix) {
 }
 
 async function _apiFetch(path, method, body, token, timeoutMs, _retry) {
+  const isIdempotentRepost = method === "POST" && /\/(?:posts|reels)\/[^/?]+\/repost\?desired=(?:true|false)(?:&|$)/.test(path);
+  const maxRetries = isIdempotentRepost ? 2 : 3;
   const headers = { "Content-Type": "application/json" };
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const controller = new AbortController();
@@ -2116,9 +2118,9 @@ async function _apiFetch(path, method, body, token, timeoutMs, _retry) {
       data = await res.json();
     } catch (_jsonErr) {
       // Empty/non-JSON = server cold-starting
-      if (_retry < 3 && method === "GET") {
-        await new Promise(r => setTimeout(r, 2000 * (_retry + 1)));
-        return _apiFetch(path, method, body, token, 15000, _retry + 1);
+      if ((_retry < 3 && method === "GET") || (isIdempotentRepost && _retry < maxRetries)) {
+        await new Promise(r => setTimeout(r, isIdempotentRepost ? 500 * (_retry + 1) : 2000 * (_retry + 1)));
+        return _apiFetch(path, method, body, token, isIdempotentRepost ? 10000 : 15000, _retry + 1);
       }
       const e = new Error("Couldn't connect to server. Tap Retry."); e.isColdStart = true; throw e;
     }
@@ -2133,9 +2135,10 @@ async function _apiFetch(path, method, body, token, timeoutMs, _retry) {
         throw err;
       }
       // 502/503/other = cold start or server error
-      if (_retry < 3 && method === "GET") {
-        await new Promise(r => setTimeout(r, 1500 * (_retry + 1)));
-        return _apiFetch(path, method, body, token, 12000, _retry + 1);
+      const retryableRepostStatus = [408, 425, 429, 500, 502, 503, 504].includes(res.status);
+      if ((_retry < 3 && method === "GET") || (isIdempotentRepost && retryableRepostStatus && _retry < maxRetries)) {
+        await new Promise(r => setTimeout(r, isIdempotentRepost ? 500 * (_retry + 1) : 1500 * (_retry + 1)));
+        return _apiFetch(path, method, body, token, isIdempotentRepost ? 10000 : 12000, _retry + 1);
       }
       const err = new Error(typeof data.detail === "object" ? data.detail.message || "Verification required" : data.detail || "Something went wrong");
       if (res.status === 403 && typeof data.detail === "object" && data.detail.code === "SECONDARY_REQUIRED") {
@@ -2148,9 +2151,9 @@ async function _apiFetch(path, method, body, token, timeoutMs, _retry) {
   } catch (e) {
     clearTimeout(timer);
     if (e.isAuthError || e.isColdStart) throw e;
-    if ((e.name === "AbortError" || e.name === "TypeError") && _retry < 3 && method === "GET") {
-      await new Promise(r => setTimeout(r, 2000 * (_retry + 1)));
-      return _apiFetch(path, method, body, token, 12000, _retry + 1);
+    if ((e.name === "AbortError" || e.name === "TypeError") && ((_retry < 3 && method === "GET") || (isIdempotentRepost && _retry < maxRetries))) {
+      await new Promise(r => setTimeout(r, isIdempotentRepost ? 500 * (_retry + 1) : 2000 * (_retry + 1)));
+      return _apiFetch(path, method, body, token, isIdempotentRepost ? 10000 : 12000, _retry + 1);
     }
     // Network/timeout error
     const ce = new Error("Couldn't connect to server. Tap Retry."); ce.isColdStart = true; throw ce;
@@ -6496,6 +6499,7 @@ function HomeTab({
   const [newPostsQueue, setNewPostsQueue] = useState([]);
   const [newNotificationQueue, setNewNotificationQueue] = useState([]);
   const postsRef = React.useRef(posts);
+  const repostOperationsRef = React.useRef(new Map());
   const newPostsQueueRef = React.useRef(newPostsQueue);
   const notificationSeenRef = React.useRef(null);
   postsRef.current = posts;
@@ -6695,41 +6699,79 @@ function HomeTab({
   };
 
   const handleRepost = async post => {
-        const targetId = post.repost_of || post.id;
-        const isReel = !!post.is_reel;
+    const targetId = String(post && (post.repost_of || post.id) || "");
+    if (!targetId) return { ok: false, reposted: false };
+    const isReel = !!(post && post.is_reel);
+    const actorId = String(user && user.id || "");
+    const currentPosts = Array.isArray(postsRef.current) ? postsRef.current : [];
+    const original = currentPosts.find(item => String(item.id) === targetId) || post;
+    const originalReposts = Array.isArray(original && original.reposts) ? original.reposts : [];
+    const wasReposted = !!(original && original.is_reposted_by_viewer) || originalReposts.some(id => String(id) === actorId) || !!(original && original.is_repost_event && String((original.reposted_by || {}).id) === actorId);
+    const desired = !wasReposted;
+    const operations = repostOperationsRef.current;
+    let operation = operations.get(targetId);
+    if (operation) operation.desired = desired;
+    else { operation = { desired, baselinePost: original, baselineReposted: wasReposted, promise: null }; operations.set(targetId, operation); }
+    const actor = { id: user && user.id, name: user && user.name, handle: user && user.handle, avatar_photo: user && user.avatar_photo, avatar_bg: user && user.avatar_bg, avatar_letter: user && user.avatar_letter };
+    const makeUpdated = (source, reposted, response) => {
+      const sourcePost = source || original;
+      const currentReposts = Array.isArray(sourcePost.reposts) ? sourcePost.reposts : [];
+      const nextReposts = currentReposts.filter(id => String(id) !== actorId);
+      if (reposted && actorId) nextReposts.push(user.id);
+      const serverCount = response && response.repost_count;
+      const updated = { ...sourcePost, reposts: nextReposts, repost_count: serverCount != null && Number.isFinite(Number(serverCount)) ? Number(serverCount) : nextReposts.length, is_reposted_by_viewer: reposted };
+      if (reposted) {
+        const repost = response && response.repost || {};
+        updated.repost_of = targetId;
+        updated.is_repost_event = true;
+        updated.repost_user_name = sourcePost.user_name;
+        updated.repost_user_handle = sourcePost.user_handle;
+        updated.reposted_by = { ...actor, id: repost.user_id || actor.id, name: repost.user_name || actor.name, handle: repost.user_handle || actor.handle, avatar_photo: repost.avatar_photo || actor.avatar_photo, avatar_bg: repost.avatar_bg || actor.avatar_bg, avatar_letter: repost.avatar_letter || actor.avatar_letter };
+        updated.original_created_at = sourcePost.original_created_at || sourcePost.created_at;
+        updated.created_at = repost.created_at || new Date().toISOString();
+        updated.feed_event_id = (isReel ? "reel-repost:" : "post-repost:") + (repost.id || (targetId + ":" + actorId));
+      } else if (sourcePost.is_repost_event && String((sourcePost.reposted_by || {}).id) === actorId) {
+        updated.repost_of = null;
+        updated.is_repost_event = false;
+        updated.reposted_by = null;
+        updated.repost_user_name = null;
+        updated.repost_user_handle = null;
+        updated.feed_event_id = targetId;
+      }
+      return updated;
+    };
+    const applyUpdated = (updated, reposted) => {
+      const previous = Array.isArray(postsRef.current) ? postsRef.current : [];
+      const next = reposted ? [updated, ...previous.filter(item => String(item.id) !== targetId && String(item.feed_event_id || "") !== String(updated.feed_event_id || ""))] : previous.map(item => String(item.id) === targetId ? updated : item);
+      postsRef.current = next;
+      setPosts(next);
+      dispatchPostUpdate(targetId, { reposts: updated.reposts, repost_count: updated.repost_count, is_reposted_by_viewer: updated.is_reposted_by_viewer, is_repost_event: updated.is_repost_event, repost_of: updated.repost_of, reposted_by: updated.reposted_by, repost_user_name: updated.repost_user_name, repost_user_handle: updated.repost_user_handle, original_created_at: updated.original_created_at, created_at: updated.created_at, feed_event_id: updated.feed_event_id });
+    };
+    applyUpdated(makeUpdated(original, desired, null), desired);
+    if (operation.promise) return operation.promise;
+    operation.promise = (async () => {
+      while (true) {
+        const requested = operation.desired;
+        const endpoint = (isReel ? "/reels/" : "/posts/") + encodeURIComponent(targetId) + "/repost?desired=" + (requested ? "true" : "false");
         try {
-          const endpoint = (isReel ? "/reels/" : "/posts/") + targetId + "/repost";
-          const res = await api(endpoint, "POST", null, token);
-          const didRepost = !!(res && res.reposted);
-          const original = (postsRef.current || []).find(item => String(item.id) === String(targetId)) || post;
-          const currentReposts = Array.isArray(original.reposts) ? original.reposts : [];
-          const alreadyReposted = currentReposts.some(id => String(id) === String(user && user.id));
-          const nextReposts = didRepost ? (alreadyReposted ? currentReposts : currentReposts.concat(user && user.id)) : currentReposts.filter(id => String(id) !== String(user && user.id));
-          const actor = { id: user && user.id, name: user && user.name, handle: user && user.handle, avatar_photo: user && user.avatar_photo, avatar_bg: user && user.avatar_bg, avatar_letter: user && user.avatar_letter };
-          const updated = { ...original, reposts: nextReposts, repost_count: Number.isFinite(Number(res && res.repost_count)) ? Number(res.repost_count) : nextReposts.length, is_reposted_by_viewer: didRepost };
-          if (didRepost) {
-            updated.repost_of = targetId;
-            updated.is_repost_event = true;
-            updated.repost_user_name = original.user_name;
-            updated.repost_user_handle = original.user_handle;
-            updated.reposted_by = { ...actor, id: (res.repost && res.repost.user_id) || actor.id, name: (res.repost && res.repost.user_name) || actor.name, handle: (res.repost && res.repost.user_handle) || actor.handle, avatar_photo: (res.repost && res.repost.avatar_photo) || actor.avatar_photo, avatar_bg: (res.repost && res.repost.avatar_bg) || actor.avatar_bg, avatar_letter: (res.repost && res.repost.avatar_letter) || actor.avatar_letter }; 
-            updated.original_created_at = original.original_created_at || original.created_at;
-            updated.created_at = (res.repost && res.repost.created_at) || new Date().toISOString();
-            updated.feed_event_id = (isReel ? "reel-repost:" : "post-repost:") + ((res.repost && res.repost.id) || (targetId + ":" + (user && user.id)));
-          } else if (original.is_repost_event && String(original.reposted_by && original.reposted_by.id) === String(user && user.id)) {
-            updated.repost_of = null;
-            updated.is_repost_event = false;
-            updated.reposted_by = null;
-            updated.repost_user_name = null;
-            updated.repost_user_handle = null;
-            updated.feed_event_id = String(targetId);
-          }
-          setPosts(prev => didRepost ? [updated, ...prev.filter(item => String(item.id) !== String(targetId))] : prev.map(item => String(item.id) === String(targetId) ? updated : item));
-          dispatchPostUpdate(targetId, { reposts: nextReposts, repost_count: updated.repost_count, is_reposted_by_viewer: didRepost, is_repost_event: updated.is_repost_event, repost_of: updated.repost_of, reposted_by: updated.reposted_by, repost_user_name: updated.repost_user_name, repost_user_handle: updated.repost_user_handle, original_created_at: updated.original_created_at, created_at: updated.created_at, feed_event_id: updated.feed_event_id });
-          showToast(didRepost ? "Reposted! ↻" : "Repost removed", didRepost ? COLORS.green : "#999");
-          return true;
-        } catch (e) { showToast(e.message, COLORS.red); return false; }
-      };
+          const response = await api(endpoint, "POST", null, token, 8000);
+          if (operation.desired !== requested) continue;
+          const confirmed = !!(response && response.reposted);
+          const current = (postsRef.current || []).find(item => String(item.id) === targetId) || operation.baselinePost;
+          applyUpdated(makeUpdated(current, confirmed, response), confirmed);
+          showToast(confirmed ? "Reposted! ↻" : "Repost removed", confirmed ? COLORS.green : "#999");
+          return { ok: true, reposted: confirmed };
+        } catch (error) {
+          if (operation.desired !== requested) continue;
+          const baseline = { ...(operation.baselinePost || original), is_reposted_by_viewer: operation.baselineReposted };
+          applyUpdated(baseline, operation.baselineReposted);
+          showToast(error.message || "Could not repost", COLORS.red);
+          return { ok: false, reposted: operation.baselineReposted };
+        }
+      }
+    })().finally(() => { if (operations.get(targetId) === operation) operations.delete(targetId); });
+    return operation.promise;
+  };
 
   const handleShare = pid => {};
   const handleMention = (pid, handle) => {
@@ -7723,7 +7765,7 @@ function BentoPostCard({
   const [badgeReason, setBadgeReason] = React.useState("");
   const [badgeSent, setBadgeSent] = React.useState(false);
   const [showVerifiedInfo, setShowVerifiedInfo] = React.useState(false);
-  const [isReposted, setIsReposted] = React.useState(!!(post.reposts || []).includes(user.id));
+  const [isReposted, setIsReposted] = React.useState(!!(post.is_reposted_by_viewer || (post.reposts || []).some(id => String(id) === String(user && user.id))));
   const [showRepostSheet, setShowRepostSheet] = React.useState(false);
   const [showTagFriendSheet, setShowTagFriendSheet] = React.useState(false);
   const [tagFriendList, setTagFriendList] = React.useState([]);
@@ -7732,6 +7774,10 @@ function BentoPostCard({
   const [showRepostedBanner, setShowRepostedBanner] = React.useState(false);
   const [repostedBannerFriend, setRepostedBannerFriend] = React.useState(null);
   const [mentionReposted, setMentionReposted] = React.useState(false);
+  React.useEffect(() => {
+    const syncedReposted = !!(post && (post.is_reposted_by_viewer || (post.reposts || []).some(id => String(id) === String(user && user.id))));
+    setIsReposted(syncedReposted);
+  }, [post.id, post.reposts, post.is_reposted_by_viewer, user && user.id]);
   const [altExpanded, setAltExpanded] = React.useState(false);
   const [reelCaptionExpanded, setReelCaptionExpanded] = React.useState(false);
   const [commentLoading, setCommentLoading] = React.useState(false);
@@ -7817,7 +7863,7 @@ function BentoPostCard({
     onLike(post.id, likeColor ? null : "#FF3B5C");
   };
   const handleSaveClick = () => { setIsSaved(s => !s); onSave && onSave(post.id); };
-  const handleRepostClick = async () => { if (!onRepost) return; const previous = isReposted; setIsReposted(!previous); const result = await onRepost(post); if (result === false) setIsReposted(previous); };
+  const handleRepostClick = async () => { if (!onRepost) return; const previous = isReposted; setIsReposted(!previous); const result = await onRepost(post); if (result && typeof result === "object" && typeof result.reposted === "boolean") setIsReposted(result.reposted || mentionReposted); else if (result === false) setIsReposted(previous); };
   const handleRepostSheetOpen = () => { setShowRepostSheet(true); };
   const handleTagFriendOpen = async () => {
     setShowRepostSheet(false);
