@@ -6712,7 +6712,7 @@ function HomeTab({
             updated.is_repost_event = true;
             updated.repost_user_name = original.user_name;
             updated.repost_user_handle = original.user_handle;
-            updated.reposted_by = res.repost || actor;
+            updated.reposted_by = { ...actor, id: (res.repost && res.repost.user_id) || actor.id, name: (res.repost && res.repost.user_name) || actor.name, handle: (res.repost && res.repost.user_handle) || actor.handle, avatar_photo: (res.repost && res.repost.avatar_photo) || actor.avatar_photo, avatar_bg: (res.repost && res.repost.avatar_bg) || actor.avatar_bg, avatar_letter: (res.repost && res.repost.avatar_letter) || actor.avatar_letter }; 
             updated.original_created_at = original.original_created_at || original.created_at;
             updated.created_at = (res.repost && res.repost.created_at) || new Date().toISOString();
             updated.feed_event_id = (isReel ? "reel-repost:" : "post-repost:") + ((res.repost && res.repost.id) || (targetId + ":" + (user && user.id)));
