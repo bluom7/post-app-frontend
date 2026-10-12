@@ -252,7 +252,13 @@ function applyProfileArticles(html) {if(html.includes("function ArticlePostDetai
         renderContent(visibleText, handle => onTagInPost && onTagInPost(handle), tag => {}),
         hasMore && onOpenPost && React.createElement("span", { onClick: event => { event.stopPropagation(); onOpenPost(post); }, style: { color: COLORS.blue, fontWeight: 700, whiteSpace: "nowrap", marginLeft: 4, cursor: "pointer" } }, "More")
       );
-    })(),`;html=replaceUnique(html,oldContent,newContent,"60-word article preview");const oldLike='api(`/posts/${post.id}/comments/${cid}/like`, "POST", {}, token).catch(() => {});';const newLike='api(`/posts/${post.id}/comments/${cid}/like`, "POST", {}, token)\n      .then(data => { if (data && Array.isArray(data.likes)) setLocalComments(prev => (prev || []).map(c => c.id === cid ? { ...c, likes: data.likes } : c)); })\n      .catch(() => {});';html=replaceUnique(html,oldLike,newLike,"persist comment likes");const oldDelete='api(`/posts/${post.id}/comments/${cid}`, "DELETE", null, token)\n      .then(() => setLocalComments(prev => (prev || []).filter(c => c.id !== cid)))\n      .catch(() => {});';const newDelete='api(`/posts/${post.id}/comments/${cid}`, "DELETE", null, token)\n      .then(() => { setLocalComments(prev => (prev || []).filter(c => c.id !== cid)); onComment && onComment(post.id, ""); })\n      .catch(() => {});';html=replaceUnique(html,oldDelete,newDelete,"refresh deleted comment count");const oldSheetRoot=`    showComments && React.createElement("div", {
+    })(),`;html=replaceUnique(html,oldContent,newContent,"60-word article preview");
+  const oldArticleCommentHeader = "React.createElement(\"div\", { style: { display: \"flex\", alignItems: \"center\", justifyContent: \"space-between\", padding: \"2px 16px 10px\", borderBottom: \"1px solid var(--border)\" } },\n          React.createElement(\"span\", { style: { fontWeight: 800, fontSize: 15, color: \"var(--text)\" } }, \"Comments\")),";
+  const newArticleCommentHeader = "React.createElement(\"div\", { style: { display: \"flex\", alignItems: \"center\", justifyContent: \"space-between\", padding: inlineComments ? \"8px 16px 10px\" : \"2px 16px 10px\", borderBottom: inlineComments ? \"none\" : \"1px solid var(--border)\" } },\n          inlineComments\n            ? React.createElement(\"div\", { style: { display: \"inline-flex\", alignItems: \"center\", gap: 6 } },\n                React.createElement(\"span\", { style: { fontWeight: 800, fontSize: 15, color: \"var(--text)\" } }, \"Comments\"),\n                React.createElement(\"svg\", { width: 17, height: 17, viewBox: \"0 0 24 24\", fill: \"none\", stroke: \"currentColor\", strokeWidth: 2.2, strokeLinecap: \"round\", strokeLinejoin: \"round\", \"aria-hidden\": \"true\" }, React.createElement(\"polyline\", { points: \"6 9 12 15 18 9\" })))\n            : React.createElement(\"span\", { style: { fontWeight: 800, fontSize: 15, color: \"var(--text)\" } }, \"Comments\")),";
+  html = replaceUnique(html, oldArticleCommentHeader, newArticleCommentHeader, "inline article comments header");
+  const oldArticleCommentList = "// comment list\n        React.createElement(\"div\", { style: { flex: 1, overflowY: \"auto\", padding: \"6px 14px\" } },";
+  const newArticleCommentList = "// comment list\n        React.createElement(\"div\", { className: inlineComments ? \"no-scrollbar\" : undefined, style: { flex: 1, overflowY: \"auto\", padding: \"6px 14px\" } },";
+  html = replaceUnique(html, oldArticleCommentList, newArticleCommentList, "inline article comments scrollbar");const oldLike='api(`/posts/${post.id}/comments/${cid}/like`, "POST", {}, token).catch(() => {});';const newLike='api(`/posts/${post.id}/comments/${cid}/like`, "POST", {}, token)\n      .then(data => { if (data && Array.isArray(data.likes)) setLocalComments(prev => (prev || []).map(c => c.id === cid ? { ...c, likes: data.likes } : c)); })\n      .catch(() => {});';html=replaceUnique(html,oldLike,newLike,"persist comment likes");const oldDelete='api(`/posts/${post.id}/comments/${cid}`, "DELETE", null, token)\n      .then(() => setLocalComments(prev => (prev || []).filter(c => c.id !== cid)))\n      .catch(() => {});';const newDelete='api(`/posts/${post.id}/comments/${cid}`, "DELETE", null, token)\n      .then(() => { setLocalComments(prev => (prev || []).filter(c => c.id !== cid)); onComment && onComment(post.id, ""); })\n      .catch(() => {});';html=replaceUnique(html,oldDelete,newDelete,"refresh deleted comment count");const oldSheetRoot=`    showComments && React.createElement("div", {
       style: { position: "fixed", inset: 0, zIndex: 500 },
       onClick: e => { if (e.target === e.currentTarget) closeCommentSheet(); }
     },
@@ -271,6 +277,7 @@ html = html.slice(0, dragHandleAt) + 'style: { display: inlineComments ? "none" 
     role: "dialog",
     "aria-modal": "true",
     "aria-label": "Post",
+    className: "no-scrollbar",
     style: { position: "fixed", inset: 0, zIndex: 12000, background: "var(--bg)", display: "flex", flexDirection: "column" }
   },
     React.createElement("div", { style: { flexShrink: 0, display: "flex", alignItems: "center", gap: 14, minHeight: 54, padding: "env(safe-area-inset-top) 14px 0", background: "var(--bg)", borderBottom: "1px solid var(--border)" } },
@@ -281,7 +288,7 @@ html = html.slice(0, dragHandleAt) + 'style: { display: inlineComments ? "none" 
       ),
       React.createElement("div", { style: { fontSize: 18, fontWeight: 800, color: "var(--text)" } }, "Post")
     ),
-    React.createElement("div", { style: { flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", paddingBottom: "env(safe-area-inset-bottom)" } },
+    React.createElement("div", { className: "no-scrollbar", style: { flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", paddingBottom: "env(safe-area-inset-bottom)" } },
       React.createElement(BentoPostCard, {
         key: String(post.id) + "-article-detail", post, user, token, showToast, isLarge: true, inlineComments: true,
         onLike, onDelete, onComment, onSave, onRepost, onShare, onMention, onViewProfile, onViewAccountInfo
