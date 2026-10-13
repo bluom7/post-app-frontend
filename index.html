@@ -6713,6 +6713,12 @@ function HomeTab({
     if (operation) operation.desired = desired;
     else { operation = { desired, baselinePost: original, baselineReposted: wasReposted, promise: null }; operations.set(targetId, operation); }
     const actor = { id: user && user.id, name: user && user.name, handle: user && user.handle, avatar_photo: user && user.avatar_photo, avatar_bg: user && user.avatar_bg, avatar_letter: user && user.avatar_letter };
+    const invalidateRepostCaches = () => {
+      invalidateCache("/posts");
+      invalidateCache("/reels/feed");
+      try { if (user && user.id) localStorage.removeItem("feed_cache_" + user.id); } catch (_) {}
+    };
+
     const makeUpdated = (source, reposted, response) => {
       const sourcePost = source || original;
       const currentReposts = Array.isArray(sourcePost.reposts) ? sourcePost.reposts : [];
@@ -6742,7 +6748,7 @@ function HomeTab({
     };
     const applyUpdated = (updated, reposted) => {
       const previous = Array.isArray(postsRef.current) ? postsRef.current : [];
-      const next = reposted ? [updated, ...previous.filter(item => String(item.id) !== targetId && String(item.feed_event_id || "") !== String(updated.feed_event_id || ""))] : previous.map(item => String(item.id) === targetId ? updated : item);
+      const next = previous.map(item => String(item.id) === targetId ? updated : item);
       postsRef.current = next;
       setPosts(next);
       dispatchPostUpdate(targetId, { reposts: updated.reposts, repost_count: updated.repost_count, is_reposted_by_viewer: updated.is_reposted_by_viewer, is_repost_event: updated.is_repost_event, repost_of: updated.repost_of, reposted_by: updated.reposted_by, repost_user_name: updated.repost_user_name, repost_user_handle: updated.repost_user_handle, original_created_at: updated.original_created_at, created_at: updated.created_at, feed_event_id: updated.feed_event_id });
@@ -6756,6 +6762,7 @@ function HomeTab({
         try {
           const response = await api(endpoint, "POST", null, token, 8000);
           if (operation.desired !== requested) continue;
+          invalidateRepostCaches();
           const confirmed = !!(response && response.reposted);
           const current = (postsRef.current || []).find(item => String(item.id) === targetId) || operation.baselinePost;
           applyUpdated(makeUpdated(current, confirmed, response), confirmed);
@@ -6763,6 +6770,7 @@ function HomeTab({
           return { ok: true, reposted: confirmed };
         } catch (error) {
           if (operation.desired !== requested) continue;
+          invalidateRepostCaches();
           const baseline = { ...(operation.baselinePost || original), is_reposted_by_viewer: operation.baselineReposted };
           applyUpdated(baseline, operation.baselineReposted);
           showToast(error.message || "Could not repost", COLORS.red);
@@ -7766,6 +7774,7 @@ function BentoPostCard({
   const [badgeSent, setBadgeSent] = React.useState(false);
   const [showVerifiedInfo, setShowVerifiedInfo] = React.useState(false);
   const [isReposted, setIsReposted] = React.useState(!!(post.is_reposted_by_viewer || (post.reposts || []).some(id => String(id) === String(user && user.id))));
+  const repostStateRef = React.useRef(!!(post.is_reposted_by_viewer || (post.reposts || []).some(id => String(id) === String(user && user.id))));
   const [showRepostSheet, setShowRepostSheet] = React.useState(false);
   const [showTagFriendSheet, setShowTagFriendSheet] = React.useState(false);
   const [tagFriendList, setTagFriendList] = React.useState([]);
@@ -7774,10 +7783,21 @@ function BentoPostCard({
   const [showRepostedBanner, setShowRepostedBanner] = React.useState(false);
   const [repostedBannerFriend, setRepostedBannerFriend] = React.useState(null);
   const [mentionReposted, setMentionReposted] = React.useState(false);
+  const [repostSpinKey, setRepostSpinKey] = React.useState(0);
+  const [repostTickVisible, setRepostTickVisible] = React.useState(!!(post.is_reposted_by_viewer || (post.reposts || []).some(id => String(id) === String(user && user.id))));
+  const repostSpinRef = React.useRef(0);
+  const repostAnimationTimerRef = React.useRef(null);
+  const repostPendingRef = React.useRef(null);
   React.useEffect(() => {
+    if (repostPendingRef.current) return;
     const syncedReposted = !!(post && (post.is_reposted_by_viewer || (post.reposts || []).some(id => String(id) === String(user && user.id))));
+    repostStateRef.current = syncedReposted;
     setIsReposted(syncedReposted);
+    setRepostTickVisible(syncedReposted);
   }, [post.id, post.reposts, post.is_reposted_by_viewer, user && user.id]);
+  React.useEffect(() => () => {
+    if (repostAnimationTimerRef.current) clearTimeout(repostAnimationTimerRef.current);
+  }, []);
   const [altExpanded, setAltExpanded] = React.useState(false);
   const [reelCaptionExpanded, setReelCaptionExpanded] = React.useState(false);
   const [commentLoading, setCommentLoading] = React.useState(false);
@@ -7863,7 +7883,54 @@ function BentoPostCard({
     onLike(post.id, likeColor ? null : "#FF3B5C");
   };
   const handleSaveClick = () => { setIsSaved(s => !s); onSave && onSave(post.id); };
-  const handleRepostClick = async () => { if (!onRepost) return; const previous = isReposted; setIsReposted(!previous); const result = await onRepost(post); if (result && typeof result === "object" && typeof result.reposted === "boolean") setIsReposted(result.reposted || mentionReposted); else if (result === false) setIsReposted(previous); };
+  const finishRepostAnimation = pending => {
+    if (!pending || repostPendingRef.current !== pending || !pending.animationDone || !pending.responseReady) return;
+    const finalReposted = pending.failed ? pending.previous : !!pending.reposted;
+    repostStateRef.current = finalReposted;
+    setIsReposted(finalReposted);
+    setRepostTickVisible(finalReposted);
+    repostPendingRef.current = null;
+    if (repostAnimationTimerRef.current) {
+      clearTimeout(repostAnimationTimerRef.current);
+      repostAnimationTimerRef.current = null;
+    }
+  };
+  const markRepostAnimationDone = spinKey => {
+    const pending = repostPendingRef.current;
+    if (!pending || pending.spinKey !== spinKey || pending.animationDone) return;
+    pending.animationDone = true;
+    finishRepostAnimation(pending);
+  };
+  const handleRepostClick = async () => {
+    if (!onRepost) return;
+    const previous = repostStateRef.current;
+    const desired = !previous;
+    const spinKey = ++repostSpinRef.current;
+    const pending = { spinKey, previous, reposted: desired, animationDone: false, responseReady: false, failed: false };
+    repostPendingRef.current = pending;
+    repostStateRef.current = desired;
+    setIsReposted(desired);
+    setRepostTickVisible(false);
+    setRepostSpinKey(spinKey);
+    if (repostAnimationTimerRef.current) clearTimeout(repostAnimationTimerRef.current);
+    repostAnimationTimerRef.current = setTimeout(() => markRepostAnimationDone(spinKey), 650);
+    try {
+      const result = await onRepost(post);
+      if (repostPendingRef.current !== pending) return result;
+      pending.responseReady = true;
+      pending.failed = result === false || !!(result && typeof result === "object" && result.ok === false);
+      if (result && typeof result === "object" && typeof result.reposted === "boolean") pending.reposted = result.reposted;
+      finishRepostAnimation(pending);
+      return result;
+    } catch (error) {
+      if (repostPendingRef.current === pending) {
+        pending.responseReady = true;
+        pending.failed = true;
+        finishRepostAnimation(pending);
+      }
+      return false;
+    }
+  };
   const handleRepostSheetOpen = () => { setShowRepostSheet(true); };
   const handleTagFriendOpen = async () => {
     setShowRepostSheet(false);
@@ -8297,13 +8364,14 @@ function BentoPostCard({
       ),
       // Repost / Tag-a-friend (always visible)
       React.createElement("button", { onClick: handleRepostClick, style: actionBtnStyle((isReposted || mentionReposted) ? COLORS.green : "var(--muted)") },
-        React.createElement("svg", { width: 26, height: 26, viewBox: "105 48 175 225", xmlns: "http://www.w3.org/2000/svg", style: { display: "block", width: actionIconSize, height: actionIconSize, flexShrink: 0, overflow: "hidden", WebkitTapHighlightColor: "transparent", outline: "none" } },
+        React.createElement("svg", { width: 26, height: 26, viewBox: "105 48 175 225", xmlns: "http://www.w3.org/2000/svg", onTransitionEnd: () => markRepostAnimationDone(repostSpinKey), style: { display: "block", width: actionIconSize, height: actionIconSize, flexShrink: 0, overflow: "hidden", WebkitTapHighlightColor: "transparent", outline: "none", transition: "transform 0.6s ease-in-out", transform: "rotate(" + (repostSpinKey * 180) + "deg)", transformOrigin: "50% 50%" } },
           React.createElement("g", { fill: "none", stroke: (isReposted || mentionReposted) ? COLORS.green : "#000", strokeWidth: "18.3", strokeLinecap: "round", strokeLinejoin: "round" },
             React.createElement("path", { d: "M112 180 V145 C112 112 140 88 174 88 H242" }),
             React.createElement("path", { d: "M210 55 L245 88" }),
             React.createElement("path", { d: "M268 140 V175 C268 208 240 232 206 232 H138" }),
             React.createElement("path", { d: "M170 265 L135 232" })
-          )
+          ),
+          repostTickVisible && React.createElement("path", { d: "M160 160 L178 178 L220 136", transform: "rotate(" + ((repostSpinKey % 2) * 180) + " 190 157)", fill: "none", stroke: "#fff", strokeWidth: "14", strokeLinecap: "round", strokeLinejoin: "round", style: { filter: "drop-shadow(0 1px 1px " + COLORS.green + ")" } })
         ),
         React.createElement("span", { style: actionCountStyle }, repostCountText)
       ),
