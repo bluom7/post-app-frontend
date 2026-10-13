@@ -15070,11 +15070,13 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
     }
   })), /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: "0 16px 32px"
+      padding: "0 16px"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
+      position: "relative",
+      zIndex: 2,
       justifyContent: "space-between",
       alignItems: "flex-end",
       marginTop: -21,
@@ -15082,6 +15084,8 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
+      position: "relative",
+      zIndex: 2,
       width: 80,
       height: 80,
       borderRadius: "50%",
@@ -15090,7 +15094,7 @@ function AccountInfoScreen({ userId, initialProfile, token, onClose }) {
       alignItems: "center",
       justifyContent: "center",
       fontWeight: 900,
-      fontSize: 30,
+      fontSize: 36,
       overflow: "hidden",
       border: "4px solid " + (normalizeColor(profile.avatar_bg) || COLORS.yellow),
       boxShadow: "0 2px 16px rgba(0,0,0,0.22)"
