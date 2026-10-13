@@ -7733,8 +7733,8 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay }) {
     }
   };
 
-  // Aspect ratio: prefer stored value (no layout jump), fall back to dynamic after metadata loads
-  const ar = (reelNatW && reelNatH) ? reelNatW / reelNatH : (post.aspect_ratio || null);
+  // Use decoded video dimensions for every reel, including older posts with stale stored ratios.
+  const ar = (reelNatW && reelNatH) ? reelNatW / reelNatH : null;
 
   return React.createElement("div", {
     ref: containerRef,
