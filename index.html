@@ -7693,8 +7693,6 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay }) {
   const [playing, setPlaying] = React.useState(false);
   const [soundOn, setSoundOn] = React.useState(false);
   const soundOnRef = React.useRef(false);
-  const [reelNatW, setReelNatW] = React.useState(0);
-  const [reelNatH, setReelNatH] = React.useState(0);
 
   React.useEffect(() => {
     const el = videoRef.current;
@@ -7733,9 +7731,6 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay }) {
     }
   };
 
-  // Use decoded video dimensions for every reel, including older posts with stale stored ratios.
-  const ar = (reelNatW && reelNatH) ? reelNatW / reelNatH : null;
-
   return React.createElement("div", {
     ref: containerRef,
     onClick: togglePlayback,
@@ -7747,10 +7742,9 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay }) {
       overflow: "hidden",
       WebkitTapHighlightColor: "transparent",
       width: "100%",
-      // aspectRatio sizes container to EXACTLY the video's natural dimensions.
-      // Preserve the complete source frame even if stored and decoded ratios differ.
-      aspectRatio: ar ? String(ar) : undefined,
-      minHeight: !ar ? 200 : undefined,
+      // Match the portrait stage used by the Reels viewer. Contain keeps
+      // landscape and square clips fully visible inside the 9:16 frame.
+      aspectRatio: "9 / 16",
     }
   },
     topOverlay,
@@ -7760,13 +7754,11 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay }) {
       muted: !soundOn,
       loop: true,
       playsInline: true,
-      onLoadedMetadata: function(e){setReelNatW(e.target.videoWidth);setReelNatH(e.target.videoHeight);},
+      preload: "metadata",
       style: {
         width: "100%",
-        // height:100% fills the aspect-ratio container exactly when ar is known.
-        // height:auto for the no-ar fallback (video sizes itself naturally).
-        // contain keeps the full video visible; any unused space stays black.
-        height: ar ? "100%" : "auto",
+        // Fill the fixed portrait stage; contain preserves the entire source frame.
+        height: "100%",
         display: "block",
         objectFit: "contain",
         objectPosition: "center center",
