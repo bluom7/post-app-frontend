@@ -9049,254 +9049,61 @@ function ArticlePostDetailScreen({ post, user, token, showToast, onClose, onLike
     )
   );
 }
-function PhotoLightbox({ photos, startIdx, onClose, post, user, onLike, onComment, onSave, onRepost, onShare, onFollow, followingIds, pendingFollowIds, onViewProfile }) {
-  const [idx, setIdx] = React.useState(startIdx || 0);
-  const [touchStart, setTouchStart] = React.useState(null);
-  const [commentText, setCommentText] = React.useState('');
-  const [showCommentInput, setShowCommentInput] = React.useState(false);
-  const [heartPop, setHeartPop] = React.useState(false);
-  const goNext = () => setIdx(i => Math.min(i + 1, photos.length - 1));
-  const goPrev = () => setIdx(i => Math.max(i - 1, 0));
-  React.useEffect(() => {
-    const handler = e => { if (e.key === 'Escape') onClose(); if (e.key === 'ArrowRight') goNext(); if (e.key === 'ArrowLeft') goPrev(); };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
-
-  const myLike = post ? (post.likes || []).find(l => l.user_id === user?.id) : null;
-  const likeColor = myLike ? (myLike.color || '#FF3B5C') : null;
-  const isSaved = post ? (post.saves || []).includes(user?.id) : false;
-  const isReposted = post ? (post.reposts || []).includes(user?.id) : false;
-  const isFollowing = followingIds ? followingIds.has(post?.user_id) : false;
-  const isPending = pendingFollowIds ? pendingFollowIds.has(post?.user_id) : false;
-  const isOwn = post?.user_id === user?.id;
-  const fmtC = n => !n ? '' : n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/,'')+'K' : ''+n;
-
-  const handleLikeClick = () => {
-    if (!onLike || !post) return;
-    setHeartPop(true); setTimeout(() => setHeartPop(false), 300);
-    onLike(post.id, likeColor ? null : '#FF3B5C');
-  };
-
-  return React.createElement('div', {
-    style: { position:'fixed', inset:0, zIndex:9999, background:'var(--bg)', display:'flex', flexDirection:'column' },
-    onTouchStart: e => setTouchStart(e.touches[0].clientX),
-    onTouchEnd: e => { if (touchStart === null) return; const d = touchStart - e.changedTouches[0].clientX; if (d > 50) goNext(); else if (d < -50) goPrev(); setTouchStart(null); }
-  },
-    // ── TOP BAR ──────────────────────────────────────────────────
-    React.createElement('div', {
-      style: { display:'flex', alignItems:'center', padding:'12px 14px', gap:10, background:'#fff', flexShrink:0, borderBottom:'1px solid #f0f0f0' }
-    },
-      // Back arrow
-      React.createElement('button', {
-        onClick: onClose,
-        style: { background:'none', border:'none', color:'var(--text)', cursor:'pointer', display:'flex', alignItems:'center', padding:6, borderRadius:'50%', flexShrink:0 }
-      },
-        React.createElement('svg', { width:24, height:24, viewBox:'0 0 24 24', fill:'none', stroke:'var(--text)', strokeWidth:2.5, strokeLinecap:'round', strokeLinejoin:'round' },
-          React.createElement('polyline', { points:'15 18 9 12 15 6' })
-        )
-      ),
-      // Avatar
-      post && React.createElement('div', {
-        onClick: () => { onViewProfile && onViewProfile(post.user_id); onClose(); },
-        style: { width:40, height:40, borderRadius:'50%', background:post.avatar_bg||'#FFD600', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900, fontSize:16, flexShrink:0, overflow:'hidden', cursor:'pointer' }
-      }, post.avatar_photo ? React.createElement('img', { src:post.avatar_photo, style:{ width:'100%', height:'100%', objectFit:'cover' } }) : (post.avatar_letter || (post.user_name||'?')[0])),
-      // Name + handle
-      post && React.createElement('div', {
-        onClick: () => { onViewProfile && onViewProfile(post.user_id); onClose(); },
-        style: { flex:1, cursor:'pointer', minWidth:0 }
-      },
-        React.createElement('div', { style:{ color:'#111', fontWeight:700, fontSize:15, lineHeight:1.2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' } }, post.user_name||''),
-        React.createElement('div', { style:{ color:'#666', fontSize:13 } }, '@'+(post.user_handle||'').replace(/^@/,''))
-      ),
-      // Follow button (only if not own post and not already following)
-      post && !isOwn && !isFollowing && React.createElement('button', {
-        onClick: e => { e.stopPropagation(); onFollow && onFollow(post.user_id); },
-        style: { background: isPending ? 'transparent' : COLORS.blue, color: isPending ? COLORS.blue : '#fff', border: isPending ? '1.5px solid '+COLORS.blue : 'none', borderRadius:20, padding:'7px 18px', fontWeight:700, fontSize:14, cursor:'pointer', flexShrink:0 }
-      }, isPending ? 'Requested' : 'Follow'),
-      // Following badge
-      post && !isOwn && isFollowing && React.createElement('div', {
-        style: { color:'#888', fontSize:13, flexShrink:0 }
-      }, 'Following')
-    ),
-
-    // ── PHOTO ────────────────────────────────────────────────────
-    React.createElement('div', {
-      style: { flex:1, display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', position:'relative', background:'#fff' }
-    },
-      React.createElement('img', {
-        src: photos[idx],
-        style: { maxWidth:'min(1080px, 100%)', maxHeight:'min(1035px, 100%)', objectFit:'contain', userSelect:'none', pointerEvents:'none', display:'block' }
-      }),
-      photos.length > 1 && React.createElement('div', {
-        style: { position:'absolute', top:12, right:14, background:'rgba(0,0,0,0.55)', borderRadius:20, padding:'3px 12px', fontSize:13, fontWeight:700, color:'#fff' }
-      }, (idx+1)+' / '+photos.length),
-      photos.length > 1 && React.createElement('div', {
-        style: { position:'absolute', bottom:10, left:0, right:0, display:'flex', justifyContent:'center', gap:6 }
-      },
-        photos.map((_,i) => React.createElement('div', { key:i, style:{ width:i===idx?18:7, height:7, borderRadius:4, background:i===idx?'#fff':'rgba(255,255,255,0.35)', transition:'all 0.3s' } }))
-      )
-    ),
-
-    // ── COMMENT INPUT ────────────────────────────────────────────
-    showCommentInput && post && React.createElement('div', {
-      style: { background:'#fff', padding:'10px 14px', display:'flex', gap:8, alignItems:'center', flexShrink:0, borderTop:'1px solid #f0f0f0' }
-    },
-      React.createElement('div', { style:{ width:30, height:30, borderRadius:'50%', background:user?.avatar_bg||'#FFD600', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:12, flexShrink:0, overflow:'hidden' } },
-        user?.avatar_photo ? React.createElement('img',{src:user.avatar_photo,style:{width:'100%',height:'100%',objectFit:'cover'}}) : (user?.avatar_letter||(user?.name||'?')[0])
-      ),
-      React.createElement('input', {
-        value: commentText,
-        onChange: e => setCommentText(e.target.value),
-        placeholder: 'Post your reply',
-        autoFocus: true,
-        style: { flex:1, background:'#f5f5f5', border:'none', borderRadius:20, padding:'10px 16px', color:'#111', fontSize:14, outline:'none' },
-        onKeyDown: e => { if (e.key==='Enter' && commentText.trim()) { onComment && onComment(post.id, commentText); setCommentText(''); setShowCommentInput(false); } }
-      }),
-      commentText.trim() && React.createElement('button', {
-        onClick: () => { onComment && onComment(post.id, commentText); setCommentText(''); setShowCommentInput(false); },
-        style: { background:'#fff', color:'#000', border:'none', borderRadius:20, padding:'8px 18px', fontWeight:700, fontSize:14, cursor:'pointer', flexShrink:0 }
-      }, 'Post')
-    ),
-
-    // ── BOTTOM ACTION BAR ─────────────────────────────────────��──
-    post && React.createElement('div', {
-      style: { display:'flex', alignItems:'center', padding:'10px 10px 22px', background:'#fff', flexShrink:0, borderTop:'1px solid #f0f0f0' }
-    },
-      // Comment
-      post.comments_enabled !== false && React.createElement('button', {
-        onClick: () => setShowCommentInput(s => !s),
-        style: { background:'none', border:'none', color: showCommentInput ? '#0D9FF3' : '#555', cursor:'pointer', display:'flex', alignItems:'center', gap:5, padding:'6px 10px 6px 4px', fontSize:13 }
-      },
-        React.createElement('svg', { width:22, height:22, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' }, React.createElement('path', { d:'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' })),
-        React.createElement('span', null, fmtC(post.comments?.length)||'')
-      ),
-      // Repost
-      !post.is_reel && React.createElement('button', {
-        onClick: () => onRepost && onRepost(post),
-        style: { background:'none', border:'none', color: isReposted ? '#00ba7c' : '#555', cursor:'pointer', display:'flex', alignItems:'center', gap:5, padding:'6px 10px', fontSize:13 }
-      },
-        React.createElement('svg', { width:22, height:22, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' },
-          React.createElement('polyline',{points:'17 1 21 5 17 9'}), React.createElement('path',{d:'M3 11V9a4 4 0 0 1 4-4h14'}),
-          React.createElement('polyline',{points:'7 23 3 19 7 15'}), React.createElement('path',{d:'M21 13v2a4 4 0 0 1-4 4H3'})
-        ),
-        React.createElement('span', null, fmtC((post.reposts||[]).length)||'')
-      ),
-      // Like
-      React.createElement('button', {
-        onClick: handleLikeClick,
-        style: { background:'none', border:'none', color: likeColor||'#555', cursor:'pointer', display:'flex', alignItems:'center', gap:5, padding:'6px 10px', fontSize:13, transform: heartPop?'scale(1.3)':'scale(1)', transition:'transform 0.15s' }
-      },
-        React.createElement(HeartIcon, { color:likeColor, size:22 }),
-        React.createElement('span', null, fmtC(post.likes?.length)||'')
-      ),
-      // Views
-      React.createElement('button', {
-        style: { background:'none', border:'none', color:'#555', cursor:'default', display:'flex', alignItems:'center', gap:5, padding:'6px 10px', fontSize:13, pointerEvents:'none' }
-      },
-        React.createElement('svg', { width:20, height:20, viewBox:'0 0 24 24', fill:'#555' },
-          React.createElement('rect',{x:2,y:14,width:3,height:7}), React.createElement('rect',{x:7.5,y:4,width:3,height:17}),
-          React.createElement('rect',{x:13,y:14,width:3,height:7}), React.createElement('rect',{x:18.5,y:4,width:3,height:17})
-        ),
-        React.createElement('span', null, fmtC(post.views?.length || post.views_count || post.view_count)||'0')
-      ),
-      React.createElement('div', { style:{ flex:1 } }),
-      // Bookmark
-      React.createElement('button', {
-        onClick: () => onSave && onSave(post.id),
-        style: { background:'none', border:'none', color: isSaved ? '#FFD600' : '#555', cursor:'pointer', display:'flex', alignItems:'center', padding:'6px 10px', fontSize:13 }
-      },
-        React.createElement('svg', { width:22, height:22, viewBox:'0 0 24 24', fill: isSaved?'currentColor':'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' },
-          React.createElement('path',{d:'M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z'})
-        )
-      ),
-      // Share
-      React.createElement('button', {
-        onClick: async () => {
-          const key = 'post:' + post.id;
-          if (_shareBusy.has(key)) return;
-          _shareBusy.add(key);
-          try {
-            const outcome = await runShareSheet({ title: post.user_name || 'BluOm', text: post.content || '', url: buildShareUrl(post) });
-            if (outcome === 'cancelled' || outcome === 'failed' || outcome === 'copied') return; // copy never counts
-            if (onShare) await onShare(post.id); else await countShareOnServer(post, window.__postAppToken);
-          } finally { _shareBusy.delete(key); }
-        },
-        style: { background:'none', border:'none', color:'#555', cursor:'pointer', display:'flex', alignItems:'center', padding:'6px 4px 6px 10px', fontSize:13 }
-      },
-        React.createElement('svg', { width:22, height:22, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' },
-          React.createElement('line',{x1:22,y1:2,x2:11,y2:13}), React.createElement('polygon',{points:'22 2 15 22 11 13 2 9 22 2'})
-        )
-      )
-    )
-  );
-}
-
-
 function PhotoCarousel({photos, post, borderRadius, user, onLike, onComment, onSave, onRepost, onShare, onFollow, followingIds, pendingFollowIds, onViewProfile}) {
   const [idx, setIdx] = React.useState(0);
   const [touchStart, setTouchStart] = React.useState(null);
   const [natAR, setNatAR] = React.useState(null);
-  const [lightboxIdx, setLightboxIdx] = React.useState(null);
   if (!photos || photos.length === 0) return null;
   const r = borderRadius !== undefined ? borderRadius : 12;
-  const lbProps = { post, user, onLike, onComment, onSave, onRepost, onShare, onFollow, followingIds, pendingFollowIds, onViewProfile };
   // Single photo — preserve the image's complete natural ratio
   if (photos.length === 1) {
-    return /*#__PURE__*/React.createElement(React.Fragment, null,
-      lightboxIdx !== null && React.createElement(PhotoLightbox, { photos, startIdx: lightboxIdx, onClose: () => setLightboxIdx(null), ...lbProps }),
-      React.createElement('div', {
-        onClick: () => setLightboxIdx(0),
-        style:{
-          width:'100%', borderRadius:r, cursor:'pointer', overflow:'hidden', background:'var(--input-bg)',
-          // aspectRatio alone sizes container to photo's natural ratio — no black bars.
-          // Never add maxHeight alongside aspectRatio+width:100% (causes side/top bars).
-          aspectRatio: natAR ? String(natAR) : undefined,
-        }
-      }, React.createElement('img', {
-        src: photos[0],
-        onLoad: e => { if(e.target.naturalWidth&&e.target.naturalHeight) setNatAR(e.target.naturalWidth/e.target.naturalHeight); },
-        style:{ width:'100%', height: natAR ? '100%' : 'auto', objectFit:'contain', display:'block', borderRadius:r },
-        loading: 'lazy'
-      }))
-    );
+    return /*#__PURE__*/React.createElement('div', {
+      style:{
+        width:'100%', borderRadius:r, overflow:'hidden', background:'var(--input-bg)',
+        // aspectRatio alone sizes container to photo's natural ratio — no black bars.
+        // Never add maxHeight alongside aspectRatio+width:100% (causes side/top bars).
+        aspectRatio: natAR ? String(natAR) : undefined,
+      }
+    }, React.createElement('img', {
+      src: photos[0],
+      onLoad: e => { if(e.target.naturalWidth&&e.target.naturalHeight) setNatAR(e.target.naturalWidth/e.target.naturalHeight); },
+      style:{ width:'100%', height: natAR ? '100%' : 'auto', objectFit:'contain', display:'block', borderRadius:r },
+      loading: 'lazy'
+    }));
   }
-  // Multiple photos — use first image aspect ratio for consistent carousel height
+  // Multiple photos — keep the inline carousel and swipe navigation
   const goNext = () => { if (idx < photos.length - 1) setIdx(idx + 1); };
   const goPrev = () => { if (idx > 0) setIdx(idx - 1); };
-  return /*#__PURE__*/React.createElement(React.Fragment, null,
-    lightboxIdx !== null && React.createElement(PhotoLightbox, { photos, startIdx: lightboxIdx, onClose: () => setLightboxIdx(null), ...lbProps }),
+  return /*#__PURE__*/React.createElement('div', {
+    style:{ position:'relative', overflow:'hidden', borderRadius:r, userSelect:'none', touchAction:'pan-y', width:'100%',
+      // aspectRatio alone — no maxHeight alongside it (causes black bars on wide screens).
+      aspectRatio: natAR ? String(natAR) : '4/3', background:'var(--input-bg)' },
+    onTouchStart: e => setTouchStart(e.touches[0].clientX),
+    onTouchEnd: e => { if (touchStart === null) return; const d = touchStart - e.changedTouches[0].clientX; if (Math.abs(d) > 40) { d > 0 ? goNext() : goPrev(); } setTouchStart(null); }
+  },
     React.createElement('div', {
-      style:{ position:'relative', overflow:'hidden', borderRadius:r, userSelect:'none', touchAction:'pan-y', width:'100%',
-        // aspectRatio alone — no maxHeight alongside it (causes black bars on wide screens).
-        aspectRatio: natAR ? String(natAR) : '4/3', background:'var(--input-bg)', cursor:'pointer' },
-      onClick: () => setLightboxIdx(idx),
-      onTouchStart: e => setTouchStart(e.touches[0].clientX),
-      onTouchEnd: e => { if (touchStart === null) return; const d = touchStart - e.changedTouches[0].clientX; if (Math.abs(d) > 40) { d > 0 ? goNext() : goPrev(); } else { setLightboxIdx(idx); } setTouchStart(null); }
+      style:{ display:'flex', transform:'translateX(-'+(idx*100)+'%)', transition:'transform 0.3s cubic-bezier(0.4,0,0.2,1)', willChange:'transform', width:'100%', height:'100%' }
     },
-      React.createElement('div', {
-        style:{ display:'flex', transform:'translateX(-'+(idx*100)+'%)', transition:'transform 0.3s cubic-bezier(0.4,0,0.2,1)', willChange:'transform', width:'100%', height:'100%' }
-      },
-        photos.map((src, i) => React.createElement('img', {
-          key:i, src,
-          onLoad: i===0 ? (e=>{if(e.target.naturalWidth&&e.target.naturalHeight)setNatAR(e.target.naturalWidth/e.target.naturalHeight);}) : undefined,
-          style:{ minWidth:'100%', width:'100%', height:'100%', objectFit:'contain', display:'block', flexShrink:0, background:'var(--input-bg)' }
-        }))
-      ),
-      React.createElement('div', {
-        style:{ position:'absolute', top:10, right:10, background:'rgba(0,0,0,0.50)', color:'#fff', borderRadius:20, padding:'3px 10px', fontSize:12, fontWeight:700, pointerEvents:'none' }
-      }, (idx+1)+'/'+photos.length),
-      React.createElement('div', {
-        style:{ position:'absolute', bottom:10, left:0, right:0, display:'flex', justifyContent:'center', gap:5, pointerEvents:'none' }
-      },
-        photos.map((_,i) => React.createElement('div', {
-          key:i,
-          style:{ width:i===idx?16:6, height:6, borderRadius:3, background:i===idx?'#fff':'rgba(255,255,255,0.5)', transition:'all 0.3s' }
-        }))
-      )
+      photos.map((src, i) => React.createElement('img', {
+        key:i, src,
+        onLoad: i===0 ? (e=>{if(e.target.naturalWidth&&e.target.naturalHeight)setNatAR(e.target.naturalWidth/e.target.naturalHeight);}) : undefined,
+        style:{ minWidth:'100%', width:'100%', height:'100%', objectFit:'contain', display:'block', flexShrink:0, background:'var(--input-bg)' }
+      }))
+    ),
+    React.createElement('div', {
+      style:{ position:'absolute', top:10, right:10, background:'rgba(0,0,0,0.50)', color:'#fff', borderRadius:20, padding:'3px 10px', fontSize:12, fontWeight:700, pointerEvents:'none' }
+    }, (idx+1)+'/'+photos.length),
+    React.createElement('div', {
+      style:{ position:'absolute', bottom:10, left:0, right:0, display:'flex', justifyContent:'center', gap:5, pointerEvents:'none' }
+    },
+      photos.map((_,i) => React.createElement('div', {
+        key:i,
+        style:{ width:i===idx?16:6, height:6, borderRadius:3, background:i===idx?'#fff':'rgba(255,255,255,0.5)', transition:'all 0.3s' }
+      }))
     )
   );
 }
+
 function getPostPhotos(post) { return (post.photo_urls && post.photo_urls.length) ? post.photo_urls : (post.photo_url ? [post.photo_url] : []); }
 function getPostVideo(post) { return (post && post.video_url) ? post.video_url : null; }
 function isProfileGridPost(post) { return !!(post && !post.repost_of && !post.is_reel && (getPostPhotos(post).length > 0 || !!getPostVideo(post))); }
