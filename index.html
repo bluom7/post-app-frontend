@@ -8363,15 +8363,15 @@ function BentoPostCard({
         React.createElement("span", { style: actionCountStyle }, commentCountText)
       ),
       // Repost / Tag-a-friend (always visible)
-      React.createElement("button", { onClick: handleRepostClick, style: actionBtnStyle((isReposted || mentionReposted) ? COLORS.green : "var(--muted)") },
+      React.createElement("button", { onClick: handleRepostClick, style: actionBtnStyle("#000") },
         React.createElement("svg", { width: 26, height: 26, viewBox: "105 48 175 225", xmlns: "http://www.w3.org/2000/svg", onTransitionEnd: () => markRepostAnimationDone(repostSpinKey), style: { display: "block", width: actionIconSize, height: actionIconSize, flexShrink: 0, overflow: "hidden", WebkitTapHighlightColor: "transparent", outline: "none", transition: "transform 0.6s ease-in-out", transform: "rotate(" + (repostSpinKey * 180) + "deg)", transformOrigin: "50% 50%" } },
-          React.createElement("g", { fill: "none", stroke: (isReposted || mentionReposted) ? COLORS.green : "#000", strokeWidth: "18.3", strokeLinecap: "round", strokeLinejoin: "round" },
+          React.createElement("g", { fill: "none", stroke: "#000", strokeWidth: "18.3", strokeLinecap: "round", strokeLinejoin: "round" },
             React.createElement("path", { d: "M112 180 V145 C112 112 140 88 174 88 H242" }),
             React.createElement("path", { d: "M210 55 L245 88" }),
             React.createElement("path", { d: "M268 140 V175 C268 208 240 232 206 232 H138" }),
             React.createElement("path", { d: "M170 265 L135 232" })
           ),
-          repostTickVisible && React.createElement("path", { d: "M160 160 L178 178 L220 136", transform: "rotate(" + ((repostSpinKey % 2) * 180) + " 190 157)", fill: "none", stroke: "#fff", strokeWidth: "14", strokeLinecap: "round", strokeLinejoin: "round", style: { filter: "drop-shadow(0 1px 1px " + COLORS.green + ")" } })
+          repostTickVisible && React.createElement("path", { d: "M160 160 L178 178 L220 136", transform: "rotate(" + ((repostSpinKey % 2) * 180) + " 190 157)", fill: "none", stroke: "#000", strokeWidth: "14", strokeLinecap: "round", strokeLinejoin: "round" })
         ),
         React.createElement("span", { style: actionCountStyle }, repostCountText)
       ),
