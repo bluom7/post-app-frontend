@@ -7742,14 +7742,13 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay }) {
     style: {
       position: "relative",
       cursor: "pointer",
-      background: "transparent",
+      background: "#000",
       borderRadius: 0,
       overflow: "hidden",
       WebkitTapHighlightColor: "transparent",
       width: "100%",
       // aspectRatio sizes container to EXACTLY the video's natural dimensions.
-      // Never add maxHeight alongside aspectRatio+width:100% — it clips height
-      // while keeping full width, causing objectFit:cover to add black bars.
+      // Preserve the complete source frame even if stored and decoded ratios differ.
       aspectRatio: ar ? String(ar) : undefined,
       minHeight: !ar ? 200 : undefined,
     }
@@ -7766,12 +7765,12 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay }) {
         width: "100%",
         // height:100% fills the aspect-ratio container exactly when ar is known.
         // height:auto for the no-ar fallback (video sizes itself naturally).
-        // NO maxHeight — that's what caused the black bars.
+        // contain keeps the full video visible; any unused space stays black.
         height: ar ? "100%" : "auto",
         display: "block",
-        objectFit: "cover",
+        objectFit: "contain",
         objectPosition: "center center",
-        background: "transparent",
+        background: "#000",
         WebkitTapHighlightColor: "transparent",
         filter: (post.video_effect && post.video_effect !== 'none') ? ((VIDEO_EFFECTS.find(function(e){return e.id===post.video_effect;})||VIDEO_EFFECTS[0]).filter) : 'none'
       }
