@@ -3,7 +3,7 @@ services:
     name: post-app-frontend
     runtime: static
     rootDir: .
-    buildCommand: node inject-feed-video-preload-guard.js
+    buildCommand: npm run build
     staticPublishPath: .
     autoDeploy: yes
     pullRequestPreviewsEnabled: false
