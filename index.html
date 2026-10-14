@@ -4787,6 +4787,288 @@ function MainTabPager(props) {
   );
 }
 
+function SavedLibraryScreen({ token, user, showToast, onClose, onOpenItem }) {
+  const h = React.createElement;
+  const [items, setItems] = React.useState([]);
+  const [collections, setCollections] = React.useState([]);
+  const [activeTab, setActiveTab] = React.useState("All");
+  const [search, setSearch] = React.useState("");
+  const [loading, setLoading] = React.useState(true);
+  const [hasMore, setHasMore] = React.useState(false);
+  const [moreLoading, setMoreLoading] = React.useState(false);
+  const [activeCollectionId, setActiveCollectionId] = React.useState(null);
+  const [activeCollection, setActiveCollection] = React.useState(null);
+  const [activeCollectionItems, setActiveCollectionItems] = React.useState([]);
+  const [collectionLoading, setCollectionLoading] = React.useState(false);
+  const [manageCollections, setManageCollections] = React.useState(false);
+  const [wizardStep, setWizardStep] = React.useState("");
+  const [collectionName, setCollectionName] = React.useState("");
+  const [selectedIds, setSelectedIds] = React.useState(new Set());
+  const [pickerCollectionId, setPickerCollectionId] = React.useState(null);
+  const [pickerSearch, setPickerSearch] = React.useState("");
+  const [working, setWorking] = React.useState(false);
+  const [openedArticle, setOpenedArticle] = React.useState(null);
+
+  const itemKey = item => (item && item.is_reel ? "reel:" : "post:") + String(item && item.id || "");
+  const isArticle = item => typeof isTextOnlyProfilePost === "function" && isTextOnlyProfilePost(item);
+  const isMediaItem = item => (typeof isProfileGridPost === "function" && isProfileGridPost(item)) || (typeof isProfileVideoReel === "function" && isProfileVideoReel(item));
+  const refreshCollections = async () => {
+    try { const data = await api("/users/me/saved-collections", "GET", null, token); setCollections(Array.isArray(data.collections) ? data.collections : []); }
+    catch (error) { showToast(error.message || "Could not load collections", COLORS.red); }
+  };
+
+  React.useEffect(() => {
+    let live = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const results = await Promise.all([
+          api("/users/me/saved-items?skip=0&limit=100", "GET", null, token),
+          api("/users/me/saved-collections", "GET", null, token).catch(() => ({ collections: [] }))
+        ]);
+        if (!live) return;
+        setItems(Array.isArray(results[0].items) ? results[0].items : []);
+        setHasMore(!!results[0].has_more);
+        setCollections(Array.isArray(results[1].collections) ? results[1].collections : []);
+      } catch (error) {
+        if (live) { setItems([]); setHasMore(false); showToast(error.message || "Could not load Saved", COLORS.red); }
+      } finally { if (live) setLoading(false); }
+    })();
+    return () => { live = false; };
+  }, [token]);
+
+  const loadMore = async () => {
+    if (!hasMore || moreLoading) return;
+    setMoreLoading(true);
+    try {
+      const data = await api("/users/me/saved-items?skip=" + items.length + "&limit=100", "GET", null, token);
+      const incoming = Array.isArray(data.items) ? data.items : [];
+      setItems(current => {
+        const known = new Set(current.map(itemKey));
+        return current.concat(incoming.filter(item => !known.has(itemKey(item))));
+      });
+      setHasMore(!!data.has_more);
+    } catch (error) { showToast(error.message || "Could not load more saved items", COLORS.red); }
+    finally { setMoreLoading(false); }
+  };
+
+  const matchesQuery = item => {
+    const q = String(search || "").trim().toLowerCase();
+    if (!q) return true;
+    return [item.content, item.caption, item.title, item.user_name, item.user_handle].some(value => String(value || "").toLowerCase().includes(q));
+  };
+  const visibleItems = items.filter(matchesQuery);
+  const visibleCollections = collections.filter(collection => !String(search || "").trim() || String(collection.name || "").toLowerCase().includes(String(search).trim().toLowerCase()));
+  const allMedia = visibleItems.filter(isMediaItem);
+  const allArticles = visibleItems.filter(isArticle);
+  const postItems = visibleItems.filter(item => !item.is_reel && typeof isProfileGridPost === "function" && isProfileGridPost(item));
+  const reelItems = visibleItems.filter(item => typeof isProfileVideoReel === "function" && isProfileVideoReel(item));
+  const seriesItems = visibleItems.filter(item => !!(item.series_id || item.series_name || item.series || item.is_series));
+
+  const openCollection = async collection => {
+    if (!collection || !collection.id) return;
+    setActiveCollectionId(String(collection.id));
+    setActiveCollection(collection);
+    setActiveCollectionItems([]);
+    setCollectionLoading(true);
+    try {
+      const data = await api("/users/me/saved-collections/" + encodeURIComponent(collection.id), "GET", null, token);
+      setActiveCollection(data.collection || collection);
+      setActiveCollectionItems(Array.isArray(data.items) ? data.items : []);
+    } catch (error) { showToast(error.message || "Could not open collection", COLORS.red); }
+    finally { setCollectionLoading(false); }
+  };
+  const closeCollection = () => { setActiveCollectionId(null); setActiveCollection(null); setActiveCollectionItems([]); setSearch(""); };
+  const createCollectionStart = () => { setCollectionName(""); setSelectedIds(new Set()); setPickerCollectionId(null); setPickerSearch(""); setWizardStep("name"); };
+  const openCollectionPicker = () => { setSelectedIds(new Set()); setPickerCollectionId(String(activeCollectionId)); setPickerSearch(""); setWizardStep("add"); };
+  const togglePicked = item => {
+    const key = itemKey(item);
+    setSelectedIds(current => { const next = new Set(current); next.has(key) ? next.delete(key) : next.add(key); return next; });
+  };
+  const selectedItems = items.filter(item => selectedIds.has(itemKey(item)));
+  const addItemToCollection = (collectionId, item) => api(
+    "/users/me/saved-collections/" + encodeURIComponent(collectionId) + "/items",
+    "POST", { item_id: String(item.id), item_type: item.is_reel ? "reel" : "post" }, token
+  );
+  const createCollection = async () => {
+    const name = String(collectionName || "").trim();
+    if (!name || working) return;
+    setWorking(true);
+    try {
+      const response = await api("/users/me/saved-collections", "POST", { name }, token);
+      const created = response.collection || response;
+      const collectionId = created && created.id;
+      if (!collectionId) throw new Error("Collection could not be created");
+      const outcomes = await Promise.allSettled(selectedItems.map(item => addItemToCollection(collectionId, item)));
+      const hadFailures = outcomes.some(outcome => outcome.status === "rejected");
+      setWizardStep("");
+      setActiveTab("Collections");
+      await refreshCollections();
+      await openCollection(created);
+      showToast(hadFailures ? "Collection created; some items could not be added" : "Collection created", hadFailures ? COLORS.yellow : COLORS.green);
+    } catch (error) { showToast(error.message || "Could not create collection", COLORS.red); }
+    finally { setWorking(false); }
+  };
+  const addPickedToCollection = async () => {
+    if (!pickerCollectionId || !selectedItems.length || working) return;
+    setWorking(true);
+    try {
+      const outcomes = await Promise.allSettled(selectedItems.map(item => addItemToCollection(pickerCollectionId, item)));
+      const hadFailures = outcomes.some(outcome => outcome.status === "rejected");
+      setWizardStep("");
+      await refreshCollections();
+      if (activeCollection) await openCollection(activeCollection);
+      showToast(hadFailures ? "Some items could not be added" : "Saved items added to collection", hadFailures ? COLORS.yellow : COLORS.green);
+    } catch (error) { showToast(error.message || "Could not add saved items", COLORS.red); }
+    finally { setWorking(false); }
+  };
+  const removeSavedItem = async postId => {
+    const item = items.find(value => String(value.id) === String(postId));
+    if (!item) return;
+    const route = (item.is_reel ? "/reels/" : "/posts/") + encodeURIComponent(item.id) + "/save";
+    try {
+      const result = await api(route, "POST", null, token);
+      if (result && result.saved === false) {
+        const key = itemKey(item);
+        setItems(current => current.filter(value => itemKey(value) !== key));
+        setActiveCollectionItems(current => current.filter(value => itemKey(value) !== key));
+        refreshCollections();
+        showToast("Removed from Saved", COLORS.yellow);
+      }
+    } catch (error) { showToast(error.message || "Could not remove saved item", COLORS.red); }
+  };
+  const updateLocalItem = (postId, patch) => setItems(current => current.map(item => String(item.id) === String(postId) ? Object.assign({}, item, patch) : item));
+  const handleArticleLike = async (postId, color) => {
+    try { const result = await api("/posts/" + encodeURIComponent(postId) + "/like", "POST", { color }, token); if (Array.isArray(result.likes)) updateLocalItem(postId, { likes: result.likes }); }
+    catch (error) { showToast(error.message || "Could not update like", COLORS.red); }
+  };
+  const handleArticleComment = async postId => {
+    try { const result = await api("/posts/" + encodeURIComponent(postId) + "/comments", "GET", null, token); if (Array.isArray(result.comments)) updateLocalItem(postId, { comments: result.comments }); }
+    catch (_) {}
+  };
+  const handleArticleRepost = async postId => {
+    try { const result = await api("/posts/" + encodeURIComponent(postId) + "/repost", "POST", null, token); updateLocalItem(postId, { is_reposted_by_viewer: !!result.reposted, repost_count: result.repost_count }); }
+    catch (error) { showToast(error.message || "Could not repost", COLORS.red); }
+  };
+  const openItem = item => { if (isArticle(item)) { setOpenedArticle(item); return; } if (typeof onOpenItem === "function") onOpenItem(item); };
+
+  const icon = (name, size) => {
+    const s = size || 22;
+    if (name === "back") return h("svg", { width: s, height: s, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, h("path", { d: "M19 12H5M12 19l-7-7 7-7" }));
+    if (name === "plus") return h("svg", { width: s, height: s, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", "aria-hidden": true }, h("path", { d: "M12 5v14M5 12h14" }));
+    if (name === "bookmark") return h("svg", { width: s, height: s, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, h("path", { d: "M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-3.8L6 21z" }));
+    return h("svg", { width: s, height: s, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, h("rect", { x: 3, y: 3, width: 18, height: 18, rx: 4 }), h("path", { d: "M12 8v8M8 12h8" }));
+  };
+  const emptyState = (title, subtitle, action) => h("div", { style: { minHeight: 210, padding: "36px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", color: "var(--muted)" } }, h("div", { style: { width: 58, height: 58, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--input-bg)", color: "var(--muted)", marginBottom: 14 } }, icon("bookmark", 26)), h("strong", { style: { color: "var(--text)", fontSize: 16, marginBottom: 6 } }, title), h("span", { style: { fontSize: 13, lineHeight: 1.5, maxWidth: 280 } }, subtitle), action || null);
+  const renderMediaGrid = rows => rows.length ? h(ProfileMediaGrid, { posts: rows, filter: () => true, onOpenPost: openItem }) : null;
+  const renderArticleList = rows => rows.length ? h("div", { style: { display: "flex", flexDirection: "column", margin: "0 -16px" } }, rows.map(post => h(BentoPostCard, { key: itemKey(post), post, user, token, showToast, isLarge: false, edgeToEdge: true, contentPreviewWords: 60, onOpenPost: openItem, onLike: handleArticleLike, onComment: handleArticleComment, onSave: removeSavedItem, onRepost: handleArticleRepost }))) : null;
+
+  const collectionCover = collection => {
+    const refs = Array.isArray(collection.items) ? collection.items : [];
+    const ref = refs[0];
+    if (!ref) return null;
+    return items.find(item => itemKey(item) === (ref.item_type + ":" + ref.item_id)) || null;
+  };
+  const deleteCollection = async collection => {
+    if (!collection || !window.confirm("Delete the collection ‘" + collection.name + "’? Saved posts themselves will stay saved.")) return;
+    try {
+      await api("/users/me/saved-collections/" + encodeURIComponent(collection.id), "DELETE", null, token);
+      setCollections(current => current.filter(item => String(item.id) !== String(collection.id)));
+      if (String(activeCollectionId) === String(collection.id)) { setActiveCollectionId(null); setActiveCollection(null); setActiveCollectionItems([]); }
+      showToast("Collection deleted", COLORS.yellow);
+    } catch (error) { showToast(error.message || "Could not delete collection", COLORS.red); }
+  };
+  const renderCollectionCard = (collection, horizontal) => {
+    const cover = collectionCover(collection);
+    const coverUrl = cover && typeof getProfileGridThumbnail === "function" ? getProfileGridThumbnail(cover) : "";
+    return h("div", { key: String(collection.id), role: "button", tabIndex: 0, onClick: () => manageCollections && activeTab === "Collections" ? null : openCollection(collection), onKeyDown: event => { if (event.key === "Enter") openCollection(collection); }, style: { position: "relative", flex: horizontal ? "0 0 148px" : "auto", minWidth: 0, cursor: "pointer", border: "1px solid var(--border)", borderRadius: 15, overflow: "hidden", background: "var(--card-bg)" }, "aria-label": "Open collection " + collection.name },
+      h("div", { style: { position: "relative", width: "100%", aspectRatio: "1.12", overflow: "hidden", background: "linear-gradient(135deg,#dbeafe,#f5d0fe)" } },
+        coverUrl ? h("img", { src: coverUrl, alt: "", loading: "lazy", style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" } }) : h("div", { style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#4b5563" } }, icon("bookmark", 32)),
+        h("span", { style: { position: "absolute", top: 8, right: 8, borderRadius: 7, padding: "3px 6px", background: "rgba(0,0,0,.58)", color: "#fff", fontSize: 10, fontWeight: 700 } }, String((collection.items || []).length) + " saved")
+      ),
+      h("div", { style: { padding: "9px 10px 10px", minWidth: 0 } }, h("div", { style: { fontSize: 14, fontWeight: 750, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, collection.name), h("div", { style: { marginTop: 4, fontSize: 11, color: "var(--muted)" } }, "🔒  Only me")),
+      manageCollections && activeTab === "Collections" ? h("button", { type: "button", onClick: event => { event.stopPropagation(); deleteCollection(collection); }, "aria-label": "Delete " + collection.name, style: { position: "absolute", left: 7, top: 7, width: 30, height: 30, border: 0, borderRadius: "50%", background: "rgba(255,255,255,.94)", color: "#d11a2a", fontSize: 17, fontWeight: 800, cursor: "pointer" } }, "×") : null
+    );
+  };
+  const createButton = h("button", { type: "button", onClick: createCollectionStart, style: { border: "1px solid var(--border)", background: "var(--input-bg)", color: "var(--text)", borderRadius: 999, padding: "7px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" } }, "New collection");
+  const collectionList = (horizontal, list) => list.length ? h("div", { style: horizontal ? { display: "flex", gap: 10, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" } : { display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: 10 } }, list.map(collection => renderCollectionCard(collection, horizontal))) : emptyState("No collections yet", "Create a private collection to organise the posts and reels you save.", h("button", { type: "button", onClick: createCollectionStart, style: { marginTop: 16, border: 0, borderRadius: 999, padding: "10px 16px", background: COLORS.blue, color: "#fff", fontWeight: 700, cursor: "pointer" } }, "Create collection"));
+
+  const pickerCollection = pickerCollectionId ? collections.find(collection => String(collection.id) === String(pickerCollectionId)) : null;
+  const pickerItems = items.filter(item => {
+    const q = String(pickerSearch || "").trim().toLowerCase();
+    const textMatch = !q || [item.content, item.caption, item.title, item.user_name].some(value => String(value || "").toLowerCase().includes(q));
+    return textMatch && (isArticle(item) || isMediaItem(item));
+  });
+  const pickerTile = item => {
+    const key = itemKey(item);
+    const selected = selectedIds.has(key);
+    const alreadyAdded = !!(pickerCollection && (pickerCollection.items || []).some(ref => ref.item_type + ":" + ref.item_id === key));
+    const thumbnail = !isArticle(item) && typeof getProfileGridThumbnail === "function" ? getProfileGridThumbnail(item) : "";
+    return h("button", { key, type: "button", disabled: alreadyAdded, onClick: () => !alreadyAdded && togglePicked(item), "aria-pressed": selected || alreadyAdded, style: { position: "relative", border: selected ? "2px solid " + COLORS.blue : "1px solid var(--border)", borderRadius: 10, padding: 0, overflow: "hidden", minWidth: 0, aspectRatio: "0.82", background: "var(--input-bg)", textAlign: "left", cursor: alreadyAdded ? "default" : "pointer", opacity: alreadyAdded ? .58 : 1 } },
+      thumbnail ? h("img", { src: thumbnail, alt: "", loading: "lazy", style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" } }) : h("div", { style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: 9, overflow: "hidden", background: isArticle(item) ? "linear-gradient(145deg,#fff7ed,#fce7f3)" : "#111", color: isArticle(item) ? "#1f2937" : "#fff", fontSize: 11, lineHeight: 1.35, fontWeight: 600 } }, String(item.content || item.caption || "Saved video").slice(0, 110)),
+      h("span", { style: { position: "absolute", top: 7, right: 7, width: 23, height: 23, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: selected || alreadyAdded ? COLORS.blue : "rgba(0,0,0,.4)", color: "#fff", border: "1px solid rgba(255,255,255,.8)", fontWeight: 800, fontSize: 14 } }, selected || alreadyAdded ? "✓" : ""),
+      h("span", { style: { position: "absolute", left: 0, right: 0, bottom: 0, padding: "18px 7px 6px", color: "#fff", fontSize: 10, fontWeight: 700, background: "linear-gradient(transparent,rgba(0,0,0,.7))", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, item.user_name || (item.is_reel ? "Reel" : "Post"))
+    );
+  };
+  const pickerModal = wizardStep === "name" || wizardStep === "choose" || wizardStep === "add" ? h("div", { onClick: event => { if (event.target === event.currentTarget && !working) setWizardStep(""); }, style: { position: "fixed", inset: 0, zIndex: 350, display: "flex", alignItems: "flex-end", justifyContent: "center", background: "rgba(0,0,0,.48)" } },
+    h("div", { role: "dialog", "aria-modal": true, "aria-label": wizardStep === "name" ? "New collection" : "Choose saved items", onClick: event => event.stopPropagation(), style: { width: "100%", maxWidth: 560, maxHeight: "84vh", display: "flex", flexDirection: "column", background: "var(--bg)", color: "var(--text)", borderRadius: "24px 24px 0 0", paddingBottom: "env(safe-area-inset-bottom, 0px)", boxShadow: "0 -10px 40px rgba(0,0,0,.2)" } },
+      h("div", { style: { width: 36, height: 4, borderRadius: 4, background: "var(--muted)", opacity: .55, alignSelf: "center", margin: "9px 0 4px" } }),
+      h("div", { style: { minHeight: 56, display: "grid", gridTemplateColumns: "74px 1fr 74px", alignItems: "center", padding: "0 14px", borderBottom: "1px solid var(--border)" } },
+        h("button", { type: "button", onClick: () => !working && setWizardStep(""), style: { border: 0, background: "none", color: "var(--muted)", fontSize: 14, textAlign: "left", cursor: "pointer" } }, "Cancel"),
+        h("strong", { style: { textAlign: "center", fontSize: 17 } }, wizardStep === "name" ? "New collection" : wizardStep === "add" ? "Add saved items" : "Choose items"),
+        h("button", { type: "button", disabled: working || (wizardStep === "name" && !String(collectionName).trim()) || (wizardStep === "add" && !selectedItems.length), onClick: () => wizardStep === "name" ? setWizardStep("choose") : wizardStep === "add" ? addPickedToCollection() : createCollection(), style: { border: 0, background: "none", color: COLORS.blue, fontSize: 15, fontWeight: 700, textAlign: "right", cursor: "pointer", opacity: working ? .55 : 1 } }, working ? "Saving…" : wizardStep === "name" ? "Next" : wizardStep === "add" ? "Add" : "Create")
+      ),
+      wizardStep === "name" ? h("div", { style: { padding: "18px 16px 22px" } }, h("label", { htmlFor: "saved-collection-name", style: { display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 7 } }, "Collection name"), h("input", { id: "saved-collection-name", value: collectionName, maxLength: 80, autoFocus: true, onChange: event => setCollectionName(event.target.value), onKeyDown: event => { if (event.key === "Enter" && String(collectionName).trim()) setWizardStep("choose"); }, placeholder: "e.g. Weekend ideas", style: { width: "100%", boxSizing: "border-box", border: "1.5px solid var(--text)", borderRadius: 14, padding: "16px", background: "var(--bg)", color: "var(--text)", font: "inherit", fontSize: 16, outline: "none" } }), h("div", { style: { fontSize: 12, color: "var(--muted)", marginTop: 9 } }, "Only you can see this collection.")) : h(React.Fragment, null,
+        h("div", { style: { padding: "12px 16px 8px", display: "flex", gap: 9, alignItems: "center" } }, h("input", { value: pickerSearch, onChange: event => setPickerSearch(event.target.value), placeholder: "Search your saved items", style: { flex: 1, minWidth: 0, border: "1px solid var(--border)", borderRadius: 999, padding: "10px 13px", background: "var(--input-bg)", color: "var(--text)", font: "inherit", fontSize: 13, outline: "none" } }), h("span", { style: { fontSize: 12, color: "var(--muted)", whiteSpace: "nowrap" } }, selectedItems.length + " selected")),
+        h("div", { style: { flex: 1, overflowY: "auto", padding: "8px 14px 20px" } }, pickerItems.length ? h("div", { style: { display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 7 } }, pickerItems.map(pickerTile)) : emptyState("Nothing to choose yet", "Save a post, reel or article first; then add it here."),
+          hasMore ? h("button", { type: "button", onClick: loadMore, disabled: moreLoading, style: { width: "100%", marginTop: 14, padding: 11, border: "1px solid var(--border)", borderRadius: 12, background: "var(--bg)", color: "var(--text)", fontWeight: 700, cursor: "pointer" } }, moreLoading ? "Loading…" : "Load more saved items") : null)
+      )
+    )
+  ) : null;
+
+  const backAction = () => activeCollectionId ? closeCollection() : onClose();
+  const plusAction = () => activeCollectionId ? openCollectionPicker() : createCollectionStart();
+  const currentCollectionItems = activeCollectionItems.filter(matchesQuery);
+  const currentMediaItems = currentCollectionItems.filter(isMediaItem);
+  const currentArticleItems = currentCollectionItems.filter(isArticle);
+  let content;
+  if (loading && !items.length) content = h("div", { style: { minHeight: 220, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" } }, "Loading saved items…");
+  else if (activeCollectionId) content = h(React.Fragment, null,
+    h("div", { style: { padding: "13px 16px 10px", display: "flex", alignItems: "center", justifyContent: "space-between" } }, h("div", null, h("div", { style: { fontWeight: 800, fontSize: 17, color: "var(--text)" } }, activeCollection && activeCollection.name || "Collection"), h("div", { style: { color: "var(--muted)", fontSize: 12, marginTop: 3 } }, collectionLoading ? "Loading items…" : currentCollectionItems.length + " saved items · Only me")), h("button", { type: "button", onClick: openCollectionPicker, style: { border: "1px solid var(--border)", borderRadius: 999, padding: "8px 12px", background: "var(--bg)", color: "var(--text)", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5 } }, icon("plus", 16), " Add items")),
+    collectionLoading ? h("div", { style: { padding: 28, textAlign: "center", color: "var(--muted)" } }, "Loading collection…") : currentCollectionItems.length ? h(React.Fragment, null, renderMediaGrid(currentMediaItems), renderArticleList(currentArticleItems)) : emptyState("This collection is empty", "Add any post, reel or article you have saved.", h("button", { type: "button", onClick: openCollectionPicker, style: { marginTop: 14, border: 0, borderRadius: 999, padding: "10px 16px", background: COLORS.blue, color: "#fff", fontWeight: 700, cursor: "pointer" } }, "Add saved items"))
+  );
+  else if (activeTab === "Collections") content = h("div", { style: { padding: "14px 14px 24px" } }, h("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 13 } }, h("strong", { style: { fontSize: 18, letterSpacing: .3 } }, "Collections"), h("div", { style: { display: "flex", gap: 8 } }, h("button", { type: "button", onClick: () => setManageCollections(value => !value), style: { border: "1px solid var(--border)", borderRadius: 999, padding: "7px 11px", background: "var(--bg)", color: "var(--text)", fontWeight: 700, fontSize: 12, cursor: "pointer" } }, manageCollections ? "Done" : "Manage"), createButton)), collectionList(false, visibleCollections));
+  else if (activeTab === "All") content = h(React.Fragment, null,
+    h("section", { style: { padding: "14px 14px 6px" } }, h("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 11 } }, h("strong", { style: { fontSize: 17, letterSpacing: .5 } }, "Collections"), createButton), collections.length ? collectionList(true, visibleCollections.slice(0, 8)) : h("button", { type: "button", onClick: createCollectionStart, style: { width: "100%", minHeight: 72, border: "1px dashed var(--border)", borderRadius: 14, background: "var(--input-bg)", color: "var(--text)", display: "flex", alignItems: "center", justifyContent: "center", gap: 9, fontWeight: 700, cursor: "pointer" }, }, icon("plus", 18), "Create a collection")),
+    h("div", { style: { padding: "17px 14px 11px", display: "flex", justifyContent: "space-between", alignItems: "center" } }, h("strong", { style: { fontSize: 17, letterSpacing: .2 } }, "Recently saved"), h("span", { style: { fontSize: 12, color: "var(--muted)" } }, visibleItems.length + " items")),
+    allMedia.length ? renderMediaGrid(allMedia) : null,
+    allArticles.length ? h("div", null, h("div", { style: { padding: "18px 14px 8px" } }, h("strong", { style: { fontSize: 17 } }, "Articles")), renderArticleList(allArticles)) : null,
+    !visibleItems.length ? emptyState("No saved items yet", "Tap the bookmark on a post, reel or article to save it here.") : null
+  );
+  else {
+    const rows = activeTab === "Reels" ? reelItems : activeTab === "Posts" ? postItems : activeTab === "Articles" ? allArticles : seriesItems;
+    content = rows.length ? (activeTab === "Articles" || (activeTab === "Series" && rows.every(isArticle)) ? renderArticleList(rows) : h(React.Fragment, null, renderMediaGrid(rows.filter(isMediaItem)), renderArticleList(rows.filter(isArticle)))) : emptyState(activeTab === "Reels" ? "No saved reels yet" : activeTab === "Posts" ? "No saved posts yet" : activeTab === "Articles" ? "No saved articles yet" : "No saved series yet", activeTab === "Series" ? "Saved posts or reels that belong to a series will appear here." : "Saved " + activeTab.toLowerCase() + " will appear here.");
+  }
+
+  const tabs = ["All", "Collections", "Series", "Reels", "Posts", "Articles"];
+  return h(React.Fragment, null,
+    h("div", { style: { position: "fixed", inset: 0, zIndex: 300, display: "flex", flexDirection: "column", background: "var(--bg)", color: "var(--text)", paddingTop: "env(safe-area-inset-top, 0px)" } },
+      h("header", { style: { minHeight: 54, display: "grid", gridTemplateColumns: "44px minmax(0,1fr) 44px", alignItems: "center", padding: "0 12px", borderBottom: "1px solid var(--border)", background: "var(--nav-bg)", flexShrink: 0 } },
+        h("button", { type: "button", onClick: backAction, "aria-label": activeCollectionId ? "Back to saved collections" : "Back", style: { width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", border: 0, borderRadius: "50%", background: "transparent", color: "var(--text)", cursor: "pointer" } }, icon("back", 22)),
+        h("strong", { style: { textAlign: "center", fontSize: 19, fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, activeCollectionId ? activeCollection && activeCollection.name || "Collection" : "Saved"),
+        h("button", { type: "button", onClick: plusAction, "aria-label": activeCollectionId ? "Add saved items to collection" : "Create a collection", style: { width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center", border: 0, borderRadius: "50%", background: "transparent", color: "var(--text)", cursor: "pointer" } }, icon("plus", 25))
+      ),
+      !activeCollectionId && h("nav", { "aria-label": "Saved categories", style: { display: "flex", gap: 7, overflowX: "auto", padding: "10px 14px", borderBottom: "1px solid var(--border)", scrollbarWidth: "none", flexShrink: 0 } }, tabs.map(name => h("button", { key: name, type: "button", onClick: () => { setActiveTab(name); setManageCollections(false); }, style: { flexShrink: 0, border: activeTab === name ? "1px solid rgba(13,159,243,.22)" : "1px solid var(--border)", borderRadius: 999, padding: "7px 14px", background: activeTab === name ? "rgba(13,159,243,.14)" : "transparent", color: "var(--text)", fontSize: 13, fontWeight: activeTab === name ? 750 : 550, cursor: "pointer" } }, name))),
+      h("div", { style: { padding: "10px 14px", flexShrink: 0, borderBottom: "1px solid var(--border)", background: "var(--bg)" } }, h("div", { style: { display: "flex", alignItems: "center", gap: 9, border: "1px solid var(--border)", borderRadius: 999, background: "var(--input-bg)", padding: "0 13px", minHeight: 39 } }, h("svg", { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "var(--muted)", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, h("circle", { cx: 11, cy: 11, r: 7 }), h("path", { d: "m20 20-4-4" })), h("input", { value: search, onChange: event => setSearch(event.target.value), placeholder: activeCollectionId ? "Search this collection" : "Search Saved", style: { flex: 1, minWidth: 0, border: 0, outline: "none", background: "transparent", color: "var(--text)", font: "inherit", fontSize: 14 } }), search ? h("button", { type: "button", onClick: () => setSearch(""), "aria-label": "Clear search", style: { border: 0, background: "none", color: "var(--muted)", fontSize: 18, cursor: "pointer" } }, "×") : null)),
+      h("main", { style: { flex: 1, minHeight: 0, overflowY: "auto", overscrollBehavior: "contain", paddingBottom: "calc(22px + env(safe-area-inset-bottom, 0px))" } }, content,
+        hasMore && !activeCollectionId ? h("div", { style: { padding: "12px 16px 22px" } }, h("button", { type: "button", onClick: loadMore, disabled: moreLoading, style: { width: "100%", minHeight: 44, border: "1px solid var(--border)", borderRadius: 12, background: "var(--bg)", color: "var(--text)", fontWeight: 700, cursor: "pointer" } }, moreLoading ? "Loading…" : "Load more saved items")) : null
+      )
+    ),
+    pickerModal,
+    openedArticle && h(ArticlePostDetailScreen, { key: String(openedArticle.id) + "-saved-article-detail", post: items.find(item => String(item.id) === String(openedArticle.id)) || openedArticle, user, token, showToast, onClose: () => setOpenedArticle(null), onLike: handleArticleLike, onComment: handleArticleComment, onSave: removeSavedItem, onRepost: handleArticleRepost })
+  );
+}
+
 function PostApp() {
   const [screen, setScreen] = useState("splash");
   const [token, setToken] = useState(() => localStorage.getItem("token") || null);
@@ -5678,15 +5960,7 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
       else if(action==="friends") setTab("friends"); else if(action==="drafts") setTab("drafts");
       else if(action==="helpcenter") setTab("helpcenter");
       else if(action==="invite") setTab("invite");
-      else if(action==="bookmarks"){
-        setShowBookmarks(true);
-        if (bookmarkPosts.length === 0) {
-          setBookmarkLoading(true);
-          api('/users/me/saved-posts','GET',null,token).then(d=>{
-            setBookmarkPosts((d.posts||[]).filter(p=>p.user_id!==user?.id));
-          }).catch(()=>{}).finally(()=>setBookmarkLoading(false));
-        }
-      }
+      else if(action==="bookmarks"){ setDrawerOpen(false); setShowBookmarks(true); }
     }
   }), showVerifModal && /*#__PURE__*/React.createElement(VerificationModal, {
     token: token,
@@ -5715,92 +5989,8 @@ return {home:home,friends:friends,discover:discover,reels:reels,notifications:no
       setScreen("login");
     }
   }),
-  showBookmarks && /*#__PURE__*/React.createElement("div", { style: { position: "fixed", inset: 0, background: "var(--bg)", zIndex: 300, display: "flex", flexDirection: "column" } },
-    React.createElement("div", { style: { position: "sticky", top: 0, background: "var(--nav-bg)", zIndex: 10, borderBottom: "1px solid var(--border)" } },
-      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px 10px" } },
-        React.createElement("button", { onClick: () => setShowBookmarks(false), style: { background: "none", border: "none", cursor: "pointer", padding: 6, display: "flex", alignItems: "center", color: "var(--text)" } },
-          React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2.4", strokeLinecap: "round", strokeLinejoin: "round" },
-            React.createElement("polyline", { points: "15 18 9 12 15 6" }))),
-        React.createElement("span", { style: { fontWeight: 800, fontSize: 18, color: "var(--text)", flex: 1 } }, "Saved")
-      ),
-      React.createElement("div", { style: { padding: "0 14px 12px" } },
-        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, background: "var(--input-bg)", borderRadius: 22, padding: "9px 14px", border: "1px solid var(--border)" } },
-          React.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "var(--muted)", strokeWidth:1.8, strokeLinecap: "round",strokeLinejoin:"round" },
-            React.createElement("path",{d:"M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z"})),
-          React.createElement("input", {
-            placeholder: "Search Saved", id: "bm-search-input",
-            onChange: e => { const q=e.target.value.toLowerCase(); document.querySelectorAll('[data-bm-card]').forEach(el=>{ el.style.display=(el.dataset.bmName||'').toLowerCase().includes(q)||(el.dataset.bmText||'').toLowerCase().includes(q)?'':'none'; }); },
-            style: { flex: 1, background: "none", border: "none", outline: "none", fontSize: 15, color: "var(--text)" }
-          })
-        )
-      )
-    ),
-    React.createElement("div", { style: { flex: 1, overflowY: "auto", background: "#FFFFFF" } },
-      bookmarkLoading
-        ? React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 60, gap: 12 } },
-            React.createElement("div", { style: { width: 20, height: 20, borderRadius: "50%", border: "2px solid var(--border)", borderTop: "2px solid " + COLORS.yellow, animation: "spin 0.8s linear infinite" } }),
-            React.createElement("div", { style: { fontSize: 14, color: "var(--muted)" } }, "Loading...")
-          )
-        : bookmarkPosts.length === 0
-          ? React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 20px", textAlign: "center" } },
-              React.createElement("svg", { width: 56, height: 56, viewBox: "0 0 24 24", fill: "none", stroke: "var(--border)", strokeWidth: 1.2, strokeLinecap: "round", strokeLinejoin: "round", style: { marginBottom: 18 } },
-                React.createElement("path", { d: "M6.5 2h11A1.5 1.5 0 0 1 19 3.5v17l-7-3.5-7 3.5V3.5A1.5 1.5 0 0 1 6.5 2z" }),
-                React.createElement("path", { d: "M9 10h6M12 7v6" })),
-              React.createElement("div", { style: { fontSize: 17, fontWeight: 700, color: "var(--text)", marginBottom: 8 } }, "No saved posts yet"),
-              React.createElement("div", { style: { fontSize: 14, color: "var(--muted)", lineHeight: 1.6 } }, "Tap the bookmark icon on any post", React.createElement("br"), "to save it here")
-            )
-          : React.createElement("div", null,
-              bookmarkPosts.map(post =>
-                React.createElement("div", { key: post.id, "data-bm-card": "1", "data-bm-name": post.user_name || "", "data-bm-text": post.content || "", style: { borderBottom: "1px solid var(--border)", background: "var(--card-bg)" } },
-                  React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "12px 14px 0" } },
-                    post.avatar_photo
-                      ? React.createElement("img", { src: post.avatar_photo, style: { width: 42, height: 42, borderRadius: "50%", objectFit: "cover", flexShrink: 0 } })
-                      : React.createElement("div", { style: { width: 42, height: 42, borderRadius: "50%", background: post.avatar_bg || COLORS.yellow, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: 800, color: "#fff", flexShrink: 0 } },
-                          (post.avatar_letter || (post.user_name || "?")[0] || "?").toUpperCase()),
-                    React.createElement("div", { style: { flex: 1, minWidth: 0 } },
-                      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } },
-                        React.createElement("span", { style: { fontWeight: 700, fontSize: 14, color: "var(--text)" } }, post.user_name || ""),
-                        post.is_badge_verified && React.createElement(VerifiedBadge, { size: 14 })
-                      ),
-                      React.createElement("div", { style: { fontSize: 12, color: "var(--muted)", marginTop: 1 } },
-                        post.user_handle ? "@" + post.user_handle.replace(/^@/, "") : "",
-                        post.created_at ? " \u00b7 " + (t => { const d=new Date(t),n=Date.now(),s=Math.floor((n-d)/1000); return s<60?s+"s":s<3600?Math.floor(s/60)+"m":s<86400?Math.floor(s/3600)+"h":Math.floor(s/86400)+"d"; })(post.created_at) : ""
-                      )
-                    ),
-                    React.createElement("button", {
-                      onClick: () => { api("/posts/"+post.id+"/save","POST",null,token).then(()=>{ setBookmarkPosts(prev=>prev.filter(p=>p.id!==post.id)); showToast("Removed from Saved","#999"); }).catch(()=>{}); },
-                      style: { background: "none", border: "none", cursor: "pointer", padding: 8, color: COLORS.yellow, flexShrink: 0 }
-                    }, React.createElement("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "currentColor" },
-                      React.createElement("path", { d: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" })))
-                  ),
-                  post.content && React.createElement("div", { style: { padding: "8px 14px 4px", fontSize: 14, lineHeight: 1.65, color: "var(--text)", whiteSpace: "pre-wrap", wordBreak: "break-word" } }, post.content),
-                  React.createElement("div", { style: { margin: "4px 0 0" } }, React.createElement(PostMedia, { post, maxHeight: 300, borderRadius: 0 })),
-                  React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "4px 6px 8px" } },
-                    React.createElement("button", { style: { background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", color: "var(--muted)", fontSize: 13 } },
-                      React.createElement("svg", { width: 21, height: 21, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-                        React.createElement("path", { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" })),
-                      fmtCount((post.comments||[]).length)||""),
-                    React.createElement("button", { style: { background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", color: "var(--muted)", fontSize: 13 } },
-                      React.createElement("svg", { width: 21, height: 21, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-                        React.createElement("polyline", { points: "17 1 21 5 17 9" }),
-                        React.createElement("path", { d: "M3 11V9a4 4 0 0 1 4-4h14" }),
-                        React.createElement("polyline", { points: "7 23 3 19 7 15" }),
-                        React.createElement("path", { d: "M21 13v2a4 4 0 0 1-4 4H3" })),
-                      fmtCount((post.reposts||[]).length)||""),
-                    React.createElement("button", { style: { background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, padding: "6px 10px", color: (post.likes||[]).some(l=>l.user_id===user?.id) ? COLORS.red : "var(--muted)", fontSize: 13 } },
-                      React.createElement(HeartIcon, { color: (post.likes||[]).some(l=>l.user_id===user?.id) ? COLORS.red : null, size: 21 }),
-                      fmtCount((post.likes||[]).length)||""),
-                    React.createElement("div", { style: { flex: 1 } }),
-                    React.createElement("button", { style: { background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", padding: "6px 10px", color: COLORS.yellow } },
-                      React.createElement("svg", { width: 21, height: 21, viewBox: "0 0 24 24", fill: "currentColor" },
-                        React.createElement("path", { d: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" })))
-                  )
-                )
-              )
-            )
-    )
-  ),
-  notifPost && /*#__PURE__*/React.createElement("div", { style: { position: "fixed", inset: 0, background: "var(--bg)", zIndex: 320, display: "flex", flexDirection: "column", overflowY: "auto" } },
+  showBookmarks && React.createElement(SavedLibraryScreen, { token, user, showToast, onClose: () => setShowBookmarks(false), onOpenItem: item => { setNotifPost(item); setNotifPostLoading(false); } }),
+    notifPost && /*#__PURE__*/React.createElement("div", { style: { position: "fixed", inset: 0, background: "var(--bg)", zIndex: 320, display: "flex", flexDirection: "column", overflowY: "auto" } },
     // ── Header ─────────────────────────────────────────────────────────────
     React.createElement("div", { style: { position: "sticky", top: 0, background: "var(--nav-bg)", zIndex: 10, borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 12, padding: "14px 16px" } },
       React.createElement("button", { onClick: () => setNotifPost(null), style: { background: "none", border: "none", cursor: "pointer", padding: 6, display: "flex", alignItems: "center", color: "var(--text)" } },
