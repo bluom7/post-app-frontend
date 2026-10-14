@@ -9,7 +9,6 @@ const INDEX_FILE = path.join(ROOT, 'index.html');
 const VIDEO_PRELOAD_GUARD = Buffer.from(
   '<script>(function(){if(!window.React)return;var createElement=React.createElement;React.createElement=function(type,props){var args=Array.prototype.slice.call(arguments);if(type==="video"){var src=props&&props.src;var remote=typeof src==="string"&&(src.indexOf("https://")===0||src.indexOf("http://")===0);if(remote&&!(props&&Object.prototype.hasOwnProperty.call(props,"preload"))){args[1]=Object.assign({},props,{preload:"none"});}}return createElement.apply(this,args);};})();</script>'
 );
-const SAVED_LIBRARY_OVERRIDE = Buffer.from('<script src="/saved-library-overrides.js"></script>');
 const HEAD_CLOSE = Buffer.from('</head>');
 
 const mime = {
@@ -45,14 +44,13 @@ function sendFile(res, filePath, fallbackToIndex = true) {
       res.writeHead(200, {
         'Content-Type': mime[ext] || 'application/octet-stream',
         'X-Content-Type-Options': 'nosniff',
-        ...(filePath === INDEX_FILE || path.basename(filePath) === 'sw.js' || path.basename(filePath) === 'saved-library-overrides.js' ? { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } : {}),
+        ...(filePath === INDEX_FILE || path.basename(filePath) === 'sw.js' ? { 'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0' } : {}),
       });
       if (filePath === INDEX_FILE) {
         const headEnd = data.indexOf(HEAD_CLOSE);
         if (headEnd >= 0) {
           res.write(data.subarray(0, headEnd));
           res.write(VIDEO_PRELOAD_GUARD);
-          res.write(SAVED_LIBRARY_OVERRIDE);
           res.end(data.subarray(headEnd));
           return;
         }
