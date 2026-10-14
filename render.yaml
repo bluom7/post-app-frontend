@@ -14,9 +14,6 @@ services:
       - path: /index.html
         name: Cache-Control
         value: no-cache
-      - path: /saved-library-overrides.js
-        name: Cache-Control
-        value: no-cache
     routes:
       - type: rewrite
         source: /*

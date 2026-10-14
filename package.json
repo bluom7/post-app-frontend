@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "node inject-saved-overrides.js"
+    "build": "echo ok"
   }
 }

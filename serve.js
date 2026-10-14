@@ -52,7 +52,7 @@ function sendFile(res, filePath, fallbackToIndex = true) {
         if (headEnd >= 0) {
           res.write(data.subarray(0, headEnd));
           res.write(VIDEO_PRELOAD_GUARD);
-          if (data.indexOf(SAVED_LIBRARY_OVERRIDE) < 0) res.write(SAVED_LIBRARY_OVERRIDE);
+          res.write(SAVED_LIBRARY_OVERRIDE);
           res.end(data.subarray(headEnd));
           return;
         }
