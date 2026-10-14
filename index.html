@@ -16825,7 +16825,7 @@ var deleteMsg=async function(msg,forEveryone){
 var fmtTime2=function(ts){if(!ts)return"";var d=new Date(ts);return d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});};
 var fmtDate=function(ts){if(!ts)return"";var d=new Date(ts);return d.toLocaleDateString([],{month:"short",day:"numeric"});};
 var members=groupData&&groupData.member_details||[];
-var getMember=function(uid){return members.find(function(m){return m.id===uid;})||null;};
+var getMember=function(uid){return members.find(function(m){return String(m.id)===String(uid);})||null;};
 var filteredMembers=members.filter(function(m){var q=String(memberQuery||"").trim().toLowerCase();if(!q)return true;return String(m.name||"").toLowerCase().includes(q)||String(m.handle||m.username||"").toLowerCase().includes(q)||String(m.bio||"").toLowerCase().includes(q);});
 var displayedMembers=showAllMembers?filteredMembers:filteredMembers.slice(0,20);
 var openGroupInfo=async function(){
@@ -17092,8 +17092,12 @@ React.createElement("div",{ref:msgScrollGC,onScroll:function(e){var el=e.current
   :messages.map(function(msg,idx){
     var isMe=msg.from_id===user.id;
     var showDate=idx===0||(new Date(msg.created_at).toDateString()!==new Date(messages[idx-1].created_at).toDateString());
-    var m=getMember(msg.from_id);
-    return React.createElement(React.Fragment,{key:msg.id},
+    var m=getMember(msg.from_id)||{};
+        var sharedPost=msg.shared_post&&typeof msg.shared_post==="object"&&!Array.isArray(msg.shared_post)&&String(msg.shared_post.id||"").trim()?msg.shared_post:null;
+        var senderAvatarPhoto=m.avatar_photo||msg.from_avatar_photo||null;
+        var senderAvatarBg=normalizeColor(m.avatar_bg||msg.from_avatar_bg)||COLORS.yellow;
+        var senderAvatarLetter=String(msg.from_avatar_letter||m.avatar_letter||(msg.from_name||m.name||"?")[0]||"?").charAt(0).toUpperCase();
+        return React.createElement(React.Fragment,{key:msg.id},
       showDate&&React.createElement("div",{style:{textAlign:"center",color:"var(--muted)",fontSize:11,margin:"8px 0"}},fmtDate(msg.created_at)),
       React.createElement("div",{
         style:{display:"flex",flexDirection:isMe?"row-reverse":"row",alignItems:"flex-start",gap:6,marginBottom:2},
@@ -17103,20 +17107,21 @@ React.createElement("div",{ref:msgScrollGC,onScroll:function(e){var el=e.current
         onMouseUp:function(){clearTimeout(lpTimerGC.current);},
         onMouseLeave:function(){clearTimeout(lpTimerGC.current);}
       },
-        !isMe&&React.createElement("div",{style:{width:28,height:28,borderRadius:"50%",background:normalizeColor(msg.from_avatar_bg)||COLORS.yellow,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:12,overflow:"hidden",flexShrink:0}},
-          msg.from_avatar_photo?React.createElement("img",{src:msg.from_avatar_photo,style:{width:"100%",height:"100%",objectFit:"cover"}}):msg.from_avatar_letter
-        ),
-        React.createElement("div",{style:{maxWidth:"72%",background:(msg.photo_url||msg.gif_url||msg.shared_post)?"transparent":"#f1f3f5",color:"#000",borderRadius:(msg.photo_url||msg.gif_url||msg.shared_post)?"0":"16px",padding:(msg.photo_url||msg.gif_url||msg.shared_post)?0:"8px 12px",border:"none",position:"relative",paddingBottom:(msg.photo_url||msg.gif_url||msg.shared_post)?0:(gcReactions[msg.id]?"16px":"8px")}},
+        !isMe&&React.createElement("div",{style:{width:28,height:28,borderRadius:"50%",background:senderAvatarBg,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:12,overflow:"hidden",flexShrink:0,position:"relative"}},
+              React.createElement("span",{style:{position:"relative",zIndex:0}},senderAvatarLetter),
+              senderAvatarPhoto&&React.createElement("img",{src:senderAvatarPhoto,alt:"",onError:function(e){e.currentTarget.style.display="none";},style:{position:"absolute",inset:0,width:"100%",height:"100%",objectFit:"cover"}})
+            ),
+            React.createElement("div",{style:{maxWidth:"72%",background:(msg.photo_url||msg.gif_url||sharedPost)?"transparent":"#f1f3f5",color:"#000",borderRadius:(msg.photo_url||msg.gif_url||sharedPost)?"0":"16px",padding:(msg.photo_url||msg.gif_url||sharedPost)?0:"8px 12px",border:"none",position:"relative",paddingBottom:(msg.photo_url||msg.gif_url||sharedPost)?0:(gcReactions[msg.id]?"16px":"8px")}},
           !isMe&&React.createElement("div",{style:{fontSize:11,fontWeight:700,color:"#6c63ff",marginBottom:3}},msg.from_name||""),
           msg.reply_to_preview&&React.createElement("div",{style:{background:"rgba(0,0,0,0.08)",borderLeft:"3px solid #6c63ff",borderRadius:6,padding:"4px 8px",marginBottom:6,fontSize:12,color:"var(--muted)"}},React.createElement("div",{style:{fontWeight:700,fontSize:11}},msg.reply_to_preview.from_name),msg.reply_to_preview.text||"📷 Photo"),
           msg.photo_url&&React.createElement("img",{src:msg.photo_url,alt:"",style:{display:"block",width:"100%",maxWidth:300,height:"auto",borderRadius:16,objectFit:"contain",imageRendering:"auto",marginBottom:msg.text?6:0}}),
           msg.gif_url&&React.createElement("img",{src:msg.gif_url,alt:"GIF",style:{display:"block",width:"100%",maxWidth:300,height:"auto",borderRadius:16,objectFit:"contain",imageRendering:"auto",marginBottom:msg.text?6:0}}),
           msg.audio_url&&!msg.deleted_for_everyone&&React.createElement(VoiceMessageBubble,{audioUrl:msg.audio_url,duration:msg.audio_duration,isMine:isMe}),
-          msg.shared_post&&React.createElement("div",{style:{background:"var(--input-bg)",borderRadius:10,padding:10,marginBottom:msg.text?6:0,fontSize:12}},
+          sharedPost&&React.createElement("div",{style:{background:"var(--input-bg)",borderRadius:10,padding:10,marginBottom:msg.text?6:0,fontSize:12}},
             React.createElement("div",{style:{fontWeight:700,color:"var(--muted)",marginBottom:4}},"📎 Shared Post"),
-            msg.shared_post.photo_url&&React.createElement("img",{src:msg.shared_post.photo_url,style:{width:"100%",borderRadius:8,marginBottom:4}}),
-            React.createElement("div",{style:{fontWeight:600}},msg.shared_post.user_name),
-            React.createElement("div",{style:{color:"var(--muted)",marginTop:2}},msg.shared_post.content)
+            sharedPost.photo_url&&React.createElement("img",{src:sharedPost.photo_url,style:{width:"100%",borderRadius:8,marginBottom:4}}),
+            React.createElement("div",{style:{fontWeight:600}},sharedPost.user_name),
+            React.createElement("div",{style:{color:"var(--muted)",marginTop:2}},sharedPost.content)
           ),
           msg.text&&React.createElement("div",{style:{fontSize:14,lineHeight:1.4}},msg.text),
           React.createElement("div",{style:{fontSize:10,color:isMe?"rgba(0,0,0,0.5)":"var(--muted)",textAlign:"right",marginTop:3}},fmtTime2(msg.created_at)),
