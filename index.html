@@ -3908,8 +3908,9 @@ function JoinWorldModal({open, onClose, token, user, showToast}) {
           // Controls
       e("div", {style:{padding:"10px 14px",flexShrink:0,display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}},
         e("button", {
+          type:"button","aria-label":"Choose country",
           onClick:()=>setShowCountryPicker(true),
-          style:{display:"flex",alignItems:"center",gap:5,background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:20,padding:"6px 12px",cursor:"pointer",fontSize:13,fontWeight:700,color:"var(--text)"}
+          style:{display:"flex",alignItems:"center",justifyContent:"center",gap:8,minWidth:116,minHeight:42,boxSizing:"border-box",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:12,padding:"8px 14px",cursor:"pointer",fontSize:14,fontWeight:800,color:"var(--text)",boxShadow:"0 2px 8px rgba(0,0,0,0.06)"}
         }, e("span", {style:{display:"flex",alignItems:"center",gap:5}},
               location==="world"
                 ? e("svg",{width:14,height:14,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"},
@@ -3917,7 +3918,7 @@ function JoinWorldModal({open, onClose, token, user, showToast}) {
                     e("path",{d:"M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"}))
                 : e("svg",{width:14,height:14,viewBox:"0 0 24 24",fill:"currentColor",stroke:"none"},
                     e("path",{d:"M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"})),
-              location==="world"?"World":locationLabel
+              location==="world"?"Country":locationLabel
             ), e("span", {style:{fontSize:10,color:"var(--muted)"}}, "▾")),
 
       ),
@@ -3967,31 +3968,58 @@ function JoinWorldModal({open, onClose, token, user, showToast}) {
               )
       ),
       // Country picker overlay
-      showCountryPicker && e("div", {
-        style:{position:"absolute",inset:0,background:"rgba(0,0,0,0.52)",zIndex:10,display:"flex",alignItems:"flex-end"},
-        onClick: ev=>{if(ev.target===ev.currentTarget){setShowCountryPicker(false);setCountrySearch("");}}
-      },
-        e("div", {style:{background:"var(--bg)",borderRadius:"20px 20px 0 0",width:"100%",maxHeight:"68vh",display:"flex",flexDirection:"column",padding:"16px 0 0"}},
-          e("div", {style:{padding:"0 16px 10px",fontWeight:800,fontSize:16,color:"var(--text)"}}, "Select Location"),
-          e("div", {style:{padding:"0 16px 10px"}},
-            e("input", {value:countrySearch,onChange:ev=>setCountrySearch(ev.target.value),placeholder:"Search country...",
-              style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:20,padding:"8px 14px",fontSize:14,color:"var(--text)"}})),
-          e("div", {className:"no-scrollbar",style:{overflowY:"auto",padding:"0 16px 20px"}},
-            e("button", {onClick:()=>{setLocation("world");setLocationLabel("World");setShowCountryPicker(false);setCountrySearch("");},
-              style:{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"12px 0",background:"none",border:"none",cursor:"pointer",fontWeight:700,fontSize:14,color:location==="world"?"#FFD600":"var(--text)"}},
-              e("svg",{width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"},
-                e("circle",{cx:"12",cy:"12",r:"10"}),e("line",{x1:"2",y1:"12",x2:"22",y2:"12"}),
-                e("path",{d:"M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"})),
-              "World (Global)"),
-            filteredCountries.map(c =>
-              e("button", {key:c.code, onClick:()=>{setLocation(c.code);setLocationLabel(c.name);setShowCountryPicker(false);setCountrySearch("");},
-                style:{width:"100%",display:"flex",alignItems:"center",gap:10,padding:"11px 0",background:"none",border:"none",cursor:"pointer",fontSize:14,fontWeight:location===c.code?700:400,color:location===c.code?"#FFD600":"var(--text)"}},
-                c.name)
+          showCountryPicker && e("div", {
+            style:{position:"absolute",inset:0,background:"rgba(12,16,24,0.46)",backdropFilter:"blur(4px)",zIndex:10,display:"flex",alignItems:"flex-end"},
+            onClick:ev=>{if(ev.target===ev.currentTarget){setShowCountryPicker(false);setCountrySearch("");}}
+          },
+            e("div", {style:{background:"var(--bg)",borderRadius:"24px 24px 0 0",border:"1px solid var(--border)",width:"100%",maxHeight:"82vh",display:"flex",flexDirection:"column",padding:"10px 0 14px",boxShadow:"0 -12px 40px rgba(0,0,0,0.18)",overflow:"hidden"}},
+              e("div", {style:{width:38,height:4,borderRadius:99,background:"var(--border)",margin:"0 auto 14px",flexShrink:0}}),
+              e("div", {style:{padding:"0 18px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexShrink:0}},
+                e("div", {style:{minWidth:0}},
+                  e("div", {style:{fontWeight:900,fontSize:18,lineHeight:1.2,color:"var(--text)"}}, "Choose Country"),
+                  e("div", {style:{fontSize:12,color:"var(--muted)",marginTop:4}}, "Filter news by country or view worldwide")
+                ),
+                e("button", {type:"button","aria-label":"Close country list",onClick:()=>{setShowCountryPicker(false);setCountrySearch("");},style:{width:36,height:36,flexShrink:0,border:"1px solid var(--border)",borderRadius:12,background:"var(--input-bg)",color:"var(--text)",fontSize:22,lineHeight:1,cursor:"pointer"}}, "×")
+              ),
+              e("div", {style:{padding:"0 16px 10px",flexShrink:0}},
+                e("div", {style:{position:"relative",display:"flex",alignItems:"center"}},
+                  e("svg", {width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"var(--muted)",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round",style:{position:"absolute",left:14,pointerEvents:"none"}},
+                    e("circle", {cx:"11",cy:"11",r:"7"}), e("path", {d:"m20 20-4-4"})),
+                  e("input", {type:"search",value:countrySearch,onChange:ev=>setCountrySearch(ev.target.value),placeholder:"Search countries","aria-label":"Search countries",autoComplete:"off",
+                    style:{width:"100%",height:46,boxSizing:"border-box",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:13,padding:"0 14px 0 42px",fontSize:14,color:"var(--text)",outline:"none"}})
+                )
+              ),
+              e("div", {className:"no-scrollbar",style:{minHeight:0,overflowY:"auto",padding:"4px 14px calc(18px + env(safe-area-inset-bottom))",overscrollBehavior:"contain"}},
+                e("button", {type:"button","aria-pressed":location==="world",onClick:()=>{setLocation("world");setLocationLabel("World");setShowCountryPicker(false);setCountrySearch("");},
+                  style:{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"12px",background:location==="world"?"rgba(255,214,0,0.14)":"var(--input-bg)",border:"1px solid",borderColor:location==="world"?"#FFD600":"var(--border)",borderRadius:14,cursor:"pointer",textAlign:"left",marginBottom:8,color:"var(--text)"}},
+                  e("span", {style:{width:36,height:36,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:11,background:"rgba(255,214,0,0.18)",color:"#A88400"}},
+                    e("svg", {width:20,height:20,viewBox:"0 0 24 24",fill:"none",stroke:"currentColor",strokeWidth:"2",strokeLinecap:"round",strokeLinejoin:"round"},
+                      e("circle", {cx:"12",cy:"12",r:"10"}),e("line", {x1:"2",y1:"12",x2:"22",y2:"12"}),e("path", {d:"M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"}))
+                  ),
+                  e("span", {style:{flex:1,minWidth:0}},
+                    e("span", {style:{display:"block",fontSize:14,fontWeight:800}}, "Worldwide"),
+                    e("span", {style:{display:"block",fontSize:12,color:"var(--muted)",marginTop:3}}, "News from all countries")
+                  ),
+                  location==="world" && e("svg", {width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#A88400",strokeWidth:"2.5",strokeLinecap:"round",strokeLinejoin:"round","aria-hidden":"true"},e("path", {d:"m5 12 4 4L19 6"}))
+                ),
+                filteredCountries.length===0
+                  ? e("div", {style:{textAlign:"center",padding:"30px 16px",color:"var(--muted)"}},
+                      e("div", {style:{fontWeight:800,fontSize:14,color:"var(--text)",marginBottom:4}}, "No countries found"),
+                      e("div", {style:{fontSize:12}}, "Try a different search."))
+                  : filteredCountries.map(c => {
+                      const selected=location===c.code;
+                      const flag=c.code.toUpperCase().replace(/[A-Z]/g,letter=>String.fromCodePoint(letter.charCodeAt(0)+127397));
+                      return e("button", {key:c.code,type:"button","aria-pressed":selected,onClick:()=>{setLocation(c.code);setLocationLabel(c.name);setShowCountryPicker(false);setCountrySearch("");},
+                        style:{width:"100%",display:"flex",alignItems:"center",gap:12,padding:"9px 12px",background:selected?"rgba(255,214,0,0.14)":"transparent",border:"1px solid",borderColor:selected?"#FFD600":"transparent",borderRadius:14,cursor:"pointer",textAlign:"left",marginBottom:4,color:"var(--text)",transition:"background 0.15s ease,border-color 0.15s ease"}},
+                        e("span", {style:{width:36,height:36,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",borderRadius:11,background:"var(--input-bg)",fontSize:20}}, flag),
+                        e("span", {style:{flex:1,fontSize:14,fontWeight:selected?800:600}}, c.name),
+                        selected && e("svg", {width:18,height:18,viewBox:"0 0 24 24",fill:"none",stroke:"#A88400",strokeWidth:"2.5",strokeLinecap:"round",strokeLinejoin:"round","aria-hidden":"true"},e("path", {d:"m5 12 4 4L19 6"}))
+                      );
+                    })
+              )
             )
-          )
-        )
-      ),
-      // Comments overlay
+          ),
+          // Comments overlay
 
     )
   );
