@@ -34056,7 +34056,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   var activeCommentReel = reels.find(function(r) { return r && String(r.id) === String(activeReelId); }) || null;
   // Main render — TikTok-style full-screen scroll snap
   var commentOverlayEl = showComments && React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 601 }, onClick: function(e) { if (e.target === e.currentTarget) { setShowComments(false); setCommentGifOpen(false); setCommentSheetExpanded(false); setShowCommentInfo(false); } } },
-      React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, background: "#fff", borderRadius: commentSheetExpanded ? "0" : "24px 24px 0 0", height: commentSheetExpanded ? "100vh" : "59vh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 -4px 32px rgba(0,0,0,0.18)", transition: "height 0.32s cubic-bezier(0.4,0,0.2,1), border-radius 0.32s" } },
+      React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, background: "#fff", borderRadius: commentSheetExpanded ? "0" : "24px 24px 0 0", height: commentSheetExpanded ? "100dvh" : "58dvh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 -4px 32px rgba(0,0,0,0.18)", transition: "height 0.32s cubic-bezier(0.4,0,0.2,1), border-radius 0.32s" } },
 
         // ── drag handle ──
         React.createElement("div", {
@@ -34876,15 +34876,15 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims, seedMode, commentCard
   const _reelEffFilter = (reel.video_effect && reel.video_effect !== 'none') ? ((VIDEO_EFFECTS.find(function(e){return e.id===reel.video_effect;})||VIDEO_EFFECTS[0]).filter) : 'none';
   // Keep the audio control next to the play control and expose both only while paused.
   const showPlaybackControls = (reel.music_url && !photoMusicPlaying) || (!isPhotoReel && !playing);
-  const _cardTop = "2.5vh", _cardH = "36vh";
-  const _cardStyle = { position: "fixed", top: _cardTop, left: "50%", transform: "translateX(-50%)", width: "27vh", height: _cardH, maxWidth: "72vw", borderRadius: 26, background: "#000", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", zIndex: 600, boxShadow: "0 0 0 200vmax #0b0d12", WebkitTapHighlightColor: "transparent" };
+  const _cardTop = "max(env(safe-area-inset-top, 0px), 2.5dvh)", _cardH = "min(38dvh, calc(100dvh - 58dvh - max(env(safe-area-inset-top, 0px), 2.5dvh) - env(safe-area-inset-bottom, 0px) - 12px))";
+  const _cardStyle = { position: "fixed", top: _cardTop, left: "50%", transform: "translateX(-50%)", width: "27dvh", height: _cardH, maxWidth: "72vw", borderRadius: 26, background: "#000", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", zIndex: 600, boxShadow: "0 0 0 200vmax #0b0d12", WebkitTapHighlightColor: "transparent" };
   const _reelPlayerRoot = /*#__PURE__*/React.createElement("div", {
     ref: containerRef,
     style: commentCard ? _cardStyle : { position: "absolute", inset: 0, background: "#000", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", WebkitTapHighlightColor: "transparent" },
     onClick: () => { handleTap(); }
   },
     isPhotoReel
-      ? /*#__PURE__*/React.createElement("img", { src: reel.photo_url, alt: "", onLoad: function(e){var w=e.target.naturalWidth,h=e.target.naturalHeight;setReelNatW(w);setReelNatH(h);onNatDims&&onNatDims(w,h);}, style: commentCard ? { width: "100%", height: "100%", objectFit: "cover", display: "block", WebkitTapHighlightColor: "transparent", filter: _reelEffFilter } : { width: "100%", height: "auto", flexShrink: 0, display: "block", WebkitTapHighlightColor: "transparent", filter: _reelEffFilter } })
+      ? /*#__PURE__*/React.createElement("img", { src: reel.photo_url, alt: "", onLoad: function(e){var w=e.target.naturalWidth,h=e.target.naturalHeight;setReelNatW(w);setReelNatH(h);onNatDims&&onNatDims(w,h);}, style: commentCard ? { width: "100%", height: "100%", objectFit: "contain", display: "block", WebkitTapHighlightColor: "transparent", filter: _reelEffFilter } : { width: "100%", height: "auto", flexShrink: 0, display: "block", WebkitTapHighlightColor: "transparent", filter: _reelEffFilter } })
       : /*#__PURE__*/React.createElement("video", {
           ref: videoRef,
           src: reel.video_url,
@@ -34893,7 +34893,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims, seedMode, commentCard
           onPlaying: function(){ setMediaError(false); setPlaying(true); },
           onPause: function(){ if(!paused) setPlaying(false); },
           onError: function(){ setPlaying(false); setMediaError(true); },
-          style: commentCard ? { width: "100%", height: "100%", objectFit: "cover", display: "block", WebkitTapHighlightColor: "transparent", filter: _reelEffFilter } : { width: "100%", height: "auto", flexShrink: 0, display: "block", WebkitTapHighlightColor: "transparent", filter: _reelEffFilter },
+          style: commentCard ? { width: "100%", height: "100%", objectFit: "contain", display: "block", WebkitTapHighlightColor: "transparent", filter: _reelEffFilter } : { width: "100%", height: "auto", flexShrink: 0, display: "block", WebkitTapHighlightColor: "transparent", filter: _reelEffFilter },
           loop: true, playsInline: true, muted: true, autoPlay: true, disableRemotePlayback: true, preload: "auto"
         }),
     _renderReelOverlays(reel, null, true, true),
