@@ -34981,7 +34981,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims, seedMode, commentCard
     key: "reel-card-speaker",
     "aria-label": audioEnabled ? "Mute audio" : "Unmute audio",
     onClick: function(e) { toggleAudio(e); },
-    style: { position: "fixed", left: "calc(50% + min(13.5dvh, 36vw) - 22px)", top: "calc(" + _cardTop + " + " + _cardH + " - 34px)", width: 30, height: 30, padding: 0, border: "none", borderRadius: "50%", background: "rgba(58,58,62,0.92)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 602, cursor: "pointer", WebkitTapHighlightColor: "transparent" }
+    style: { position: "fixed", left: "calc(50% + min(13.5dvh, 36vw) + 8px)", top: "calc(" + _cardTop + " + " + _cardH + " - 34px)", width: 30, height: 30, padding: 0, border: "none", borderRadius: "50%", background: "rgba(58,58,62,0.92)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 602, cursor: "pointer", WebkitTapHighlightColor: "transparent" }
   }, audioEnabled
     ? /*#__PURE__*/React.createElement("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
         /*#__PURE__*/React.createElement("path", { d: "M3 9h4l7-5v16l-7-5H3z", fill: "#fff" }),
