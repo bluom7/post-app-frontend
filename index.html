@@ -32738,7 +32738,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   var reelOverlayTextStyle = { color: "#fff", fontFamily: "'Roboto Slab', Georgia, serif", fontStyle: "normal", fontStretch: "normal", fontWeight: 700, letterSpacing: 0.25, lineHeight: 1.15, WebkitTextStroke: "1px #000", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(0,0,0,0.7)" };
   return React.createElement(React.Fragment, null,
     React.createElement("div", { ref: itemRef, style: { height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden", flexShrink: 0, background: "#000", boxSizing: "border-box" } },
-      React.createElement(ReelVideoPlayer, { commentCard: !!commentCard, commentExpanded: !!commentExpanded, seedMode: !!seedMode, reel: reel, onTap: handleVideoTap, paused: !isActive || showUpload || showCamera || !!showSearch || showRemixPage, onNatDims: function(w, h) { setMediaAR(h > 0 ? w / h : null); } }),
+      React.createElement(ReelVideoPlayer, { commentCard: !!commentCard, commentExpanded: !!commentExpanded, seedMode: !!seedMode, reel: reel, onTap: handleVideoTap, paused: !commentCard && (!isActive || showUpload || showCamera || !!showSearch || showRemixPage), onNatDims: function(w, h) { setMediaAR(h > 0 ? w / h : null); } }),
       showHeart && React.createElement("div", { style: { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", pointerEvents: "none", zIndex: 10, animation: "reelHeartPop 0.9s ease forwards" } },
         React.createElement("svg", { width: 90, height: 90, viewBox: "0 0 24 24", fill: "#FF1744", stroke: "none" },
           React.createElement("path", { d: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" }))),
@@ -34056,7 +34056,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   var activeCommentReel = reels.find(function(r) { return r && String(r.id) === String(activeReelId); }) || null;
   // Main render — TikTok-style full-screen scroll snap
   var commentOverlayEl = showComments && React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 601 }, onClick: function(e) { if (e.target === e.currentTarget) { setShowComments(false); setCommentGifOpen(false); setCommentSheetExpanded(false); setShowCommentInfo(false); } } },
-      React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, background: "#fff", borderRadius: commentSheetExpanded ? "0" : "24px 24px 0 0", height: commentSheetExpanded ? "100dvh" : "58dvh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 -4px 32px rgba(0,0,0,0.18)", transition: "height 0.32s cubic-bezier(0.4,0,0.2,1), border-radius 0.32s" } },
+      React.createElement("div", { style: { position: "absolute", bottom: 0, left: 0, right: 0, background: "#25262b", borderRadius: commentSheetExpanded ? "0" : "24px 24px 0 0", height: commentSheetExpanded ? "100dvh" : "58dvh", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 -4px 32px rgba(0,0,0,0.18)", transition: "height 0.32s cubic-bezier(0.4,0,0.2,1), border-radius 0.32s" } },
 
         // ── drag handle ──
         React.createElement("div", {
@@ -34068,7 +34068,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
           onMouseMove: function(e) { if (!commentSheetDragRef.current.dragging) return; var dy = commentSheetDragRef.current.startY - e.clientY; if (dy > 50 && !commentSheetExpanded) setCommentSheetExpanded(true); else if (dy < -50 && commentSheetExpanded) setCommentSheetExpanded(false); },
           onMouseUp: function() { commentSheetDragRef.current.dragging = false; }
         },
-          React.createElement("div", { style: { width: 38, height: 4, borderRadius: 2, background: "#ccc" } })),
+          React.createElement("div", { style: { width: 38, height: 4, borderRadius: 2, background: "#767780" } })),
 
         activeCommentReel && React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "8px 16px 10px" } },
           React.createElement("div", { style: { width: 44, height: 44, borderRadius: "50%", background: activeCommentReel.avatar_bg || "#FFD600", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", fontWeight: 800, fontSize: 17, color: "#111" } },
@@ -34078,31 +34078,31 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
           ),
           React.createElement("div", { style: { minWidth: 0, flex: 1 } },
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, minWidth: 0 } },
-              React.createElement("span", { style: { color: "#111", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 800, fontSize: 16, lineHeight: "20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, activeCommentReel.user_name || activeCommentReel.user_handle || "User"),
+              React.createElement("span", { style: { color: "#f5f5f6", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 800, fontSize: 16, lineHeight: "20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, activeCommentReel.user_name || activeCommentReel.user_handle || "User"),
               activeCommentReel.is_badge_verified && React.createElement(VerifiedBadge, { size: 16 })
             ),
-            activeCommentReel.user_handle && React.createElement("div", { style: { color: "#666", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 500, fontSize: 14, lineHeight: "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + activeCommentReel.user_handle.replace(/^@/, ""))
+            activeCommentReel.user_handle && React.createElement("div", { style: { color: "#b6b8c1", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 500, fontSize: 14, lineHeight: "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + activeCommentReel.user_handle.replace(/^@/, ""))
           ),
-          activeCommentReel.user_id != null && String(activeCommentReel.user_id) !== "" && !(activeCommentReel.is_own || (user && String(activeCommentReel.user_id) === String(user.id))) && React.createElement("button", { onClick: function() { followUser(activeCommentReel.user_id); }, "aria-label": activeCommentReel.is_follow_pending ? "Requested" : activeCommentReel.is_following ? "Following" : "Follow", style: { background: "#EFF0F2", color: "#111", border: "none", borderRadius: 6, padding: "7px 14px", minWidth: 78, height: 34, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: 15, lineHeight: "20px", fontWeight: 650, cursor: "pointer", flexShrink: 0 } }, activeCommentReel.is_follow_pending ? "Requested" : activeCommentReel.is_following ? "Following" : "Follow")
+          activeCommentReel.user_id != null && String(activeCommentReel.user_id) !== "" && !(activeCommentReel.is_own || (user && String(activeCommentReel.user_id) === String(user.id))) && React.createElement("button", { onClick: function() { followUser(activeCommentReel.user_id); }, "aria-label": activeCommentReel.is_follow_pending ? "Requested" : activeCommentReel.is_following ? "Following" : "Follow", style: { background: "#3a3b43", color: "#f5f5f6", border: "none", borderRadius: 6, padding: "7px 14px", minWidth: 78, height: 34, display: "flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontSize: 15, lineHeight: "20px", fontWeight: 650, cursor: "pointer", flexShrink: 0 } }, activeCommentReel.is_follow_pending ? "Requested" : activeCommentReel.is_following ? "Following" : "Follow")
         ),
         // ── comments title + information ──
         React.createElement("div", { style: { position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", margin: "0 0 8px" } },
           React.createElement("div", { style: { flexShrink: 0, width: "fit-content", background: "#FFD600", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, padding: "8px 20px" } },
             React.createElement("span", { style: { color: "#111", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", fontWeight: 800, fontSize: 15, lineHeight: "20px" } }, "Comments")),
-          React.createElement("button", { type: "button", onClick: function() { setShowCommentInfo(function(prev) { return !prev; }); }, "aria-label": "Comments information", style: { width: 32, height: 32, flexShrink: 0, padding: 0, border: 0, background: "none", color: "#111", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" } },
+          React.createElement("button", { type: "button", onClick: function() { setShowCommentInfo(function(prev) { return !prev; }); }, "aria-label": "Comments information", style: { width: 32, height: 32, flexShrink: 0, padding: 0, border: 0, background: "none", color: "#f5f5f6", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" } },
             React.createElement("svg", { width: 25, height: 25, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true" },
               React.createElement("circle", { cx: 12, cy: 12, r: 9.5 }),
               React.createElement("line", { x1: 12, y1: 10.5, x2: 12, y2: 16 }),
               React.createElement("circle", { cx: 12, cy: 7.2, r: 0.65, fill: "currentColor", stroke: "none" }))),
-          showCommentInfo && React.createElement("div", { role: "dialog", "aria-label": "Comments information", onClick: function(event) { event.stopPropagation(); }, style: { position: "absolute", top: 42, right: 16, width: "min(300px, calc(100vw - 48px))", boxSizing: "border-box", background: "#fff", color: "#111", borderRadius: 14, padding: "14px 16px", boxShadow: "0 10px 28px rgba(0,0,0,0.18)", border: "1px solid #e5e5e5", zIndex: 10, fontSize: 14, lineHeight: 1.45 } }, "Join the conversation. A thought becomes meaningful when it’s shared.")
+          showCommentInfo && React.createElement("div", { role: "dialog", "aria-label": "Comments information", onClick: function(event) { event.stopPropagation(); }, style: { position: "absolute", top: 42, right: 16, width: "min(300px, calc(100vw - 48px))", boxSizing: "border-box", background: "#303138", color: "#f2f2f4", borderRadius: 14, padding: "14px 16px", boxShadow: "0 10px 28px rgba(0,0,0,0.18)", border: "1px solid #44454d", zIndex: 10, fontSize: 14, lineHeight: 1.45 } }, "Join the conversation. A thought becomes meaningful when it’s shared.")
         ),
 
         // ── comment list ──
-        React.createElement("div", { ref: commentListRef, className: "no-scrollbar", style: { flex: 1, overflowY: "auto", padding: "6px 14px", background: "#fff", scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" } },
+        React.createElement("div", { ref: commentListRef, className: "no-scrollbar", style: { flex: 1, overflowY: "auto", padding: "6px 14px", background: "#25262b", scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" } },
           commentsFetching
             ? ["one", "two", "three"].map(function(key) { return renderReelCommentSkeleton(key); })
             : comments.length === 0
-              ? React.createElement("div", { style: { textAlign: "center", color: "#999", padding: "36px 0", fontSize: 14 } }, "No comments yet. Be the first!")
+              ? React.createElement("div", { style: { textAlign: "center", color: "#a3a5ae", padding: "36px 0", fontSize: 14 } }, "No comments yet. Be the first!")
             : comments.map(function(c) {
                 var cLiked = (c.likes || []).some(function(id) { return String(id) === String(user.id); });
                 var cLikeCount = (c.likes || []).length;
@@ -34114,19 +34114,19 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                     React.createElement("div", { style: { flex: 1, minWidth: 0 } },
                       React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between" } },
                         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, minWidth: 0, whiteSpace: "nowrap" } },
-                          React.createElement("span", { style: { fontWeight: 700, fontSize: 14, color: "#111" } }, c.user_name || c.user_handle || "User"),
+                          React.createElement("span", { style: { fontWeight: 700, fontSize: 14, color: "#f5f5f6" } }, c.user_name || c.user_handle || "User"),
                           c.is_badge_verified && React.createElement(VerifiedBadge, { size: 14 }),
-                          React.createElement("span", { style: { color: "#999", fontSize: 12, marginLeft: 0 } }, c.created_at ? (function(ts){var d=new Date(ts),s=Math.floor((Date.now()-d)/1000);return s<5?"just now":s<60?s+"s":s<3600?Math.floor(s/60)+"m":s<86400?Math.floor(s/3600)+"h":s<604800?Math.floor(s/86400)+"d":s<2592000?Math.floor(s/604800)+"w":Math.floor(s/2592000)+"mo";})(c.created_at) : ""))),
-                      React.createElement("div", { style: { fontSize: 16, color: "#222", marginTop: 3, wordBreak: "break-word", lineHeight: 1.4 } }, commentTextValue),
+                          React.createElement("span", { style: { color: "#a3a5ae", fontSize: 12, marginLeft: 0 } }, c.created_at ? (function(ts){var d=new Date(ts),s=Math.floor((Date.now()-d)/1000);return s<5?"just now":s<60?s+"s":s<3600?Math.floor(s/60)+"m":s<86400?Math.floor(s/3600)+"h":s<604800?Math.floor(s/86400)+"d":s<2592000?Math.floor(s/604800)+"w":Math.floor(s/2592000)+"mo";})(c.created_at) : ""))),
+                      React.createElement("div", { style: { fontSize: 16, color: "#f0f0f2", marginTop: 3, wordBreak: "break-word", lineHeight: 1.4 } }, commentTextValue),
                       c.gif_url && React.createElement("img", { src: c.gif_url, alt: "GIF", style: { maxWidth: 180, borderRadius: 8, marginTop: 5, display: "block" }, loading: "lazy" }),
-                      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, marginTop: 5, whiteSpace: "nowrap", flexWrap: "nowrap" } }, React.createElement("button", { onClick: function() { setReplyingTo(c); setCommentText(""); if (commentInputRef.current) commentInputRef.current.focus(); }, style: { background: "none", border: "none", cursor: "pointer", color: "#111", fontSize: 16, lineHeight: "16px", fontWeight: 500, padding: 0 } }, "Reply"), c.text && React.createElement("button", { type: "button", onClick: function() { translateReelComment(c.id, c.text); }, disabled: !!commentTranslationLoading[c.id], style: { background: "none", border: "none", cursor: commentTranslationLoading[c.id] ? "wait" : "pointer", color: "#111", fontSize: 16, lineHeight: "16px", fontWeight: 500, padding: 0 } }, commentTranslationLoading[c.id] ? "Loading..." : (commentTranslation && !commentTranslation.showingOriginal ? "See original" : "See translation")), React.createElement("div", { style: { marginLeft: "auto", display: "flex", alignItems: "center" } }, React.createElement("button", { onClick: function() { likeComment(c.id); }, style: { background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 0, padding: "0 2px", lineHeight: "16px" } },
-                          React.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: cLiked ? "#FF1744" : "none", stroke: cLiked ? "#FF1744" : "#bbb", strokeWidth: "2" },
+                      React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, marginTop: 5, whiteSpace: "nowrap", flexWrap: "nowrap" } }, React.createElement("button", { onClick: function() { setReplyingTo(c); setCommentText(""); if (commentInputRef.current) commentInputRef.current.focus(); }, style: { background: "none", border: "none", cursor: "pointer", color: "#f5f5f6", fontSize: 16, lineHeight: "16px", fontWeight: 500, padding: 0 } }, "Reply"), c.text && React.createElement("button", { type: "button", onClick: function() { translateReelComment(c.id, c.text); }, disabled: !!commentTranslationLoading[c.id], style: { background: "none", border: "none", cursor: commentTranslationLoading[c.id] ? "wait" : "pointer", color: "#f5f5f6", fontSize: 16, lineHeight: "16px", fontWeight: 500, padding: 0 } }, commentTranslationLoading[c.id] ? "Loading..." : (commentTranslation && !commentTranslation.showingOriginal ? "See original" : "See translation")), React.createElement("div", { style: { marginLeft: "auto", display: "flex", alignItems: "center" } }, React.createElement("button", { onClick: function() { likeComment(c.id); }, style: { background: "none", border: "none", cursor: "pointer", display: "flex", flexDirection: "row", alignItems: "center", gap: 4, flexShrink: 0, padding: "0 2px", lineHeight: "16px" } },
+                          React.createElement("svg", { width: 16, height: 16, viewBox: "0 0 24 24", fill: cLiked ? "#FF1744" : "none", stroke: cLiked ? "#FF1744" : "#777982", strokeWidth: "2" },
                             React.createElement("path", { d: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" })),
-                          cLikeCount > 0 && React.createElement("span", { style: { fontSize: 16, color: "#111", lineHeight: "16px", fontWeight: 400 } }, cLikeCount)))))),
+                          cLikeCount > 0 && React.createElement("span", { style: { fontSize: 16, color: "#f5f5f6", lineHeight: "16px", fontWeight: 400 } }, cLikeCount)))))),
                   cReplies.length > 0 && React.createElement("div", { style: { marginLeft: 44, marginTop: 4 } },
                     // "View X replies" toggle — collapsed by default
-                    React.createElement("button", { onClick: function() { toggleReelCommentReplies(c.id); }, style: { background: "none", border: "none", cursor: "pointer", color: "#111", fontSize: 13, fontWeight: 400, padding: "5px 0 2px", marginTop: 3, display: "flex", alignItems: "center", gap: 6 } },
-                      React.createElement("span", { style: { display: "inline-block", width: 22, height: 1, background: "#ddd", verticalAlign: "middle" } }),
+                    React.createElement("button", { onClick: function() { toggleReelCommentReplies(c.id); }, style: { background: "none", border: "none", cursor: "pointer", color: "#f5f5f6", fontSize: 13, fontWeight: 400, padding: "5px 0 2px", marginTop: 3, display: "flex", alignItems: "center", gap: 6 } },
+                      React.createElement("span", { style: { display: "inline-block", width: 22, height: 1, background: "#45464e", verticalAlign: "middle" } }),
                       expandedReplies[c.id] ? "Hide replies" : ("View " + cReplies.length + " " + (cReplies.length === 1 ? "reply" : "replies"))),
                     // When expanded: show first 2 (or all if showAllReplies)
                     expandedReplies[c.id] && (function() {
@@ -34138,26 +34138,26 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
                               r.avatar_photo ? React.createElement("img", { src: r.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" } }) : (r.avatar_letter || "?")),
                             React.createElement("div", { style: { flex: 1, minWidth: 0 } },
                               React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, minWidth: 0, whiteSpace: "nowrap" } },
-                                React.createElement("span", { style: { fontWeight: 700, fontSize: 12, color: "#111" } }, r.user_name || r.user_handle || "User"),
+                                React.createElement("span", { style: { fontWeight: 700, fontSize: 12, color: "#f5f5f6" } }, r.user_name || r.user_handle || "User"),
                                 r.is_badge_verified && React.createElement(VerifiedBadge, { size: 12 }),
-                                React.createElement("span", { style: { color: "#999", fontSize: 10, marginLeft: 0 } }, r.created_at ? (function(ts){var d=new Date(ts),s=Math.floor((Date.now()-d)/1000);return s<5?"just now":s<60?s+"s":s<3600?Math.floor(s/60)+"m":s<86400?Math.floor(s/3600)+"h":s<604800?Math.floor(s/86400)+"d":s<2592000?Math.floor(s/604800)+"w":Math.floor(s/2592000)+"mo";})(r.created_at) : "")),
+                                React.createElement("span", { style: { color: "#a3a5ae", fontSize: 10, marginLeft: 0 } }, r.created_at ? (function(ts){var d=new Date(ts),s=Math.floor((Date.now()-d)/1000);return s<5?"just now":s<60?s+"s":s<3600?Math.floor(s/60)+"m":s<86400?Math.floor(s/3600)+"h":s<604800?Math.floor(s/86400)+"d":s<2592000?Math.floor(s/604800)+"w":Math.floor(s/2592000)+"mo";})(r.created_at) : "")),
                               r.gif_url && React.createElement("img", { src: r.gif_url, alt: "GIF", style: { maxWidth: 140, borderRadius: 6, marginTop: 3, display: "block" }, loading: "lazy" }),
-                              React.createElement("div", { style: { fontSize: 13, color: "#222", marginTop: 2, wordBreak: "break-word", lineHeight: 1.4 } }, r.text)));
+                              React.createElement("div", { style: { fontSize: 13, color: "#f0f0f2", marginTop: 2, wordBreak: "break-word", lineHeight: 1.4 } }, r.text)));
                         }));
 
                     })()));
               })),
 
         // ── GIF preview strip (when a GIF is selected) ──
-        commentGifUrl && React.createElement("div", { style: { borderTop: "1px solid #e0e0e0", background: "#f5f5f5", padding: "8px 12px", display: "flex", alignItems: "center", gap: 8 } },
-          React.createElement("img", { src: commentGifUrl, alt: "GIF", style: { height: 60, borderRadius: 8, border: "1px solid #ddd" } }),
+        commentGifUrl && React.createElement("div", { style: { borderTop: "1px solid #41424a", background: "#2f3037", padding: "8px 12px", display: "flex", alignItems: "center", gap: 8 } },
+          React.createElement("img", { src: commentGifUrl, alt: "GIF", style: { height: 60, borderRadius: 8, border: "1px solid #45464e" } }),
           React.createElement("button", { onClick: function() { setCommentGifUrl(null); }, style: { background: "rgba(255,255,255,0.12)", border: "none", borderRadius: "50%", width: 26, height: 26, cursor: "pointer", color: "#fff", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } }, "×")),
 
         // ── input bar ──
-        replyingTo && React.createElement("div", { style: { padding: "6px 14px", background: "#f0f8ff", borderTop: "1px solid #dce8f5", display: "flex", alignItems: "center", justifyContent: "space-between" } },
+        replyingTo && React.createElement("div", { style: { padding: "6px 14px", background: "#30343e", borderTop: "1px solid #444b58", display: "flex", alignItems: "center", justifyContent: "space-between" } },
           React.createElement("span", { style: { fontSize: 12, color: "#0D9FF3", fontWeight: 600 } }, "Replying to @" + ((replyingTo.user_handle || replyingTo.user_name || "User").replace(/^@/, ""))),
-          React.createElement("button", { onClick: function() { setReplyingTo(null); setCommentText(""); }, style: { background: "none", border: "none", cursor: "pointer", color: "#888", fontSize: 18, lineHeight: 1, padding: "0 2px" } }, "×")),
-        React.createElement("div", { style: { padding: "10px 12px 14px", borderTop: "1px solid #e0e0e0", display: "flex", alignItems: "center", gap: 8, background: "#fff" } },
+          React.createElement("button", { onClick: function() { setReplyingTo(null); setCommentText(""); }, style: { background: "none", border: "none", cursor: "pointer", color: "#b6b8c1", fontSize: 18, lineHeight: 1, padding: "0 2px" } }, "×")),
+        React.createElement("div", { style: { padding: "10px 12px 14px", borderTop: "1px solid #41424a", display: "flex", alignItems: "center", gap: 8, background: "#25262b" } },
           React.createElement("div", { style: { width: 32, height: 32, borderRadius: "50%", background: (user && user.avatar_bg) || "#FFD600", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, fontSize: 13, overflow: "hidden", color: "#111" } },
             user && user.avatar_photo
               ? React.createElement("img", { src: user.avatar_photo, style: { width: "100%", height: "100%", objectFit: "cover" } })
@@ -34168,18 +34168,18 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
             onChange: function(e) { setCommentText(e.target.value); },
             onKeyDown: function(e) { if (e.key === "Enter" && !e.shiftKey && commentText.trim()) { postComment(); setCommentGifOpen(false); } },
             placeholder: replyingTo ? ("Reply to @" + ((replyingTo.user_handle || replyingTo.user_name || "User").replace(/^@/, "")) + "...") : "Add a comment...",
-            style: { flex: 1, background: "#f0f0f0", border: "none", borderRadius: 22, padding: "9px 14px", color: "#111", fontSize: 14, outline: "none", minWidth: 0 }
+            style: { flex: 1, background: "#34353b", border: "none", borderRadius: 22, padding: "9px 14px", color: "#f5f5f6", fontSize: 14, outline: "none", minWidth: 0 }
           }),
           // GIF button
           React.createElement("button", {
             onClick: function() { setShowCommentGifPicker(true); },
-            style: { background: commentGifUrl ? "rgba(255,214,0,0.3)" : "#f0f0f0", border: "none", borderRadius: 8, padding: "5px 7px", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }
-          }, React.createElement("span", { style: { color: commentGifUrl ? "#b8900a" : "#555", fontSize: 11, fontWeight: 900, letterSpacing: 0.5 } }, "GIF")),
+            style: { background: commentGifUrl ? "rgba(255,214,0,0.3)" : "#34353b", border: "none", borderRadius: 8, padding: "5px 7px", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }
+          }, React.createElement("span", { style: { color: commentGifUrl ? "#b8900a" : "#b6b8c1", fontSize: 11, fontWeight: 900, letterSpacing: 0.5 } }, "GIF")),
           // Sticker button — Giphy sticker icon
           React.createElement("button", {
             onClick: function() { setShowCommentStickerPicker(true); },
             title: "Giphy Stickers",
-            style: { background: "#f0f0f0", border: "none", borderRadius: 8, padding: "4px 6px", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }
+            style: { background: "#34353b", border: "none", borderRadius: 8, padding: "4px 6px", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }
           }, React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 22 22", fill: "none" },
               React.createElement("rect", { x: 0, y: 0, width: 22, height: 22, rx: 5, fill: "#222" }),
               React.createElement("rect", { x: 1.5, y: 1.5, width: 5, height: 14, rx: 1.5, fill: "#00FF99" }),
@@ -34677,7 +34677,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims, seedMode, commentCard
   // Start only after the media element is ready, and sync UI with the real
   // play() promise so a rejected playback attempt never leaves a fake state.
   const attemptVideoPlayback = () => {
-    if (isPhotoReel || paused || mediaError) return Promise.resolve(false);
+    if (isPhotoReel || (paused && !commentCard) || mediaError) return Promise.resolve(false);
     const v = videoRef.current;
     if (!v) return Promise.resolve(false);
     v.loop = true;
@@ -34729,13 +34729,13 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims, seedMode, commentCard
     if (isPhotoReel) return;
     const v = videoRef.current;
     if (!v) return;
-    if (paused) {
+    if (paused && !commentCard) {
       v.pause(); setPlaying(false);
       if (musicRef.current) musicRef.current.pause();
     } else {
       attemptVideoPlayback();
     }
-  }, [paused]);
+  }, [paused, commentCard]);
 
   // Photo reels: manage music element when reel/paused changes — auto-start music
   React.useEffect(() => {
@@ -34748,7 +34748,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims, seedMode, commentCard
       setPhotoMusicPlaying(false);
     }
     return () => { clearMusicClipTimer(); if (musicRef.current) { musicRef.current.pause(); musicRef.current = null; } };
-  }, [paused, reel.id]);
+  }, [paused, commentCard, reel.id]);
 
   // Progress bar — 60fps RAF loop.
   // Case A (fast network / cached): v.duration is finite from the first frame →
@@ -34898,14 +34898,14 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims, seedMode, commentCard
         }),
     _renderReelOverlays(reel, null, true, true),
     // Photo reel: play icon when paused (audio on but music stopped)
-    isPhotoReel && reel.music_url && !mediaError && !photoMusicPlaying && /*#__PURE__*/React.createElement("div", {
+    isPhotoReel && reel.music_url && !mediaError && !photoMusicPlaying && !commentCard && /*#__PURE__*/React.createElement("div", {
       style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }
     },
       /*#__PURE__*/React.createElement("div", { style: { width: 60, height: 60, borderRadius: "50%", background: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center" } },
         /*#__PURE__*/React.createElement("svg", { width: 32, height: 32, viewBox: "0 0 24 24", fill: "#fff", style: { transform: "translateX(2px)" } },
           /*#__PURE__*/React.createElement("path", { d: "M7.1 4.75c-.93-.56-2.1.11-2.1 1.2v12.1c0 1.09 1.17 1.76 2.1 1.2l10.2-6.05c.93-.55.93-1.9 0-2.45L7.1 4.75Z" })))),
     // Video reel: play icon when paused
-    !isPhotoReel && !mediaError && !playing && /*#__PURE__*/React.createElement("div", {
+    !isPhotoReel && !mediaError && !playing && !commentCard && /*#__PURE__*/React.createElement("div", {
       style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }
     },
       /*#__PURE__*/React.createElement("div", { style: { width: 60, height: 60, borderRadius: "50%", background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" } },
@@ -34967,7 +34967,7 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims, seedMode, commentCard
       style: { position: "absolute", bottom: seedMode ? 5 : 23, left: 14, color: "#fff", fontFamily: "'Roboto Slab', Georgia, serif", fontStyle: "normal", fontStretch: "normal", fontWeight: 700, letterSpacing: 0.25, lineHeight: 1.15, WebkitTextStroke: "1px #000", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(0,0,0,0.7)", fontSize: 15, marginTop: -2, zIndex: 7, pointerEvents: "none", opacity: playing ? 0 : 1, transition: "opacity 0.18s", fontVariantNumeric: "tabular-nums" }
     }, "0:00 / 0:00"),
     // Video progress bar — 60fps RAF smooth, gray track, white fill, at very bottom
-    !isPhotoReel && /*#__PURE__*/React.createElement("div", {
+    !isPhotoReel && !commentCard && /*#__PURE__*/React.createElement("div", {
       style: { position: "absolute", bottom: (seedMode || commentCard) ? 0 : 18, left: 0, right: 0, height: 2, background: "rgba(255,255,255,0.30)", zIndex: 6, pointerEvents: "none" }
     },
       /*#__PURE__*/React.createElement("div", {
@@ -34981,13 +34981,13 @@ function ReelVideoPlayer({ reel, onTap, paused, onNatDims, seedMode, commentCard
     key: "reel-card-speaker",
     "aria-label": audioEnabled ? "Mute audio" : "Unmute audio",
     onClick: function(e) { toggleAudio(e); },
-    style: { position: "fixed", right: 14, top: "calc(" + _cardTop + " + " + _cardH + " - 38px)", width: 38, height: 38, padding: 0, border: "none", borderRadius: "50%", background: "rgba(58,58,62,0.92)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 602, cursor: "pointer", WebkitTapHighlightColor: "transparent" }
+    style: { position: "fixed", left: "calc(50% + min(13.5dvh, 36vw) - 34px)", top: "calc(" + _cardTop + " + " + _cardH + " - 34px)", width: 30, height: 30, padding: 0, border: "none", borderRadius: "50%", background: "rgba(58,58,62,0.92)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 602, cursor: "pointer", WebkitTapHighlightColor: "transparent" }
   }, audioEnabled
-    ? /*#__PURE__*/React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+    ? /*#__PURE__*/React.createElement("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
         /*#__PURE__*/React.createElement("path", { d: "M3 9h4l7-5v16l-7-5H3z", fill: "#fff" }),
         /*#__PURE__*/React.createElement("path", { d: "M17.2 9.5a3.5 3.5 0 0 1 0 5", stroke: "#fff", strokeWidth: 1.8, strokeLinecap: "round" }),
         /*#__PURE__*/React.createElement("path", { d: "M19.8 7.2a6.8 6.8 0 0 1 0 9.6", stroke: "#fff", strokeWidth: 1.8, strokeLinecap: "round" }))
-    : /*#__PURE__*/React.createElement("svg", { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+    : /*#__PURE__*/React.createElement("svg", { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
         /*#__PURE__*/React.createElement("path", { d: "M3 9h3.5v6H3z", fill: "#fff" }),
         /*#__PURE__*/React.createElement("path", { d: "M7.4 8.8L13.5 4.25c.2-.15.5-.01.5.25v1.95L7.4 13.1z", fill: "#fff" }),
         /*#__PURE__*/React.createElement("path", { d: "M10.4 17.5L14 12.8V20c0 .25-.29.39-.49.24z", fill: "#fff" }),
