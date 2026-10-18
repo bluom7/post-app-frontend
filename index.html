@@ -17258,7 +17258,7 @@ React.createElement("div",null,
           item.avatar_photo?React.createElement("img",{src:item.avatar_photo,alt:"",decoding:"async",style:{width:"100%",height:"100%",objectFit:"cover",imageRendering:"auto"}}):
           item.type==="group"?React.createElement("span",null,item.avatar_letter):item.avatar_letter
         ),
-        item.type==="dm"&&item.is_online&&React.createElement("div",{style:{position:"absolute",bottom:1,right:1,width:12,height:12,borderRadius:"50%",background:COLORS.green,border:"2.5px solid var(--bg)"}}),
+        item.type==="dm"&&canShowPresence(item,user)&&item.is_online&&React.createElement("div",{style:{position:"absolute",bottom:1,right:1,width:12,height:12,borderRadius:"50%",background:COLORS.green,border:"2.5px solid var(--bg)"}}),
         item.type==="group"&&React.createElement("div",{style:{position:"absolute",bottom:-3,right:-3,width:19,height:19,borderRadius:"50%",background:"#6c63ff",border:"2px solid var(--bg)",display:"flex",alignItems:"center",justifyContent:"center"}},React.createElement("svg",{width:10,height:10,viewBox:"0 0 24 24",fill:"white"},React.createElement("path",{d:"M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"}),React.createElement("circle",{cx:9,cy:7,r:4}),React.createElement("path",{d:"M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"})))
       ),
       React.createElement("div",{style:{flex:1,minWidth:0,height:50,display:"flex",flexDirection:"column",justifyContent:"space-between"}},
@@ -17383,7 +17383,7 @@ function openDM(f){
 function PersonCard(f){
       var nm=f.name||f.username||f.handle||f.id;var ltr=(nm[0]||"?").toUpperCase();var handle=f.handle||f.username||"";
       return React.createElement("div",{key:f._id||f.id,onClick:function(){openDM(f);},style:{display:"flex",alignItems:"center",gap:14,padding:"8px 16px",cursor:"pointer",background:"transparent",borderBottom:"none",position:"relative",WebkitFontSmoothing:"antialiased"}},
-        React.createElement("div",{style:{position:"relative",flexShrink:0}},React.createElement("div",{style:{width:50,height:50,borderRadius:"50%",background:normalizeColor(f.avatar_bg)||COLORS.yellow,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:700,color:"#fff",overflow:"hidden"}},f.avatar_photo?React.createElement("img",{src:f.avatar_photo,alt:"",decoding:"async",style:{width:"100%",height:"100%",objectFit:"cover"}}):ltr),f.is_online&&React.createElement("div",{style:{position:"absolute",bottom:1,right:1,width:12,height:12,borderRadius:"50%",background:COLORS.green,border:"2.5px solid var(--bg)"}})),
+        React.createElement("div",{style:{position:"relative",flexShrink:0}},React.createElement("div",{style:{width:50,height:50,borderRadius:"50%",background:normalizeColor(f.avatar_bg)||COLORS.yellow,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,fontWeight:700,color:"#fff",overflow:"hidden"}},f.avatar_photo?React.createElement("img",{src:f.avatar_photo,alt:"",decoding:"async",style:{width:"100%",height:"100%",objectFit:"cover"}}):ltr),canShowPresence(f,user)&&f.is_online&&React.createElement("div",{style:{position:"absolute",bottom:1,right:1,width:12,height:12,borderRadius:"50%",background:COLORS.green,border:"2.5px solid var(--bg)"}})),
         React.createElement("div",{style:{flex:1,minWidth:0,height:50,display:"flex",flexDirection:"column",justifyContent:"space-between"}},
           React.createElement("div",{style:{display:"flex",alignItems:"center",gap:4,overflow:"hidden",height:25}},React.createElement("span",{style:{fontWeight:500,fontSize:17,lineHeight:"25px",color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},nm),f.is_badge_verified&&React.createElement("span",{style:{display:"inline-flex",alignItems:"center",justifyContent:"center",flexShrink:0,height:25}},React.createElement(VerifiedBadge,{size:17}))),
           React.createElement("div",{style:{color:"var(--muted)",fontSize:15,lineHeight:"25px",height:25,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},handle?"@"+handle.replace(/^@/,""):"")),
@@ -18664,6 +18664,10 @@ function fmtLastSeen(ts) {
 }
 
 
+function canShowPresence(target, viewer) {
+  return !(target && target.is_badge_verified && !(viewer && viewer.is_badge_verified));
+}
+
 // ── Verified-account chat gate: Follow + Connect row (shown only when a non-verified user opens chat with a verified user) ──
 function VerifiedChatActions({ token, user, partner, profile, showToast, onFriendsChange }) {
   const pid = String((profile && profile.id) || (partner && partner.id) || '');
@@ -19845,7 +19849,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
         following_count: firstNumber(profileSource.following_count) ?? firstNumber(profileSource.stats && profileSource.stats.following) ?? firstNumber(partnerUser.following_count) ?? firstNumber(partner && partner.following_count) ?? (Array.isArray(partnerUser.following) ? partnerUser.following.length : 0),
       };
 
-        const blockedByVerified = !user.is_badge_verified && !!chatProfile.is_badge_verified && String(verifiedFriendId || '') !== String((partner && partner.id) || (chatProfile && chatProfile.id) || '');
+        const blockedByVerified = false; // Verified recipients accept direct messages without a connect request.
 
     const renderLpMenu = () => {
       const m = lpMsg; if (!m) return null;
@@ -19943,7 +19947,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
         React.createElement('div', { onClick: () => onViewProfile && onViewProfile((partnerProfile && partnerProfile.id) || partner.id, partnerProfile || partner), role: 'button', tabIndex: 0, 'aria-label': 'Open profile', onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') onViewProfile && onViewProfile((partnerProfile && partnerProfile.id) || partner.id, partnerProfile || partner); }, style: { cursor: 'pointer', display: 'flex', flexShrink: 0 } }, React.createElement(AvatarDiv, { u: partner, size: 32, circle: true })),
         React.createElement('div', { style: { flex: 1, minWidth: 0 } },
           React.createElement('div', { style: { fontWeight: 700, fontSize: 15, lineHeight: '20px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, partner.name),
-          React.createElement('div', { style: { fontSize: 12, fontWeight: 400, lineHeight: '16px', letterSpacing: '0', color: isTyping ? COLORS.green : (partner.is_online ? COLORS.green : 'var(--muted)'), WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility' } },
+          canShowPresence(partner, user) && React.createElement('div', { style: { fontSize: 12, fontWeight: 400, lineHeight: '16px', letterSpacing: '0', color: isTyping ? COLORS.green : (partner.is_online ? COLORS.green : 'var(--muted)'), WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility' } },
             isTyping ? 'Typing...' : (partner.is_online ? 'Online' : fmtLastSeen(partner.last_seen)))
         ),
         React.createElement('button', {
@@ -20266,7 +20270,7 @@ function MessagesTab({ token, user, showToast, initialChatUser, onChatOpened, on
                 /* avatar + online dot */
                 React.createElement('div', { style: { position: 'relative', flexShrink: 0 } },
                   React.createElement(AvatarDiv, { u, size: 48 }),
-                  React.createElement('div', { style: { position: 'absolute', bottom: 1, right: 1, width: 11, height: 11, borderRadius: '50%', background: u.is_online ? COLORS.green : '#888', border: '2px solid var(--bg)' } })
+                  canShowPresence(u, user) && React.createElement('div', { style: { position: 'absolute', bottom: 1, right: 1, width: 11, height: 11, borderRadius: '50%', background: u.is_online ? COLORS.green : '#888', border: '2px solid var(--bg)' } })
                 ),
                 /* text block */
                 React.createElement('div', { style: { flex: 1, minWidth: 0 } },
