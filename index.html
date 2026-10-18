@@ -329,7 +329,7 @@ window.__PostLogo=function(props){
   useEffect,
   useRef
 } = React;
-const API = "https://post-app-backend-zmb5.onrender.com/api";
+const API = "https://post-app-backend-bmge.onrender.com/api";
 const GIPHY_KEY = "ZTJgQEFaRLeskUxqpKe3YGDegmshaPE6";
 const SONG_MARQUEE_DURATION_SEC = 4;
 const SONG_MARQUEE_SPEED_PX_SEC = 42;
@@ -4865,7 +4865,7 @@ function OurPlanetScreen({onBack, isDark, token, showToast, initialQuery}) {
         + '</style>'
       : '';
     return OUR_PLANET_HTML
-      .replace('const API="/api/our-planet/search"','const API="https://post-app-backend-zmb5.onrender.com/api/our-planet/search"')
+      .replace('const API="/api/our-planet/search"','const API="https://post-app-backend-bmge.onrender.com/api/our-planet/search"')
       .replace('document.getElementById("backBtn").onclick=()=>{if(history.length>1)history.back()};','document.getElementById("backBtn").onclick=()=>{window.parent.postMessage({type:"our-planet-back"},"*")};')
       .replace('</head>', darkThemeStyle + '<style>html,body{height:auto!important;min-height:100%;overflow-y:auto!important;overflow-x:hidden!important}body{overscroll-behavior-y:auto!important}.sub{display:none!important}</style></head>');
   }, [isDark]);
