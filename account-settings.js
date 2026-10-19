@@ -26,6 +26,7 @@
           '.as-message{min-height:20px;margin:12px 0 0;font-size:13px;line-height:1.4}.as-error{color:#c62828}.as-success{color:#18794e}.as-country-list{margin-top:10px;max-height:38vh;overflow:auto;border:1px solid rgba(127,127,127,.25);border-radius:10px}.as-country-option{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid rgba(127,127,127,.12);padding:11px 12px;background:transparent;color:inherit;font:inherit;cursor:pointer}.as-country-option:last-child{border-bottom:0}.as-country-option:hover,.as-country-option:focus{background:rgba(225,48,108,.1);outline:none}.as-empty{padding:14px;font-size:13px;opacity:.7}\n' +
           '.as-setting-row{cursor:pointer!important}.as-setting-row:focus-visible{outline:2px solid #e1306c;outline-offset:3px;border-radius:8px}\n' +
           '@media(prefers-color-scheme:dark){.as-dialog{--card-bg:#191919;--text:#f5f5f5}.as-error{color:#ff8a80}.as-success{color:#81c784}}@media(max-width:480px){.as-dialog{padding:20px 16px;border-radius:16px}}';
+        style.textContent += '.as-inline-action{display:inline-flex;align-items:center;margin-left:auto;padding:7px 10px;border-radius:999px;background:rgba(225,48,108,.1);color:#d81b60;font-size:12px;font-weight:700;white-space:nowrap;line-height:1.2}';
         document.head.appendChild(style);
       }
 
@@ -201,6 +202,12 @@
         row.dataset.asAccountBound = label.toLowerCase();
         row.classList.add('as-setting-row'); row.setAttribute('role', 'button'); row.setAttribute('tabindex', '0');
         row.setAttribute('aria-haspopup', 'dialog'); row.setAttribute('aria-label', label + (label === 'Phone' ? ': add mobile number' : ': choose country'));
+        const affordance = document.createElement('span');
+        affordance.className = 'as-inline-action';
+        affordance.setAttribute('aria-hidden', 'true');
+        const currentValue = key(valueText(node, label));
+        affordance.textContent = label === 'Phone' ? 'Add number ›' : (currentValue && currentValue !== '—' && currentValue !== '-' ? 'Edit country ›' : 'Choose country ›');
+        row.appendChild(affordance);
         row.addEventListener('click', (event) => { if (event.target.closest('a,button,input,select')) return; handler(); });
         row.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); handler(); } });
       }
