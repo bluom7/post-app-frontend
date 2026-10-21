@@ -7887,6 +7887,12 @@ function HomeTab({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
   const [homeReelViewer, setHomeReelViewer] = useState(null);
+  // Full-screen reel viewer owns the audio: pause every feed video/song underneath it.
+  React.useEffect(function () {
+    if (!homeReelViewer) return;
+    _FeedSound.suspend();
+    return function () { _FeedSound.resume(); };
+  }, [!!homeReelViewer]);
   const [showCompose, setShowCompose] = useState(false);
   const [composeInitialText, setComposeInitialText] = useState("");
   const [composeDraft, setComposeDraft] = useState(null);
@@ -8616,6 +8622,131 @@ function _stopAllPostMusic(exceptPid) {
   });
 }
 
+// ══ GLOBAL HOME-FEED SPEAKER ═══════════════════════════════════════════════
+// One shared on/off state for EVERY speaker in the feed (feed videos, reel
+// videos, photo posts / photo reels that carry a song). Tapping any speaker
+// switches all of them on together; tapping again switches all of them off
+// together. The item that is on screen plays audibly, the others stay paused.
+var _FeedSound = (function () {
+  var on = false, suspended = 0, subs = [];
+  function emit() { subs.slice().forEach(function (f) { try { f(); } catch (_) {} }); }
+  return {
+    wanted: function () { return on; },
+    isSuspended: function () { return suspended > 0; },
+    set: function (v) {
+      v = !!v;
+      if (on === v) return;
+      on = v;
+      if (!v) _stopAllPostMusic();
+      emit();
+    },
+    suspend: function () { suspended++; emit(); },
+    resume: function () { suspended = Math.max(0, suspended - 1); emit(); },
+    subscribe: function (f) { subs.push(f); return function () { subs = subs.filter(function (x) { return x !== f; }); }; }
+  };
+})();
+
+function useFeedSound() {
+  var force = React.useState(0)[1];
+  React.useEffect(function () {
+    return _FeedSound.subscribe(function () { force(function (n) { return n + 1; }); });
+  }, []);
+  return { on: _FeedSound.wanted(), suspended: _FeedSound.isSuspended() };
+}
+
+// Applies "should this feed <video> play, and with which sound" in one place.
+function _feedVideoApply(el, visible, userPaused, onState, forceMute) {
+  if (!el) return;
+  el.muted = !_FeedSound.wanted() || !!forceMute;
+  if (_FeedSound.isSuspended() || !visible || userPaused) {
+    if (!el.paused) el.pause();
+    onState(false);
+    return;
+  }
+  var p = el.play();
+  if (p && p.then) {
+    p.then(function () { onState(true); }).catch(function () {
+      if (!el.muted) {
+        el.muted = true;
+        var q = el.play();
+        if (q && q.then) q.then(function () { onState(true); }).catch(function () {});
+      }
+    });
+  } else onState(true);
+}
+
+// Song that belongs to a feed item (photo song, or music added on a reel video).
+// Plays only while the item is on screen AND the global feed speaker is on.
+function useFeedSong(post, enabled) {
+  var pid = String(post.id);
+  var musicUrl = enabled ? (post.music_preview_url || post.music_url) : null;
+  var fs = useFeedSound();
+  var audioRef = React.useRef(null);
+  var visibleRef = React.useRef(false);
+  var holdRef = React.useRef(false);
+  var apiRef = React.useRef({});
+
+  function stopSong() {
+    var a = audioRef.current;
+    if (!a) return;
+    audioRef.current = null;
+    a.onended = null; a.ontimeupdate = null;
+    try { a.pause(); } catch (_) {}
+    if (_postMusicAudio[pid] === a) delete _postMusicAudio[pid];
+    window.dispatchEvent(new CustomEvent('postmusic', { detail: { id: pid, playing: false } }));
+  }
+  function shouldPlay() {
+    return !!musicUrl && _FeedSound.wanted() && !_FeedSound.isSuspended() && visibleRef.current && !holdRef.current;
+  }
+  function startSong() {
+    if (audioRef.current || !musicUrl) return;
+    _stopAllPostMusic(pid);
+    var a = new Audio(musicUrl);
+    var startSec = post.music_start_ms != null
+      ? Math.max(0, Number(post.music_start_ms) || 0) / 1000
+      : Math.max(0, Number(post.music_start_time) || 0);
+    var clipSec = post.music_clip_duration_ms != null
+      ? Math.max(1, Math.min(30, (Number(post.music_clip_duration_ms) || 30000) / 1000))
+      : Math.max(1, Math.min(30, Number(post.music_clip_duration) || 15));
+    var actualStart = startSec, begun = false;
+    audioRef.current = a;
+    _postMusicAudio[pid] = a;
+    a.preload = 'auto';
+    var wrap = function () {
+      if (audioRef.current !== a) return;
+      if (shouldPlay()) {
+        try { a.currentTime = actualStart; } catch (_) {}
+        a.play().catch(function () {});
+      } else stopSong();
+    };
+    var begin = function () {
+      if (begun || audioRef.current !== a) return;
+      begun = true;
+      actualStart = Math.min(startSec, Math.max(0, (a.duration || 30) - 0.05));
+      try { a.currentTime = actualStart; } catch (_) {}
+      a.play().then(function () {
+        if (audioRef.current !== a) { a.pause(); return; }
+        window.dispatchEvent(new CustomEvent('postmusic', { detail: { id: pid, playing: true } }));
+      }).catch(function () { if (audioRef.current === a) stopSong(); });
+    };
+    a.onended = wrap;
+    a.ontimeupdate = function () { if (a.currentTime >= actualStart + clipSec) wrap(); };
+    a.addEventListener('loadedmetadata', begin, { once: true });
+    if (a.readyState >= 1) begin();
+  }
+  function sync() { if (shouldPlay()) startSong(); else stopSong(); }
+  apiRef.current = { sync: sync, stop: stopSong };
+
+  React.useEffect(function () { apiRef.current.sync(); }, [fs.on, fs.suspended, musicUrl]);
+  React.useEffect(function () {
+    return function () { visibleRef.current = false; apiRef.current.stop(); };
+  }, []);
+  return React.useRef({
+    setVisible: function (v) { visibleRef.current = !!v; apiRef.current.sync(); },
+    setHold: function (h) { holdRef.current = !!h; apiRef.current.sync(); }
+  }).current;
+}
+
 function PostSpeakerButton({ post }) {
   var pid = String(post.id);
   var [playing, setPlaying] = React.useState(function(){
@@ -8694,22 +8825,33 @@ function FeedVideo({ post, topOverlay }) {
   const videoRef = React.useRef(null);
   const [loaded, setLoaded] = React.useState(false);
   const [paused, setPaused] = React.useState(true);
-  const [soundOn, setSoundOn] = React.useState(false);
-  const soundOnRef = React.useRef(false);
+  const fs = useFeedSound();
+  const hasSong = !!post.music_preview_url;
+  const song = useFeedSong(post, hasSong);
+  const visibleRef = React.useRef(false);
+  const userPausedRef = React.useRef(false);
   const [natW, setNatW] = React.useState(0);
   const [natH, setNatH] = React.useState(0);
 
-  // Muted autoplay via IntersectionObserver — play when ≥50% in viewport
+  const setPlayState = (isPlaying) => setPaused(!isPlaying);
+
+  // Play when >=50% visible; sound follows the GLOBAL feed speaker.
   React.useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
-        el.muted = !soundOnRef.current;
-        el.play().then(() => setPaused(false)).catch(() => {});
+        visibleRef.current = true;
+        userPausedRef.current = false;
+        song.setHold(false);
+        song.setVisible(true);
+        _feedVideoApply(el, true, false, setPlayState, hasSong);
       } else {
+        visibleRef.current = false;
+        userPausedRef.current = false;
+        song.setVisible(false);
         el.pause();
-        el.currentTime = 0;
+        try { el.currentTime = 0; } catch (_) {}
         setPaused(true);
       }
     }, { threshold: 0.5 });
@@ -8717,34 +8859,31 @@ function FeedVideo({ post, topOverlay }) {
     return () => obs.disconnect();
   }, []);
 
+  // Global speaker toggled (or a full-screen viewer opened/closed) -> re-apply.
+  React.useEffect(() => {
+    _feedVideoApply(videoRef.current, visibleRef.current, userPausedRef.current, setPlayState, hasSong);
+  }, [fs.on, fs.suspended]);
+
   const togglePlayback = (e) => {
     if (e) e.stopPropagation();
     const v = videoRef.current;
     if (!v) return;
     if (v.paused) {
-      soundOnRef.current = true;
-      setSoundOn(true);
-      v.muted = false;
-      v.volume = 1;
-      v.play().then(() => setPaused(false)).catch(() => {
-        soundOnRef.current = false;
-        setSoundOn(false);
-        v.muted = true;
-      });
+      userPausedRef.current = false;
+      song.setHold(false);
+      _feedVideoApply(v, true, false, setPlayState, hasSong);
     } else {
+      userPausedRef.current = true;
+      song.setHold(true);
       v.pause();
       setPaused(true);
     }
   };
 
+  // Speaker = global switch for every speaker in the feed.
   const toggleSound = (e) => {
     if (e) e.stopPropagation();
-    const v = videoRef.current;
-    if (!v) return;
-    const nextSoundOn = !soundOnRef.current;
-    soundOnRef.current = nextSoundOn;
-    setSoundOn(nextSoundOn);
-    v.muted = !nextSoundOn;
+    _FeedSound.set(!_FeedSound.wanted());
   };
 
   const ar = (natW && natH) ? natW / natH : (post.aspect_ratio || null);
@@ -8798,7 +8937,7 @@ function FeedVideo({ post, topOverlay }) {
     React.createElement('video', {
       ref: videoRef,
       src: post.video_url,
-      muted: !soundOn,
+      muted: !fs.on || hasSong,
       loop: true,
       playsInline: true,
       onLoadedMetadata: (e) => {
@@ -8860,9 +8999,9 @@ function FeedVideo({ post, topOverlay }) {
 
     // ── Speaker control: bottom-right, matching reel media control ──
     React.createElement(ReelMediaControl, {
-      active: soundOn,
+      active: fs.on,
       onClick: toggleSound,
-      ariaLabel: soundOn ? 'Mute video' : 'Unmute video'
+      ariaLabel: fs.on ? 'Mute all feed sounds' : 'Unmute all feed sounds'
     }),
 
     // ── Play overlay (shown when video loaded but paused) ─────────────
@@ -8894,19 +9033,28 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay, openOnTap }) {
   const videoRef = React.useRef(null);
   const containerRef = React.useRef(null);
   const [playing, setPlaying] = React.useState(false);
-  const [soundOn, setSoundOn] = React.useState(false);
-  const soundOnRef = React.useRef(false);
+  const fs = useFeedSound();
+  const hasSong = !!(post.music_preview_url || post.music_url);
+  const song = useFeedSong(post, hasSong);
+  const visibleRef = React.useRef(false);
+  const userPausedRef = React.useRef(false);
 
   React.useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
-        el.muted = !soundOnRef.current;
-        el.play().then(() => setPlaying(true)).catch(() => {});
+        visibleRef.current = true;
+        userPausedRef.current = false;
+        song.setHold(false);
+        song.setVisible(true);
+        _feedVideoApply(el, true, false, setPlaying, hasSong);
       } else {
+        visibleRef.current = false;
+        userPausedRef.current = false;
+        song.setVisible(false);
         el.pause();
-        el.currentTime = 0;
+        try { el.currentTime = 0; } catch (_) {}
         setPlaying(false);
       }
     }, { threshold: 0.5 });
@@ -8914,21 +9062,21 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay, openOnTap }) {
     return () => obs.disconnect();
   }, []);
 
+  React.useEffect(() => {
+    _feedVideoApply(videoRef.current, visibleRef.current, userPausedRef.current, setPlaying, hasSong);
+  }, [fs.on, fs.suspended]);
+
   const togglePlayback = (e) => {
     if (e) e.stopPropagation();
     const v = videoRef.current;
     if (!v) return;
     if (v.paused) {
-      soundOnRef.current = true;
-      setSoundOn(true);
-      v.muted = false;
-      v.volume = 1;
-      v.play().then(() => setPlaying(true)).catch(() => {
-        soundOnRef.current = false;
-        setSoundOn(false);
-        v.muted = true;
-      });
+      userPausedRef.current = false;
+      song.setHold(false);
+      _feedVideoApply(v, true, false, setPlaying, hasSong);
     } else {
+      userPausedRef.current = true;
+      song.setHold(true);
       v.pause();
       setPlaying(false);
     }
@@ -8954,7 +9102,7 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay, openOnTap }) {
     React.createElement("video", {
       ref: videoRef,
       src: post.video_url,
-      muted: !soundOn,
+      muted: !fs.on || hasSong,
       loop: true,
       playsInline: true,
       preload: "metadata",
@@ -8974,9 +9122,9 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay, openOnTap }) {
 
     // Compose-style media control: same bottom-right speaker treatment.
     React.createElement(ReelMediaControl, {
-      active: playing && soundOn,
-      onClick: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); togglePlayback(ev); },
-      ariaLabel: playing ? 'Pause video' : 'Play video with sound'
+      active: fs.on,
+      onClick: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); _FeedSound.set(!_FeedSound.wanted()); },
+      ariaLabel: fs.on ? 'Mute all feed sounds' : 'Unmute all feed sounds'
     })
   );
 }
@@ -8988,8 +9136,9 @@ function ReelFeedVideo({ post, onOpenReel, topOverlay, openOnTap }) {
 //   • All overlays: sticker_overlays, text_overlays, emoji_overlays (via _renderReelOverlays)
 //   • video_effect filter (same as reel viewer)
 //   • Click → opens full-screen reel viewer via onOpenReel
-function ReelMediaControl({ active, onClick, ariaLabel }) {
+function ReelMediaControl({ active, onClick, ariaLabel, btnRef }) {
   return React.createElement("button", {
+    ref: btnRef,
     type: "button",
     onClick,
     "aria-label": ariaLabel,
@@ -9017,96 +9166,29 @@ function ReelMediaControl({ active, onClick, ariaLabel }) {
 }
 
 function ReelPhotoMusicButton({ post }) {
-  const pid = String(post.id);
-  const musicUrl = post.music_preview_url || post.music_url;
-  const [playing, setPlaying] = React.useState(function(){
-    const a = _postMusicAudio[pid];
-    return !!(a && !a.paused);
-  });
-  const audioRef = React.useRef(null);
+  const fs = useFeedSound();
+  const btnRef = React.useRef(null);
+  const song = useFeedSong(post, true);
 
-  React.useEffect(function(){
-    function handler(e){
-      if (e.detail && String(e.detail.id) === pid) setPlaying(!!e.detail.playing);
-    }
-    window.addEventListener('postmusic', handler);
-    return function(){ window.removeEventListener('postmusic', handler); };
-  }, [pid]);
-
-  const stop = function(){
-    const a = audioRef.current || _postMusicAudio[pid];
-    if (a) {
-      a.pause();
-      try { a.currentTime = 0; } catch (_) {}
-      if (_postMusicAudio[pid] === a) delete _postMusicAudio[pid];
-    }
-    audioRef.current = null;
-    setPlaying(false);
-    window.dispatchEvent(new CustomEvent('postmusic', { detail: { id: pid, playing: false } }));
-  };
-
-  const toggle = function(e){
-    e.stopPropagation();
-    if (playing) {
-      stop();
-      return;
-    }
-    if (!musicUrl) return;
-
-    _stopAllPostMusic(pid);
-    const a = new Audio(musicUrl);
-    const startSec = post.music_start_ms != null
-      ? Math.max(0, Number(post.music_start_ms) || 0) / 1000
-      : Math.max(0, Number(post.music_start_time) || 0);
-    const clipDurationSec = post.music_clip_duration_ms != null
-      ? Math.max(1, Math.min(30, (Number(post.music_clip_duration_ms) || 30000) / 1000))
-      : Math.max(1, Math.min(30, Number(post.music_clip_duration) || 15));
-    let clipTimer = null;
-    let actualStart = startSec;
-    const finish = function(){
-      if (clipTimer) { clearTimeout(clipTimer); clipTimer = null; }
-      a.pause();
-      if (_postMusicAudio[pid] === a) delete _postMusicAudio[pid];
-      if (audioRef.current === a) audioRef.current = null;
-      setPlaying(false);
-      window.dispatchEvent(new CustomEvent('postmusic', { detail: { id: pid, playing: false } }));
-    };
-    const begin = function(){
-      if (audioRef.current !== a) return;
-      actualStart = Math.min(startSec, Math.max(0, (a.duration || 30) - 0.05));
-      try { a.currentTime = actualStart; } catch (_) {}
-      a.play().then(function(){
-        setPlaying(true);
-        clipTimer = setTimeout(finish, clipDurationSec * 1000);
-        window.dispatchEvent(new CustomEvent('postmusic', { detail: { id: pid, playing: true } }));
-      }).catch(finish);
-    };
-
-    audioRef.current = a;
-    _postMusicAudio[pid] = a;
-    a.preload = 'auto';
-    a.onended = finish;
-    a.ontimeupdate = function(){
-      if (a.currentTime >= actualStart + clipDurationSec) finish();
-    };
-    a.addEventListener('loadedmetadata', begin, { once: true });
-    if (a.readyState >= 1) begin();
-  };
-
-  React.useEffect(function(){
-    return function(){
-      const a = audioRef.current;
-      if (a) {
-        a.pause();
-        if (_postMusicAudio[pid] === a) delete _postMusicAudio[pid];
-      }
-    };
-  }, [pid]);
+  // The song plays while the media (button's parent) is on screen.
+  React.useEffect(function () {
+    const btn = btnRef.current;
+    const host = btn && btn.parentElement;
+    if (!host) return;
+    const obs = new IntersectionObserver(function (entries) {
+      const e = entries[entries.length - 1];
+      const vh = window.innerHeight || 800;
+      song.setVisible(!!(e.isIntersecting && (e.intersectionRatio >= 0.5 || (e.intersectionRect && e.intersectionRect.height >= vh * 0.5))));
+    }, { threshold: [0, 0.25, 0.5, 0.75, 1] });
+    obs.observe(host);
+    return function () { obs.disconnect(); song.setVisible(false); };
+  }, []);
 
   return React.createElement(ReelMediaControl, {
-    active: playing,
-    onClick: toggle,
-    ariaLabel: playing ? 'Pause song' : 'Play song'
+    btnRef: btnRef,
+    active: fs.on,
+    onClick: function (e) { if (e && e.stopPropagation) e.stopPropagation(); _FeedSound.set(!_FeedSound.wanted()); },
+    ariaLabel: fs.on ? 'Mute all feed sounds' : 'Unmute all feed sounds'
   });
 }
 
@@ -9783,7 +9865,7 @@ function BentoPostCard({
         : post.music_title && post.music_preview_url
           ? /*#__PURE__*/React.createElement("div", { style:{ position:"relative" } },
               React.createElement(PostMedia,{post,maxHeight:466,borderRadius:0,user,onLike,onComment,onSave,onRepost,onShare:countShare,onFollow,followingIds,pendingFollowIds,onViewProfile}),
-              /*#__PURE__*/React.createElement(PostSpeakerButton, { post }),
+              /*#__PURE__*/React.createElement(ReelPhotoMusicButton, { post }),
 
             )
           : React.createElement(PostMedia,{post,maxHeight:466,borderRadius:0,user,onLike,onComment,onSave,onRepost,onShare:countShare,onFollow,followingIds,pendingFollowIds,onViewProfile}),
@@ -34394,6 +34476,26 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   );
 }
 // ── ReelsTab — TikTok-style smooth vertical scroll ───────────────────────────
+// Reels opened from the home feed arrive in the *post* shape. Convert them to
+// the shape the Reels viewer + ranking expect (liked/saved/following state,
+// duration, category) so the opened reel behaves exactly like a Reels-tab reel.
+function _normalizeSeedReel(r, user) {
+  if (!r) return r;
+  var uid = user && user.id != null ? String(user.id) : "";
+  function has(arr) {
+    return Array.isArray(arr) && arr.some(function (x) { return String(x && typeof x === "object" && x.user_id != null ? x.user_id : x) === uid; });
+  }
+  var following = (user && Array.isArray(user.following) ? user.following : []).map(String);
+  var out = Object.assign({}, r);
+  out.caption = r.caption || r.content || "";
+  if (!out.duration && r.video_duration) out.duration = r.video_duration;
+  if (r.is_liked == null) out.is_liked = has(r.likes);
+  if (r.is_saved == null) out.is_saved = has(r.saves);
+  if (r.like_count == null && Array.isArray(r.likes)) out.like_count = r.likes.length;
+  out.is_following = !!r.is_following || following.indexOf(String(r.user_id)) >= 0 || String(r.user_id) === uid;
+  return out;
+}
+
 function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, onBack, setTab, onOpenCompose, reelDraft, onReelDraftHandled, seedReel, onClose }) {
   // Reels stays quiet after successful actions. Keep only genuine failures
   // visible so users are not interrupted by transient success/instruction toasts.
@@ -34404,7 +34506,7 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   }
 
   // Seeded mode (opened from Saved): the tapped reel plays first, then the normal ranked feed follows.
-  var seedRef = React.useRef(seedReel || null);
+  var seedRef = React.useRef(seedReel ? _normalizeSeedReel(seedReel, user) : null);
   var seedMode = !!seedRef.current;
   function withSeed(list) {
     var seed = seedRef.current;
@@ -34882,7 +34984,20 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
   }
 
   React.useEffect(function() {
-    if (token) fetchReels(0, true);
+    if (!token) return;
+    var seed = seedRef.current;
+    if (!seed || !seed.id) { fetchReels(0, true); return; }
+    // Opened from the home feed: register the tapped reel as the first view of
+    // this session BEFORE the ranked feed is requested, so its category/creator
+    // signals shape the reels that follow (same as a normal Reels-tab session).
+    var started = false;
+    function go() { if (started) return; started = true; fetchReels(0, true); }
+    var payload = { watch_seconds: 0, completion_ratio: 0, reason: "seed_open" };
+    if (seed.category) payload.category = seed.category;
+    api("/reels/" + encodeURIComponent(seed.id) + "/view", "POST", payload, token)
+      .then(function(r) { if (r && typeof r.view_count === "number") dispatchReelUpdate(seed.id, { view_count: r.view_count }); go(); }, go);
+    var timer = setTimeout(go, 1200);
+    return function() { clearTimeout(timer); };
   }, [token]);
   React.useEffect(function() {
     if (!showComments) {
@@ -35641,18 +35756,18 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
         })),
 ),
     seedMode && React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, zIndex: 201, height: "calc(56px + env(safe-area-inset-top, 0px))", paddingTop: "env(safe-area-inset-top, 0px)", background: "transparent", display: "flex", alignItems: "center", gap: 4, padding: "env(safe-area-inset-top, 0px) 8px 0", boxSizing: "border-box", pointerEvents: "none" } },
-      React.createElement("button", { type: "button", "aria-label": "Back", onClick: function() { if (onClose) onClose(); }, style: { width: 44, height: 44, padding: 0, border: "none", borderRadius: "50%", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", pointerEvents: "auto", filter: "drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,0.85))" } },
+      React.createElement("button", { type: "button", "aria-label": "Back", onClick: function() { if (onClose) onClose(); }, style: { width: 44, height: 44, padding: 0, border: "none", borderRadius: "50%", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", pointerEvents: "auto" } },
         React.createElement(BackArrowIcon, { size: 26, color: "#fff" })),
       React.createElement("span", { style: { flex: 1, fontFamily: "'Roboto', 'Helvetica Neue', Arial, sans-serif", fontWeight: 800, fontSize: 26, lineHeight: 1, letterSpacing: "-0.2px", color: "#fff", WebkitTextStroke: "1.2px #000", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(0,0,0,0.35)", WebkitFontSmoothing: "antialiased", whiteSpace: "nowrap", pointerEvents: "none" } }, "Reels"),
-      React.createElement("button", { type: "button", "aria-label": "Create reel", onClick: function() { setShowCamera(true); }, style: { width: 44, height: 44, padding: 0, border: "none", borderRadius: "50%", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", pointerEvents: "auto", filter: "drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,0.85))" } },
-        React.createElement("svg", { width: 36, height: 36, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.5", strokeLinecap: "round" }, React.createElement("line", { x1: "12", y1: "5", x2: "12", y2: "19" }), React.createElement("line", { x1: "5", y1: "12", x2: "19", y2: "12" })))),
+      React.createElement("button", { type: "button", "aria-label": "Create reel", onClick: function() { setShowCamera(true); }, style: { width: 44, height: 44, padding: 0, border: "none", borderRadius: "50%", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", pointerEvents: "auto" } },
+        React.createElement("svg", { width: 30, height: 30, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.8", strokeLinecap: "round" }, React.createElement("line", { x1: "12", y1: "5", x2: "12", y2: "19" }), React.createElement("line", { x1: "5", y1: "12", x2: "19", y2: "12" })))),
     seedMode && React.createElement("div", { style: { position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 200, height: "calc(64px + env(safe-area-inset-bottom, 0px))", paddingBottom: "env(safe-area-inset-bottom, 0px)", background: "#000", boxSizing: "border-box", display: "flex", alignItems: "center", padding: "0 12px env(safe-area-inset-bottom, 0px)" } },
       React.createElement("button", { type: "button", "aria-label": "Add comment", onClick: function() { var cur = reels[Math.min(activeIdx, reels.length - 1)]; if (cur && cur.id) openComments(cur.id); }, style: { flex: 1, height: 44, border: "none", borderRadius: 999, background: "rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.78)", fontSize: 17, textAlign: "left", padding: "0 20px", cursor: "pointer", fontFamily: "inherit" } }, "Add comment\u2026")),
     React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, zIndex: 200, height: 52, background: "transparent", display: seedMode ? "none" : "flex", alignItems: "center", paddingLeft: 16, paddingRight: 4 } },
       React.createElement("div", { style: { flex: 1, fontFamily: "'Roboto', 'Helvetica Neue', Arial, sans-serif", fontWeight: 800, fontSize: 26, lineHeight: 1, letterSpacing: "-0.2px", color: "#fff", WebkitTextStroke: "1.2px #000", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(0,0,0,0.35)", WebkitFontSmoothing: "antialiased", whiteSpace: "nowrap" } }, "Reels"),
       React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } },
         React.createElement("button", { onClick: function() { setShowCamera(true); }, style: { background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center" } },
-          React.createElement("svg", { width: 36, height: 36, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.5", strokeLinecap: "round" },
+          React.createElement("svg", { width: 30, height: 30, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.8", strokeLinecap: "round" },
             React.createElement("line", { x1: "12", y1: "5", x2: "12", y2: "19" }),
             React.createElement("line", { x1: "5", y1: "12", x2: "19", y2: "12" }))),
         React.createElement("button", { onClick: function() { setShowSearch(true); }, style: { background: "none", border: "none", cursor: "pointer", padding: 8, display: "flex", alignItems: "center" } },
@@ -35881,13 +35996,12 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
             onTryRemix: openRemixEditor
           });
         })),
-      React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, height: 90, background: "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, transparent 100%)", zIndex: 491, pointerEvents: "none" } }),
       React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, zIndex: 492, height: "calc(56px + env(safe-area-inset-top, 0px))", background: "transparent", display: "flex", alignItems: "center", gap: 4, padding: "env(safe-area-inset-top, 0px) 8px 0", boxSizing: "border-box", pointerEvents: "none" } },
-        React.createElement("button", { type: "button", "aria-label": "Back", onClick: function() { setGridViewerOpen(false); }, style: { width: 44, height: 44, padding: 0, border: "none", borderRadius: "50%", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", pointerEvents: "auto", filter: "drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,0.85))" } },
+        React.createElement("button", { type: "button", "aria-label": "Back", onClick: function() { setGridViewerOpen(false); }, style: { width: 44, height: 44, padding: 0, border: "none", borderRadius: "50%", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", pointerEvents: "auto" } },
           React.createElement(BackArrowIcon, { size: 26, color: "#fff" })),
         React.createElement("span", { style: { flex: 1, fontFamily: "'Roboto', 'Helvetica Neue', Arial, sans-serif", fontWeight: 800, fontSize: 26, lineHeight: 1, letterSpacing: "-0.2px", color: "#fff", WebkitTextStroke: "1.2px #000", paintOrder: "stroke fill", textShadow: "0 1px 2px rgba(0,0,0,0.35)", WebkitFontSmoothing: "antialiased", whiteSpace: "nowrap", pointerEvents: "none" } }, "Reels"),
-        React.createElement("button", { type: "button", "aria-label": "Create reel", onClick: function() { setShowCamera(true); }, style: { width: 44, height: 44, padding: 0, border: "none", borderRadius: "50%", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", pointerEvents: "auto", filter: "drop-shadow(0 0 1px #000) drop-shadow(0 1px 2px rgba(0,0,0,0.85))" } },
-          React.createElement("svg", { width: 36, height: 36, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.5", strokeLinecap: "round" }, React.createElement("line", { x1: "12", y1: "5", x2: "12", y2: "19" }), React.createElement("line", { x1: "5", y1: "12", x2: "19", y2: "12" })))),
+        React.createElement("button", { type: "button", "aria-label": "Create reel", onClick: function() { setShowCamera(true); }, style: { width: 44, height: 44, padding: 0, border: "none", borderRadius: "50%", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", pointerEvents: "auto" } },
+          React.createElement("svg", { width: 30, height: 30, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: "1.8", strokeLinecap: "round" }, React.createElement("line", { x1: "12", y1: "5", x2: "12", y2: "19" }), React.createElement("line", { x1: "5", y1: "12", x2: "19", y2: "12" })))),
       !showComments && React.createElement("div", { style: { position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 492, height: "calc(64px + env(safe-area-inset-bottom, 0px))", paddingBottom: "env(safe-area-inset-bottom, 0px)", background: "#000", boxSizing: "border-box", display: "flex", alignItems: "center", padding: "0 12px env(safe-area-inset-bottom, 0px)" } },
         React.createElement("button", { type: "button", "aria-label": "Add comment", onClick: function() { var cur = gridViewerActiveReel; if (cur && cur.id) openComments(cur.id); }, style: { flex: 1, height: 44, border: "none", borderRadius: 999, background: "rgba(255,255,255,0.14)", color: "rgba(255,255,255,0.78)", fontSize: 17, textAlign: "left", padding: "0 20px", cursor: "pointer", fontFamily: "inherit" } }, "Add comment\u2026"))),
 
