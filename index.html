@@ -8840,6 +8840,70 @@ function useTaggedUsers(handles, token, selfHandle) {
     return { _pending: true, username: k, name: k, avatar_photo: null, avatar_bg: "#e5e7eb", avatar_letter: (k.charAt(0) || "?").toUpperCase(), is_badge_verified: false };
   }).filter(Boolean);
 }
+function TaggedPeopleSheet({ users, user, followingIds, pendingFollowIds, onFollow, onViewProfile, onClose }) {
+  const rows = Array.isArray(users) ? users.filter(Boolean) : [];
+  React.useEffect(() => {
+    if (typeof document === "undefined" || !document.body) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKey = event => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handleKey);
+    return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", handleKey); };
+  }, []);
+  const contains = (set, id) => {
+    if (!set || id == null) return false;
+    if (typeof set.has === "function" && (set.has(id) || set.has(String(id)))) return true;
+    return Array.isArray(set) && set.some(value => String(value) === String(id));
+  };
+  const openProfile = person => {
+    if (!person || person.id == null || typeof onViewProfile !== "function" || String(person.id) === String(user && user.id)) return;
+    onClose();
+    onViewProfile(person.id);
+  };
+  const shell = React.createElement("div", {
+    onClick: event => { if (event.target === event.currentTarget) onClose(); },
+    style: { position: "fixed", inset: 0, zIndex: 10050, background: "rgba(0,0,0,.38)", display: "flex", alignItems: "flex-end", justifyContent: "center", boxSizing: "border-box" }
+  },
+    React.createElement("style", null, ".tagged-people-scroll{scrollbar-width:none;-ms-overflow-style:none}.tagged-people-scroll::-webkit-scrollbar{display:none!important;width:0!important;height:0!important;background:transparent!important}"),
+    React.createElement("section", {
+      role: "dialog", "aria-modal": true, "aria-label": "In this photo",
+      onClick: event => event.stopPropagation(),
+      style: { width: "min(100%, 560px)", height: "calc(100vh - 30px)", maxHeight: "calc(100dvh - 20px)", borderRadius: "28px 28px 0 0", background: "var(--card-bg)", color: "var(--text)", display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 -10px 40px rgba(0,0,0,.22)", paddingBottom: "env(safe-area-inset-bottom, 0px)", boxSizing: "border-box" }
+    },
+      React.createElement("div", { style: { display: "flex", justifyContent: "center", padding: "12px 0 8px", flexShrink: 0 } }, React.createElement("div", { style: { width: 38, height: 4, borderRadius: 4, background: "var(--muted)", opacity: .55 } })),
+      React.createElement("div", { style: { position: "relative", minHeight: 58, display: "flex", alignItems: "center", justifyContent: "center", borderBottom: "1px solid var(--border)", flexShrink: 0, padding: "0 52px" } },
+        React.createElement("div", { style: { fontSize: 21, fontWeight: 800, color: "var(--text)", textAlign: "center" } }, "In this photo"),
+        React.createElement("button", { type: "button", onClick: onClose, "aria-label": "Close tagged people", style: { position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, border: "none", borderRadius: "50%", background: "var(--input-bg)", color: "var(--text)", fontSize: 23, lineHeight: 1, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" } }, "×")
+      ),
+      React.createElement("div", { className: "tagged-people-scroll", style: { flex: 1, minHeight: 0, overflowY: "auto", overflowX: "hidden", overscrollBehavior: "contain", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", msOverflowStyle: "none", padding: "4px 20px 18px", boxSizing: "border-box" } },
+        rows.length ? rows.map((person, index) => {
+          const id = person && person.id;
+          const handle = String((person && (person.username || person.handle || person.user_handle)) || "").replace(/^@+/, "");
+          const displayName = person && person._pending ? "Loading profile…" : String((person && (person.name || person.full_name)) || handle || "User");
+          const self = id != null && String(id) === String(user && user.id);
+          const isFollowing = contains(followingIds, id);
+          const isPending = contains(pendingFollowIds, id);
+          const canFollow = !self && id != null && typeof onFollow === "function";
+          const followLabel = self ? "You" : (isFollowing ? "Following" : (isPending ? "Requested" : (id == null ? "Loading" : "Follow")));
+          const photo = person && (person.avatar_photo || person.avatar_url);
+          const letter = String((person && person.avatar_letter) || displayName || handle || "U").slice(0, 1).toUpperCase();
+          const personName = handle ? "@" + handle : "@user";
+          const open = () => openProfile(person);
+          return React.createElement("div", { key: String(id || handle || index), style: { display: "flex", alignItems: "center", gap: 12, minHeight: 78, padding: "9px 0", borderBottom: "1px solid var(--border)", boxSizing: "border-box" } },
+            React.createElement("button", { type: "button", onClick: open, "aria-label": "View " + personName, style: { width: 54, height: 54, borderRadius: "50%", overflow: "hidden", flexShrink: 0, padding: 0, border: "1px solid var(--border)", background: photo ? "transparent" : (person.avatar_bg || "var(--input-bg)"), color: "var(--text)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 19, fontWeight: 800, cursor: person && person.id != null ? "pointer" : "default" } }, photo ? React.createElement("img", { src: photo, alt: "", loading: "lazy", style: { width: "100%", height: "100%", objectFit: "cover", display: "block" } }) : letter),
+            React.createElement("div", { onClick: open, role: person && person.id != null ? "button" : undefined, tabIndex: person && person.id != null ? 0 : undefined, onKeyDown: event => { if ((event.key === "Enter" || event.key === " ") && person && person.id != null) { event.preventDefault(); open(); } }, style: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3, cursor: person && person.id != null ? "pointer" : "default" } },
+              React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, minWidth: 0 } }, React.createElement("span", { style: { fontSize: 15, fontWeight: 800, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, personName), person && person.is_badge_verified && React.createElement(VerifiedBadge, { size: 14 })),
+              React.createElement("div", { style: { fontSize: 14, lineHeight: "19px", color: "var(--muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, displayName)
+            ),
+            React.createElement("button", { type: "button", onClick: event => { event.stopPropagation(); if (canFollow) onFollow(id); }, disabled: !canFollow, "data-follow-control": true, "aria-pressed": isFollowing, style: { minWidth: 96, height: 38, padding: "0 15px", borderRadius: 999, border: isFollowing || isPending ? "1px solid var(--border)" : "none", background: isFollowing || isPending ? "var(--input-bg)" : "var(--text)", color: isFollowing || isPending ? "var(--text)" : "var(--bg)", fontSize: 14, fontWeight: 800, fontFamily: "inherit", whiteSpace: "nowrap", cursor: canFollow ? "pointer" : "default", opacity: id == null ? .65 : 1, flexShrink: 0 } }, followLabel)
+          );
+        }) : React.createElement("div", { style: { padding: "42px 12px", textAlign: "center", color: "var(--muted)", fontSize: 14 } }, "No tagged users found.")
+      )
+    )
+  );
+  return typeof document !== "undefined" && document.body && ReactDOM.createPortal ? ReactDOM.createPortal(shell, document.body) : shell;
+}
+
 function TaggedPairAvatars({ post, tag, posterPhoto, size, ring, canOpenPoster, onOpenPoster, onOpenTagged }) {
   // Instagram collab style: poster avatar bottom-left, tagged user's avatar up at the top-right (behind, overlapping)
   var sz = size || 26;
@@ -10535,6 +10599,7 @@ function BentoPostCard({
   const likeBurstShow = likeBurstState[0], triggerLikeBurst = likeBurstState[1];
   const lastMediaTapRef = React.useRef(0);
   const [tagStacked, setTagStacked] = React.useState(false);
+  const [showTaggedPeople, setShowTaggedPeople] = React.useState(false);
   const _taggedList = useTaggedUsers(post && post.tagged_users, token, post && post.user_handle);
   const tagInfo = _taggedList.find(t => String(t.id) !== String(post.user_id)) || null; // first tagged user (collab-style header)
   const [showMenu, setShowMenu] = React.useState(false);
@@ -11044,7 +11109,9 @@ function BentoPostCard({
     );
   }
 
-  return React.createElement(React.Fragment, null, React.createElement("div", { style: (headerOnly || actionsOnly) ? { background: "transparent", border: "none", position: "relative", padding: 0, height: actionsOnly ? "100%" : undefined } : edgeToEdge ? { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", position: "relative", padding: "0 16px" } : { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", position: "relative" } },
+  return React.createElement(React.Fragment, null,
+    showTaggedPeople && React.createElement(TaggedPeopleSheet, { users: _taggedList, user, followingIds, pendingFollowIds, onFollow, onViewProfile, onClose: () => setShowTaggedPeople(false) }),
+    React.createElement("div", { style: (headerOnly || actionsOnly) ? { background: "transparent", border: "none", position: "relative", padding: 0, height: actionsOnly ? "100%" : undefined } : edgeToEdge ? { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", position: "relative", padding: "0 16px" } : { background: "var(--card-bg)", borderBottom: "1px solid var(--border)", position: "relative" } },
     !actionsOnly && React.createElement(LikeBurst, { show: likeBurstShow }),
     // ── Header ──────────────────────────────────────────────────
     !actionsOnly && (headerOnly || !post.video_url || !!homeVideoKind) &&     React.createElement("div", { style: { display: "flex", alignItems: "center", padding: (headerOnly || tightEdge) ? "10px 0 8px 0" : "10px 2px 8px 14px", gap: 10, boxSizing: "border-box" } },
@@ -11173,7 +11240,15 @@ function BentoPostCard({
 
             )
           : React.createElement(PostMedia,{post,maxHeight:466,borderRadius:0,homeGrid:photoGridHome,homeLeft:photoGridHome?React.createElement(HomeTileCaption,{post,token,onTagInPost}):null,homeMusic:(photoGridHome&&post.music_title&&post.music_preview_url)?(function(ps){return React.createElement(ReelPhotoMusicButton,{post:post,posStyle:ps});}):null,user,onLike,onComment,onSave,onRepost,onShare:countShare,onFollow,followingIds,pendingFollowIds,onViewProfile}),
-    // Reposter avatar on the media, bottom-left (home feed only)
+    videoCardLayout && !headerOnly && !actionsOnly && Array.isArray(post.tagged_users) && post.tagged_users.length > 0 && (post.video_url || post.photo_url || getPostPhotos(post).length) && React.createElement("button", {
+        type: "button",
+        "data-tagged-people-trigger": "1",
+        "aria-label": "View tagged people (" + post.tagged_users.length + ")",
+        title: "Tagged people",
+        onClick: e => { e.preventDefault(); e.stopPropagation(); setShowTaggedPeople(true); },
+        style: { position: "absolute", left: (homeVideoKind === "tall" || photoGridHome) ? "calc(54% + 14px)" : (post.repost_of ? 64 : 14), bottom: 14, zIndex: 7, width: 40, height: 40, borderRadius: "50%", border: "1.5px solid #fff", background: "rgba(0,0,0,.48)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, cursor: "pointer", WebkitTapHighlightColor: "transparent" }
+      }, React.createElement("svg", { width: 20, height: 20, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" }, React.createElement("circle", { cx: 12, cy: 8, r: 3.2, fill: "currentColor" }), React.createElement("path", { d: "M5 20c.6-3.6 3.1-5.7 7-5.7s6.4 2.1 7 5.7", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round" }))),
+      // Reposter avatar on the media, bottom-left (home feed only)
     post.repost_of && (() => {
       const actor = post.reposted_by || post.mentioned_by || {};
       return React.createElement("div", { style: { position: "absolute", left: 14, bottom: 14, width: 44, height: 44, zIndex: 5, pointerEvents: "none" } },
