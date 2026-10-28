@@ -2189,6 +2189,12 @@ function setAppLang(lang) {
 // ── Auto-Translation (POST's own — no Google dependency) ───────
 const _translateCache = {};
 const _toneCache = {};
+function getPostTranslationTarget(text) {
+  const value = String(text || "");
+  const devanagariCount = (value.match(/[\u0900-\u097F]/g) || []).length;
+  const latinCount = (value.match(/[A-Za-z]/g) || []).length;
+  return devanagariCount > latinCount ? "en" : "hi";
+}
 const LANG_MAP = {
   en: "en",
   hi: "hi",
@@ -2216,48 +2222,30 @@ const LANG_MAP = {
   vi: "vi"
 };
 async function translateText(text, targetLang, withTone = false) {
-  if (!text || !text.trim()) return {
-    translated: text,
-    tone_hint: null
-  };
+  if (!text || !text.trim()) return { translated: text, tone_hint: null, error: false };
   const tl = LANG_MAP[targetLang] || targetLang;
   const key = tl + "||" + text;
-  if (_translateCache[key] && !withTone) return {
-    translated: _translateCache[key],
-    tone_hint: null
-  };
-  if (_translateCache[key] && _toneCache[key] !== undefined) return {
-    translated: _translateCache[key],
-    tone_hint: _toneCache[key]
-  };
+  if (_translateCache[key] && !withTone) return { translated: _translateCache[key], tone_hint: null, error: false };
+  if (_translateCache[key] && _toneCache[key] !== undefined) return { translated: _translateCache[key], tone_hint: _toneCache[key], error: false };
   try {
-    const res = await fetch(`${API}/translate`, {
+    const res = await fetch(API + "/translate", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        text,
-        target: tl,
-        tone: withTone
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, target: tl, tone: withTone })
     });
+    if (!res.ok) throw new Error("Translation request failed");
     const data = await res.json();
-    const translated = data.translated || text;
+    const translated = data && typeof data.translated === "string" ? data.translated : "";
+    if (!translated.trim() || translated.trim() === text.trim()) return { translated: text, tone_hint: null, error: true };
     const tone_hint = data.tone_hint || null;
     _translateCache[key] = translated;
     if (withTone) _toneCache[key] = tone_hint;
-    return {
-      translated,
-      tone_hint
-    };
+    return { translated, tone_hint, error: false };
   } catch (e) {
-    return {
-      translated: text,
-      tone_hint: null
-    };
+    return { translated: text, tone_hint: null, error: true };
   }
 }
+
 const DEFAULT_PROFILE_COLOR = "#FFFFFF";
 const ACCENTS = [COLORS.yellow, COLORS.green, COLORS.red, COLORS.blue];
 const normalizeColor = c => c && c.toUpperCase() === "#0D9FF3" ? "#0D9FF3" : c;
@@ -9000,29 +8988,70 @@ function pbExactTime(ts){
 function PBCaption({ name, text, createdAt }) {
   const [open, setOpen] = React.useState(false);
   const [truncated, setTruncated] = React.useState(false);
+  const [translated, setTranslated] = React.useState("");
+  const [showTranslation, setShowTranslation] = React.useState(false);
+  const [translationLoading, setTranslationLoading] = React.useState(false);
+  const [translationFailed, setTranslationFailed] = React.useState(false);
+  const translationRequestRef = React.useRef(0);
   const lineRef = React.useRef(null);
   const raw = String(text || "");
+  const displayedText = showTranslation && translated ? translated : raw;
   const hasBreak = /\n/.test(raw);
-  React.useLayoutEffect(function(){
+  React.useEffect(function() {
+    translationRequestRef.current += 1;
+    setTranslated("");
+    setShowTranslation(false);
+    setTranslationLoading(false);
+    setTranslationFailed(false);
+  }, [raw]);
+  React.useLayoutEffect(function() {
     if (open) return;
     const el = lineRef.current; if (!el) return;
-    const check = function(){ setTruncated(hasBreak || el.scrollWidth > el.clientWidth + 1); };
+    const check = function() { setTruncated(hasBreak || el.scrollWidth > el.clientWidth + 1); };
     check();
     window.addEventListener("resize", check);
-    return function(){ window.removeEventListener("resize", check); };
+    return function() { window.removeEventListener("resize", check); };
   }, [open, raw, name]);
   const canToggle = truncated || open;
   const nameEl = name ? React.createElement("span", { style: { fontWeight: 700 } }, name, " ") : null;
+  const onTranslate = async function(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (translationLoading) return;
+    if (showTranslation) { setShowTranslation(false); return; }
+    if (translated) { setShowTranslation(true); return; }
+    const requestId = translationRequestRef.current + 1;
+    translationRequestRef.current = requestId;
+    setTranslationLoading(true);
+    setTranslationFailed(false);
+    try {
+      const result = await translateText(raw, getPostTranslationTarget(raw));
+      if (requestId !== translationRequestRef.current) return;
+      if (result && !result.error && result.translated && result.translated.trim() !== raw.trim()) {
+        setTranslated(result.translated);
+        setShowTranslation(true);
+      } else {
+        setTranslationFailed(true);
+      }
+    } catch (_) {
+      if (requestId === translationRequestRef.current) setTranslationFailed(true);
+    } finally {
+      if (requestId === translationRequestRef.current) setTranslationLoading(false);
+    }
+  };
   const body = open
-    ? React.createElement("div", { style: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, nameEl, renderContent(raw, null, null))
+    ? React.createElement("div", { style: { whiteSpace: "pre-wrap", overflowWrap: "anywhere" } }, nameEl, renderContent(displayedText, null, null))
     : React.createElement("div", { style: { display: "flex", alignItems: "baseline", minWidth: 0, maxWidth: "100%" } },
-        React.createElement("span", { ref: lineRef, style: { flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, nameEl, renderContent(raw, null, null)),
+        React.createElement("span", { ref: lineRef, style: { flex: "1 1 auto", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, nameEl, renderContent(displayedText, null, null)),
         truncated && React.createElement("span", { style: { flex: "0 0 auto", marginLeft: 4, fontWeight: 400, color: "var(--post-text)" } }, "more"));
-  const meta = open ? (pbExactTime(createdAt) ? pbExactTime(createdAt) + ". See translation" : "See translation") : pbRelAgo(createdAt);
-  return React.createElement("div", { className: "pb-caption", onClick: canToggle ? function(){ setOpen(function(v){ return !v; }); } : undefined, style: Object.assign({ padding: "0 14px 12px", cursor: canToggle ? "pointer" : "auto", WebkitTapHighlightColor: "transparent", WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" }, PB_TEXT) },
+  const exactTime = pbExactTime(createdAt);
+  const meta = open
+    ? React.createElement(React.Fragment, null, exactTime, exactTime ? " · " : null, raw.trim() && React.createElement("button", { type: "button", onClick: onTranslate, disabled: translationLoading, "aria-busy": translationLoading, style: { border: "none", background: "none", padding: 0, color: "var(--text)", font: "inherit", fontWeight: 700, cursor: translationLoading ? "wait" : "pointer", WebkitTapHighlightColor: "transparent" } }, translationLoading ? "Translating…" : (translationFailed ? "Try again" : (showTranslation ? "See original" : "See translation"))))
+    : pbRelAgo(createdAt);
+  return React.createElement("div", { className: "pb-caption", onClick: canToggle ? function() { setOpen(function(v) { return !v; }); } : undefined, style: Object.assign({ padding: "0 14px 12px", cursor: canToggle ? "pointer" : "auto", WebkitTapHighlightColor: "transparent", WebkitUserSelect: "none", userSelect: "none", WebkitTouchCallout: "none" }, PB_TEXT) },
     body,
-    meta && React.createElement("div", { style: { marginTop: 4, color: "var(--post-text)", fontSize: 15, fontWeight: 400, lineHeight: 1.4 } }, meta));
+    meta && React.createElement("div", { style: { marginTop: 4, color: "var(--muted)", fontSize: 15, fontWeight: 400, lineHeight: 1.4 } }, meta));
 }
+
 function renderContent(text, onMentionClick, onTagClick) {
   if (!text) return null;
   const parts = text.split(/(@[a-zA-Z0-9_.]+|#[a-zA-Z0-9_\u0900-\u097F]+)/g);
@@ -9585,15 +9614,22 @@ function HomeTileCaption({ post, token, onTagInPost }) {
   const canTr = !!shown;
   const onTranslate = async (e) => {
     e.stopPropagation();
+    if (trState === "loading") return;
     if (showTr) { setShowTr(false); return; }
     if (tr) { setShowTr(true); return; }
-    setTrState('loading');
+    setTrState("loading");
     try {
-      const d = await api('/translate', 'POST', { text: shown, target: (navigator.language || 'en').slice(0, 2) }, token);
-      const out = d && (d.translated || d.text);
-      if (out) { setTr(String(out)); setShowTr(true); }
-      setTrState('idle');
-    } catch (_) { setTrState('idle'); }
+      const result = await translateText(shown, getPostTranslationTarget(shown));
+      if (result && !result.error && result.translated && result.translated.trim() !== shown.trim()) {
+        setTr(String(result.translated));
+        setShowTr(true);
+        setTrState("idle");
+      } else {
+        setTrState("error");
+      }
+    } catch (_) {
+      setTrState("error");
+    }
   };
   return React.createElement('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10, minWidth: 0, maxWidth: '100%', width: '100%' } },
     text ? React.createElement('div', { style: { position: 'relative', maxWidth: '100%', width: '100%' } },
@@ -9610,7 +9646,7 @@ function HomeTileCaption({ post, token, onTagInPost }) {
     ) : null,
     React.createElement('div', { style: { fontSize: 13.5, lineHeight: '19px', color: 'var(--muted)', maxWidth: '100%' } },
       React.createElement('div', null, metaTime),
-      canTr ? React.createElement('div', { onClick: onTranslate, role: 'button', style: { fontWeight: 600, cursor: 'pointer', color: 'var(--text)', whiteSpace: 'nowrap', display: 'inline-block', marginTop: 2 } }, trState === 'loading' ? 'Translating…' : (showTr ? 'See original' : 'See translation')) : null),
+      canTr ? React.createElement('div', { onClick: onTranslate, role: 'button', style: { fontWeight: 600, cursor: 'pointer', color: 'var(--text)', whiteSpace: 'nowrap', display: 'inline-block', marginTop: 2 } }, trState === 'loading' ? 'Translating…' : (trState === 'error' ? 'Try again' : (showTr ? 'See original' : 'See translation'))) : null),
     post.location ? React.createElement('div', { style: { display: 'inline-flex', alignItems: 'center', gap: 6, maxWidth: '100%', background: 'var(--input-bg)', color: 'var(--text)', borderRadius: 12, padding: '7px 12px', fontSize: 14, lineHeight: '18px', boxSizing: 'border-box' } },
       React.createElement('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'currentColor', style: { flexShrink: 0 } }, React.createElement('path', { d: 'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z' })),
       React.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 } }, post.location)) : null
@@ -10478,16 +10514,26 @@ function BentoPostCard({
   const [thTrState, setThTrState] = React.useState('idle');
   const onThoughtTranslate = async (e) => {
     if (e && e.stopPropagation) e.stopPropagation();
+    if (thTrState === "loading") return;
     if (thShowTr) { setThShowTr(false); return; }
     if (thTr) { setThShowTr(true); return; }
-    setThTrState('loading');
+    const original = String(post.content || "");
+    setThTrState("loading");
     try {
-      const d = await api('/translate', 'POST', { text: String(post.content || ''), target: (navigator.language || 'en').slice(0, 2) }, token);
-      const out = d && (d.translated || d.text);
-      if (out) { setThTr(String(out)); setThShowTr(true); }
-    } catch (_) {}
-    setThTrState('idle');
+      const result = await translateText(original, getPostTranslationTarget(original));
+      const out = result && result.translated;
+      if (result && !result.error && out && String(out).trim() !== original.trim()) {
+        setThTr(String(out));
+        setThShowTr(true);
+        setThTrState("idle");
+      } else {
+        setThTrState("error");
+      }
+    } catch (_) {
+      setThTrState("error");
+    }
   };
+
   const homeVideoKind = (videoCardLayout && !headerOnly && !actionsOnly) ? (post.video_url ? _homeVideoKind(post, homeVNat) : ((post.is_reel && post.photo_url) ? 'tall' : null)) : null;
   // Home feed multi-photo post: thought/date/translation go to the LEFT of the 9:16 photo grid (like the 9:16 video tile)
   const photoGridHome = !!(videoCardLayout && !headerOnly && !actionsOnly && !post.is_reel && !post.video_url && getPostPhotos(post).length > 1);
@@ -11060,7 +11106,7 @@ function BentoPostCard({
         hasMore && onOpenPost && React.createElement("span", { onClick: event => { event.stopPropagation(); onOpenPost(post); }, style: { color: COLORS.blue, fontWeight: 700, whiteSpace: "nowrap", marginLeft: 4, cursor: "pointer" } }, "Show more")
       ), showThoughtMeta ? React.createElement("div", { className: "pb-post-date", style: { padding: "0 14px 12px", fontSize: 13.5, lineHeight: "19px", color: "var(--muted)", display: "block", whiteSpace: "nowrap", overflow: "hidden" } },
         React.createElement("span", { style: { display: "inline", whiteSpace: "nowrap" } }, pbExactTime(post.created_at) || pbRelAgo(post.created_at)),
-        React.createElement("span", { onClick: onThoughtTranslate, role: "button", style: { display: "inline", marginLeft: 14, fontWeight: 600, cursor: "pointer", color: "var(--text)", whiteSpace: "nowrap", WebkitTapHighlightColor: "transparent" } }, thTrState === 'loading' ? "Translating\u2026" : (thShowTr ? "See original" : "See translation"))) : null);
+        React.createElement("span", { onClick: onThoughtTranslate, role: "button", style: { display: "inline", marginLeft: 14, fontWeight: 600, cursor: "pointer", color: "var(--text)", whiteSpace: "nowrap", WebkitTapHighlightColor: "transparent" } }, thTrState === 'loading' ? "Translating\u2026" : (thTrState === 'error' ? "Try again" : (thShowTr ? "See original" : "See translation")))) : null);
     })(),
     React.createElement("div", { style: { position: "relative", minHeight: (post.repost_of && !getPostVideo(post) && !getPostPhotos(post).length) ? 58 : undefined, ...(homeVideoKind === 'wide' ? { padding: '0 0 6px' } : homeVideoKind === 'tall' ? { display: 'flex', alignItems: 'flex-start', gap: 14, padding: '0 14px 8px' } : {}) }, onClick: (e) => {
       if (e.target && e.target.closest && e.target.closest("button,a,input,textarea,select,[role='slider']")) return;
@@ -39597,7 +39643,8 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
   var [captionExpanded, setCaptionExpanded] = React.useState(false);
   var [captionTranslation, setCaptionTranslation] = React.useState("");
   var [captionTranslationLoading, setCaptionTranslationLoading] = React.useState(false);
-  var [captionTranslationTarget, setCaptionTranslationTarget] = React.useState("hi");
+  var [captionTranslationError, setCaptionTranslationError] = React.useState(false);
+  var [captionTranslationTarget, setCaptionTranslationTarget] = React.useState(function() { return getPostTranslationTarget(String((reel && (reel.caption || reel.content)) || "")); });
   var [captionShowingOriginal, setCaptionShowingOriginal] = React.useState(false);
   var captionTranslationRequestRef = React.useRef(0);
   var [showMenu, setShowMenu] = React.useState(false);
@@ -39681,8 +39728,9 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
     captionTranslationRequestRef.current += 1;
     setCaptionTranslation("");
     setCaptionTranslationLoading(false);
+    setCaptionTranslationError(false);
     setCaptionShowingOriginal(false);
-    setCaptionTranslationTarget("hi");
+    setCaptionTranslationTarget(getPostTranslationTarget(reelCaption));
   }, [reel.id, reelCaption]);
   // Keep adjacent hashtags readable and on the same horizontal line in the details sheet.
   // Keep every hashtag on its own line while preserving user-entered prompt line breaks.
@@ -39719,18 +39767,28 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
     var requestId = captionTranslationRequestRef.current + 1;
     captionTranslationRequestRef.current = requestId;
     setCaptionTranslationLoading(true);
+    setCaptionTranslationError(false);
     translateText(reelCaptionSheetText, target).then(function(result) {
       if (captionTranslationRequestRef.current !== requestId) return;
-      setCaptionTranslation(result && result.translated ? result.translated : reelCaptionSheetText);
+      var translated = result && result.translated ? String(result.translated) : "";
+      if (!result || result.error || !translated.trim() || translated.trim() === reelCaptionSheetText.trim()) {
+        setCaptionTranslation("");
+        setCaptionShowingOriginal(false);
+        setCaptionTranslationError(true);
+        return;
+      }
+      setCaptionTranslation(translated);
       setCaptionShowingOriginal(false);
     }).catch(function() {
       if (captionTranslationRequestRef.current !== requestId) return;
-      setCaptionTranslation(reelCaptionSheetText);
+      setCaptionTranslation("");
       setCaptionShowingOriginal(false);
+      setCaptionTranslationError(true);
     }).finally(function() {
       if (captionTranslationRequestRef.current === requestId) setCaptionTranslationLoading(false);
     });
   };
+
   var translateReelCaption = function(e) {
     if (e) e.stopPropagation();
     if (captionTranslationLoading) return;
@@ -39746,6 +39804,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
     if (!nextTarget || nextTarget === captionTranslationTarget) return;
     setCaptionTranslationTarget(nextTarget);
     setCaptionTranslation("");
+    setCaptionTranslationError(false);
     setCaptionShowingOriginal(false);
     requestReelTranslation(nextTarget);
   };
@@ -40141,7 +40200,7 @@ function ReelItem({ reel, isActive, user, token, showToast, onViewProfile, onVie
                     React.createElement("span", { style: { minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, reel.location)),
                   React.createElement("div", { style: { display: "block", marginBottom: 6 } }, reelCaptionTimeAgo(reel.created_at)),
                   React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } },
-                    React.createElement("button", { type: "button", onClick: translateReelCaption, disabled: captionTranslationLoading, style: { background: "none", border: "none", padding: 0, color: "var(--muted)", fontSize: 14, fontWeight: 700, cursor: captionTranslationLoading ? "wait" : "pointer", fontFamily: "inherit", letterSpacing: "0.1px", WebkitTapHighlightColor: "transparent" } }, captionTranslationLoading ? "Loading..." : (captionTranslation && !captionShowingOriginal ? "See original" : "See translation")),
+                    React.createElement("button", { type: "button", onClick: translateReelCaption, disabled: captionTranslationLoading, style: { background: "none", border: "none", padding: 0, color: "var(--muted)", fontSize: 14, fontWeight: 700, cursor: captionTranslationLoading ? "wait" : "pointer", fontFamily: "inherit", letterSpacing: "0.1px", WebkitTapHighlightColor: "transparent" } }, captionTranslationLoading ? "Translating…" : (captionTranslationError ? "Try again" : (captionTranslation && !captionShowingOriginal ? "See original" : "See translation"))),
                     React.createElement("button", { type: "button", onClick: function(e) { e.stopPropagation(); setShowTranslationLanguages(true); }, "aria-label": "Translation language", style: { display: "inline-flex", alignItems: "center", gap: 4, border: "1px solid rgba(13,159,243,0.45)", borderRadius: 9, background: "var(--card-bg)", color: "#0D9FF3", padding: "7px 10px", fontSize: 13, fontWeight: 800, lineHeight: 1.2, cursor: "pointer", fontFamily: "inherit", WebkitTapHighlightColor: "transparent" } },
                       (reelTranslationLanguages.find(function(language) { return language.value === captionTranslationTarget; }) || reelTranslationLanguages[0]).label,
                       React.createElement("span", { style: { fontSize: 12, lineHeight: 1, marginTop: 1 } }, "▾")
@@ -41283,7 +41342,8 @@ function ReelsTab({ token, user, showToast, onViewProfile, onViewAccountInfo, on
     }
     sendNext();
   }
-  function translateReelComment(cid, text) { var existing = commentTranslationState[cid]; if (existing) { setCommentTranslationState(function(prev) { return Object.assign({}, prev, { [cid]: Object.assign({}, prev[cid], { showingOriginal: !prev[cid].showingOriginal }) }); }); return; } setCommentTranslationLoading(function(prev) { return Object.assign({}, prev, { [cid]: true }); }); translateText(text, "hi").then(function(result) { setCommentTranslationState(function(prev) { return Object.assign({}, prev, { [cid]: { translated: result && result.translated ? result.translated : text, showingOriginal: false } }); }); }).catch(function() {}).finally(function() { setCommentTranslationLoading(function(prev) { return Object.assign({}, prev, { [cid]: false }); }); }); } function deleteReply(cid, rid) {
+  function translateReelComment(cid, text) { var existing = commentTranslationState[cid]; if (existing) { setCommentTranslationState(function(prev) { return Object.assign({}, prev, { [cid]: Object.assign({}, prev[cid], { showingOriginal: !prev[cid].showingOriginal }) }); }); return; } setCommentTranslationLoading(function(prev) { return Object.assign({}, prev, { [cid]: true }); }); translateText(text, getPostTranslationTarget(text)).then(function(result) { if (!result || result.error || !result.translated || String(result.translated).trim() === String(text || "").trim()) return; setCommentTranslationState(function(prev) { return Object.assign({}, prev, { [cid]: { translated: result.translated, showingOriginal: false } }); }); }).catch(function() {}).finally(function() { setCommentTranslationLoading(function(prev) { return Object.assign({}, prev, { [cid]: false }); }); }); }
+function deleteReply(cid, rid) {
     api("/reels/" + activeReelId + "/comments/" + cid + "/replies/" + rid, "DELETE", null, token)
       .then(function() { setComments(function(prev) { return prev.map(function(c) { return c.id === cid ? Object.assign({}, c, { replies: (c.replies || []).filter(function(r) { return r.id !== rid; }) }) : c; }); }); })
       .catch(function() {});
