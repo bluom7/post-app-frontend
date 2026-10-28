@@ -9538,6 +9538,7 @@ function HomeTileCaption({ post, token, onTagInPost }) {
   const [open, setOpen] = React.useState(false);
   const [trunc, setTrunc] = React.useState(false);
   const [cutText, setCutText] = React.useState(null);
+  const [maxTextHeight, setMaxTextHeight] = React.useState(69);
   const [tr, setTr] = React.useState(null);
   const [trState, setTrState] = React.useState('idle');
   const [showTr, setShowTr] = React.useState(false);
@@ -9566,13 +9567,31 @@ function HomeTileCaption({ post, token, onTagInPost }) {
       body);
   };
   const lh = 23;
+  const getMediaElement = () => {
+    const el = ref.current;
+    if (!el || !el.closest) return null;
+    const grid = el.closest('[data-photo-grid="1"]');
+    if (grid) return grid;
+    const row = el.closest('[data-home-caption-row="1"]');
+    return row ? row.querySelector('[data-home-tile="1"]') : null;
+  };
   React.useLayoutEffect(() => {
     if (open) return;
     const el = ref.current;
     if (!el) return;
+    const root = el.parentElement && el.parentElement.parentElement;
     const check = () => {
       const w = el.clientWidth;
       if (!w) return;
+      const media = getMediaElement();
+      const mediaHeight = media ? media.getBoundingClientRect().height : 0;
+      const children = root ? Array.from(root.children) : [];
+      const metaHeight = children[1] ? children[1].getBoundingClientRect().height : 0;
+      const locationHeight = children[2] ? children[2].getBoundingClientRect().height : 0;
+      const rootStyle = root ? window.getComputedStyle(root) : null;
+      const gap = rootStyle ? (parseFloat(rootStyle.rowGap || rootStyle.gap) || 0) : 0;
+      const maxH = mediaHeight ? Math.max(lh, Math.floor(mediaHeight - 8 - metaHeight - locationHeight - gap * Math.max(0, children.length - 1) - 2)) : lh * 3;
+      setMaxTextHeight(prev => prev === maxH ? prev : maxH);
       const cs = window.getComputedStyle(el);
       const m = document.createElement('div');
       m.style.cssText = 'position:absolute;left:-99999px;top:0;visibility:hidden;pointer-events:none;white-space:pre-wrap;overflow-wrap:anywhere;';
@@ -9581,17 +9600,18 @@ function HomeTileCaption({ post, token, onTagInPost }) {
       m.style.fontStyle = cs.fontStyle; m.style.letterSpacing = cs.letterSpacing; m.style.wordBreak = cs.wordBreak;
       m.style.lineHeight = lh + 'px';
       document.body.appendChild(m);
-      const fits = (str) => { m.textContent = str; return m.scrollHeight <= lh * 3 + 1; };
+      const fits = str => { m.textContent = str; return m.scrollHeight <= maxH + 1; };
       let next = null, isTrunc = false;
       if (!fits(text)) {
         isTrunc = true;
-        // longest prefix such that "<prefix>... more" still fits inside 3 lines -> "..." + "more" sit right after the text
-        let lo = 0, hi = text.length;
+        // Fit the caption and every hashtag into the space beside its media tile.
+        const chars = Array.from(text);
+        let lo = 0, hi = chars.length;
         while (lo < hi) {
           const mid = (lo + hi + 1) >> 1;
-          if (fits(text.slice(0, mid).replace(/\s+$/, '') + '... more')) lo = mid; else hi = mid - 1;
+          if (fits(chars.slice(0, mid).join('').replace(/\s+$/, '') + '... more')) lo = mid; else hi = mid - 1;
         }
-        next = text.slice(0, lo).replace(/\s+$/, '');
+        next = chars.slice(0, lo).join('').replace(/\s+$/, '');
       }
       document.body.removeChild(m);
       setTrunc(isTrunc);
@@ -9599,9 +9619,16 @@ function HomeTileCaption({ post, token, onTagInPost }) {
     };
     check();
     let lastW = el.clientWidth;
-    const onSize = () => { const w = el.clientWidth; if (w && w !== lastW) { lastW = w; check(); } else if (!lastW && w) { lastW = w; check(); } };
+    let media = getMediaElement();
+    let lastH = media ? media.getBoundingClientRect().height : 0;
+    const onSize = () => {
+      const w = el.clientWidth;
+      media = getMediaElement();
+      const h = media ? media.getBoundingClientRect().height : 0;
+      if ((w && w !== lastW) || (h && h !== lastH)) { lastW = w; lastH = h; check(); }
+    };
     let ro = null;
-    try { if (typeof ResizeObserver !== 'undefined') { ro = new ResizeObserver(onSize); ro.observe(el); } } catch (_) {}
+    try { if (typeof ResizeObserver !== 'undefined') { ro = new ResizeObserver(onSize); ro.observe(el); if (media) ro.observe(media); } } catch (_) {}
     window.addEventListener('resize', onSize);
     try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(check); } catch (_) {}
     return () => { if (ro) ro.disconnect(); window.removeEventListener('resize', onSize); };
@@ -9612,7 +9639,7 @@ function HomeTileCaption({ post, token, onTagInPost }) {
     if (open || !trunc || cutText == null) return;
     const el = ref.current;
     if (!el) return;
-    if (el.scrollHeight > el.clientHeight + 1 && cutText.length > 0) setCutText(cutText.slice(0, -2).replace(/\s+$/, ''));
+    if (el.scrollHeight > el.clientHeight + 1 && cutText.length > 0) setCutText(Array.from(cutText).slice(0, -1).join('').replace(/\s+$/, ''));
   }, [cutText, trunc, open]);
   const metaTime = pbExactTime(post.created_at) || pbRelAgo(post.created_at);
   const canTr = !!shown;
@@ -9641,7 +9668,7 @@ function HomeTileCaption({ post, token, onTagInPost }) {
         ref,
         onClick: (trunc || open) ? () => setOpen(v => !v) : undefined,
         style: Object.assign({}, PB_TEXT, { fontSize: 16, lineHeight: lh + 'px', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', cursor: (trunc || open) ? 'pointer' : 'auto' },
-          open ? {} : (trunc ? { maxHeight: lh * 3, overflow: 'hidden' } : { display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }))
+          open ? {} : (trunc ? { maxHeight: maxTextHeight, overflow: 'hidden' } : {}))
       }, (trunc && !open && cutText != null) ? React.createElement(React.Fragment, null,
         cutText.split('\n').map(renderLine),
         '... ',
@@ -11112,7 +11139,7 @@ function BentoPostCard({
         React.createElement("span", { style: { display: "inline", whiteSpace: "nowrap" } }, pbExactTime(post.created_at) || pbRelAgo(post.created_at)),
         React.createElement("span", { onClick: onThoughtTranslate, role: "button", style: { display: "inline", marginLeft: 14, fontWeight: 600, cursor: "pointer", color: "var(--text)", whiteSpace: "nowrap", WebkitTapHighlightColor: "transparent" } }, thTrState === 'loading' ? "Translating\u2026" : (thTrState === 'error' ? "Try again" : (thShowTr ? "See original" : "See translation")))) : null);
     })(),
-    React.createElement("div", { style: { position: "relative", minHeight: (post.repost_of && !getPostVideo(post) && !getPostPhotos(post).length) ? 58 : undefined, ...(homeVideoKind === 'wide' ? { padding: '0 0 6px' } : homeVideoKind === 'tall' ? { display: 'flex', alignItems: 'flex-start', gap: 14, padding: '0 14px 8px' } : {}) }, onClick: (e) => {
+    React.createElement("div", { "data-home-caption-row": "1", style: { position: "relative", minHeight: (post.repost_of && !getPostVideo(post) && !getPostPhotos(post).length) ? 58 : undefined, ...(homeVideoKind === 'wide' ? { padding: '0 0 6px' } : homeVideoKind === 'tall' ? { display: 'flex', alignItems: 'flex-start', gap: 14, padding: '0 14px 8px' } : {}) }, onClick: (e) => {
       if (e.target && e.target.closest && e.target.closest("button,a,input,textarea,select,[role='slider']")) return;
       const now = Date.now();
       if (now - lastMediaTapRef.current < 300) {
