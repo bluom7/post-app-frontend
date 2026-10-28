@@ -11230,7 +11230,7 @@ function BentoPostCard({
   ),
     showMenu && React.createElement("div", { onClick: () => { setShowMenu(false); setShowDeleteConfirm(false); }, style: { position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "flex-end" } },
       React.createElement("style", null, "@keyframes _bsUp{from{transform:translateY(100%)}to{transform:translateY(0)}}"),
-      React.createElement("div", { onClick: e => e.stopPropagation(), style: { width: "100%", maxWidth: 540, margin: "0 auto", background: "var(--card-bg)", borderRadius: "22px 22px 0 0", paddingBottom: 32, animation: "_bsUp 0.26s cubic-bezier(0.32,0.72,0,1)", overflowY: "auto", maxHeight: "70vh" } },
+      React.createElement("div", { onClick: e => e.stopPropagation(), className: "no-scrollbar", style: { width: "100%", maxWidth: 540, margin: "0 auto", background: "var(--card-bg)", borderRadius: "22px 22px 0 0", paddingBottom: 32, animation: "_bsUp 0.26s cubic-bezier(0.32,0.72,0,1)", overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none", maxHeight: "70vh" } },
         React.createElement("div", { style: { width: 36, height: 4, borderRadius: 3, background: "var(--border)", margin: "12px auto 8px" } }),
         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "8px 22px 14px" } },
           React.createElement("div", { style: { width: 44, height: 44, borderRadius: "50%", background: post.avatar_bg || "#FFD600", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", fontWeight: 800, fontSize: 17, color: "#111" } },
@@ -11249,11 +11249,11 @@ function BentoPostCard({
         ),
         menuItemsFinal.map((item, i) => React.createElement("button", {
           key: i, onClick: item.onClick,
-          style: { display: "flex", alignItems: "center", gap: 16, width: "100%", padding: "15px 22px", background: "none", border: "none", borderTop: "none", textAlign: "left", cursor: "pointer", fontSize: 18, fontWeight: 700, color: "var(--text)" },
+          style: { display: "flex", alignItems: "center", gap: 16, width: "100%", padding: "8px 22px", background: "none", border: "none", borderTop: "none", textAlign: "left", cursor: "pointer", fontSize: 18, fontWeight: 400, color: "var(--text)" },
           onTouchStart: e => { e.currentTarget.style.opacity = "0.6"; },
           onTouchEnd: e => { e.currentTarget.style.opacity = "1"; }
         },
-          React.createElement("span", { style: { width: 54, height: 54, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "var(--text)" } }, item.icon),
+          React.createElement("span", { style: { width: 42, height: 42, borderRadius: "50%", background: "var(--input-bg)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "var(--text)" } }, React.isValidElement(item.icon) ? React.cloneElement(item.icon, { width: 20, height: 20, size: 20 }) : item.icon),
           item.label
         )),
         isOwn && React.createElement(React.Fragment, null,
