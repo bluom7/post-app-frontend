@@ -6577,7 +6577,13 @@ function SavedLibraryScreen({ token, user, showToast, onClose, onOpenItem, onOpe
   };
   let content;
   const sk = (style, key) => h("div", { key, className: "svl-skel", style }, null);
-  const skeletonGrid = rows => h("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 2 } }, Array.from({ length: rows * 3 }, (_, i) => sk({ aspectRatio: "0.68", width: "100%" }, "g" + i)));
+  const skeletonGrid = rows => {
+    const ratios = [[1, 0.82, 1.18], [0.82, 1.18, 0.95]];
+    return h("div", { "data-saved-masonry-skeleton": "true", style: { display: "flex", alignItems: "flex-start", gap: 10, padding: "10px", width: "100vw", marginLeft: "calc(50% - 50vw)", marginRight: "calc(50% - 50vw)", boxSizing: "border-box" } },
+      ratios.map((columnRatios, column) => h("div", { key: "s" + column, style: { flex: "1 1 0", minWidth: 0, display: "flex", flexDirection: "column", gap: 10 } },
+        Array.from({ length: rows }, (_, i) => sk({ width: "100%", height: "auto", aspectRatio: String(columnRatios[i % columnRatios.length]), borderRadius: 18, flexShrink: 0 }, "s" + column + "-" + i))
+      )));
+  };
   const skeletonCollections = () => h("div", { style: { display: "flex", gap: 10, overflow: "hidden", padding: "0 14px" } }, [0, 1, 2].map(i => h("div", { key: "c" + i, style: { flex: "0 0 148px", border: "1px solid var(--border)", borderRadius: 15, overflow: "hidden" } }, sk({ width: "100%", aspectRatio: "1.12" }), h("div", { style: { padding: "10px" } }, sk({ height: 13, width: "70%", borderRadius: 6 }), h("div", { style: { height: 8 } }), sk({ height: 11, width: "45%", borderRadius: 6 })))));
   if (loading && !items.length) content = h("div", { role: "status", "aria-busy": "true", "aria-label": "Loading saved items" },
     activeTab === "All" || activeTab === "Collections" ? h(React.Fragment, null,
