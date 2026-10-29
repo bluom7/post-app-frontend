@@ -4810,6 +4810,20 @@ function JoinWorldModal({open, onClose, token, user, showToast}) {
   const jwRadio = (sel) => e("span", {"aria-hidden":"true", style:{width:22,height:22,boxSizing:"border-box",borderRadius:"50%",border:"2px solid "+(sel?jwBlue:"var(--border)"),display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}},
     sel && e("span", {style:{width:12,height:12,borderRadius:"50%",background:jwBlue}}));
 
+  const newsSkeleton = () => {
+    const titleWidths = [100, 93, 81, 66];
+    const rows = Array.from({ length: 6 }, (_, i) => {
+      const lines = titleWidths.map((width, line) => e("div", { key: "title-" + line, className: "jw-news-skeleton-block", style: { width: width + "%", height: 12, borderRadius: 4 } }));
+      lines.push(e("div", { key: "source", className: "jw-news-skeleton-block", style: { width: "55%", height: 10, borderRadius: 4, marginTop: 1 } }));
+      lines.push(e("div", { key: "date", className: "jw-news-skeleton-block", style: { width: "38%", height: 9, borderRadius: 4 } }));
+      return e("div", { key: "news-skeleton-" + i, "aria-hidden": true, style: { display: "flex", alignItems: "center", gap: 14, padding: "10px 14px", margin: 0, background: "transparent" } },
+        e("div", { className: "jw-news-skeleton-block", style: { width: 150, height: 134, borderRadius: 12, flexShrink: 0 } }),
+        e("div", { style: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 7 } }, lines));
+    });
+    return e("div", { role: "status", "aria-busy": true, "aria-label": "Loading news" },
+      e("style", null, "@keyframes jwNewsShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}} .jw-news-skeleton-block{background:linear-gradient(100deg,var(--input-bg) 30%,var(--border) 50%,var(--input-bg) 70%);background-size:300% 100%;animation:jwNewsShimmer 1.3s ease-in-out infinite} @media(prefers-reduced-motion:reduce){.jw-news-skeleton-block{animation:none}}"),
+      rows);
+  };
   if (!open) return null;
   return e("div", {
     className:"no-tap-flash",
@@ -4888,8 +4902,7 @@ function JoinWorldModal({open, onClose, token, user, showToast}) {
         style:{flex:1,overflowY:"auto",overflowX:"hidden",touchAction:"pan-y",overscrollBehaviorX:"contain",padding:"0 0 20px"}},
       e("div", {ref:feedSlideRef, style:{minHeight:"100%",willChange:"transform"}},
         loading
-          ? e("div", {style:{display:"flex",justifyContent:"center",alignItems:"center",minHeight:"50vh",padding:50}},
-              e("div", {style:{width:34,height:34,border:"3.5px solid var(--border)",borderTopColor:"#0D9FF3",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}))
+          ? newsSkeleton()
           : error
             ? e("div", {style:{textAlign:"center",padding:40,color:"var(--muted)"}},
                 e("div", {style:{marginBottom:12}}, error),
