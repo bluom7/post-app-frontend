@@ -6456,7 +6456,7 @@ function SavedLibraryScreen({ token, user, showToast, onClose, onOpenItem, onOpe
     return h("svg", { width: s, height: s, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, h("rect", { x: 3, y: 3, width: 18, height: 18, rx: 4 }), h("path", { d: "M12 8v8M8 12h8" }));
   };
   const emptyState = (title, subtitle, action) => h("div", { style: { minHeight: 210, padding: "36px 20px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", color: "var(--muted)" } }, h("div", { style: { width: 58, height: 58, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--input-bg)", color: "var(--muted)", marginBottom: 14 } }, icon("bookmark", 26)), h("strong", { style: { color: "var(--text)", fontSize: 16, marginBottom: 6 } }, title), h("span", { style: { fontSize: 13, lineHeight: 1.5, maxWidth: 280 } }, subtitle), action || null);
-  const renderMediaGrid = rows => rows.length ? h(ProfileMediaGrid, { posts: rows, filter: () => true, onOpenPost: openItem }) : null;
+  const renderMediaGrid = rows => rows.length ? h(ProfileVideoMasonry, { posts: rows, onOpenPost: openItem }) : null;
   const renderArticleList = rows => rows.length ? h("div", { style: { display: "flex", flexDirection: "column", margin: "0 -16px" } }, rows.map((post, idx) => h(BentoPostCard, { key: itemKey(post), post, user, token, showToast, isLarge: idx % 5 === 0, videoCardLayout: true, repostAvatarInAction: true, onViewProfile, onViewAccountInfo, onLike: handleArticleLike, onComment: handleArticleComment, onSave: removeSavedItem, onRepost: handleArticleRepost }))) : null;
 
   const collectionCover = collection => {
@@ -6591,7 +6591,7 @@ function SavedLibraryScreen({ token, user, showToast, onClose, onOpenItem, onOpe
     const colReels = currentCollectionItems.filter(it => typeof isProfileVideoReel === "function" && isProfileVideoReel(it));
     if (collectionLoading && !activeCollectionItems.length) content = h("div", { role: "status", "aria-busy": "true", "aria-label": "Loading collection" }, skeletonGrid(4));
     else if (colTab === "reels") content = colReels.length
-      ? h(ProfileMediaGrid, { posts: colReels, includeReels: true, onOpenPost: openItem })
+      ? h(ProfileVideoMasonry, { posts: colReels, onOpenPost: openItem })
       : emptyState("No reels in this collection", "Saved reels you add to this collection will appear here.");
     else content = currentCollectionItems.length
       ? h(React.Fragment, null, renderMediaGrid(currentMediaItems), renderArticleList(currentArticleItems))
@@ -6610,7 +6610,7 @@ function SavedLibraryScreen({ token, user, showToast, onClose, onOpenItem, onOpe
   else if (activeTab === "Planet") content = renderPlanetList();
   else {
     const rows = activeTab === "Reels" ? reelItems : activeTab === "Posts" ? postItems : allArticles;
-    content = rows.length ? (activeTab === "Articles" ? renderArticleList(rows) : activeTab === "Reels" ? h(ProfileMediaGrid, { posts: rows, includeReels: true, onOpenPost: openItem }) : h(React.Fragment, null, renderMediaGrid(rows.filter(isMediaItem)), renderArticleList(rows.filter(isArticle)))) : emptyState(activeTab === "Reels" ? "No saved reels yet" : activeTab === "Posts" ? "No saved posts yet" : "No saved articles yet", "Saved " + activeTab.toLowerCase() + " will appear here.");
+    content = rows.length ? (activeTab === "Articles" ? renderArticleList(rows) : activeTab === "Reels" ? h(ProfileVideoMasonry, { posts: rows, onOpenPost: openItem }) : h(React.Fragment, null, renderMediaGrid(rows.filter(isMediaItem)), renderArticleList(rows.filter(isArticle)))) : emptyState(activeTab === "Reels" ? "No saved reels yet" : activeTab === "Posts" ? "No saved posts yet" : "No saved articles yet", "Saved " + activeTab.toLowerCase() + " will appear here.");
   }
 
   const manageTile = item => {
